@@ -1,0 +1,19 @@
+[user]
+    name = Duck Matthew
+    email = matt@mattduck.com
+    editor = vim
+
+[alias]
+    l = log --graph --pretty=oneline --abbrev-commit
+    s = status
+    d = diff
+
+[color]
+    ui = true
+    branch = auto
+    diff = auto
+    interactive = auto
+    status = auto
+
+[core]
+    excludesfile = ~/.gitignore

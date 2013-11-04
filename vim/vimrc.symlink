@@ -1,0 +1,45 @@
+" Personal files live in ./plugin, everything else is installed in ./bundle.
+
+" This line should not be removed as it ensures that various options are
+" properly set to work with the Vim-related packages available in Debian.
+runtime! debian.vim
+
+set nocompatible  
+set runtimepath+=$HOME/.vim/
+
+if has("macunix")
+    let uname = system("uname")
+    if uname == "Darwin\n"
+        " Correct OS X path and some other stuff
+        set runtimepath=$HOME/.vim,/usr/share/vim/vim72,/usr/bin
+        let $VIMRUNTIME="/usr/share/vim/vim72/"
+        let g:CSApprox_konsole = 1
+        set backspace=2
+    endif
+endif 
+
+set rtp+=~/.vim/bundle/vundle/
+call vundle#rc()
+
+" plugins
+Bundle "tpope/vim-surround"
+Bundle "tpope/vim-repeat"
+Bundle "Lokaltog/vim-easymotion"
+Bundle "scrooloose/nerdcommenter"
+Bundle "godlygeek/csapprox"
+Bundle "Townk/vim-autoclose"
+Bundle "davidhalter/jedi-vim"
+
+" syntax
+Bundle "rest.vim"
+Bundle "vim-creole"
+Bundle "mako.vim"
+Bundle "tpope/vim-markdown"
+
+" colours
+Bundle "altercation/vim-colors-solarized"
+
+" my plugins
+Bundle "../splitscreen/.git"
+
+filetype plugin indent on   

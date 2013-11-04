@@ -1,0 +1,66 @@
+# Use same prefix as gnuscreen
+set-option -g prefix C-a
+unbind-key C-b
+bind-key C-a send-prefix
+
+# Enable mouse
+set -g mode-mouse on
+setw -g mouse-select-window on
+setw -g mouse-select-pane on
+
+# Be quiet
+set -g quiet on
+
+# I not sure why would need to wait for Esc, and it interferes with vim
+set-option -sg escape-time 0
+
+# History
+set -g history-limit 50000
+
+# Resize to smallest viewing client, not smallest attached client.
+set -g aggressive-resize on
+
+# 256 colours.
+set-option -g default-terminal "screen-256color"
+
+# Customise colours per-machine, using variable set in bashrc
+colour="colour$TMUXCOLOUR"
+
+# Left status is session name, right is hostname + date. Highlights current
+# window name.
+set-option -g status-bg colour0
+set-option -g status-fg $colour
+set-option -g status-left '#[fg=colour10]#S'
+set-option -g status-right '#[fg=$colour] #H #[fg=colour10] %Y-%b-%d %H:%M'
+set-option -g window-status-current-bg colour10
+
+# Command bar colours
+set-option -g message-command-bg colour7
+set-option -g message-bg colour7
+set-option -g message-command-fg $colour
+set-option -g message-fg $colour
+
+# Highlight current pane.
+set-option -g pane-active-border-fg colour7
+set-option -g pane-border-fg colour10
+
+# The leftmost key should show the leftmost window. 
+set-option -g base-index 1 
+set-option -g pane-base-index 1 
+
+# vi
+set-option -g status-keys vi
+set-option -g mode-keys vi
+bind h select-pane -L
+bind j select-pane -D
+bind k select-pane -U
+bind l select-pane -R
+bind -r C-h resize-pane -L 5
+bind -r C-j resize-pane -D 5
+bind -r C-k resize-pane -U 5
+bind -r C-l resize-pane -R 5
+bind-key -t vi-copy 'v' begin-selection
+bind-key -t vi-copy 'y' copy-selection
+
+# Use namespace shell wrapper to enable pbcopy and paste on OS X.
+set-option -g default-command "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace -l bash; else bash; fi"
