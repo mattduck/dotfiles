@@ -1,4 +1,4 @@
-;; Change tab width to fit headline indents. Not working atm?
+;; Change tab width to fit headline indents.
 (add-hook 'org-mode-hook '(lambda () 
     (setq tab-width 2)
     (setq evil-shift-width 2)
