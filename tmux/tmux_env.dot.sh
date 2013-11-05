@@ -32,6 +32,6 @@ function ,tminit() {
 function ,tmreload() {
     # Reload tmux config and this file. Has to be done per pane.
     tmux source-file ~/.tmux.conf
-    source $DOTFILES/tmux/tmux_env.sh
+    source $DOTFILES/tmux/tmux_env.dot.sh
     echo "Reloaded ~/.tmux.conf and $DOTFILES/tmux/tmux_env.sh"
 }
