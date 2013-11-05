@@ -5,3 +5,4 @@ alias ls="gls --color=auto"
 alias dircolors="gdircolors"
 alias sort="gsort"
 
+alias emacs-app="/Applications/Emacs.app/Contents/MacOS/Emacs"
