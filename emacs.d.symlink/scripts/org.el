@@ -54,3 +54,6 @@
   )
 (add-hook 'org-mode-hook 'set-org-solarized-faces)
 (add-hook 'solarized-theme-hook 'set-org-solarized-faces)
+
+;; Inline code should have syntax highlight
+(setq org-src-fontify-natively t)
