@@ -68,3 +68,5 @@ fi
 
 export HOSTCOLOUR
 export TMUXCOLOUR
+
+eval $(dircolors -b $DOTFILES/solarized/dircolors/dircolors.ansi-universal)

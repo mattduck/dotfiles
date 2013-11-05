@@ -16,3 +16,6 @@
 [submodule "vim/vim.symlink/bundle/vundle"]
 	path = vim/vim.symlink/bundle/vundle
 	url = https://github.com/gmarik/vundle.git
+[submodule "solarized/dircolors"]
+	path = solarized/dircolors
+	url = https://github.com/seebi/dircolors-solarized
