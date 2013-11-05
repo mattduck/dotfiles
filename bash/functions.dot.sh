@@ -10,8 +10,3 @@ function ,pathadd() {
     fi
     echo "New path:\n$($DOTFILES/bin/,pathecho)"
 }
-
-function ,cdgit() {
-    # cd to top level of git directory
-    cd "$(git rev-parse --show-toplevel)"
-}
