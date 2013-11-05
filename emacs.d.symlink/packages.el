@@ -27,4 +27,4 @@
     (package-install p)))
 
 ;; Local
-(load-file "../splitscreen/splitscreen.el")
+(load-file (concat (getenv "DOTFILES") "/splitscreen/splitscreen.el"))
