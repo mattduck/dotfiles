@@ -18,7 +18,7 @@ fi
 
 # Anything ending in .dot.xx.sh gets sourced in numerical order, then anything
 # ending in .dot.sh. 
-for f in $(find -E $DOTFILES -regex ".+\.dot\.[0-9][0-9]\.sh" | sort -g); do
+for f in $(find -E $DOTFILES -regex ".+\.dot\.[0-9][0-9]\.sh" | sort -t "." -k 2); do
     source $f
 done
 
