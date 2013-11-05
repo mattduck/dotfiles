@@ -31,3 +31,5 @@ set noerrorbells
 set novisualbell
 
 set cmdheight=2
+
+set wildmenu " Show all autocomplete choices
