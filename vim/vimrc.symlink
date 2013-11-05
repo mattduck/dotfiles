@@ -1,4 +1,4 @@
-" Personal files live in ./plugin, everything else is installed in ./bundle.
+" Personal files live in ./source, everything else is installed in ./bundle.
 
 " This line should not be removed as it ensures that various options are
 " properly set to work with the Vim-related packages available in Debian.
@@ -43,3 +43,7 @@ Bundle "altercation/vim-colors-solarized"
 Bundle "../splitscreen/.git"
 
 filetype plugin indent on   
+
+for f in split(glob('$DOTFILES/vim/vim.symlink/source/*.vim'), '\n')
+    exe 'source' f
+endfor
