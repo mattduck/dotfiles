@@ -1,0 +1,9 @@
+#!/bin/bash
+#
+# Open current directory or given path in finder
+if [ $@ ]; then
+    open -R $@
+else
+    open -R .
+fi
+
