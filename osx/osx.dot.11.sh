@@ -1,14 +1,14 @@
 if [[ "$(uname -a)" != *Darwin* ]]; then return; fi
 
+# Use GNU coreutils - it's easier if programs have the same flags between
+# machines, same man pages etc.
+export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+export MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
+
 # Bash completion lives in the brew directory
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
   . $(brew --prefix)/etc/bash_completion
 fi
-
-# Use coreutils to support solarized colours
-alias ls="gls --color=auto"
-alias dircolors="gdircolors"
-alias sort="gsort"
 
 alias emacs-app="/Applications/Emacs.app/Contents/MacOS/Emacs"
 
