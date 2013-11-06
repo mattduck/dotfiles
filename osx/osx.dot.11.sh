@@ -16,3 +16,9 @@ function ,finder-pull() {
     # cd to topmost Finder window directory
     cd "$(osascript -e 'tell app "Finder" to POSIX path of (insertion location as alias)')"
 }
+
+# This is easier than messing with system pythons and pips etc.
+# The prompt is set /after/ this, so won't see a (venv) prefix. 
+if [ -d ~/venv ]; then
+    source ~/venv/bin/activate
+fi
