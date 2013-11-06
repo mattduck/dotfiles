@@ -34,11 +34,11 @@ inoremap jj <ESC>
 nnoremap j gj
 nnoremap k gk
 
+" Don't care about most NERDcomment functionality, just want toggle
+nnoremap <C-c> :call NERDComment(0,"toggle")<CR>
+vnoremap <C-c> :call NERDComment(0,"toggle")<CR>
+
 """""""""" Leader commands
 
 " :nohl
 nnoremap <leader>n :nohl<CR>
-
-" Don't care about most NERDcomment functionality, just want toggle
-nnoremap <leader>c :call NERDComment(0,"toggle")<CR>
-vnoremap <leader>c :call NERDComment(0,"toggle")<CR>
