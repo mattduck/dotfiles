@@ -1,3 +1,9 @@
+function ,reload() {
+    # Reload dotfiles environment
+    source $DOTFILES/activate.sh
+    bind -f $DOTFILES/inputrc.symlink
+}
+
 function ,pathadd() {
     # Add current directory or givens paths to $PATH
     if [ -z "$*" ]; then
@@ -9,4 +15,9 @@ function ,pathadd() {
         done
     fi
     echo "New path:\n$($DOTFILES/bin/,pathecho)"
+}
+
+function ,mkd() {
+    # Make and enter directory
+    mkdir -p "$@" && cd "$@"
 }
