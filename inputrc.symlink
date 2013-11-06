@@ -1,0 +1,28 @@
+set editing-mode vi
+
+set keymap vi-command
+"\e[B": history-search-forward
+"\e[A": history-search-backward
+Control-l: clear-screen
+
+set keymap vi-insert
+"\e[B": history-search-forward
+"\e[A": history-search-backward
+Control-l: clear-screen
+
+# Be quiet
+set bell-style visible
+
+# Tab autocompletion ignores case
+set completion-ignore-case on
+
+# Add trailing slash when autocompleting symlinks to directories
+set mark-symlinked-directories on
+
+# If more than 200 completions, ask to show them
+set completion-query-items 200
+
+# Allow UTF-8 input and output
+set input-meta on
+set output-meta on
+set covert-meta off
