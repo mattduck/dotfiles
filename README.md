@@ -20,11 +20,24 @@ Add the above line to your bashrc or equivalent. This will:
 
 ## Symlinks
 
-    $ bin/,install_dotfile_symlinks.py
+    $ bin/,install-dotfile-symlinks.py
 
 - Create symlinks to ~/.file for __\*.symlink__.
 
 - Backup any existing (non-link) files to ~/dotfiles_backup/$(date).
+
+
+## Third party stuff
+
+- Submodules are used for code that belongs in the repo:
+
+    - Plugins that can't be installed by eg. Vundle / ELPA.
+
+    - Config-related stuff, eg. for setting up solarized schemes on
+      various programs.
+
+- Non-config related programs are installed as part of the ,install-deps scripts.
+  Programs that need to be sourced (eg.  rupa/z) are installed to *~/sh*. 
 
 
 # Thanks
