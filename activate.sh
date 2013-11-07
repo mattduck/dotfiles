@@ -18,7 +18,13 @@ fi
 
 # Anything ending in .dot.xx.sh gets sourced in numerical order, then anything
 # ending in .dot.sh. 
-for f in $(find -E $DOTFILES -regex ".+\.dot\.[0-9][0-9]\.sh" | sort -t "." -k 2); do
+if [[ $(uname -a) == *Darwin* ]]; then
+    find_re="find -E $DOTFILES -regex"
+else
+    find_re="find $DOTFILES -regextype posix-extended -regex"
+fi
+
+for f in $($find_re ".+\.dot\.[0-9][0-9]\.sh" | sort -t "." -k 2); do
     source $f
 done
 
