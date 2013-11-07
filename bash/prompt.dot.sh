@@ -21,3 +21,7 @@ else
 fi
 
 export PROMPT_DIRTRIM=4                 
+
+# Write to history file on every prompt to make sure it always gets saved. Don't
+# read on every prompt, as prefer to use immediate history per-shell. 
+export PROMPT_COMMAND="history -a;"
