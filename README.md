@@ -41,7 +41,7 @@ Add the above line to your bashrc or equivalent. This will:
       various programs.
 
 - Non-config related programs are installed as part of the ,install-deps scripts.
-  Programs that need to be sourced (eg. rupa/z) are installed to *~/sh*. 
+  Programs that need to be sourced are installed to *~/sh*. 
 
 
 # Thanks

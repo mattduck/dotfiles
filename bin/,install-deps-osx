@@ -16,15 +16,12 @@ brew install \
     macvim \
     emacs \
     postgresql \
-    z
+    fasd
+
+# Required to allow tmux to merge w/osx clipboard
+brew install reattach-to-user-namespace
 
 if [ ! -d ~/sh ]; then
     echo "~/sh not found, creating..."
     mkdir -v ~/sh
-fi
-
-# rupa/z
-if [ ! -f  ~/sh/z.sh ]; then
-    echo "~/sh/z.sh not found, creating..."
-    cp -v $(brew --prefix)/etc/profile.d/z.sh ~/sh/z.sh
 fi

@@ -9,7 +9,6 @@ alias la="ls -A"
 alias l="ls -CF"
 alias ll="ls -alF"
 
-alias v="vim"
 alias h="history"
 alias g="grep"
 
