@@ -12,7 +12,7 @@
 	url = https://github.com/mattduck/emacs-color-theme-solarized
 [submodule "splitscreen"]
 	path = splitscreen
-	url = git@bitbucket.org:mattduck/splitscreen.git
+	url = git@github.com:mattduck/splitscreen.git
 [submodule "vim/vim.symlink/bundle/vundle"]
 	path = vim/vim.symlink/bundle/vundle
 	url = https://github.com/gmarik/vundle.git
