@@ -1,0 +1,5 @@
+#!/bin/bash 
+#
+# Pretty print $PATH
+IFS=:
+eval printf "%s\\\n" \$${1:-PATH}
