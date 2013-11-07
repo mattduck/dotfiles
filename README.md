@@ -20,7 +20,7 @@ Add the above line to your bashrc or equivalent. This will:
 
 ## Symlinks
 
-    $ bin/,install-dotfile-symlinks.py
+    $ bin/,install-dotfile-symlinks
 
 - Create symlinks to ~/.file for __\*.symlink__.
 
