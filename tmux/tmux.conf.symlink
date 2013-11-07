@@ -24,7 +24,7 @@ set -g aggressive-resize on
 set-option -g default-terminal "screen-256color"
 
 # Customise colours per-machine, using variable set in bashrc
-colour="colour$TMUXCOLOUR"
+colour="colour$HOST_COLOUR_NUM"
 
 # Left status is session name, right is hostname + date. Highlights current
 # window name.

@@ -15,8 +15,13 @@ function ,tminit() {
 
     ORIG_WINDOW=`tmux display-message -p "#I"`
 
-    # Usually only have one session per machine
-    tmux rename-session "main"
+    # 4 panes
+    tmux splitw -h -p 50
+    tmux selectp -t 1
+    tmux splitw -v -p 60
+    tmux selectp -t 0
+    tmux splitw -v -p 60
+    tmux select-layout tiled
 
     # Probably want a few windows
     tmux new-window
@@ -24,6 +29,9 @@ function ,tminit() {
 
     # Go back to the original window
     tmux select-window -t $ORIG_WINDOW
+
+    # Usually only have one session per machine
+    tmux rename-session "main"
 
     export CUSTOM_TMUX_INIT=true
     echo "Generic tmux layout initiated"
