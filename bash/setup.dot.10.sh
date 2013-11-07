@@ -5,3 +5,5 @@ export HISTFILESIZE=$HISTSIZE
 export HISTIGNORE="ls:l:ll:h:cd:"
 export HISTCONTROL="ignoredups"
 shopt -s histappend
+
+export PATH="$PATH:$HOME/bin"
