@@ -23,6 +23,12 @@
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cb" 'org-iswitchb)
 
+;; Inline code should have syntax highlight
+(setq org-src-fontify-natively t)
+
+(setq org-level-color-stars-only t)
+(setq org-M-RET-may-split-line nil)
+
 ;; Want the org faces to update whenever a solarized theme is
 ;; enabled. However, you can't set the faces outside of org mode without error.
 ;; So need to add an org-mode hook too, and suppress the errors
@@ -54,6 +60,3 @@
   )
 (add-hook 'org-mode-hook 'set-org-solarized-faces)
 (add-hook 'solarized-theme-hook 'set-org-solarized-faces)
-
-;; Inline code should have syntax highlight
-(setq org-src-fontify-natively t)
