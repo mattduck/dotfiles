@@ -29,7 +29,11 @@ Add the above line to your bashrc or equivalent. This will:
 
 ## Third party stuff
 
-- Submodules are used for code that belongs in the repo:
+- Vim plugins are installed with `:BundleInstall`. 
+
+- Emacs plugins are installed on startup.
+
+- Submodules are used for other code that belongs in the dotfiles repo:
 
     - Plugins that can't be installed by eg. Vundle / ELPA.
 
@@ -37,7 +41,7 @@ Add the above line to your bashrc or equivalent. This will:
       various programs.
 
 - Non-config related programs are installed as part of the ,install-deps scripts.
-  Programs that need to be sourced (eg.  rupa/z) are installed to *~/sh*. 
+  Programs that need to be sourced (eg. rupa/z) are installed to *~/sh*. 
 
 
 # Thanks
