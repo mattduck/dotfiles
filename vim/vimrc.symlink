@@ -40,7 +40,7 @@ Bundle "tpope/vim-markdown"
 Bundle "altercation/vim-colors-solarized"
 
 " my plugins
-Bundle "../splitscreen/.git"
+Bundle $DOTFILES . "/splitscreen/.git"
 
 filetype plugin indent on   
 
