@@ -21,3 +21,7 @@ function ,mkd() {
     # Make and enter directory
     mkdir -p "$@" && cd "$@"
 }
+
+function ,prompt-note() {
+    PS1="[$Abase01$@] $PS1"
+}
