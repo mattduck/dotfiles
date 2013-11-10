@@ -7,3 +7,5 @@ export HISTCONTROL="ignoredups"
 shopt -s histappend
 
 export PATH="$PATH:$HOME/bin"
+
+export VIRTUAL_ENV_DISABLE_PROMPT=1

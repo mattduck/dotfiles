@@ -18,7 +18,6 @@ function ,finder-pull() {
 }
 
 # This is easier than messing with system pythons and pips etc.
-# The prompt is set /after/ this, so won't see a (venv) prefix. 
 if [ -d ~/venv ]; then
     source ~/venv/bin/activate
 fi

@@ -16,18 +16,24 @@ if [[ ":$PATH:" != *":$DOTFILES/bin:"* ]]; then
     export PATH="$PATH:$DOTFILES/bin"
 fi
 
-# Anything ending in .dot.xx.sh gets sourced in numerical order, then anything
-# ending in .dot.sh. 
-if [[ $(uname -a) == *Darwin* ]]; then
-    find_re="find -E $DOTFILES -regex"
-else
-    find_re="find $DOTFILES -regextype posix-extended -regex"
-fi
+function ,shell-files {
+    # Anything ending in .dot.xx.sh gets sourced in numerical order, then anything
+    # ending in .dot.sh. 
+    if [[ $(uname -a) == *Darwin* ]]; then
+        find_re="find -E $DOTFILES -regex"
+    else
+        find_re="find $DOTFILES -regextype posix-extended -regex"
+    fi
 
-for f in $($find_re ".+\.dot\.[0-9][0-9]\.sh" | sort -t "." -k 2); do
-    source $f
-done
+    for f in $($find_re ".+\.dot\.[0-9][0-9]\.sh" | sort -t "." -k 2); do
+        echo $f
+    done
 
-for f in $(find $DOTFILES -name "*.dot.sh"); do
+    for f in $(find $DOTFILES -name "*.dot.sh"); do
+        echo "$f"
+    done
+}
+
+for f in $(,shell-files); do
     source "$f"
 done
