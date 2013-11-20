@@ -36,6 +36,7 @@ Bundle "vim-creole"
 Bundle "mako.vim"
 Bundle "tpope/vim-markdown"
 Bundle "groenewege/vim-less"
+Bundle "python.vim"
 
 " colours
 Bundle "altercation/vim-colors-solarized"
