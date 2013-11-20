@@ -11,6 +11,7 @@ if [ -f $(brew --prefix)/etc/bash_completion ]; then
 fi
 
 alias emacs-app="/Applications/Emacs.app/Contents/MacOS/Emacs"
+alias vi="vim" # Otherwise vi will point to /usr/bin, and vim to the brew dir.
 
 function ,finder-pull() {
     # cd to topmost Finder window directory
