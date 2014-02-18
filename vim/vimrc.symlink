@@ -22,27 +22,30 @@ set rtp+=~/.vim/bundle/vundle/
 call vundle#rc()
 
 " plugins
-Bundle "tpope/vim-surround"
-Bundle "tpope/vim-repeat"
-Bundle "Lokaltog/vim-easymotion"
-Bundle "scrooloose/nerdcommenter"
-Bundle "godlygeek/csapprox"
-Bundle "Townk/vim-autoclose"
-Bundle "davidhalter/jedi-vim"
+    Bundle "tpope/vim-surround"
+    Bundle "tpope/vim-repeat"
+    Bundle "Lokaltog/vim-easymotion"
+    Bundle "scrooloose/nerdcommenter"
+    Bundle "godlygeek/csapprox"
+    Bundle "Townk/vim-autoclose"
+    Bundle "davidhalter/jedi-vim"
 
-" syntax
-Bundle "rest.vim"
-Bundle "vim-creole"
-Bundle "mako.vim"
-Bundle "tpope/vim-markdown"
-Bundle "groenewege/vim-less"
-Bundle "python.vim"
+" syntax / indent
+    Bundle "rest.vim"
+    Bundle "vim-creole"
+    Bundle "mako.vim"
+    Bundle "tpope/vim-markdown"
+    Bundle "groenewege/vim-less"
+    Bundle "python.vim"
+
+    " HTML-enhanced
+    Bundle "php.vim"
 
 " colours
-Bundle "altercation/vim-colors-solarized"
+    Bundle "altercation/vim-colors-solarized"
 
 " my plugins
-Bundle $DOTFILES . "/splitscreen/.git"
+    Bundle $DOTFILES . "/splitscreen/.git"
 
 filetype plugin indent on   
 
