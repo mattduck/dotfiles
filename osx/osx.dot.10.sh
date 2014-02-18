@@ -5,6 +5,9 @@ if [[ "$(uname -a)" != *Darwin* ]]; then return; fi
 export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
 export MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
 
+# Use Brew instead of system Ruby
+export PATH="/usr/local/opt/ruby/bin:$PATH"
+
 # Bash completion lives in the brew directory
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
   . $(brew --prefix)/etc/bash_completion
