@@ -20,4 +20,5 @@
 
 ;; Closest thing to easymotion
 (require 'ace-jump-mode)
-(define-key evil-normal-state-map (kbd "SPC") 'ace-jump-char-mode)
+(setq ace-jump-mode-scope 'window) ;; it's quicker this way
+(define-key evil-normal-state-map (kbd "SPC") 'ace-jump-line-mode)
