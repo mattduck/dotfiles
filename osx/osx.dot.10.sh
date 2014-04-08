@@ -13,6 +13,10 @@ if [ -f $(brew --prefix)/etc/bash_completion ]; then
   . $(brew --prefix)/etc/bash_completion
 fi
 
+# MIT-Scheme
+export MITSCHEME_LIBRARY_PATH="/Applications/MIT\:GNU\ Scheme.app/Contents/Resources"
+export MIT_SCHEME_EXE="/usr/local/scheme"
+
 alias emacs-app="/Applications/Emacs.app/Contents/MacOS/Emacs"
 alias vi="vim" # Otherwise vi will point to /usr/bin, and vim to the brew dir.
 
