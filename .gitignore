@@ -1,2 +1,3 @@
 vim/vim.symlink
 emacs.d.symlink/elpa
+emacs.d.symlink/history
