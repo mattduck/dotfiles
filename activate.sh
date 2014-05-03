@@ -16,7 +16,7 @@ if [[ ":$PATH:" != *":$DOTFILES/bin:"* ]]; then
     export PATH="$PATH:$DOTFILES/bin"
 fi
 
-function ,shell-files {
+function ,echo-dot-sh-files {
     # Anything ending in .dot.xx.sh gets sourced in numerical order, then anything
     # ending in .dot.sh. 
     if [[ $(uname -a) == *Darwin* ]]; then
@@ -34,6 +34,6 @@ function ,shell-files {
     done
 }
 
-for f in $(,shell-files); do
+for f in $(,echo-dot-sh-files); do
     source "$f"
 done
