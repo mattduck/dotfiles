@@ -23,8 +23,3 @@ brew install vim
 
 # Required to allow tmux to merge w/osx clipboard
 brew install reattach-to-user-namespace
-
-if [ ! -d ~/sh ]; then
-    echo "~/sh not found, creating..."
-    mkdir -v ~/sh
-fi

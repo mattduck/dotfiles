@@ -27,21 +27,15 @@ Add the above line to your bashrc or equivalent. This will:
 - Backup any existing (non-link) files to ~/dotfiles_backup/$(date).
 
 
-## Third party stuff
+## Third party stuff that lives in dotfiles
 
 - Vim plugins are installed with `:BundleInstall`. 
 
 - Emacs plugins are installed on startup.
 
-- Submodules are used for other code that belongs in the dotfiles repo:
-
-    - Plugins that can't be installed by eg. Vundle / ELPA.
-
-    - Config-related stuff, eg. for setting up solarized schemes on
-      various programs.
-
-- Non-config related programs are installed as part of the ,install-deps scripts.
-  Programs that need to be sourced are installed to *~/sh*. 
+- Submodules are used when we're just using git to pull in other content,
+  eg. the initial Vundle install, some config bits relating to Solarized
+  schemes.
 
 
 # Thanks
