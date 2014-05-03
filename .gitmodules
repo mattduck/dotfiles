@@ -9,13 +9,13 @@
 	url = https://github.com/altercation/solarized.git
 [submodule "emacs.d.symlink/non-elpa/color-theme-solarized"]
 	path = emacs.d.symlink/non-elpa/color-theme-solarized
-	url = https://github.com/mattduck/emacs-color-theme-solarized
+	url = https://github.com/mattduck/emacs-color-theme-solarized.git
 [submodule "splitscreen"]
 	path = splitscreen
-	url = git@github.com:mattduck/splitscreen.git
+	url = https://github.com/mattduck/splitscreen.git
 [submodule "vim/vim.symlink/bundle/vundle"]
 	path = vim/vim.symlink/bundle/vundle
 	url = https://github.com/gmarik/vundle.git
 [submodule "solarized/dircolors"]
 	path = solarized/dircolors
-	url = https://github.com/seebi/dircolors-solarized
+	url = https://github.com/seebi/dircolors-solarized.git
