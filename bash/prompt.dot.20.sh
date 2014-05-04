@@ -8,7 +8,7 @@ if [[ $EUID == 0 ]]; then
 # Standard prompt
 else
     _user="\[$Ayellow\]$debian_chroot\u"
-    _hostname="\[$Ayellow\]\h"
+    _hostname="\[$HOST_COLOUR_ANSI\]\h"
     _pwd="\[$HOST_COLOUR_ANSI\]\w"
 
     # Add git info
@@ -17,7 +17,7 @@ else
         _git_info="\[$Abase01\]\$(__git_ps1)"
     fi
 
-    PS1="$_pwd$_git_info\n\[$Abase1\]$ "
+    PS1="$_hostname: $_pwd$_git_info\n\[$Abase1\]$ "
 fi
 
 export PROMPT_DIRTRIM=4                 
