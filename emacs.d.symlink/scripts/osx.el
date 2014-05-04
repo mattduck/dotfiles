@@ -5,6 +5,9 @@
 ;; LEFT ALT = none
 ;; COMMAND = meta
 ;; RIGHT ALT = super
-(setq ns-option-modifier nil)
-(setq ns-command-modifier 'meta)
-(setq ns-right-option-modifier 'super)
+
+(if (not (eq system-type 'darwin))
+  (setq ns-option-modifier nil)
+  (setq ns-command-modifier 'meta)
+  (setq ns-right-option-modifier 'super)
+  )
