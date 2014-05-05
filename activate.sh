@@ -12,13 +12,49 @@ done
 
 export DOTFILES="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-if [[ ":$PATH:" != *":$DOTFILES/bin:"* ]]; then
-    export PATH="$PATH:$DOTFILES/bin"
-fi
+
+function ,path-add() {
+    # usage: ,path-add [--prepend] [<directories>]
+    #
+    # Adds current directory or given directories to path. If --prepend not
+    # given, directories are appended.
+    #
+    # Also updates $_OLD_VIRTUAL_PATH set by Python's virtualenv, so that path
+    # changes persist through a venv deactivate command.
+
+    if [[ $1 = "--prepend" ]]; then
+        prepend=true
+        paths=(${@:2})
+    else
+        prepend=false
+        paths=($@)
+    fi
+
+    if [ -z "$paths" ]; then
+        paths[0]=$PWD
+    fi
+
+   for path in "${paths[@]}"; do
+        fullpath="$(cd "$path"; echo $PWD)"
+
+        if [[ ":$PATH:" != *":$fullpath:"* ]]; then
+
+            if [[ "$prepend" = true ]]; then
+                export PATH="$fullpath:$PATH"
+                export _OLD_VIRTUAL_PATH="$fullpath:$PATH"
+            else
+                export PATH="$PATH:$fullpath"
+                export _OLD_VIRTUAL_PATH="$PATH:$fullpath"
+            fi
+        fi
+    done
+}
+
 
 function ,echo-dot-sh-files {
-    # Anything ending in .dot.xx.sh gets sourced in numerical order, then anything
-    # ending in .dot.sh. 
+    # In numerical order, echo paths ending in .dot.xx.sh .
+    # Then, echo anything ending in .dot.sh .
+
     if [[ $(uname -a) == *Darwin* ]]; then
         find_re="find -E $DOTFILES -regex"
     else
@@ -33,6 +69,9 @@ function ,echo-dot-sh-files {
         echo "$f"
     done
 }
+
+
+,path-add $(find $DOTFILES -type d -name bin)
 
 for f in $(,echo-dot-sh-files); do
     source "$f"

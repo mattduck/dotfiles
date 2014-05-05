@@ -9,20 +9,20 @@
 
     $ source ~/dotfiles/activate.sh
 
-Add the above line to your bashrc or equivalent. This will:
+The activate script will:
 
-- Add dotfiles/bin to $PATH. 
+- Add $DOTFILES/**/bin to $PATH.
 
-- First source __\*.dot.XX.sh__ in numeric order.
+- First source $DOTFILES/**.dot.xx.sh in numeric order.
 
-- Then source __\*.dot.sh__. 
+- Then source $DOTFILES/**.dot.sh.
 
 
 ## Symlinks
 
     $ bin/,install-dotfile-symlinks
 
-- Create symlinks to ~/.file for __\*.symlink__.
+- Create symlinks to ~/.file for $DOTFILES/**.symlink.
 
 - Backup any existing (non-link) files to ~/dotfiles_backup/$(date).
 

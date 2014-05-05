@@ -6,6 +6,6 @@ export HISTIGNORE="ls:l:ll:h:cd:"
 export HISTCONTROL="ignorespace:ignoredups"
 shopt -s histappend
 
-export PATH="$PATH:$HOME/bin"
+,path-add $HOME/bin
 
 export VIRTUAL_ENV_DISABLE_PROMPT=1
