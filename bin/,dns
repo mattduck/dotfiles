@@ -4,7 +4,7 @@
 
 function usage
 {
-   echo "USAGE: ,dns [mac-unblock|mac-home]"
+   echo "usage: ,dns [mac-unblock|mac-home]"
 }
 
 if [ $@ ]; then

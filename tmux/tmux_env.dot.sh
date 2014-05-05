@@ -6,7 +6,7 @@ echo "Setting up tmux environment..."
 
 tmux source-file $DOTFILES/splitscreen/tmux.conf
 
-function ,tminit() {
+function ,tm-init() {
     # Setup session with a generic layout
     if [[ ! -z "$CUSTOM_TMUX_INIT" ]]; then
         echo "This session has already been initialised"
@@ -37,7 +37,7 @@ function ,tminit() {
     echo "Generic tmux layout initiated"
 }
 
-function ,tmreload() {
+function ,tm-reload() {
     # Reload tmux config and this file. Has to be done per pane.
     tmux source-file ~/.tmux.conf
     source $DOTFILES/tmux/tmux_env.dot.sh

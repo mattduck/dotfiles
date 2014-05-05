@@ -51,9 +51,9 @@ function ,path-add() {
 }
 
 
-function ,echo-dot-sh-files {
-    # In numerical order, echo paths ending in .dot.xx.sh .
-    # Then, echo anything ending in .dot.sh .
+function ,dotfiles-ls {
+    # In numerical order, list paths ending in .dot.xx.sh, then list paths
+    # ending in .dot.sh.
 
     if [[ $(uname -a) == *Darwin* ]]; then
         find_re="find -E $DOTFILES -regex"
@@ -73,6 +73,6 @@ function ,echo-dot-sh-files {
 
 ,path-add $(find $DOTFILES -type d -name bin)
 
-for f in $(,echo-dot-sh-files); do
+for f in $(,dotfiles-ls); do
     source "$f"
 done

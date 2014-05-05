@@ -1,4 +1,4 @@
-function ,reload() {
+function ,dotfiles-reload() {
     # Reload dotfiles environment
     source $DOTFILES/activate.sh
     bind -f $DOTFILES/inputrc.symlink

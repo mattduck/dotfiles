@@ -20,7 +20,7 @@ The activate script will:
 
 ## Symlinks
 
-    $ bin/,install-dotfile-symlinks
+    $ bin/,dotfiles-install
 
 - Create symlinks to ~/.file for $DOTFILES/**.symlink.
 
