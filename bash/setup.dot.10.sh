@@ -9,3 +9,8 @@ shopt -s histappend
 ,path-add $HOME/bin
 
 export VIRTUAL_ENV_DISABLE_PROMPT=1
+
+if [ $(command -v keychain) ]; then
+    keychain --quiet
+    eval `keychain --quiet --eval`
+fi
