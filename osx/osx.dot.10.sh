@@ -8,6 +8,9 @@ if [[ "$(uname -a)" != *Darwin* ]]; then return; fi
 # Use Brew instead of system Ruby
 ,path-add "/usr/local/opt/ruby/bin"
 
+# Add TeX to path (for org-mode PDF exporting)
+,path-add "/usr/local/texlive/2014/bin/universal-darwin"
+
 # Bash completion lives in the brew directory
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
   . $(brew --prefix)/etc/bash_completion
