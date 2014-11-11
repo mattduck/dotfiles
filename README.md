@@ -1,6 +1,6 @@
 # Install
 
-    $ git clone https://github.com/mattduck.dotfiles.git ~/dotfiles
+    $ git clone https://github.com/mattduck/dotfiles.git ~/dotfiles
     $ cd ~/dotfiles
     $ git submodule update --init --recursive
 
@@ -10,6 +10,8 @@
     $ source ~/dotfiles/activate.sh
 
 The activate script will:
+
+- Export $DOTFILES as the path to the directory of the activation script.
 
 - Add $DOTFILES/**/bin to $PATH.
 
@@ -31,9 +33,9 @@ The activate script will:
 
 - Vim plugins are installed with `:BundleInstall`. 
 
-- Emacs plugins are installed on startup.
+- Emacs plugins are automatically installed on startup.
 
-- Submodules are used when we're just using git to pull in other content,
+- Submodules are used when we're just using pulling in other content with git
   eg. the initial Vundle install, some config bits relating to Solarized
   schemes.
 
