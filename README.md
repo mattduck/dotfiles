@@ -35,7 +35,7 @@ The activate script will:
 
 - Emacs plugins are automatically installed on startup.
 
-- Submodules are used when we're just using pulling in other content with git
+- Submodules are used when we're just pulling in other content with git
   eg. the initial Vundle install, some config bits relating to Solarized
   schemes.
 
@@ -48,4 +48,4 @@ The activate script will:
 - I liked [Brandon Rhodes' idea](https://github.com/brandon-rhodes/homedir) of
   prefixing your custom commands with a comma. 
 
-- Emacs organisation inspired by [Hans Engel](https://github.com/hans/dotfiles).
+- My old Emacs organisation was inspired by [Hans Engel](https://github.com/hans/dotfiles).

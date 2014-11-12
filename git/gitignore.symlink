@@ -6,8 +6,9 @@ __pycache__
 .tox
 
 *.swo
-*~
 *.swp
+*.swn
+*~
 
 *.class
 
