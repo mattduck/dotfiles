@@ -39,6 +39,10 @@
                  (not (equal f ".")))
         (add-to-list 'load-path name)))))
 
+;;;; Add to custom-theme-load-path
+;; =============================================================================
+(add-to-list 'custom-theme-load-path "non-elpa/color-theme-solarized")
+
 ;;;; Load external files
 ;; =============================================================================
 
@@ -106,7 +110,7 @@
 ;; Colour column
 (require 'fill-column-indicator)
 (setq fci-rule-width 5) ; 5 seems to be max width
-(add-hook 'solarized-theme-hook '(lambda () (setq fci-rule-color sol-base02)))
+(add-hook 'solarized-theme-hook '(lambda () (setq fci-rule-color solarized-base02)))
 ;; Performance is too slow w/big files to enable this by default
 ;; (define-globalized-minor-mode global-fci-mode fci-mode (lambda () (fci-mode 1)))
 ;; (global-fci-mode t)
@@ -131,12 +135,13 @@
 ;; Basic paren matching is built in. We want to enable the "matches..." messages
 ;; in the mini-buffer, but use show-paren-mode for more control over the
 ;; on-screen parens.
+(require 'paren) ;; Load now to avoid invalid-face error
 (setq blink-matching-paren t)
 (setq blink-matching-paren-on-screen nil)
 (defun my-show-paren-solarized-faces ()
-  (set-face-foreground 'show-paren-match sol-blue)
-  (set-face-background 'show-paren-mismatch sol-red)
-  (set-face-foreground 'show-paren-mismatch sol-base03))
+  (set-face-foreground 'show-paren-match solarized-blue)
+  (set-face-background 'show-paren-mismatch solarized-red)
+  (set-face-foreground 'show-paren-mismatch solarized-base03))
 (add-hook 'solarized-theme-hook 'my-show-paren-solarized-faces)
 
 ;;;; Prog mode
@@ -228,29 +233,29 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
 (defun my-org-solarized-faces () 
   (ignore-errors ; The font symbols don't exist until org-mode loaded
-    (set-face-attribute 'org-level-1 nil :foreground sol-blue)
-    (set-face-attribute 'org-level-2 nil :foreground sol-yellow)
-    (set-face-attribute 'org-level-3 nil :foreground sol-violet)
-    (set-face-attribute 'org-level-4 nil :foreground sol-cyan)
-    (set-face-attribute 'org-level-5 nil :foreground sol-blue)
-    (set-face-attribute 'org-level-6 nil :foreground sol-yellow)
-    (set-face-attribute 'org-level-7 nil :foreground sol-violet)
-    (set-face-attribute 'org-level-8 nil :foreground sol-cyan)
+    (set-face-attribute 'org-level-1 nil :foreground solarized-blue)
+    (set-face-attribute 'org-level-2 nil :foreground solarized-yellow)
+    (set-face-attribute 'org-level-3 nil :foreground solarized-violet)
+    (set-face-attribute 'org-level-4 nil :foreground solarized-cyan)
+    (set-face-attribute 'org-level-5 nil :foreground solarized-blue)
+    (set-face-attribute 'org-level-6 nil :foreground solarized-yellow)
+    (set-face-attribute 'org-level-7 nil :foreground solarized-violet)
+    (set-face-attribute 'org-level-8 nil :foreground solarized-cyan)
 
-    (set-face-attribute 'org-date nil :foreground sol-blue)
-    (set-face-attribute 'org-upcoming-deadline nil :foreground sol-base1 :background sol-red)
-    (set-face-attribute 'org-scheduled nil :foreground sol-blue)
-    (set-face-attribute 'org-scheduled-today nil :foreground sol-orange)
-    (set-face-attribute 'org-scheduled-previously nil :foreground sol-blue)
+    (set-face-attribute 'org-date nil :foreground solarized-blue)
+    (set-face-attribute 'org-upcoming-deadline nil :foreground solarized-base1 :background solarized-red)
+    (set-face-attribute 'org-scheduled nil :foreground solarized-blue)
+    (set-face-attribute 'org-scheduled-today nil :foreground solarized-orange)
+    (set-face-attribute 'org-scheduled-previously nil :foreground solarized-blue)
 
-    (set-face-attribute 'org-checkbox nil :foreground sol-yellow)
-    (set-face-attribute 'org-tag nil :foreground sol-yellow)
+    (set-face-attribute 'org-checkbox nil :foreground solarized-yellow)
+    (set-face-attribute 'org-tag nil :foreground solarized-yellow)
 
-    (set-face-attribute 'org-code nil :foreground sol-green)
-    (set-face-attribute 'org-verbatim nil :foreground sol-cyan)
-    (set-face-attribute 'org-list-dt nil :foreground sol-green)
+    (set-face-attribute 'org-code nil :foreground solarized-green)
+    (set-face-attribute 'org-verbatim nil :foreground solarized-cyan)
+    (set-face-attribute 'org-list-dt nil :foreground solarized-green)
 
-    (set-face-attribute 'bold nil :foreground sol-orange)))
+    (set-face-attribute 'bold nil :foreground solarized-orange)))
 
 (defun my-org-hook ()
   ;; Change tab widths to fit headline indents
@@ -269,7 +274,6 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
   (my-org-solarized-faces))
 
-
 (add-hook 'org-mode-hook 'my-org-hook)
 (add-hook 'solarized-theme-hook 'my-org-solarized-faces)
 
@@ -279,12 +283,23 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
 (defun my-general-solarized-hook ()
   (setq evil-default-cursor t)
-  (set-face-background 'cursor sol-base1))
-(add-hook 'solarized-theme-hook 'my-general-solarized-hook)
+  (set-face-background 'cursor solarized-base1)
 
-(require 'color-theme)
-(require 'color-theme-solarized)
-(eval-after-load "color-theme"
-    '(progn
-    (color-theme-initialize)
-    (color-theme-solarized-dark)))
+  ;; I think this is the easiest way to fontify all my buffers
+  ;; after the changes. I always have font-lock-mode on anyway.
+  (global-font-lock-mode 0)
+  (global-font-lock-mode 1))
+(add-hook 'solarized-theme-hook 'my-general-solarized-hook t)
+
+
+;; Solarized Emacs custom theme setup
+(require 'solarized-definitions)
+(solarized-load-theme 'dark)
+;;(solarized-load-theme 'light)
+
+;; Solarized color-theme setup
+;;(require 'color-theme)
+;;(require 'color-theme-solarized)
+;;(color-theme-initialize)
+;;(color-theme-solarized-dark)
+;;(color-theme-solarized-light)
