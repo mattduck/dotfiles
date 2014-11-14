@@ -126,7 +126,13 @@
 ;; (require 'linum) ; numbers in margin
 ;; (global-linum-mode nil)
 
-(set-default-font "Inconsolata-15:antialias=subpixel")
+(set-frame-font "Monaco-15:antialias=subpixel")
+
+;; Necessary on v24.4 to display accurate Solarized colors, due to Emacs bug #8402.
+;; v24.3 didn't set ns-use-sgrb-colorspace.
+(setq ns-use-srgb-colorspace nil)
+(setq solarized-broken-srgb t)
+
 (setq visible-bell nil)
 
 ;;;; Parentheses
