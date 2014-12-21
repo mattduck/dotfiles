@@ -1,3 +1,6 @@
 vim/vim.symlink
 emacs.d.symlink/elpa
 emacs.d.symlink/history
+emacs.d.symlink/.org-id-locations
+emacs.d.symlink/url
+emacs.d.symlink/.backups

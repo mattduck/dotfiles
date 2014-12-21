@@ -8,11 +8,6 @@
         ("melpa" . "http://melpa.milkbox.net/packages/")
         ("org" . "http://orgmode.org/elpa/")))
 
-(when (not package-archive-contents)
-  (package-refresh-contents))
-
-(package-initialize)
-
 ;; Packages to install on launch
 (defvar my-required-packages
   '(ace-jump-mode
@@ -23,9 +18,19 @@
     org
     undo-tree))
 
-(dolist (p my-required-packages)
-  (when (not (package-installed-p p))
-    (package-install p)))
+(package-initialize)
+
+(defun my-refresh-packages ()
+  (interactive)
+  
+  (when (not package-archive-contents)
+    (package-refresh-contents))
+
+  (package-initialize)
+
+  (dolist (p my-required-packages)
+    (when (not (package-installed-p p))
+      (package-install p))))
 
 ;;;; Add "non-elpa" dir to load-path
 ;; =============================================================================
@@ -47,6 +52,15 @@
 ;; =============================================================================
 
 (load-file (concat (getenv "DOTFILES") "/splitscreen/splitscreen.el"))
+
+;;;; Backups
+;; =============================================================================
+
+;; Backup everything to the same directory, rather than dropping
+;; files all over the place
+(if (getenv "DOTFILES")
+    (setq backup-directory-alist 
+          `(("." . ,(concat (getenv "DOTFILES") "/emacs.d.symlink/.backups")))))
 
 ;;;; OS X
 ;; =============================================================================
@@ -249,6 +263,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
     (set-face-attribute 'org-level-8 nil :foreground solarized-cyan)
 
     (set-face-attribute 'org-date nil :foreground solarized-blue)
+    (set-face-attribute 'org-sexp-date nil :foreground solarized-cyan)
     (set-face-attribute 'org-upcoming-deadline nil :foreground solarized-base1 :background solarized-red)
     (set-face-attribute 'org-scheduled nil :foreground solarized-blue)
     (set-face-attribute 'org-scheduled-today nil :foreground solarized-orange)
@@ -282,6 +297,18 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
 (add-hook 'org-mode-hook 'my-org-hook)
 (add-hook 'solarized-theme-hook 'my-org-solarized-faces)
+
+;; Default to using my CSS theme for html exports
+(setq org-html-head-extra
+ "<link id='generic-css-dark' rel='stylesheet' type='text/css'
+   href='https://mattduck.github.io/generic-css/css/generic-dark.css'> 
+  <link id='generic-css-light' rel='stylesheet' type='text/css'
+   href='https://mattduck.github.io/generic-css/css/generic-light.css'> 
+  <script type='text/javascript'
+   src='https://mattduck.github.io/generic-css/js/generic-css.js'></script>")
+(setq org-export-headline-levels 6)
+(setq org-export-with-section-numbers 4)
+
 
 ;;;; Solarized
 ;; =============================================================================
