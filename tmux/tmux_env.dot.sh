@@ -23,8 +23,6 @@ function ,tm-init() {
     tmux splitw -v -p 60
     tmux select-layout tiled
 
-    # Probably want a few windows
-    tmux new-window
     tmux new-window
 
     # Go back to the original window
