@@ -264,19 +264,25 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
     (set-face-attribute 'org-date nil :foreground solarized-blue)
     (set-face-attribute 'org-sexp-date nil :foreground solarized-cyan)
-    (set-face-attribute 'org-upcoming-deadline nil :foreground solarized-base1 :background solarized-red)
+    (set-face-attribute 'org-upcoming-deadline nil :foreground solarized-base1 
+                        :background solarized-red) ; Not sure I ever seen this in use
     (set-face-attribute 'org-scheduled nil :foreground solarized-blue)
     (set-face-attribute 'org-scheduled-today nil :foreground solarized-orange)
     (set-face-attribute 'org-scheduled-previously nil :foreground solarized-blue)
 
     (set-face-attribute 'org-checkbox nil :foreground solarized-yellow)
-    (set-face-attribute 'org-tag nil :foreground solarized-yellow)
+    (set-face-attribute 'org-tag nil :foreground solarized-yellow :background solarized-base02)
+    (set-face-attribute 'org-special-keyword nil :foreground solarized-green 
+                        :background solarized-base02)
 
     (set-face-attribute 'org-code nil :foreground solarized-green)
     (set-face-attribute 'org-verbatim nil :foreground solarized-cyan)
     (set-face-attribute 'org-list-dt nil :foreground solarized-green)
 
-    (set-face-attribute 'bold nil :foreground solarized-orange)))
+    (set-face-attribute 'org-table nil :foreground solarized-base1)
+
+    (set-face-attribute 'italic nil :foreground solarized-base1)
+    (set-face-attribute 'bold nil :foreground solarized-base2))
 
 (defun my-org-hook ()
   ;; Change tab widths to fit headline indents
