@@ -21,13 +21,15 @@ endif
 set rtp+=~/.vim/bundle/vundle/
 call vundle#rc()
 
+" vundle itself
+    Bundle "gmarik/vundle"
+
 " plugins
     Bundle "tpope/vim-surround"
     Bundle "tpope/vim-repeat"
     Bundle "Lokaltog/vim-easymotion"
     Bundle "scrooloose/nerdcommenter"
     Bundle "godlygeek/csapprox"
-    Bundle "Townk/vim-autoclose"
     Bundle "davidhalter/jedi-vim"
 
 " syntax / indent
@@ -48,6 +50,10 @@ call vundle#rc()
 
 " my plugins
     Bundle $DOTFILES . "/splitscreen/.git"
+
+" old plugins
+"   Bundle "Townk/vim-autoclose" " Find this irritating lately
+    
 
 filetype plugin indent on   
 
