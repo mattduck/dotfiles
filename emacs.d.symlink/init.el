@@ -242,8 +242,8 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
 (setq org-log-done 'time) ; Add timestamp when set task as closed
 (setq org-agenda-restore-windows-after-quit t) ; Don't understand why this isn't default
-(setq org-src-fontify-natively t) ; Inline code has syntax highlighting
-(setq org-level-color-stars-only t) ; Don't colour the whole headline
+(setq org-src-fontify-natively nil) ; Inline code has syntax highlighting
+(setq org-level-color-stars-only nil) ; Don't colour the whole headline
 (setq org-catch-invisible-edits "show-and-error") ; Prevent accidentally editing invisible lines
 (setq org-M-RET-may-split-line nil)
 
@@ -264,8 +264,6 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
     (set-face-attribute 'org-date nil :foreground solarized-blue)
     (set-face-attribute 'org-sexp-date nil :foreground solarized-cyan)
-    (set-face-attribute 'org-upcoming-deadline nil :foreground solarized-base1 
-                        :background solarized-red) ; Not sure I ever seen this in use
     (set-face-attribute 'org-scheduled nil :foreground solarized-blue)
     (set-face-attribute 'org-scheduled-today nil :foreground solarized-orange)
     (set-face-attribute 'org-scheduled-previously nil :foreground solarized-blue)
@@ -282,7 +280,19 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
     (set-face-attribute 'org-table nil :foreground solarized-base1)
 
     (set-face-attribute 'italic nil :foreground solarized-base1)
-    (set-face-attribute 'bold nil :foreground solarized-base2))
+    (set-face-attribute 'bold nil :foreground solarized-base2)
+
+    (set-face-attribute 'org-agenda-structure nil :foreground solarized-violet)
+    (set-face-attribute 'org-agenda-date nil :foreground solarized-blue)
+    (set-face-attribute 'org-agenda-date-today nil 
+                        :foreground solarized-blue :weight 'bold :slant 'italic)
+    (set-face-attribute 'org-warning nil :foreground solarized-orange)
+    (set-face-attribute 'org-scheduled-previously nil :foreground solarized-cyan)
+    (set-face-attribute 'org-scheduled nil :foreground solarized-cyan)
+    (set-face-attribute 'org-upcoming-deadline nil 
+                        :background nil :foreground solarized-red :weight 'bold :slant 'italic)
+
+    (set-face-attribute 'warning nil :foreground solarized-red))
 
 (defun my-org-hook ()
   ;; Change tab widths to fit headline indents
