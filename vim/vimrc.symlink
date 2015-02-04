@@ -37,7 +37,8 @@ call vundle#rc()
     Bundle "tpope/vim-markdown"
     Bundle "groenewege/vim-less"
     Bundle "python.vim"
-    Bundle 'cakebaker/scss-syntax.vim'
+    Bundle "cakebaker/scss-syntax.vim"
+    Bundle "django.vim"
 
     " HTML-enhanced
     Bundle "php.vim"
