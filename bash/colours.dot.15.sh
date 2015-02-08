@@ -38,7 +38,7 @@ export Ngreen=2
 # Make system colour variables available, to help differentiate machines in 
 # status lines etc.
 if command -v lsb_release >/dev/null; then
-    DISTRO_INFO="$(lsb_release -a)"
+    DISTRO_INFO=$(lsb_release -a 2>/dev/null)
     if [[ $DISTRO_INFO == *Ubuntu* ]]; then
         HOST_COLOUR_NUM=$Nviolet
         HOST_COLOUR_ANSI=$Aviolet
