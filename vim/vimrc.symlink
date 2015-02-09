@@ -10,9 +10,11 @@ set runtimepath+=$HOME/.vim/
 if has("macunix")
     let uname = system("uname")
     if uname == "Darwin\n"
-        " Correct OS X path and some other stuff
-        set runtimepath=$HOME/.vim,/usr/share/vim/vim72,/usr/bin
-        let $VIMRUNTIME="/usr/share/vim/vim72/"
+        " Correct OS X path and some other stuff.
+        " - Snow leopard uses vim72
+        " - Yosemite install seems to be using vim73
+        set runtimepath=$HOME/.vim,/usr/share/vim/vim73,/usr/share/vim/vim72,/usr/bin
+        "let $VIMRUNTIME="/usr/share/vim/vim72/" - why was this ever here?
         let g:CSApprox_konsole = 1
         set backspace=2
     endif
