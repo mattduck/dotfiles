@@ -30,6 +30,9 @@ set number      " Line numbers
 set noerrorbells
 set novisualbell
 
-set cmdheight=2
+set cmdheight=1
 
 set wildmenu " Show all autocomplete choices
+
+set foldmethod=syntax
+set foldlevel=1

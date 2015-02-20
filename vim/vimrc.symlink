@@ -27,12 +27,15 @@ call vundle#rc()
     Bundle "gmarik/vundle"
 
 " plugins
+    Bundle "scrooloose/nerdtree"
+    Bundle "scrooloose/syntastic"
     Bundle "tpope/vim-surround"
     Bundle "tpope/vim-repeat"
     Bundle "Lokaltog/vim-easymotion"
     Bundle "scrooloose/nerdcommenter"
     Bundle "godlygeek/csapprox"
     Bundle "davidhalter/jedi-vim"
+    Bundle "nicwest/vim-flake8"
 
 " syntax / indent
     Bundle "rest.vim"
@@ -46,6 +49,9 @@ call vundle#rc()
 
     " HTML-enhanced
     Bundle "php.vim"
+
+" fold
+    Bundle "jpythonfold.vim"
 
 " colours
     Bundle "altercation/vim-colors-solarized"

@@ -41,3 +41,11 @@ function ,tm-reload() {
     source $DOTFILES/tmux/tmux_env.dot.sh
     echo "Reloaded ~/.tmux.conf and $DOTFILES/tmux/tmux_env.sh"
 }
+
+function ,tm-solarized-dark() {
+    tmux source-file $DOTFILES/solarized/various/tmux/tmuxcolors-256.conf
+}
+function ,tm-solarized-light() {
+    tmux source-file $DOTFILES/solarized/various/tmux/tmuxcolors-light.conf
+}
+

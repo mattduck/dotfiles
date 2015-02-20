@@ -40,6 +40,22 @@ The activate script will:
   schemes.
 
 
+## Fixes
+
+### Mac - Tmux $PATH
+
+Mac - Tmux edits $PATH /after/ the environment has been setup, due to a
+utility called path_helper which is run in `/etc/profile`. Fix:
+
+``` bash
+if [ -f /etc/profile ]; then
+    PATH=""
+    source /etc/profile
+    source ~/dotfiles/activate.sh
+fi
+```
+
+
 # Thanks
 
 - The \*.symlink and \*.sh features were taken from [Zach Holman's

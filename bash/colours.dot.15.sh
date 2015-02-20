@@ -1,39 +1,39 @@
 # Solarized ANSI
-Anone="\e[00m"
-Abase02="\e[00;30m"
-Abase01="\e[01;30m"
-Ared="\e[00;31m"
-Aorange="\e[01;31m"
-Agreen="\e[00;32m"
-Abase01="\e[01;32m"
-Ayellow="\e[00;33m"
-Abase00="\e[01;33m"
-Ablue="\e[00;34m"
-Abase0="\e[01;34m"
-Amagenta="\e[00;35m"
-Aviolet="\e[01;35m"
-Acyan="\e[00;36m"
-Abase1="\e[01;36m"
-Abase2="\e[00;37m"
-Abase3="\e[01;37m"
+export Anone="\e[00m"
+export Abase02="\e[00;30m"
+export Abase01="\e[01;30m"
+export Ared="\e[00;31m"
+export Aorange="\e[01;31m"
+export Agreen="\e[00;32m"
+export Abase01="\e[01;32m"
+export Ayellow="\e[00;33m"
+export Abase00="\e[01;33m"
+export Ablue="\e[00;34m"
+export Abase0="\e[01;34m"
+export Amagenta="\e[00;35m"
+export Aviolet="\e[01;35m"
+export Acyan="\e[00;36m"
+export Abase1="\e[01;36m"
+export Abase2="\e[00;37m"
+export Abase3="\e[01;37m"
 
 # Solarized numbers
-Nbase03=8
-Nbase02=0
-Nbase01=10
-Nbase00=11
-Nbase0=12
-Nbase1=14
-Nbase2=7
-Nbase3=15
-Nyellow=3
-Norange=9
-Nred=1
-Nmagenta=5
-Nviolet=13
-Nblue=4
-Ncyan=6
-Ngreen=2
+export Nbase03=8
+export Nbase02=0
+export Nbase01=10
+export Nbase00=11
+export Nbase0=12
+export Nbase1=14
+export Nbase2=7
+export Nbase3=15
+export Nyellow=3
+export Norange=9
+export Nred=1
+export Nmagenta=5
+export Nviolet=13
+export Nblue=4
+export Ncyan=6
+export Ngreen=2
 
 # Make system colour variables available, to help differentiate machines in 
 # status lines etc.

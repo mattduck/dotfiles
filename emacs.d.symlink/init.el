@@ -75,7 +75,13 @@
 (if (eq system-type 'darwin)
     (setq ns-option-modifier nil
           ns-command-modifier 'meta
-          ns-right-option-modifier 'super))
+          ns-right-option-modifier 'super)
+
+  ;; This is temporary, prob won't use long term - if do, add conditional
+  (add-hook 'org-clock-in-hook (lambda () (call-process "/usr/bin/osascript" nil 0 nil "-e" (concat "tell application \"org-clock-statusbar\" to clock in \"" org-clock-current-task "\""))))
+  (add-hook 'org-clock-out-hook (lambda () (call-process "/usr/bin/osascript" nil 0 nil "-e" "tell application \"org-clock-statusbar\" to clock out"))) 
+
+  )
 
 ;;;; Custom
 ;; =============================================================================
@@ -292,7 +298,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
     (set-face-attribute 'org-upcoming-deadline nil 
                         :background nil :foreground solarized-red :weight 'bold :slant 'italic)
 
-    (set-face-attribute 'warning nil :foreground solarized-red))
+    (set-face-attribute 'warning nil :foreground solarized-red)))
 
 (defun my-org-hook ()
   ;; Change tab widths to fit headline indents

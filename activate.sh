@@ -35,6 +35,12 @@ function ,path-add() {
     fi
 
    for path in "${paths[@]}"; do
+
+       # Ignore paths that don't exist
+       if [ ! -f "$path" ] && [ ! -d "$path" ]; then
+           continue
+        fi
+
         fullpath="$(cd "$path"; echo $PWD)"
 
         if [[ ":$PATH:" != *":$fullpath:"* ]]; then
