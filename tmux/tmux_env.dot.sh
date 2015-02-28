@@ -15,15 +15,10 @@ function ,tm-init() {
 
     ORIG_WINDOW=`tmux display-message -p "#I"`
 
-    # 4 panes
-    tmux splitw -h -p 50
-    tmux selectp -t 1
-    tmux splitw -v -p 60
-    tmux selectp -t 0
-    tmux splitw -v -p 60
-    tmux select-layout tiled
-
-    tmux new-window
+    # Panes
+    tmux splitw -h -p 30
+    tmux splitw -v -p 50
+    ,tm-new-window
 
     # Go back to the original window
     tmux select-window -t $ORIG_WINDOW
@@ -42,10 +37,8 @@ function ,tm-reload() {
     echo "Reloaded ~/.tmux.conf and $DOTFILES/tmux/tmux_env.sh"
 }
 
-function ,tm-solarized-dark() {
-    tmux source-file $DOTFILES/solarized/various/tmux/tmuxcolors-256.conf
+function ,tm-new-window {
+    tmux new-window
+    tmux splitw -h -p 30
+    tmux splitw -v -p 50
 }
-function ,tm-solarized-light() {
-    tmux source-file $DOTFILES/solarized/various/tmux/tmuxcolors-light.conf
-}
-

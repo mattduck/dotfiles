@@ -1,3 +1,6 @@
+set-option -g status-position top
+set-option -g status-justify centre
+
 # Use same prefix as gnuscreen
 set-option -g prefix C-a
 unbind-key C-b
@@ -47,17 +50,18 @@ col_primary="$col_base0"
 col_optional_em="$col_base1"
 col_host="$HOST_COLOUR_NUM"
 
+
 # Left status is session name, right is hostname + date. Highlights current
 # window name.
-set-option -g status-bg "colour$col_bg_hl"
-set-option -g status-fg "colour$col_host"
-set-option -g status-left "#[fg=colour$col_host]#S"
-set-option -g status-right "#[fg=colour$col_host] #H #[fg=colour$col_secondary] %Y-%b-%d %H:%M"
+set-option -g status-bg "colour$col_bg"
+set-option -g status-fg "colour$col_primary"
+set-option -g status-left "#[fg=colour$col_host]#[bg=colour$col_bg_hl] #S "
+set-option -g status-right "#[fg=colour$col_bg]#[bg=colour$col_host] #H #[fg=colour$col_host]#[bg=colour$col_bg_hl] %Y-%b-%d %H:%M "
 
 set-option -g window-status-bg "colour$col_bg"
-set-option -g window-status-fg "colour$col_secondary"
+set-option -g window-status-fg "colour$col_host"
 set-option -g window-status-current-bg "colour$col_host"
-set-option -g window-status-current-fg "colour$col_bg_hl"
+set-option -g window-status-current-fg "colour$col_base2"
 
 # Command bar colours
 set-option -g message-command-bg "colour$col_orange"
@@ -69,9 +73,9 @@ set-option -g message-fg "colour$col_primary"
 set-option -g pane-active-border-fg "colour$col_host"
 set-option -g pane-border-fg "colour$col_secondary"
 
-# The leftmost key should show the leftmost window. 
-set-option -g base-index 1 
-set-option -g pane-base-index 1 
+# The leftmost key should show the leftmost window.
+set-option -g base-index 1
+set-option -g pane-base-index 1
 
 # vi
 set-option -g status-keys vi
