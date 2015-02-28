@@ -1,25 +1,27 @@
-" Personal files live in ./source, everything else is installed in ./bundle.
+" Init {{{
 
 " This line should not be removed as it ensures that various options are
 " properly set to work with the Vim-related packages available in Debian.
 runtime! debian.vim
 
-set nocompatible  
+set nocompatible " Vim improvements
 set runtimepath+=$HOME/.vim/
 
+" Correct OS X path and some other stuff:
+"   - Snow leopard uses vim72
+"   - Yosemite install seems to be using vim73
 if has("macunix")
     let uname = system("uname")
     if uname == "Darwin\n"
-        " Correct OS X path and some other stuff.
-        " - Snow leopard uses vim72
-        " - Yosemite install seems to be using vim73
         set runtimepath=$HOME/.vim,/usr/share/vim/vim73,/usr/share/vim/vim72,/usr/bin
-        "let $VIMRUNTIME="/usr/share/vim/vim72/" - why was this ever here?
         let g:CSApprox_konsole = 1
         set backspace=2
     endif
-endif 
+endif
 
+" }}}
+
+" Vundle {{{
 set rtp+=~/.vim/bundle/vundle/
 call vundle#rc()
 
@@ -31,11 +33,12 @@ call vundle#rc()
     Bundle "scrooloose/syntastic"
     Bundle "tpope/vim-surround"
     Bundle "tpope/vim-repeat"
+    Bundle "tpope/vim-fugitive"
     Bundle "Lokaltog/vim-easymotion"
     Bundle "scrooloose/nerdcommenter"
     Bundle "godlygeek/csapprox"
     Bundle "davidhalter/jedi-vim"
-    Bundle "nicwest/vim-flake8"
+    Bundle "bling/vim-airline"
 
 " syntax / indent
     Bundle "rest.vim"
@@ -46,7 +49,6 @@ call vundle#rc()
     Bundle "python.vim"
     Bundle "cakebaker/scss-syntax.vim"
     Bundle "django.vim"
-
     " HTML-enhanced
     Bundle "php.vim"
 
@@ -55,16 +57,229 @@ call vundle#rc()
 
 " colours
     Bundle "altercation/vim-colors-solarized"
+    Bundle "skammer/vim-css-color"
 
 " my plugins
     Bundle $DOTFILES . "/splitscreen/.git"
 
 " old plugins
 "   Bundle "Townk/vim-autoclose" " Find this irritating lately
-    
 
-filetype plugin indent on   
+" }}}
 
-for f in split(glob('$DOTFILES/vim/vim.symlink/source/*.vim'), '\n')
-    exe 'source' f
-endfor
+" Source {{{
+"for f in split(glob('$DOTFILES/vim/vim.symlink/source/*.vim'), '\n')
+    "exe 'source' f
+"endfor
+" }}}
+
+" General {{{
+if has('autocmd')
+    filetype plugin indent on " Enable filetype detection, load indent files
+endif
+if has('syntax') && !exists('g:syntax_on')
+    syntax enable " Enable syntax highlighting
+endif
+
+set encoding=utf-8
+set mouse=a " Enable mouse in all modes.
+set history=1000
+
+set ignorecase  " All lowercase searches are case insensitive
+set smartcase   " Searches w/uppercase chars are case sensitive
+set hlsearch    " Highlight search results
+set incsearch   " Show search matches as type
+
+" Use unamed clipboard, this should help doing copy / paste on OS X,
+" for some reason.
+set clipboard=unnamed
+
+" Delete comment character when joining commented lines
+if v:version > 703 || v:version == 703 && has("patch541")
+    set formatoptions+=j
+endif
+
+" }}}
+
+" General mappings {{{
+" Use ; for cmdline. ; usually shows next results for f/F/t/T commands.
+noremap ; :
+
+" Use , to show next results for f/F/t/T commands. Usually shows previous
+" results, which is now disabled.
+noremap , ;
+
+" Unbind C-z to stop accidentally stopping process.
+" Might put this back in soon.
+noremap <C-z> <Nop>
+
+" Unbind arrow keys
+noremap <Up> <Nop>
+noremap <Down> <Nop>
+noremap <Left> <Nop>
+noremap <Right> <Nop>
+inoremap <Up> <Nop>
+inoremap <Down> <Nop>
+inoremap <Left> <Nop>
+inoremap <Right> <Nop>
+
+" Escape insert mode w/jj
+inoremap jj <ESC>
+
+" Behave properly on long lines
+nnoremap j gj
+nnoremap k gk
+
+nnoremap Y y$
+
+" Don't care about most NERDcomment functionality, just want toggle
+nnoremap <C-c> :call NERDComment(0,"toggle")<CR>
+vnoremap <C-c> :call NERDComment(0,"toggle")<CR>
+
+nnoremap L $
+nnoremap H ^
+vmap L $
+vmap H ^
+omap L $
+omap H ^
+
+nnoremap <tab> za
+
+" :nohl
+nnoremap <leader>n :nohl<CR>
+
+" Strip trailing whitespace
+nnoremap <leader>W :%s/\s\+$//<cr>:let @/=''<CR>
+
+" vimrc
+nnoremap <leader>vr :source $MYVIMRC<CR>
+nnoremap <leader>v% :vsplit $MYVIMRC<CR>
+nnoremap <leader>v" :split $MYVIMRC<CR>
+
+" Use perl-style regular expressions
+nnoremap / /\v
+vnoremap / /\v
+
+
+" }}}
+
+" Display {{{
+set wrap " Wrap long lines
+set textwidth=80
+set scrolloff=5 " Scroll page with the cursor
+set sidescrolloff=5
+
+set cursorline  " Hightlight current line
+if exists('+colorcolumn')
+    set colorcolumn=+1  " Boundary for line wrapping
+endif
+
+set showmatch " Showing matching brackets
+
+set ttyfast " Improves redrawing
+
+set showcmd " Show commands that typing, eg. 'f'.
+set ruler " Show column no. in status bar.
+set number  " Line numbers
+set noerrorbells
+set novisualbell
+
+set laststatus=2 " Always show statusbar
+set cmdheight=1
+
+set wildmenu " Show all autocomplete choices
+
+set noshowmode " Don't show current mode - it instead goes in statusline
+set showcmd
+
+set backspace=indent,eol,start " Backspace works in all modes
+set tabstop=4 " How many columns a tab counts for
+set shiftwidth=4 " How many columns are indented with >> and <<
+set softtabstop=4 " Side effect of this sets how many chars backspace deletes
+set expandtab " Replace tab characters with spaces
+set autoindent
+
+
+" }}}
+
+" Colours {{{
+set t_Co=16 " Solarized uses 16 colours
+let g:CSApprox_verbose_level = 0 " Get rid of CSApprox 16col warnings
+
+set background=dark
+colorscheme solarized
+let g:solarized_termcolours=16
+" }}}
+
+" Files {{{
+set autoread " Autoread external changes if vim hasn't edited the file.
+set backupskip=/tmp/*,/private/tmp/* " Fix crontab's "temp file must be edited in place"
+set hidden " Buffers stay open when they're hidden, like emacs
+
+au BufNewFile,BufRead *.mak set filetype=mako
+" }}}
+
+" Folding {{{
+
+" Nicer folding format, from http://dhruvasagar.com/2013/03/28/vim-better-foldtext
+function! FoldText()
+  let line = ' ' . substitute(getline(v:foldstart), '^\s*"\?\s*\|\s*"\?\s*{{' . '{\d*\s*', '', 'g') . ' '
+  let lines_count = v:foldend - v:foldstart + 1
+  let lines_count_text = '| ' . printf("%10s", lines_count . ' lines') . ' |'
+  let foldchar = matchstr(&fillchars, 'fold:\zs.')
+  let foldtextstart = strpart('+' . repeat(foldchar, v:foldlevel*2) . line, 0, (winwidth(0)*2)/3)
+  let foldtextend = lines_count_text . repeat(foldchar, 8)
+  let foldtextlength = strlen(substitute(foldtextstart . foldtextend, '.', 'x', 'g')) + &foldcolumn
+  return foldtextstart . repeat(foldchar, winwidth(0)-foldtextlength) . foldtextend
+endfunction
+
+set foldtext=FoldText()
+set foldmethod=syntax
+set foldlevelstart=0
+set foldminlines=0
+set foldnestmax=3
+
+autocmd FileType vim setlocal foldmethod=marker
+
+nmap <Leader>fs :let &l:foldmethod = 'syntax'<CR>
+nmap <Leader>fi :let &l:foldmethod = 'indent'<CR>
+nmap <Leader>fm :let &l:foldmethod = 'marker'<CR>
+
+" }}}
+
+" Easymotion {{{
+let g:EasyMotion_keys = "asdfghjklASDFGHJKLqwertyuiopQWERTYUIOP1234567890-="
+hi link EasyMotionTarget Todo
+hi link EasyMotionTarget2First Todo
+hi link EasyMotionTarget2Second Identifier
+hi link EasyMotionShade Comment
+map <Space> <Plug>(easymotion-prefix)
+" }}}
+
+" Syntastic {{{
+let g:syntastic_always_populate_loc_list = 0
+let g:syntastic_auto_loc_list = 0
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+let g:syntastic_aggregate_errors = 1
+let g:syntastic_id_checkers = 1
+let g:synastic_enable_signs = 1
+let g:syntastic_python_checkers = ["python", "flake8"]
+let g:syntastic_loc_list_height = 3
+" }}}
+
+" Nerdtree {{{
+map <leader>t :NERDTreeToggle<CR>
+let NERDTreeIgnore = ['\.pyc$']
+" }}}
+
+" Git {{{
+autocmd FileType gitcommit setlocal textwidth=72
+" }}}
+
+" Python {{{
+autocmd FileType python setlocal textwidth=79 " Adhere to PEP8
+
+" Python folding syntax isn't provided by default
+autocmd FileType python source $DOTFILES/vim/vim.symlink/bundle/jpythonfold.vim/syntax/jpythonfold.vim
+" }}}
