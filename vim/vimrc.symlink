@@ -148,8 +148,8 @@ nnoremap <tab> za
 " :nohl
 nnoremap <leader>n :nohl<CR>
 
-" Strip trailing whitespace
-nnoremap <leader>W :%s/\s\+$//<cr>:let @/=''<CR>
+" Strip trailing whitespace and save
+nnoremap <leader>W :%s/\s\+$//<cr>:let @/=''<CR>:w<CR>
 
 " vimrc
 nnoremap <leader>vr :source $MYVIMRC<CR>
@@ -248,9 +248,11 @@ nmap <Leader>fm :let &l:foldmethod = 'marker'<CR>
 " }}}
 
 " Easymotion {{{
-let g:EasyMotion_keys = "asdfghjklASDFGHJKLqwertyuiopQWERTYUIOP1234567890-="
-hi link EasyMotionTarget Todo
-hi link EasyMotionTarget2First Todo
+let g:EasyMotion_use_upper = 1
+let g:EasyMotion_keys = "URIEOWYTQPBVNCM;ALSKDJF"
+
+hi link EasyMotionTarget Special
+hi link EasyMotionTarget2First Special
 hi link EasyMotionTarget2Second Identifier
 hi link EasyMotionShade Comment
 map <Space> <Plug>(easymotion-prefix)
