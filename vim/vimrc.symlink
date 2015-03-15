@@ -39,6 +39,7 @@ call vundle#rc()
     Bundle "godlygeek/csapprox"
     Bundle "davidhalter/jedi-vim"
     Bundle "bling/vim-airline"
+    Bundle 'christoomey/vim-tmux-navigator'
 
 " syntax / indent
     Bundle "rest.vim"
@@ -60,7 +61,7 @@ call vundle#rc()
     Bundle "skammer/vim-css-color"
 
 " my plugins
-    Bundle $DOTFILES . "/splitscreen/.git"
+    Bundle "file://" . $DOTFILES . "/splitscreen"
 
 " old plugins
 "   Bundle "Townk/vim-autoclose" " Find this irritating lately
