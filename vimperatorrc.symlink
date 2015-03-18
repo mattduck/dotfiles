@@ -1,6 +1,6 @@
 "3.8.3 (created: 2014/11/09 13:19:01)
 
 set hintchars=asdfghjklqwertyuiopzxcvbnm
-source! /Users/matt/.vimperatorrc.local
+source! ~/.vimperatorrc.local
 
 " vim: set ft=vimperator:
