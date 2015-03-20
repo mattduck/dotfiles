@@ -13,6 +13,7 @@
   '(ace-jump-mode
     color-theme
     evil
+    evil-surround
     fill-column-indicator
     outline-magic
     org
@@ -103,7 +104,7 @@
 ;;;; Indentation
 ;; =============================================================================
 
-(setq-default indent-tabs-mode nil)
+(setq-default indent-tabs-mode nil) ; Use spaces instead of tabs
 (setq-default tab-width 4)
 (setq indent-line-function 'insert-tab)
 (electric-indent-mode 1) ; Auto indent code
@@ -118,7 +119,7 @@
 (add-hook 'electric-indent-functions 'electric-indent-ignore-python)
 (add-hook 'python-mode-hook 'set-newline-and-indent)
 
-;; Stop indenting in org-mode, as it adds indents all over the place and
+;; Don't indent in org-mode, as it adds indents all over the place and
 ;; is generally annoying.
 (defun fix-electric-indent-in-org-mode ()
   (setq-local electric-indent-functions (list (lambda (arg) 'no-indent))))
@@ -131,9 +132,12 @@
 (require 'fill-column-indicator)
 (setq fci-rule-width 5) ; 5 seems to be max width
 (add-hook 'solarized-theme-hook '(lambda () (setq fci-rule-color solarized-base02)))
-;; Performance is too slow w/big files to enable this by default
+
+;; Performance is too slow w/big files to enable these by default
 ;; (define-globalized-minor-mode global-fci-mode fci-mode (lambda () (fci-mode 1)))
 ;; (global-fci-mode t)
+;; (require 'linum) ; numbers in margin
+;; (global-linum-mode nil)
 
 ;; Line and Column number in mode-line. These seem to be global.
 (line-number-mode 1)
@@ -142,16 +146,24 @@
 ;; Highlight cursor line
 (global-hl-line-mode 1)
 
-;; Performance is too slow w/big files to enable this by default
-;; (require 'linum) ; numbers in margin
-;; (global-linum-mode nil)
-
 (set-frame-font "Monaco-15:antialias=subpixel")
 
 ;; Necessary on v24.4 to display accurate Solarized colors, due to Emacs bug #8402.
 ;; v24.3 didn't set ns-use-sgrb-colorspace.
 (setq ns-use-srgb-colorspace nil)
 (setq solarized-broken-srgb t)
+
+;; Vim-like scrolling with margins
+(setq
+ scroll-margin 1
+ scroll-conservatively 9999
+ scroll-step 1)
+
+;; Make fringe thinner - default is 8 pixels
+(fringe-mode 4)
+
+;; Remove scrollbars to get extra screen space
+(scroll-bar-mode -1)
 
 (setq visible-bell nil)
 
@@ -165,7 +177,8 @@
 (setq blink-matching-paren t)
 (setq blink-matching-paren-on-screen nil)
 (defun my-show-paren-solarized-faces ()
-  (set-face-foreground 'show-paren-match solarized-blue)
+  (set-face-foreground 'show-paren-match solarized-orange)
+  (set-face-background 'show-paren-match solarized-base02)
   (set-face-background 'show-paren-mismatch solarized-red)
   (set-face-foreground 'show-paren-mismatch solarized-base03))
 (add-hook 'solarized-theme-hook 'my-show-paren-solarized-faces)
@@ -182,13 +195,16 @@
 ;; =============================================================================
 
 (require 'evil)
+(require 'evil-surround)
 (evil-mode 1)
+(global-evil-surround-mode 1)
+
 
 ;; I don't need to learn the default emacs undo system yet, this seems simpler.
 (require 'undo-tree)
 
 ;; Use <esc> to cancel everything.
-;; Taken from https://github.com/davvil/.emacs.d/blob/master/init.el.
+;; Taken from https://github.com/davvil/.emacs.d/blob/master/init.el
 (defun minibuffer-keyboard-quit ()
   "Abort recursive edit.
 In Delete Selection mode, if the mark is active, just deactivate it;
@@ -219,11 +235,26 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 (my-move-key evil-motion-state-map evil-normal-state-map (kbd "RET"))
 (my-move-key evil-motion-state-map evil-normal-state-map " ")
 
-;; Closest thing to easymotion. I am using SPC for this atm, should maybe
-;; swap to something else
+;; Closest thing to easymotion.
 (require 'ace-jump-mode)
+(setq ace-jump-mode-move-keys '(?f ?j ?d ?k ?s ?l ?a ?\; ?g ?h ?r ?u ?e ?i ?w ?o ?t ?y ?b ?v ?n ?c ?m ?x))
 (setq ace-jump-mode-scope 'window) ;; it's quicker this way
-(define-key evil-normal-state-map (kbd "SPC") 'ace-jump-line-mode)
+(setq ace-jump-word-mode-use-query-char nil)
+(define-key evil-normal-state-map (kbd "SPC") nil)
+(define-key evil-normal-state-map (kbd "SPC j") 'evil-ace-jump-line-mode)
+(define-key evil-normal-state-map (kbd "SPC k") 'evil-ace-jump-line-mode)
+(define-key evil-normal-state-map (kbd "SPC w") 'evil-ace-jump-word-mode)
+(define-key evil-normal-state-map (kbd "SPC b") 'evil-ace-jump-word-mode)
+(define-key evil-normal-state-map (kbd "SPC f") 'evil-ace-jump-char-mode)
+(define-key evil-normal-state-map (kbd "SPC F") 'evil-ace-jump-char-mode)
+(define-key evil-normal-state-map (kbd "SPC t") 'evil-ace-jump-char-mode)
+(define-key evil-normal-state-map (kbd "SPC T") 'evil-ace-jump-char-mode)
+
+;; Same as vimrc
+(define-key evil-normal-state-map "H" 'move-beginning-of-line)
+(define-key evil-normal-state-map "L" 'move-end-of-line)
+(define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
+(define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
 
 
 ;;;; Outline
@@ -338,6 +369,12 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 (defun my-general-solarized-hook ()
   (setq evil-default-cursor t)
   (set-face-background 'cursor solarized-base1)
+  (setq evil-emacs-state-cursor `(,solarized-violet box))
+  (setq evil-normal-state-cursor `(,solarized-base1 box))
+  (setq evil-visual-state-cursor `(,solarized-base1 box))
+  (setq evil-insert-state-cursor `(,solarized-base1 bar))
+  (setq evil-replace-state-cursor `(,solarized-red bar))
+  (setq evil-operator-state-cursor `(,solarized-base1 hollow))
 
   ;; I think this is the easiest way to fontify all my buffers
   ;; after the changes. I always have font-lock-mode on anyway.
@@ -349,11 +386,3 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 ;; Solarized Emacs custom theme setup
 (require 'solarized-definitions)
 (solarized-load-theme 'dark)
-;;(solarized-load-theme 'light)
-
-;; Solarized color-theme setup
-;;(require 'color-theme)
-;;(require 'color-theme-solarized)
-;;(color-theme-initialize)
-;;(color-theme-solarized-dark)
-;;(color-theme-solarized-light)

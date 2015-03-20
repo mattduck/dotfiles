@@ -147,7 +147,7 @@ omap H ^
 nnoremap <tab> za
 
 " :nohl
-nnoremap <leader>n :nohl<CR>
+nnoremap <leader>hl :nohl<CR>
 
 " Strip trailing whitespace and save
 nnoremap <leader>W :%s/\s\+$//<cr>:let @/=''<CR>:w<CR>
