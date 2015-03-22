@@ -1,3 +1,8 @@
+;;;; Reload
+(defun md/dotfiles-reload ()
+    (interactive)
+    (load-file (concat (getenv "DOTFILES") "/emacs.d.symlink/init.el")))
+
 ;;;; Download and install packages
 ;; =============================================================================
 
@@ -9,7 +14,7 @@
         ("org" . "http://orgmode.org/elpa/")))
 
 ;; Packages to install on launch
-(defvar my-required-packages
+(defvar md/required-packages
   '(ace-jump-mode
     color-theme
     evil
@@ -21,26 +26,26 @@
 
 (package-initialize)
 
-(defun my-refresh-packages ()
+(defun md/refresh-packages ()
   (interactive)
-  
+
   (when (not package-archive-contents)
     (package-refresh-contents))
 
   (package-initialize)
 
-  (dolist (p my-required-packages)
+  (dolist (p md/required-packages)
     (when (not (package-installed-p p))
       (package-install p))))
 
 ;;;; Add "non-elpa" dir to load-path
 ;; =============================================================================
 
-(let ((base (concat (file-name-directory load-file-name) "non-elpa")))
+(let ((base (concat (getenv "DOTFILES") "/emacs.d.symlink/non-elpa")))
   (add-to-list 'load-path base)
   (dolist (f (directory-files base)) ; Include top-level sub-directories
     (let ((name (concat base "/" f)))
-      (when (and (file-directory-p name) 
+      (when (and (file-directory-p name)
                  (not (equal f ".."))
                  (not (equal f ".")))
         (add-to-list 'load-path name)))))
@@ -60,14 +65,14 @@
 ;; Backup everything to the same directory, rather than dropping
 ;; files all over the place
 (if (getenv "DOTFILES")
-    (setq backup-directory-alist 
+    (setq backup-directory-alist
           `(("." . ,(concat (getenv "DOTFILES") "/emacs.d.symlink/.backups")))))
 
 ;;;; OS X
 ;; =============================================================================
 
 ;; Map modifier keys so that all are accessible, but the left option key
-;; is kept free so can use it for character modifications, eg. alt+3 = #. 
+;; is kept free so can use it for character modifications, eg. alt+3 = #.
 ;;
 ;; CTRL = ctrl
 ;; LEFT ALT = none
@@ -76,18 +81,12 @@
 (if (eq system-type 'darwin)
     (setq ns-option-modifier nil
           ns-command-modifier 'meta
-          ns-right-option-modifier 'super)
-
-  ;; This is temporary, prob won't use long term - if do, add conditional
-  (add-hook 'org-clock-in-hook (lambda () (call-process "/usr/bin/osascript" nil 0 nil "-e" (concat "tell application \"org-clock-statusbar\" to clock in \"" org-clock-current-task "\""))))
-  (add-hook 'org-clock-out-hook (lambda () (call-process "/usr/bin/osascript" nil 0 nil "-e" "tell application \"org-clock-statusbar\" to clock out"))) 
-
-  )
+          ns-right-option-modifier 'super))
 
 ;;;; Custom
 ;; =============================================================================
 
-(setq custom-file (concat (file-name-directory load-file-name) "custom.el"))
+(setq custom-file (concat (getenv "DOTFILES") "/emacs.d.symlink/custom.el"))
 (load custom-file 'noerror)
 
 (savehist-mode 1)
@@ -111,19 +110,19 @@
 
 ;; Python indentation is handled differently - taken from
 ;; www.emacswiki.org/emacs/AutoIndentation
-(defun electric-indent-ignore-python (char)
+(defun md/electric-indent-ignore-python (char)
   (if (equal major-mode 'python-mode) `no-indent' nil))
-(defun set-newline-and-indent ()
+(defun md/set-newline-and-indent ()
  (local-set-key (kbd "RET") 'newline-and-indent))
 
-(add-hook 'electric-indent-functions 'electric-indent-ignore-python)
-(add-hook 'python-mode-hook 'set-newline-and-indent)
+(add-hook 'electric-indent-functions 'md/electric-indent-ignore-python)
+(add-hook 'python-mode-hook 'md/set-newline-and-indent)
 
 ;; Don't indent in org-mode, as it adds indents all over the place and
 ;; is generally annoying.
-(defun fix-electric-indent-in-org-mode ()
+(defun md/fix-electric-indent-in-org-mode ()
   (setq-local electric-indent-functions (list (lambda (arg) 'no-indent))))
-(add-hook 'org-mode-hook 'fix-electric-indent-in-org-mode)
+(add-hook 'org-mode-hook 'md/fix-electric-indent-in-org-mode)
 
 ;;;; Display
 ;; =============================================================================
@@ -176,20 +175,20 @@
 (require 'paren) ;; Load now to avoid invalid-face error
 (setq blink-matching-paren t)
 (setq blink-matching-paren-on-screen nil)
-(defun my-show-paren-solarized-faces ()
+(defun md/show-paren-solarized-faces ()
   (set-face-foreground 'show-paren-match solarized-orange)
   (set-face-background 'show-paren-match solarized-base02)
   (set-face-background 'show-paren-mismatch solarized-red)
   (set-face-foreground 'show-paren-mismatch solarized-base03))
-(add-hook 'solarized-theme-hook 'my-show-paren-solarized-faces)
+(add-hook 'solarized-theme-hook 'md/show-paren-solarized-faces)
 
 ;;;; Prog mode
 ;; =============================================================================
 
-(defun my-prog-hook ()
+(defun md/prog-hook ()
   (show-paren-mode 1)
   (outline-minor-mode 1))
-(add-hook 'prog-mode-hook 'my-prog-hook)
+(add-hook 'prog-mode-hook 'md/prog-hook)
 
 ;;;; Evil
 ;; =============================================================================
@@ -205,7 +204,7 @@
 
 ;; Use <esc> to cancel everything.
 ;; Taken from https://github.com/davvil/.emacs.d/blob/master/init.el
-(defun minibuffer-keyboard-quit ()
+(defun md/minibuffer-keyboard-quit ()
   "Abort recursive edit.
 In Delete Selection mode, if the mark is active, just deactivate it;
 then it takes a second \\[keyboard-quit] to abort the minibuffer."
@@ -217,11 +216,11 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
 (define-key evil-normal-state-map [escape] 'keyboard-quit)
 (define-key evil-visual-state-map [escape] 'keyboard-quit)
-(define-key minibuffer-local-map [escape] 'minibuffer-keyboard-quit)
-(define-key minibuffer-local-ns-map [escape] 'minibuffer-keyboard-quit)
-(define-key minibuffer-local-completion-map [escape] 'minibuffer-keyboard-quit)
-(define-key minibuffer-local-must-match-map [escape] 'minibuffer-keyboard-quit)
-(define-key minibuffer-local-isearch-map [escape] 'minibuffer-keyboard-quit)
+(define-key minibuffer-local-map [escape] 'md/minibuffer-keyboard-quit)
+(define-key minibuffer-local-ns-map [escape] 'md/minibuffer-keyboard-quit)
+(define-key minibuffer-local-completion-map [escape] 'md/minibuffer-keyboard-quit)
+(define-key minibuffer-local-must-match-map [escape] 'md/minibuffer-keyboard-quit)
+(define-key minibuffer-local-isearch-map [escape] 'md/minibuffer-keyboard-quit)
 
 ;; Remap ";" to ":" and "," to ";", like vimrc
 (define-key evil-motion-state-map ";" 'evil-ex)
@@ -229,11 +228,11 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
 ;; As recommended by emacswiki, take RET and SPC out of evil-motion-state-map
 ;; so it doesn't override bindings in eg. the profiler.
-(defun my-move-key (keymap-from keymap-to key)
+(defun md/move-key (keymap-from keymap-to key)
   (define-key keymap-to key (lookup-key keymap-from key))
   (define-key keymap-from key nil))
-(my-move-key evil-motion-state-map evil-normal-state-map (kbd "RET"))
-(my-move-key evil-motion-state-map evil-normal-state-map " ")
+(md/move-key evil-motion-state-map evil-normal-state-map (kbd "RET"))
+(md/move-key evil-motion-state-map evil-normal-state-map " ")
 
 ;; Closest thing to easymotion.
 (require 'ace-jump-mode)
@@ -261,8 +260,8 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 ;; =============================================================================
 
 ;; Outline-magic
-(defun my-outline-magic-mode-hook () (require 'outline-magic))
-(defun my-outline-magic-minor-mode-hook ()
+(defun md/outline-magic-mode-hook () (require 'outline-magic))
+(defun md/outline-magic-minor-mode-hook ()
   (require 'outline-magic)
   ;; Provide cycle and positioning keys similar to org-mode
   (define-key outline-minor-mode-map (kbd "<C-tab>") 'outline-cycle)
@@ -271,8 +270,8 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
   (define-key outline-minor-mode-map (kbd "<M-left>") 'outline-promote)
   (define-key outline-minor-mode-map (kbd "<M-right>") 'outline-demote))
 
-(add-hook 'outline-mode-hook 'my-outline-magic-mode-hook)
-(add-hook 'outline-minor-mode-hook 'my-outline-magic-minor-mode-hook)
+(add-hook 'outline-mode-hook 'md/outline-magic-mode-hook)
+(add-hook 'outline-minor-mode-hook 'md/outline-magic-minor-mode-hook)
 
 ;;;; Org
 ;; =============================================================================
@@ -288,7 +287,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cp" 'org-perspectives)
 
-(defun my-org-solarized-faces () 
+(defun md/org-solarized-faces ()
   (ignore-errors ; The font symbols don't exist until org-mode loaded
     (set-face-attribute 'org-level-1 nil :foreground solarized-blue)
     (set-face-attribute 'org-level-2 nil :foreground solarized-yellow)
@@ -307,7 +306,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
     (set-face-attribute 'org-checkbox nil :foreground solarized-yellow)
     (set-face-attribute 'org-tag nil :foreground solarized-yellow :background solarized-base02)
-    (set-face-attribute 'org-special-keyword nil :foreground solarized-green 
+    (set-face-attribute 'org-special-keyword nil :foreground solarized-green
                         :background solarized-base02)
 
     (set-face-attribute 'org-code nil :foreground solarized-green)
@@ -321,19 +320,19 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
     (set-face-attribute 'org-agenda-structure nil :foreground solarized-violet)
     (set-face-attribute 'org-agenda-date nil :foreground solarized-blue)
-    (set-face-attribute 'org-agenda-date-today nil 
+    (set-face-attribute 'org-agenda-date-today nil
                         :foreground solarized-blue :weight 'bold :slant 'italic)
     (set-face-attribute 'org-warning nil :foreground solarized-orange)
     (set-face-attribute 'org-scheduled-previously nil :foreground solarized-cyan)
     (set-face-attribute 'org-scheduled nil :foreground solarized-cyan)
-    (set-face-attribute 'org-upcoming-deadline nil 
+    (set-face-attribute 'org-upcoming-deadline nil
                         :background nil :foreground solarized-red :weight 'bold :slant 'italic)
 
     (set-face-attribute 'warning nil :foreground solarized-red)))
 
-(defun my-org-hook ()
+(defun md/org-hook ()
   ;; Change tab widths to fit headline indents
-  (setq tab-width 2)  
+  (setq tab-width 2)
   (setq evil-shift-width 2)
 
   ;; Disable in-buffer line numbers and the colur column, as both decrease
@@ -346,17 +345,17 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
   (setq-local line-number-mode 1)
   (setq-local column-number-mode nil)
 
-  (my-org-solarized-faces))
+  (md/org-solarized-faces))
 
-(add-hook 'org-mode-hook 'my-org-hook)
-(add-hook 'solarized-theme-hook 'my-org-solarized-faces)
+(add-hook 'org-mode-hook 'md/org-hook)
+(add-hook 'solarized-theme-hook 'md/org-solarized-faces)
 
 ;; Default to using my CSS theme for html exports
 (setq org-html-head-extra
  "<link id='generic-css-dark' rel='stylesheet' type='text/css'
-   href='https://mattduck.github.io/generic-css/css/generic-dark.css'> 
+   href='https://mattduck.github.io/generic-css/css/generic-dark.css'>
   <link id='generic-css-light' rel='stylesheet' type='text/css'
-   href='https://mattduck.github.io/generic-css/css/generic-light.css'> 
+   href='https://mattduck.github.io/generic-css/css/generic-light.css'>
   <script type='text/javascript'
    src='https://mattduck.github.io/generic-css/js/generic-css.js'></script>")
 (setq org-export-headline-levels 6)
@@ -366,7 +365,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 ;; =============================================================================
 ;; Load this last so any Solarized hooks run
 
-(defun my-general-solarized-hook ()
+(defun md/general-solarized-hook ()
   (setq evil-default-cursor t)
   (set-face-background 'cursor solarized-base1)
   (setq evil-emacs-state-cursor `(,solarized-violet box))
@@ -380,8 +379,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
   ;; after the changes. I always have font-lock-mode on anyway.
   (global-font-lock-mode 0)
   (global-font-lock-mode 1))
-(add-hook 'solarized-theme-hook 'my-general-solarized-hook t)
-
+(add-hook 'solarized-theme-hook 'md/general-solarized-hook t)
 
 ;; Solarized Emacs custom theme setup
 (require 'solarized-definitions)
