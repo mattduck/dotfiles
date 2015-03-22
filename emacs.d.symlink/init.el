@@ -285,7 +285,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
-(global-set-key "\C-cp" 'org-perspectives)
+(global-set-key "\C-cp" 'org-query)
 
 (defun md/org-solarized-faces ()
   (ignore-errors ; The font symbols don't exist until org-mode loaded
