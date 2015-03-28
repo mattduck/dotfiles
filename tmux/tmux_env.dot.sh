@@ -16,12 +16,9 @@ function ,tm-init() {
     ORIG_WINDOW=`tmux display-message -p "#I"`
 
     # Panes
-    tmux splitw -h -p 30
-    tmux splitw -v -p 50
-    ,tm-new-window
-
-    # Go back to the original window
+    ,tm-new-win-vertical
     tmux select-window -t $ORIG_WINDOW
+    tmux kill-window
 
     # Usually only have one session per machine
     tmux rename-session "main"
@@ -37,8 +34,28 @@ function ,tm-reload() {
     echo "Reloaded ~/.tmux.conf and $DOTFILES/tmux/tmux_env.sh"
 }
 
-function ,tm-new-window {
+function ,tm-new-win-vertical() {
+    tmux new-window
+    tmux splitw -v -p 70
+
+    tmux select-pane -t 1
+    tmux splitw -h -p 33
+    tmux select-pane -t 1
+    tmux splitw -h -p 50
+    tmux select-pane -t 4 # main bottom pane
+}
+
+function ,tm-new-win-horizontal() {
     tmux new-window
     tmux splitw -h -p 30
     tmux splitw -v -p 50
+    tmux select-pane -t 1 # main left pane
+}
+
+function ,tm-move() {
+    tmux move-pane -t $1
+}
+
+function ,tm-pop() {
+    tmux break-pane
 }
