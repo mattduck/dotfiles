@@ -1,6 +1,6 @@
 [user]
     name = Matthew Duck
-    email = matt@letolab.com
+    email = matt@mattduck.com
     editor = vim
 
 [alias]
@@ -13,6 +13,7 @@
     d = diff
     dc = diff --cached
     co = checkout
+    cob = checkout -b
     ci = commit
     b = branch
     vconfig = !vi $DOTFILES/git/gitconfig.symlink
