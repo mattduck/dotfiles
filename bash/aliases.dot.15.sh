@@ -10,7 +10,13 @@ alias l="ls -CF"
 alias ll="ls -alF"
 
 alias h="history"
-alias g="grep"
+
+# Setup autocompletion for git alias
+alias g="git"
+alias gs="git status"
+if [[ $(type -t __git_complete) == *function* ]]; then
+    __git_complete g __git_main
+fi
 
 alias ..="cd .."
 alias ...="cd ../.."

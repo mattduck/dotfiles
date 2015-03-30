@@ -4,11 +4,36 @@
     editor = vim
 
 [alias]
+    # Some useful bits here are taken from
+    # http://haacked.com/archive/2014/07/28/github-flow-aliases/
+
+    # An alternative to stash if I just want to save WIP for this branch
+    msavepoint = !git add -A && git commit -m 'SAVEPOINT'
+    md-undo = reset HEAD~1 --mixed
+
+    # A friendly alternative to --reset HEAD --hard: commit then remove, so my
+    # work stays is still accessible via reflog.
+    md-wipe = !git add -A && git commit -qm 'WIPE SAVEPOINT' && git reset HEAD~1 --hard
+
+    # Get up to date and remove remote branches that have been deleted
+    md-up = !git pull --rebase --prune $@ && git submodule update --init --recursive
+
+    # Delete all branches that have been merged into master or given branch
+    # Could do with passing --no-run-if-empty to xargs here, but that's only a
+    # valid flag for GNU xargs.
+    md-bclean = "!f() { git branch --merged ${1-master} | grep -v " ${1-master}$" | xargs git branch -d; }; f"
+
+    # Checkout branch, bring it up to date with origin and delete all merged branches
+    md-bdone = "!f() { git checkout ${1-master} && git md-up && git md-bclean ${1-master}; }; f"
+
+    md-vconfig = config --global -e
+    md-vignore = !vi $DOTFILES/git/gitignore.symlink
+
     lp = log -p
     l = log --graph --oneline --abbrev-commit --decorate --all
     ld = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative --graph
     ll = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat --date=short
-    last = "!git ll -1"
+
     s = status
     d = diff
     dc = diff --cached
@@ -16,8 +41,6 @@
     cob = checkout -b
     ci = commit
     b = branch
-    vconfig = !vi $DOTFILES/git/gitconfig.symlink
-    vignore = !vi $DOTFILES/git/gitignore.symlink
 
 [color]
     ui = true
