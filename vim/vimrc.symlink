@@ -155,11 +155,6 @@ nnoremap <leader>vr :source $MYVIMRC<CR>
 nnoremap <leader>v% :vsplit $MYVIMRC<CR>
 nnoremap <leader>v" :split $MYVIMRC<CR>
 
-" Use perl-style regular expressions
-nnoremap / /\v
-vnoremap / /\v
-
-
 " }}}
 
 " Display {{{
@@ -217,8 +212,16 @@ hi DiffText ctermfg=4  " blue
 
 " Files {{{
 set autoread " Autoread external changes if vim hasn't edited the file.
-set backupskip=/tmp/*,/private/tmp/* " Fix crontab's "temp file must be edited in place"
 set hidden " Buffers stay open when they're hidden, like emacs
+
+set backup
+set backupskip=/tmp/*,/private/tmp/* " Fix crontab's "temp file must be edited in place"
+
+" Don't pollute files everywhere. Double trailing slash tells vim to avoid
+" name collisions by prepending path
+set backupdir=~/.vim-backup//
+set directory=~/.vim-swap// " Where swap file is saved
+set undodir=~/.vim-undo// " Not using undofile atm, but in case do
 
 au BufNewFile,BufRead *.mak set filetype=mako
 " }}}
