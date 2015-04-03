@@ -248,9 +248,9 @@ set foldnestmax=3
 
 autocmd FileType vim setlocal foldmethod=marker
 
-nmap <Leader>fs :let &l:foldmethod = 'syntax'<CR>
-nmap <Leader>fi :let &l:foldmethod = 'indent'<CR>
-nmap <Leader>fm :let &l:foldmethod = 'marker'<CR>
+nmap <Leader>fsyn :let &l:foldmethod = 'syntax'<CR>
+nmap <Leader>find :let &l:foldmethod = 'indent'<CR>
+nmap <Leader>fmark :let &l:foldmethod = 'marker'<CR>
 
 " }}}
 
