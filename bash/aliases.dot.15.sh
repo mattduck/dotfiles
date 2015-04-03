@@ -13,7 +13,7 @@ alias h="history"
 
 # Setup autocompletion for git alias
 alias g="git"
-alias gs="git status"
+alias gg="git status"
 if [[ $(type -t __git_complete) == *function* ]]; then
     __git_complete g __git_main
 fi
