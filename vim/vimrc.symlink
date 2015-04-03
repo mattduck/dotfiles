@@ -205,8 +205,10 @@ colorscheme solarized
 let g:solarized_termcolours=16
 
 hi Todo ctermfg=1  " red
-hi DiffChange ctermfg=4  " blue
-hi DiffText ctermfg=4  " blue
+hi DiffChange ctermfg=4 cterm=reverse  " blue
+hi DiffText ctermfg=4 cterm=reverse  " blue
+hi DiffAdd cterm=reverse
+hi DiffDelete cterm=reverse
 
 " }}}
 
