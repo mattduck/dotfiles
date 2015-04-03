@@ -8,7 +8,7 @@
     # http://haacked.com/archive/2014/07/28/github-flow-aliases/
 
     # An alternative to stash if I just want to save WIP for this branch
-    msavepoint = !git add -A && git commit -m 'SAVEPOINT'
+    md-savepoint = !git add -A && git commit -m 'SAVEPOINT'
     md-undo = reset HEAD~1 --mixed
 
     # A friendly alternative to --reset HEAD --hard: commit then remove, so my
