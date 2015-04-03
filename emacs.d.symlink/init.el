@@ -357,6 +357,8 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
     (set-face-attribute 'org-table nil :foreground solarized-base1)
 
+    (set-face-attribute 'org-clock-overlay nil :background solarized-base2)
+
     (set-face-attribute 'italic nil :foreground solarized-base1)
     (set-face-attribute 'bold nil :foreground solarized-base2)
 
