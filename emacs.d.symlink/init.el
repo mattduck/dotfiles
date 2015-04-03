@@ -22,6 +22,7 @@
     fill-column-indicator
     outline-magic
     org
+    smart-mode-line
     undo-tree))
 
 (package-initialize)
@@ -67,6 +68,47 @@
 (if (getenv "DOTFILES")
     (setq backup-directory-alist
           `(("." . ,(concat (getenv "DOTFILES") "/emacs.d.symlink/.backups")))))
+
+;;;; SML
+(require 'smart-mode-line)
+
+(defun md/sml-solarized-hook ()
+  ;; This isn't great atm. The active theme is OK, but inactive is not
+  ;; particularly readable - not sure if sml allows different faces for
+  ;; active/inactive frames, or if it can disable sml faces in inactive frames
+  ;; (in which case they would all use the normal mode-line faces).
+  ;;
+  ;; Ideally, color-theme-solarized would take care of this by default.
+  (sml/apply-theme 'respectful)
+  (sml/setup)
+  (setq sml/shorten-directory t
+        sml/shorten-modes t
+        sml/extra-filler 0
+        sml/override-theme nil)
+
+  (set-face-attribute 'mode-line nil
+                      :background solarized-base02
+                      :foreground solarized-base3)
+  (set-face-attribute 'mode-line-inactive nil
+                      :background solarized-base01
+                      :foreground solarized-base02)
+
+  (set-face-attribute 'sml/filename nil :foreground nil) ; When nil, uses 'mode-line
+  (set-face-attribute 'sml/folder nil :foreground solarized-base0)
+  (set-face-attribute 'sml/prefix nil :foreground solarized-base0)
+
+  ;; Git branch - seems it doesn't use sml/git
+  (set-face-attribute 'sml/vc nil :foreground solarized-blue)
+  (set-face-attribute 'sml/vc-edited nil :foreground solarized-orange)
+
+  (set-face-attribute 'sml/modes nil :foreground solarized-yellow)
+  (set-face-attribute 'sml/minor-modes nil :foreground solarized-base0)
+
+  (set-face-attribute 'sml/line-number nil :foreground solarized-base0)
+  (set-face-attribute 'sml/col-number nil :foreground solarized-base0)
+  (set-face-attribute 'sml/position-percentage nil :foreground solarized-base0))
+
+(add-hook 'solarized-theme-hook 'md/sml-solarized-hook)
 
 ;;;; OS X
 ;; =============================================================================
