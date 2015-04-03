@@ -39,6 +39,7 @@ call vundle#rc()
     Bundle "godlygeek/csapprox"
     Bundle "davidhalter/jedi-vim"
     Bundle "bling/vim-airline"
+    Bundle 'airblade/vim-gitgutter'
     Bundle 'christoomey/vim-tmux-navigator'
 
 " syntax / indent
@@ -62,9 +63,6 @@ call vundle#rc()
 
 " my plugins
     Bundle "file://" . $DOTFILES . "/splitscreen"
-
-" old plugins
-"   Bundle "Townk/vim-autoclose" " Find this irritating lately
 
 " }}}
 
@@ -210,6 +208,11 @@ let g:CSApprox_verbose_level = 0 " Get rid of CSApprox 16col warnings
 set background=dark
 colorscheme solarized
 let g:solarized_termcolours=16
+
+hi Todo ctermfg=1  " red
+hi DiffChange ctermfg=4  " blue
+hi DiffText ctermfg=4  " blue
+
 " }}}
 
 " Files {{{
@@ -252,8 +255,8 @@ nmap <Leader>fm :let &l:foldmethod = 'marker'<CR>
 let g:EasyMotion_use_upper = 1
 let g:EasyMotion_keys = "URIEOWYTQPBVNCM;ALSKDJF"
 
-hi link EasyMotionTarget Special
-hi link EasyMotionTarget2First Special
+hi link EasyMotionTarget Todo
+hi link EasyMotionTarget2First Todo
 hi link EasyMotionTarget2Second Identifier
 hi link EasyMotionShade Comment
 map <Space> <Plug>(easymotion-prefix)
@@ -278,6 +281,24 @@ let NERDTreeIgnore = ['\.pyc$']
 
 " Git {{{
 autocmd FileType gitcommit setlocal textwidth=72
+
+" Recommended by gitgutter docs if grep is aliased to something that changes
+" output, eg. -color=auto
+let g:gitgutter_escape_grep = 1
+
+let g:gitgutter_map_keys = 0
+let g:gitgutter_realtime = 0
+nmap <leader>ghl :GitGutterLineHighlightsToggle<CR>
+nmap <leader>gn <Plug>GitGutterNextHunk
+nmap <leader>gp <Plug>GitGutterPrevHunk
+nmap <leader>gadd <Plug>GitGutterStageHunk
+nmap <leader>gres <Plug>GitGutterRevertHunk
+nmap <leader>grev <Plug>GitGutterRevertHunk
+
+hi link GitGutterChange DiffChange
+hi link GitGutterChangeDelete GitGutterChange
+hi link GitGutterChangeDeleteLine GitGutterChangeLine
+
 " }}}
 
 " Python {{{
