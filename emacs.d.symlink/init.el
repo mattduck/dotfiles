@@ -145,7 +145,7 @@
 ;; Highlight cursor line
 (global-hl-line-mode 1)
 
-(set-frame-font "Monaco-15:antialias=subpixel")
+(set-frame-font "Monaco-13:antialias=subpixel")
 
 ;; Necessary on v24.4 to display accurate Solarized colors, due to Emacs bug #8402.
 ;; v24.3 didn't set ns-use-sgrb-colorspace.
