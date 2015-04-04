@@ -7,7 +7,7 @@ SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do
   THIS_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
   SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$THIS_DIR/$SOURCE" 
+  [[ $SOURCE != /* ]] && SOURCE="$THIS_DIR/$SOURCE"
 done
 
 export DOTFILES="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
