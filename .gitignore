@@ -5,3 +5,7 @@ emacs.d.symlink/.org-id-locations
 emacs.d.symlink/url
 emacs.d.symlink/.backups
 emacs.d.symlink/custom.el
+
+# .config might contain files that have been dumped by programs, so
+# don't include it by default
+config.symlink/*
