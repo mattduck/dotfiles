@@ -204,8 +204,6 @@ set autoindent
 " Colours {{{
 set t_Co=16 " Solarized uses 16 colours
 let g:CSApprox_verbose_level = 0 " Get rid of CSApprox 16col warnings
-
-set background=dark
 colorscheme solarized
 let g:solarized_termcolours=16
 
@@ -219,11 +217,13 @@ endfunction
 
 nmap <leader>bg :call BgToggle()<CR>
 
-hi Todo ctermfg=1  " red
-hi DiffChange ctermfg=4 cterm=reverse  " blue
-hi DiffText ctermfg=4 cterm=reverse  " blue
-hi DiffAdd cterm=reverse
-hi DiffDelete cterm=reverse
+" Use autocmd, because if you only declare custom highlights once they will be
+" overridden with the defaults when enabling light / dark background.
+autocmd ColorScheme * hi Todo ctermfg=1  " red
+autocmd ColorScheme * hi DiffAdd cterm=reverse
+autocmd ColorScheme * hi DiffChange ctermfg=4 cterm=reverse  " blue
+autocmd ColorScheme * hi DiffText ctermfg=4 cterm=reverse  " blue
+autocmd ColorScheme * hi DiffDelete cterm=reverse
 
 " }}}
 
@@ -275,10 +275,10 @@ nmap <Leader>fmark :let &l:foldmethod = 'marker'<CR>
 let g:EasyMotion_use_upper = 1
 let g:EasyMotion_keys = "URIEOWYTQPBVNCM;ALSKDJF"
 
-hi link EasyMotionTarget Todo
-hi link EasyMotionTarget2First Todo
-hi link EasyMotionTarget2Second Identifier
-hi link EasyMotionShade Comment
+autocmd ColorScheme * hi link EasyMotionTarget Todo
+autocmd ColorScheme * hi link EasyMotionTarget2First Todo
+autocmd ColorScheme * hi link EasyMotionTarget2Second Identifier
+autocmd ColorScheme * hi link EasyMotionShade Comment
 map <Space> <Plug>(easymotion-prefix)
 " }}}
 
@@ -315,9 +315,9 @@ nmap <leader>gadd <Plug>GitGutterStageHunk
 nmap <leader>gres <Plug>GitGutterRevertHunk
 nmap <leader>grev <Plug>GitGutterRevertHunk
 
-hi GitGutterChange ctermfg=4 ctermbg=0 " blue, same as DiffChange
-hi link GitGutterChangeDelete GitGutterChange
-hi link GitGutterChangeDeleteLine GitGutterChangeLine
+autocmd ColorScheme * hi GitGutterChangeDefault ctermfg=4 " blue, same as DiffChange
+autocmd ColorScheme * hi link GitGutterChangeDelete GitGutterChange
+autocmd ColorScheme * hi link GitGutterChangeDeleteLine GitGutterChangeLine
 
 " }}}
 
@@ -326,4 +326,9 @@ autocmd FileType python setlocal textwidth=79 " Adhere to PEP8
 
 " Python folding syntax isn't provided by default
 autocmd FileType python source $DOTFILES/vim/vim.symlink/bundle/jpythonfold.vim/syntax/jpythonfold.vim
+" }}}
+
+" Set colorscheme last {{{
+" To trigger the autocmd highlight overrides in this file.
+set background=dark
 " }}}
