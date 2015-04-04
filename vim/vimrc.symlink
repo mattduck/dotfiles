@@ -130,8 +130,8 @@ nnoremap j gj
 nnoremap k gk
 
 " Insert newline without leaving normal mode or moving cursor
-nnoremap <leader>o mao<Esc>`a:delmarks a<CR>
-nnoremap <leader>O maO<Esc>`a:delmarks a<CR>
+nnoremap <leader>o mao<Esc>`a:delmarks a<CR>:w<CR>
+nnoremap <leader>O maO<Esc>`a:delmarks a<CR>:w<CR>
 
 nnoremap Y y$
 
