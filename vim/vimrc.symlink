@@ -209,6 +209,16 @@ set background=dark
 colorscheme solarized
 let g:solarized_termcolours=16
 
+function! BgToggle()
+    if &background == 'dark'
+        set background=light
+    else
+        set background=dark
+    endif
+endfunction
+
+nmap <leader>bg :call BgToggle()<CR>
+
 hi Todo ctermfg=1  " red
 hi DiffChange ctermfg=4 cterm=reverse  " blue
 hi DiffText ctermfg=4 cterm=reverse  " blue
