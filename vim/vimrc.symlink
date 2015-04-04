@@ -146,6 +146,7 @@ vmap H ^
 omap L $
 omap H ^
 
+" I'm used to this from org-mode
 nnoremap <tab> za
 
 " :nohl
@@ -304,7 +305,7 @@ nmap <leader>gadd <Plug>GitGutterStageHunk
 nmap <leader>gres <Plug>GitGutterRevertHunk
 nmap <leader>grev <Plug>GitGutterRevertHunk
 
-hi link GitGutterChange DiffChange
+hi GitGutterChange ctermfg=4 ctermbg=0 " blue, same as DiffChange
 hi link GitGutterChangeDelete GitGutterChange
 hi link GitGutterChangeDeleteLine GitGutterChangeLine
 
