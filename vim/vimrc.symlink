@@ -28,8 +28,8 @@ call vundle#rc()
 " vundle itself
     Bundle "gmarik/vundle"
 
-" plugins
-    Bundle "scrooloose/nerdtree"
+" addons
+    Bundle "ctrlpvim/ctrlp.vim"
     Bundle "scrooloose/syntastic"
     Bundle "tpope/vim-surround"
     Bundle "tpope/vim-repeat"
@@ -296,8 +296,15 @@ let g:syntastic_loc_list_height = 3
 " }}}
 
 " Nerdtree {{{
-map <leader>t :NERDTreeToggle<CR>
-let NERDTreeIgnore = ['\.pyc$']
+"map <leader>t :NERDTreeToggle<CR>
+"let NERDTreeIgnore = ['\.pyc$']
+" }}}
+
+" Ctrl-p {{{
+"
+let g:ctrlp_switch_buffer = 'et' " Don't jump to other tabs, open buffer in same window
+noremap <leader>bb :CtrlPBuffer<CR>
+
 " }}}
 
 " Git {{{
