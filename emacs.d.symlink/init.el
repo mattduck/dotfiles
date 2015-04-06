@@ -318,12 +318,16 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 ;;;; Org
 ;; =============================================================================
 
-(setq org-log-done 'time) ; Add timestamp when set task as closed
-(setq org-agenda-restore-windows-after-quit t) ; Don't understand why this isn't default
-(setq org-src-fontify-natively nil) ; Inline code has syntax highlighting
-(setq org-level-color-stars-only nil) ; Don't colour the whole headline
-(setq org-catch-invisible-edits 'show-and-error) ; Prevent accidentally editing invisible lines
-(setq org-M-RET-may-split-line nil)
+(setq org-log-done 'time ; Add timestamp when set task as closed.
+      org-agenda-restore-windows-after-quit t ; Don't understand why this isn't default.
+      org-src-fontify-natively nil ; Inline code has syntax highlighting.
+      org-level-color-stars-only nil ; Colour the whole headline.
+      org-catch-invisible-edits 'show-and-error ; Prevent accidentally editing invisible lines.
+      org-adapt-indentation t           ; Ideally this would be true for
+                                        ; clock/properties, but nil for plain lists. Not
+                                        ; sure can do this though.
+      org-clock-out-remove-zero-time-clocks t
+      org-M-RET-may-split-line nil)
 
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
@@ -404,7 +408,6 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
    src='https://mattduck.github.io/generic-css/js/generic-css.js'></script>")
 (setq org-export-headline-levels 6)
 (setq org-export-with-section-numbers 4)
-(setq org-clock-out-remove-zero-time-clocks t)
 
 ;;;; Org-evil
 ;; =============================================================================
