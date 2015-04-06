@@ -157,6 +157,7 @@ nnoremap <leader>W :%s/\s\+$//<cr>:let @/=''<CR>:w<CR>
 
 " vimrc
 nnoremap <leader>vr :source $MYVIMRC<CR>
+nnoremap <leader>ve :e $MYVIMRC<CR>
 nnoremap <leader>v% :vsplit $MYVIMRC<CR>
 nnoremap <leader>v" :split $MYVIMRC<CR>
 
