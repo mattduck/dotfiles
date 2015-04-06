@@ -135,9 +135,9 @@ nnoremap <leader>O maO<Esc>`a:delmarks a<CR>:w<CR>
 
 nnoremap Y y$
 
-" Don't care about most NERDcomment functionality, just want toggle
-nnoremap <C-c> :call NERDComment(0,"toggle")<CR>
-vnoremap <C-c> :call NERDComment(0,"toggle")<CR>
+" Don't care about most NERDcomment functionality
+map <leader>cc <Plug>NERDCommenterToggle
+map <leader>cA <Plug>NERDCommenterAppend
 
 nnoremap L $
 nnoremap H ^
