@@ -31,7 +31,7 @@ The activate script will:
 
 ## Third party stuff that lives in dotfiles
 
-- Vim plugins are installed with `:BundleInstall`. 
+- Vim plugins are installed with `:BundleInstall`.
 
 - Emacs plugins are automatically installed on startup.
 
@@ -58,10 +58,12 @@ fi
 
 # Thanks
 
+- Some cool vim / shell / tmux ideas taken from [Nic West](https://github.com/nicwest/.dotfiles).
+
 - The \*.symlink and \*.sh features were taken from [Zach Holman's
   dotfiles](https://github.com/holman/dotfiles).
 
 - I liked [Brandon Rhodes' idea](https://github.com/brandon-rhodes/homedir) of
-  prefixing your custom commands with a comma. 
+  prefixing your custom commands with a comma.
 
 - My old Emacs organisation was inspired by [Hans Engel](https://github.com/hans/dotfiles).

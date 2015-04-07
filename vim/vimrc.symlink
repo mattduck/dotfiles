@@ -154,12 +154,23 @@ nnoremap <leader>hl :nohl<CR>
 
 " Strip trailing whitespace and save
 nnoremap <leader>W :%s/\s\+$//<cr>:let @/=''<CR>:w<CR>
+nnoremap <leader>w :w<CR>
 
 " vimrc
 nnoremap <leader>vr :source $MYVIMRC<CR>
 nnoremap <leader>ve :e $MYVIMRC<CR>
 nnoremap <leader>v% :vsplit $MYVIMRC<CR>
 nnoremap <leader>v" :split $MYVIMRC<CR>
+
+function! ToggleLineWrap()
+    if &wrap
+        set nowrap
+    else
+        set wrap
+    endif
+endfunction
+nnoremap <leader>lw :call ToggleLineWrap()<CR>
+
 
 " }}}
 
@@ -208,7 +219,7 @@ let g:CSApprox_verbose_level = 0 " Get rid of CSApprox 16col warnings
 colorscheme solarized
 let g:solarized_termcolours=16
 
-function! BgToggle()
+function! ToggleBg()
     if &background == 'dark'
         set background=light
     else
@@ -216,7 +227,7 @@ function! BgToggle()
     endif
 endfunction
 
-nmap <leader>bg :call BgToggle()<CR>
+nmap <leader>bg :call ToggleBg()<CR>
 
 " Use autocmd, because if you only declare custom highlights once they will be
 " overridden with the defaults when enabling light / dark background.
