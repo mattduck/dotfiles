@@ -1,15 +1,20 @@
+# Detect which `ls` flavor is in use
+if ls --color > /dev/null 2>&1; then # GNU `ls`
+    lscolorflag="--color"
+else # OS X `ls`
+    lscolorflag="-G"
+fi
+
+alias ls="ls ${lscolorflag}"
+alias l="ls -lF"
+alias ll="ls -alF"
+alias lsd="ls -lF ${colorflag} | grep --color=never '^d'" # List only directories
+
 alias sudo="sudo " # Enable aliases to be sudo'ed
 
-alias ls="ls --color=auto" # This breaks on mac if it doesn't use coreutils
 alias grep="grep --color=auto"
 alias fgrep="fgrep --color=auto"
 alias egrep="egrep --color=auto"
-
-alias la="ls -A"
-alias l="ls -CF"
-alias ll="ls -alF"
-
-alias h="history"
 
 # Setup autocompletion for git alias
 alias g="git"
