@@ -444,8 +444,6 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
   "L" 'org-end-of-line
   "$" 'org-end-of-line
   "^" 'org-beginning-of-line
-  "<" 'org-metaleft
-  ">" 'org-metaright
   "-" 'org-cycle-list-bullet
   (kbd "TAB") 'org-cycle)
 
