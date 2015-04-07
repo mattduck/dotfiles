@@ -3,6 +3,7 @@ emacs.d.symlink/elpa
 emacs.d.symlink/history
 emacs.d.symlink/.org-id-locations
 emacs.d.symlink/url
+emacs.d.symlink/tramp
 emacs.d.symlink/.backups
 emacs.d.symlink/custom.el
 
