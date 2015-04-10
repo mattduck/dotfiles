@@ -26,6 +26,9 @@
     # Checkout branch, bring it up to date with origin and delete all merged branches
     md-bdone = "!f() { git checkout ${1-master} && git md-up && git md-bclean ${1-master}; }; f"
 
+    # Grep through all commits
+    md-hgrep = "!f() { git rev-list --all | xargs git grep $@; }; f"
+
     md-vconfig = config --global -e
     md-vignore = !vi $DOTFILES/git/gitignore.symlink
 
