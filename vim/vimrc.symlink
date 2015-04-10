@@ -98,6 +98,19 @@ if v:version > 703 || v:version == 703 && has("patch541")
     set formatoptions+=j
 endif
 
+" Ignore during file / directory completion
+set wildignore=*.o,*.obj,*~,*.pyc
+set wildignore+=*.egg,*.egg-info
+set wildignore+=*.png,*.jpg,*.gif
+set wildignore+=*.so,*.swp,*.zip,*/.Trash/**,*.pdf,*.dmg,*/Library/**,*/.rbenv/**
+set wildignore+=.tmp
+set wildignore+=.coverage
+set wildignore+=.coverage/**
+set wildignore+=*DS_Store*
+set wildignore+=.sass-cache/
+set wildignore+=__pycache__/
+set wildignore+=.webassets-cache/
+
 " }}}
 
 " General mappings {{{
