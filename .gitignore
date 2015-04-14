@@ -6,6 +6,7 @@ emacs.d.symlink/url
 emacs.d.symlink/tramp
 emacs.d.symlink/.backups
 emacs.d.symlink/custom.el
+emacs.d.symlink/recentf
 
 # .config might contain files that have been dumped by programs, so
 # don't include it by default
