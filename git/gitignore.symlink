@@ -5,6 +5,8 @@ __pycache__
 .coverage
 .tox
 
+venv
+
 *.swo
 *.swp
 *.swn
