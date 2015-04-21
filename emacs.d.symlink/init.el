@@ -23,6 +23,8 @@
     outline-magic
     org
     smart-mode-line
+    helm
+    key-chord
     undo-tree))
 
 (package-initialize)
@@ -68,6 +70,131 @@
 (if (getenv "DOTFILES")
     (setq backup-directory-alist
           `(("." . ,(concat (getenv "DOTFILES") "/emacs.d.symlink/.backups")))))
+
+
+
+;;;; Helm
+(require 'helm)
+(require 'helm-config)
+
+(defun md/helm-solarized-hook ()
+  (ignore-errors ; Faces don't always exist
+
+    ;; Copy these from emacs-color-theme-solarized until I update my fork
+    ;;(set-face-attribute 'helm-apt-deinstalled nil :foreground solarized-base01)
+    ;;(set-face-attribute 'helm-apt-installed nil :foreground solarized-green)
+    (set-face-attribute 'helm-bookmark-addressbook nil :foreground solarized-blue)
+    (set-face-attribute 'helm-bookmark-directory nil :inherit 'helm-ff-directory)
+    (set-face-attribute 'helm-bookmark-file nil :inherit 'helm-ff-file)
+    (set-face-attribute 'helm-bookmark-gnus nil :foreground solarized-cyan)
+    (set-face-attribute 'helm-bookmark-info nil :foreground solarized-green)
+    (set-face-attribute 'helm-bookmark-man nil :foreground solarized-violet)
+    (set-face-attribute 'helm-bookmark-w3m nil :foreground solarized-yellow)
+    ;;(set-face-attribute 'helm-bookmarks-su nil :foreground solarized-orange)
+    (set-face-attribute 'helm-buffer-not-saved nil :foreground solarized-orange)
+    (set-face-attribute 'helm-buffer-process nil :foreground solarized-magenta)
+    (set-face-attribute 'helm-buffer-saved-out nil 
+                        :inverse-video t 
+                        :foreground solarized-red 
+                        :background solarized-base03)
+    (set-face-attribute 'helm-buffer-size nil :foreground solarized-base01)
+    (set-face-attribute 'helm-candidate-number nil
+                        :weight 'bold
+                        :foreground solarized-base1
+                        :background solarized-base02)
+    ;;(set-face-attribute 'helm-emms-playlist nil :foreground solarized-base01)
+    ;;(set-face-attribute 'helm-etags+-highlight-face nil :inherit 'highlight)
+    (set-face-attribute 'helm-ff-directory nil
+                        :background solarized-base03
+                        :foreground solarized-blue)
+    (set-face-attribute 'helm-ff-executable nil 
+                        :weight 'bold
+                        :foreground solarized-green)
+    (set-face-attribute 'helm-ff-file nil :inherit 'default)
+    (set-face-attribute 'helm-ff-invalid-symlink nil 
+                        :background solarized-base02
+                        :foreground solarized-red)
+    (set-face-attribute 'helm-ff-prefix nil 
+                        :inverse-video t
+                        :foreground solarized-yellow)
+    (set-face-attribute 'helm-ff-symlink nil 
+                        :weight 'bold
+                        :foreground solarized-cyan)
+    ;;(set-face-attribute 'helm-gentoo-match nil :inherit 'helm-match)
+    (set-face-attribute 'helm-grep-cmd-line nil :inherit 'diff-added)
+    (set-face-attribute 'helm-grep-file nil 
+                        :underline t
+                        :foreground solarized-cyan)
+    (set-face-attribute 'helm-grep-finish nil :foreground solarized-green)
+    (set-face-attribute 'helm-grep-lineno nil :foreground solarized-orange)
+    (set-face-attribute 'helm-grep-match nil :inherit 'helm-match)
+    (set-face-attribute 'helm-grep-running nil :foreground solarized-red)
+    (set-face-attribute 'helm-helper nil :inherit 'helm-header)
+    (set-face-attribute 'helm-history-deleted nil :inherit 'helm-ff-invalid-symlink)
+    (set-face-attribute 'helm-history-remote nil :foreground solarized-red)
+    (set-face-attribute 'helm-lisp-completion-info nil :foreground solarized-base0)
+    (set-face-attribute 'helm-lisp-show-completion nil 
+                        :weight 'bold
+                        :foreground solarized-yellow
+                        :background solarized-base02)
+    ;;(set-face-attribute 'helm-ls-git-added-copied-face nil :foreground solarized-green)
+    ;;(set-face-attribute 'helm-ls-git-conflict-face nil 
+    ;;                    :weight 'bold
+    ;;                    :foreground solarized-red)
+    ;;(set-face-attribute 'helm-ls-git-deleted-and-staged-face nil 
+    ;;                    :slant 'italic
+    ;;                    :foreground solarized-base01)
+    ;;(set-face-attribute 'helm-ls-git-deleted-not-staged-face nil 
+    ;;                    :weight 'bold
+    ;;                    :foreground solarized-green)
+    ;;(set-face-attribute 'helm-ls-git-modified-and-staged-face nil 
+    ;;                    :slant 'italic
+    ;;                    :foreground solarized-base01)
+    ;;(set-face-attribute 'helm-ls-git-modified-not-staged-face nil 
+    ;;                    :slant 'italic
+    ;;                    :foreground solarized-base01)
+    ;;(set-face-attribute 'helm-ls-git-renamed-modified-face nil :foreground solarized-green)
+    ;;(set-face-attribute 'helm-ls-git-untracked-face nil :foreground solarized-red)
+    (set-face-attribute 'helm-M-x-key nil :foreground solarized-orange)
+    (set-face-attribute 'helm-match nil :inherit 'match)
+    (set-face-attribute 'helm-moccur-buffer nil 
+                        :underline t
+                        :foreground solarized-cyan)
+    (set-face-attribute 'helm-selection-line nil :inherit 'secondary-selection)
+    (set-face-attribute 'helm-separator nil :foreground solarized-red)
+    (set-face-attribute 'helm-source-header nil :inherit 'helm-header)
+    (set-face-attribute 'helm-time-zone-current nil :foreground solarized-green)
+    (set-face-attribute 'helm-time-zone-home nil :foreground solarized-red)
+    (set-face-attribute 'helm-visible-mark nil 
+                        :weight 'bold
+                        :background solarized-base03
+                        :foreground solarized-magenta)
+    ;;(set-face-attribute 'helm-w3m-bookmarks nil :inherit 'helm-bookmark-w3m)
+
+    (set-face-attribute 'helm-selection nil
+                        :inverse-video nil
+                        :weight 'bold
+                        :foreground solarized-orange
+                        :background solarized-base02)
+    ))
+
+(add-hook 'solarized-theme-hook 'md/helm-solarized-hook)
+(helm-mode 1)
+(helm-autoresize-mode 0)
+
+;; Replace some standard commands with helm versions
+(define-key global-map [remap find-file] 'helm-find-files)
+(define-key global-map [remap occur] 'helm-occur)
+(define-key global-map [remap dabbrev-expand] 'helm-dabbrev)
+(define-key global-map [remap list-buffers] 'helm-buffers-list) ; This is probably C-x b
+
+(global-set-key (kbd "M-x") 'helm-M-x)
+(global-set-key (kbd "C-x b") 'helm-mini)
+
+(unless (boundp 'completion-in-region-function)
+  (define-key lisp-interaction-mode-map [remap completion-at-point] 'helm-lisp-completion-at-point)
+  (define-key emacs-lisp-mode-map       [remap completion-at-point] 'helm-lisp-completion-at-point))
+
 
 ;;;; SML
 (require 'smart-mode-line)
@@ -201,10 +328,15 @@
  scroll-step 1)
 
 ;; Make fringe thinner - default is 8 pixels
+(require 'fringe)
 (fringe-mode 4)
 
 ;; Remove scrollbars to get extra screen space
+(require 'scroll-bar)
 (scroll-bar-mode -1)
+
+;; ...and toolbar
+(if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 
 (setq visible-bell nil)
 
@@ -296,6 +428,12 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 (define-key evil-normal-state-map "L" 'move-end-of-line)
 (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
 (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
+
+;; This seems the easiest way to get vim-style arbitrary prefixs
+(require 'key-chord)
+(setq key-chord-two-keys-delay 0.4)
+(key-chord-define evil-insert-state-map "jj" 'evil-normal-state)
+(key-chord-mode 1)
 
 
 ;;;; Outline
