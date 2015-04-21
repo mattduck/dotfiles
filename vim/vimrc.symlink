@@ -149,8 +149,8 @@ nnoremap <leader>O maO<Esc>`a:delmarks a<CR>:w<CR>
 nnoremap Y y$
 
 " Don't care about most NERDcomment functionality
-map <leader>cc <Plug>NERDCommenterToggle
-map <leader>cA <Plug>NERDCommenterAppend
+nmap <leader>cc <Plug>NERDCommenterToggle
+nmap <leader>cA <Plug>NERDCommenterAppend
 
 nnoremap L $
 nnoremap H ^
