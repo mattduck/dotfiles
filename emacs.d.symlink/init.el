@@ -172,10 +172,9 @@
     ;;(set-face-attribute 'helm-w3m-bookmarks nil :inherit 'helm-bookmark-w3m)
 
     (set-face-attribute 'helm-selection nil
-                        :inverse-video nil
-                        :weight 'bold
-                        :foreground solarized-orange
-                        :background solarized-base02)
+                        :inverse-video t
+                        :background solarized-base03
+                        :foreground solarized-base01)
     ))
 
 (add-hook 'solarized-theme-hook 'md/helm-solarized-hook)
