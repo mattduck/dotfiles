@@ -17,8 +17,6 @@ function ,tm-init() {
 
     # Panes
     ,tm-new-win-vertical
-    tmux select-window -t $ORIG_WINDOW
-    tmux kill-window
 
     # Usually only have one session per machine
     tmux rename-session "main"
