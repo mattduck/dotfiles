@@ -71,7 +71,8 @@
     (setq backup-directory-alist
           `(("." . ,(concat (getenv "DOTFILES") "/emacs.d.symlink/.backups")))))
 
-
+;;;; General
+(setq confirm-kill-emacs 'yes-or-no-p)
 
 ;;;; Helm
 (require 'helm)
