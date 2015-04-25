@@ -432,6 +432,12 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 ;; This seems the easiest way to get vim-style arbitrary prefixs
 (require 'key-chord)
 (setq key-chord-two-keys-delay 0.4)
+(defun md/normal-state-and-save ()
+  (interactive)
+  (evil-normal-state)
+  (save-buffer))
+  
+(key-chord-define evil-insert-state-map "jk" 'md/normal-state-and-save)
 (key-chord-define evil-insert-state-map "jj" 'evil-normal-state)
 (key-chord-mode 1)
 

@@ -135,7 +135,7 @@ inoremap <Down> <Nop>
 inoremap <Left> <Nop>
 inoremap <Right> <Nop>
 
-" Escape insert mode w/jj
+inoremap jk <ESC>:w<CR>
 inoremap jj <ESC>
 
 " Behave properly on long lines
