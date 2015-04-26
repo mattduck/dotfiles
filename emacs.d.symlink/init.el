@@ -437,8 +437,8 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
   (evil-normal-state)
   (save-buffer))
   
-(key-chord-define evil-insert-state-map "jk" 'md/normal-state-and-save)
-(key-chord-define evil-insert-state-map "jj" 'evil-normal-state)
+(key-chord-define evil-insert-state-map "jj" 'md/normal-state-and-save)
+(key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
 (key-chord-mode 1)
 
 

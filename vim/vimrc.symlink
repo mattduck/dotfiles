@@ -135,8 +135,8 @@ inoremap <Down> <Nop>
 inoremap <Left> <Nop>
 inoremap <Right> <Nop>
 
-inoremap jk <ESC>:w<CR>
-inoremap jj <ESC>
+inoremap jj <ESC>:w<CR>
+inoremap jk <ESC>
 
 " Behave properly on long lines
 nnoremap j gj
