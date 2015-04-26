@@ -150,6 +150,7 @@ nnoremap Y y$
 
 " Don't care about most NERDcomment functionality
 nmap <leader>cc <Plug>NERDCommenterToggle
+vmap <leader>cc <Plug>NERDCommenterToggle
 nmap <leader>cA <Plug>NERDCommenterAppend
 
 nnoremap L $
