@@ -339,6 +339,7 @@
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 
 (setq visible-bell nil)
+(setq ring-bell-function 'ignore)
 
 ;;;; Parentheses
 ;; =============================================================================
