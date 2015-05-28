@@ -189,10 +189,6 @@ nnoremap <leader>lw :call ToggleLineWrap()<CR>
 nnoremap n nzz
 nnoremap <S-n> <S-n>zz
 
-" Reselect visual block after indent
-vnoremap < <gv
-vnoremap > >gv
-
 
 " }}}
 
