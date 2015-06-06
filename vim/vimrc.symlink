@@ -73,11 +73,21 @@ call vundle#rc()
 " }}}
 
 " General {{{
-if has('autocmd')
-    filetype plugin indent on " Enable filetype detection, load indent files
-endif
+
+" Register and reset autocmd groups.
+augroup vimrc " Group for general declarations
+    autocmd!
+augroup END
+augroup vimrc_enter " Group for wrapping things to override plugin settings on vim load
+    autocmd!
+augroup END
+
+" Enable filetype detection and loading filetype plugins / indent
+filetype plugin indent on
+
+" Enable syntax highlighting
 if has('syntax') && !exists('g:syntax_on')
-    syntax enable " Enable syntax highlighting
+    syntax enable
 endif
 
 set encoding=utf-8
@@ -149,9 +159,12 @@ nnoremap <leader>O maO<Esc>`a:delmarks a<CR>:w<CR>
 nnoremap Y y$
 
 " Don't care about most NERDcomment functionality
-nmap <leader>cc <Plug>NERDCommenterToggle
-vmap <leader>cc <Plug>NERDCommenterToggle
-nmap <leader>cA <Plug>NERDCommenterAppend
+function! OverrideNERDCommentMappings()
+  nmap <leader>cc <Plug>NERDCommenterToggle
+  vmap <leader>cc <Plug>NERDCommenterToggle
+  nmap <leader>cA <Plug>NERDCommenterAppend
+endfunction
+autocmd vimrc_enter VimEnter * call OverrideNERDCommentMappings()
 
 nnoremap L $
 nnoremap H ^
@@ -236,7 +249,6 @@ set t_Co=16 " Solarized uses 16 colours
 let g:CSApprox_verbose_level = 0 " Get rid of CSApprox 16col warnings
 colorscheme solarized
 let g:solarized_termcolours=16
-
 function! ToggleBg()
     if &background == 'dark'
         set background=light
@@ -247,13 +259,11 @@ endfunction
 
 nmap <leader>bg :call ToggleBg()<CR>
 
-" Use autocmd, because if you only declare custom highlights once they will be
-" overridden with the defaults when enabling light / dark background.
-autocmd ColorScheme * hi Todo ctermfg=1  " red
-autocmd ColorScheme * hi DiffAdd cterm=reverse
-autocmd ColorScheme * hi DiffChange ctermfg=4 cterm=reverse  " blue
-autocmd ColorScheme * hi DiffText ctermfg=4 cterm=reverse  " blue
-autocmd ColorScheme * hi DiffDelete cterm=reverse
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi Todo ctermfg=1  " red
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffAdd cterm=reverse
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffChange ctermfg=4 cterm=reverse  " blue
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffText ctermfg=4 cterm=reverse  " blue
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffDelete cterm=reverse
 
 " }}}
 
@@ -293,7 +303,7 @@ set foldlevelstart=0
 set foldminlines=0
 set foldnestmax=3
 
-autocmd FileType vim setlocal foldmethod=marker
+autocmd vimrc_enter VimEnter * autocmd vimrc FileType vim setlocal foldmethod=marker
 
 nmap <Leader>fsyn :let &l:foldmethod = 'syntax'<CR>
 nmap <Leader>find :let &l:foldmethod = 'indent'<CR>
@@ -305,10 +315,10 @@ nmap <Leader>fmark :let &l:foldmethod = 'marker'<CR>
 let g:EasyMotion_use_upper = 1
 let g:EasyMotion_keys = "URIEOWYTQPBVNCM;ALSKDJF"
 
-autocmd ColorScheme * hi link EasyMotionTarget Todo
-autocmd ColorScheme * hi link EasyMotionTarget2First Todo
-autocmd ColorScheme * hi link EasyMotionTarget2Second Identifier
-autocmd ColorScheme * hi link EasyMotionShade Comment
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionTarget Todo
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionTarget2First Todo
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionTarget2Second Identifier
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionShade Comment
 map <Space> <Plug>(easymotion-prefix)
 " }}}
 
@@ -347,7 +357,7 @@ endif
 " }}}
 
 " Git {{{
-autocmd FileType gitcommit setlocal textwidth=72
+autocmd vimrc_enter VimEnter * autocmd vimrc FileType gitcommit setlocal textwidth=72
 
 " Recommended by gitgutter docs if grep is aliased to something that changes
 " output, eg. -color=auto
@@ -362,20 +372,35 @@ nmap <leader>gadd <Plug>GitGutterStageHunk
 nmap <leader>gres <Plug>GitGutterRevertHunk
 nmap <leader>grev <Plug>GitGutterRevertHunk
 
-autocmd ColorScheme * hi GitGutterChangeDefault ctermfg=4 " blue, same as DiffChange
-autocmd ColorScheme * hi link GitGutterChangeDelete GitGutterChange
-autocmd ColorScheme * hi link GitGutterChangeDeleteLine GitGutterChangeLine
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi GitGutterChangeDefault ctermfg=4 " blue, same as DiffChange
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link GitGutterChangeDelete GitGutterChange
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link GitGutterChangeDeleteLine GitGutterChangeLine
 
 " }}}
 
 " Python {{{
-autocmd FileType python setlocal textwidth=79 " Adhere to PEP8
+autocmd vimrc_enter VimEnter * autocmd vimrc FileType python setlocal textwidth=79 " Adhere to PEP8
 
 " Python folding syntax isn't provided by default
-autocmd FileType python source $DOTFILES/vim/vim.symlink/bundle/jpythonfold.vim/syntax/jpythonfold.vim
+autocmd vimrc_enter VimEnter * autocmd vimrc FileType python source $DOTFILES/vim/vim.symlink/bundle/jpythonfold.vim/syntax/jpythonfold.vim
 " }}}
 
-" Set colorscheme last {{{
-" To trigger the autocmd highlight overrides in this file.
-set background=dark
+" autocmd handling {{{
+
+" The autocmds in this file are organised to override any autocmds that might be
+" set by plugins that are loaded after the vimrc on startup. We use the VimEnter
+" hook to define all autocmds - to put them at the end of the list of hooks for
+" each event. We also need to re-populate those autocmds when vimrc is reloaded,
+" so:
+doautoall vimrc_enter VimEnter
+
+" On startup, perform all ColorScheme hooks, because they aren't done
+" automatically.
+autocmd vimrc_enter VimEnter * doautoall vimrc ColorScheme
+
+" Perform all ColorScheme hooks on every reload, as they don't all get executed
+" when the colorscheme is defined near the top of this file.
+doautoall vimrc ColorScheme
+
+" There are obviously better solutions to this, but this will do for now.
 " }}}
