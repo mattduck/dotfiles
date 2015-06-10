@@ -253,6 +253,7 @@ set autoindent
 set t_Co=16 " Solarized uses 16 colours
 let g:CSApprox_verbose_level = 0 " Get rid of CSApprox 16col warnings
 colorscheme solarized
+set background=dark
 let g:solarized_termcolours=16
 function! ToggleBg()
     if &background == 'dark'
