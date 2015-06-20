@@ -17,9 +17,11 @@ brew install \
     emacs \
     postgresql \
     fasd \
+    oath-toolkit \
+    ansible \
 
 # Brew is easiest way to compile with python
-brew install vim 
+brew install vim
 
 # Required to allow tmux to merge w/osx clipboard
 brew install reattach-to-user-namespace
