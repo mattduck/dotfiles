@@ -1,7 +1,15 @@
+;;;; Fix environment if called as GUI app
+;; =============================================================================
+(defun md/get-dotfiles-path ()
+  (or
+    (getenv "DOTFILES")
+    (concat (expand-file-name "~") "/dotfiles")))
+
 ;;;; Reload
+;; =============================================================================
 (defun md/dotfiles-reload ()
     (interactive)
-    (load-file (concat (getenv "DOTFILES") "/emacs.d.symlink/init.el")))
+    (load-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/init.el")))
 
 ;;;; Download and install packages
 ;; =============================================================================
@@ -44,7 +52,7 @@
 ;;;; Add "non-elpa" dir to load-path
 ;; =============================================================================
 
-(let ((base (concat (getenv "DOTFILES") "/emacs.d.symlink/non-elpa")))
+(let ((base (concat (md/get-dotfiles-path) "/emacs.d.symlink/non-elpa")))
   (add-to-list 'load-path base)
   (dolist (f (directory-files base)) ; Include top-level sub-directories
     (let ((name (concat base "/" f)))
@@ -60,16 +68,15 @@
 ;;;; Load external files
 ;; =============================================================================
 
-(load-file (concat (getenv "DOTFILES") "/splitscreen/splitscreen.el"))
+(load-file (concat (md/get-dotfiles-path) "/splitscreen/splitscreen.el"))
 
 ;;;; Backups
 ;; =============================================================================
 
 ;; Backup everything to the same directory, rather than dropping
 ;; files all over the place
-(if (getenv "DOTFILES")
-    (setq backup-directory-alist
-          `(("." . ,(concat (getenv "DOTFILES") "/emacs.d.symlink/.backups")))))
+(setq backup-directory-alist
+      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
 
 ;;;; General
 (setq confirm-kill-emacs 'yes-or-no-p)
@@ -255,7 +262,7 @@
 ;;;; Custom
 ;; =============================================================================
 
-(setq custom-file (concat (getenv "DOTFILES") "/emacs.d.symlink/custom.el"))
+(setq custom-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/custom.el"))
 (load custom-file 'noerror)
 
 (savehist-mode 1)
