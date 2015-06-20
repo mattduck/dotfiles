@@ -174,12 +174,16 @@ vmap H ^
 omap L $
 omap H ^
 
-" I'm used to this from org-mode
-nnoremap <tab> za
-
 " Quick way to move between method definitions in a file
 nmap gk [m
 nmap gj ]m
+vmap gk [m
+vmap gj ]m
+omap gk [m
+omap gj ]m
+
+" I'm used to this from org-mode
+nnoremap <tab> za
 
 " :nohl
 nnoremap <leader>hl :nohl<CR>
