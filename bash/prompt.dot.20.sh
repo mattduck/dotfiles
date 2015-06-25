@@ -3,7 +3,7 @@ if [[ $EUID == 0 ]]; then
     _user="\[$Ared\]$debian_chroot\u"
     _hostname="\[$HOST_COLOUR_ANSI\]\h"
     _pwd="\[$Abase1\]\w"
-    PS1="$_user $_hostname $_pwd\n\[$Ared\]# "
+    PS1="\n$_user $_hostname $_pwd\n\[$Ared\]# "
 
 # Standard prompt
 else
@@ -17,11 +17,11 @@ else
         _git_info="\[$Abase01\]\$(__git_ps1)"
     fi
 
-    PS1="$_hostname: $_pwd$_git_info\n\[$Abase1\]$ "
+    PS1="\n$_hostname: $_pwd$_git_info\n\[$Abase1\]$ "
 fi
 
-export PROMPT_DIRTRIM=4                 
+export PROMPT_DIRTRIM=4
 
 # Write to history file on every prompt to make sure it always gets saved. Don't
-# read on every prompt, as prefer to use immediate history per-shell. 
+# read on every prompt, as prefer to use immediate history per-shell.
 export PROMPT_COMMAND="history -a;"
