@@ -41,6 +41,7 @@ call vundle#rc()
     Bundle "bling/vim-airline"
     Bundle 'airblade/vim-gitgutter'
     Bundle 'christoomey/vim-tmux-navigator'
+    Bundle "mileszs/ack.vim"
 
 " syntax / indent
     Bundle "rest.vim"
@@ -344,13 +345,7 @@ let g:syntastic_python_checkers = ["python", "flake8"]
 let g:syntastic_loc_list_height = 3
 " }}}
 
-" Nerdtree {{{
-"map <leader>t :NERDTreeToggle<CR>
-"let NERDTreeIgnore = ['\.pyc$']
-" }}}
-
 " Ctrl-p {{{
-"
 let g:ctrlp_switch_buffer = 'et' " Don't jump to other tabs, open buffer in same window
 noremap <leader>bb :CtrlPBuffer<CR>
 if executable('ag')
@@ -363,6 +358,29 @@ if executable('ag')
                 \ --ignore "__pycache__/"
                 \ -g ""'
 endif
+" }}}
+
+" ack.vim {{{
+if executable('ag')
+    let g:ackprg = 'ag --vimgrep --hidden --skip-vcs-ignores
+                \ --ignore ".git"
+                \ --ignore ".DS_Store"
+                \ --ignore "*.pyc"
+                \ --ignore "*.egg"
+                \ --ignore "*.egg-info"
+                \ --ignore "__pycache__/"'
+endif
+
+let g:ackhighlight = 1
+let g:ack_autofold_results = 1
+
+" Replace default mappings with splitscreen conventions, remove what I won't
+" use. Open in: current window, tab, horizontal split, vertical split.
+let g:ack_mappings = {
+      \ "o": "<CR><C-W>j",
+      \ "t": "<C-W><CR><C-W>TgT<C-W>j",
+      \ '"': "<C-W><CR><C-W>K<C-W>b",
+      \ "%": "<C-W><CR><C-W>H<C-W>b<C-W>J" }
 
 " }}}
 
