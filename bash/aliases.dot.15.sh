@@ -15,6 +15,7 @@ alias sudo="sudo " # Enable aliases to be sudo'ed
 alias grep="grep --color=auto"
 alias fgrep="fgrep --color=auto"
 alias egrep="egrep --color=auto"
+alias ag="ag --color-line-number=36 --color-path=32 --color-match=1\;4\;31"
 
 # Setup autocompletion for git alias
 alias g="git"

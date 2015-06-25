@@ -8,3 +8,12 @@ function ,mkd() {
     # Make and enter directory
     mkdir -p "$@" && cd "$@"
 }
+
+function ,ag() {
+    # Display coloured ag results via less.
+    ag $@ \
+        --color \
+        --break \
+        --context=2 \
+        --pager="less -r"
+}
