@@ -184,7 +184,7 @@ omap gk [m
 omap gj ]m
 
 " I'm used to this from org-mode
-nnoremap <tab> za
+"nnoremap <tab> za
 
 " :nohl
 nnoremap <leader>hl :nohl<CR>
@@ -288,8 +288,13 @@ set backupskip=/tmp/*,/private/tmp/* " Fix crontab's "temp file must be edited i
 " Don't pollute files everywhere. Double trailing slash tells vim to avoid
 " name collisions by prepending path
 set backupdir=~/.vim-backup//
-set directory=~/.vim-swap// " Where swap file is saved
-set undodir=~/.vim-undo// " Not using undofile atm, but in case do
+set directory=~/.vim-swap//   " Where swap file is saved
+set undodir=~/.vim-undo//     " Not using undofile atm, but in case do
+
+" Vim throws error on startup if the above directories don't exist
+call system('mkdir -p ~/.vim-backup >/dev/null')
+call system('mkdir -p ~/.vim-swap >/dev/null')
+call system('mkdir -p ~/.vim-undo >/dev/null')
 
 au BufNewFile,BufRead *.mak set filetype=mako
 " }}}
@@ -362,7 +367,7 @@ endif
 
 " ack.vim {{{
 if executable('ag')
-    let g:ackprg = 'ag --vimgrep --hidden --skip-vcs-ignores
+    let g:ackprg = 'ag --vimgrep --hidden
                 \ --ignore ".git"
                 \ --ignore ".DS_Store"
                 \ --ignore "*.pyc"
