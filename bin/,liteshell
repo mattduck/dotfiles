@@ -1,0 +1,6 @@
+#!/bin/bash
+# Shell with some resource-hungry things removed
+
+echo "Loading liteshell..."
+DOTFILES_LITE=true bash
+echo "...exited liteshell"

@@ -1,12 +1,15 @@
 # Root prompt
-if [[ $EUID == 0 ]]; then
+if [[ $DOTFILES_LITE ]]; then
+    PS1="\n$ "
+
+elif [[ $EUID == 0 ]]; then
     _user="\[$Ared\]$debian_chroot\u"
     _hostname="\[$HOST_COLOUR_ANSI\]\h"
     _pwd="\[$Abase1\]\w"
     PS1="\n$_user $_hostname $_pwd\n\[$Ared\]# "
 
-# Standard prompt
 else
+    # Standard prompt
     _user="\[$Ayellow\]$debian_chroot\u"
     _hostname="\[$HOST_COLOUR_ANSI\]\h"
     _pwd="\[$HOST_COLOUR_ANSI\]\w"
