@@ -1,0 +1,7 @@
+#!/bin/bash
+# Display coloured ag results via less.
+ag "$@" \
+    --color \
+    --break \
+    --context=2 \
+    --pager="less -r"
