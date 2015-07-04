@@ -1,28 +1,65 @@
 set editing-mode vi
 
 set keymap vi-command
+# arrows
 "\e[B": history-search-forward
 "\e[A": history-search-backward
-Control-l: clear-screen
+"j": history-search-forward
+"k": history-search-backward
+"\C-n": history-search-forward
+"\C-p": history-search-backward
+"\C-l": clear-screen
+"\C-a": beginning-of-line
+"H": beginning-of-line
+"L": end-of-line
 
 set keymap vi-insert
+# arrows
 "\e[B": history-search-forward
 "\e[A": history-search-backward
-Control-l: clear-screen
+"\C-n": history-search-forward
+"\C-p": history-search-backward
+"\C-l": clear-screen
+"\C-a": beginning-of-line
+"\C-e": end-of-line
+"\C-u": backward-kill-line
+"jj": vi-movement-mode
+"\C-j": menu-complete
+"\C-k": menu-complete-backward
 
 # Be quiet
 set bell-style visible
 
-# Tab autocompletion ignores case
-set completion-ignore-case on
-
 # Add trailing slash when autocompleting symlinks to directories
 set mark-symlinked-directories on
 
-# If more than 200 completions, ask to show them
-set completion-query-items 200
+# Ask to show more than this number of completions
+set completion-query-items 50
 
 # Allow UTF-8 input and output
 set input-meta on
 set output-meta on
 set covert-meta off
+
+# Colourise completion
+set colored-stats on
+
+# Ignore case, treat _ and - the same
+set completion-ignore-case on
+set completion-map-case on
+
+# menu-complete cycles through completion, like TAB in vim command mode but
+# without showing all of the possible values. If on, this displays the common
+# prefix on the first completion, and then starts cycling on the next.
+set menu-complete-display-prefix off
+
+# Enable application keypad
+set enable-keypad on
+
+# Don't expand tilde to /home/foo when autocompleting.
+set expand-tilde off
+
+# When there is more than one possible completion, list them immediately instead
+# of ringing the bell and requiring completion to be called again.
+set show-all-if-ambiguous on
+set show-all-if-unmodified on
