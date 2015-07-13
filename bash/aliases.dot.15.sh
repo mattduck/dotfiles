@@ -6,9 +6,9 @@ else # OS X `ls`
 fi
 
 alias ls="ls ${lscolorflag}"
-alias l="ls -lF"
-alias ll="ls -alF"
-alias lsd="ls -lF ${colorflag} | grep --color=never '^d'" # List only directories
+alias l="ls -hlF"
+alias ll="ls -halF"
+alias lsd="ls -hlF ${colorflag} | grep --color=never '^d'" # List only directories
 
 alias sudo="sudo " # Enable aliases to be sudo'ed
 
