@@ -2,7 +2,7 @@ export EDITOR="vim"
 
 export HISTSIZE=32768
 export HISTFILESIZE=$HISTSIZE
-export HISTIGNORE="ls:l:ll:h:cd:"
+export HISTIGNORE="ls:l:ll:h:cd:vi:history:,history:gg:"
 export HISTCONTROL="ignorespace:ignoredups"
 shopt -s histappend
 
