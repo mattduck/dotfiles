@@ -4,4 +4,7 @@ ag "$@" \
     --color \
     --break \
     --context=2 \
-    --pager="less -r"
+    --pager="less -r" \
+    --color-line-number=36 \
+    --color-path=32 \
+    --color-match=1\;4\;31 \
