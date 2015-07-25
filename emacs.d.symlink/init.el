@@ -613,6 +613,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
   "$" 'org-end-of-line
   "^" 'org-beginning-of-line
   "-" 'org-cycle-list-bullet
+  (kbd "RET") 'org-cycle
   (kbd "TAB") 'org-cycle)
 
 ;; normal & insert state shortcuts.
