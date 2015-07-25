@@ -422,17 +422,17 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 ;; Closest thing to easymotion.
 (require 'ace-jump-mode)
 (setq ace-jump-mode-move-keys '(?f ?j ?d ?k ?s ?l ?a ?\; ?g ?h ?r ?u ?e ?i ?w ?o ?t ?y ?b ?v ?n ?c ?m ?x))
-(setq ace-jump-mode-scope 'window) ;; it's quicker this way
+(setq ace-jump-mode-scope 'window) ;; If scope is wider than window performance drops a lot
 (setq ace-jump-word-mode-use-query-char nil)
-(define-key evil-normal-state-map (kbd "SPC") nil)
-(define-key evil-normal-state-map (kbd "SPC j") 'evil-ace-jump-line-mode)
-(define-key evil-normal-state-map (kbd "SPC k") 'evil-ace-jump-line-mode)
-(define-key evil-normal-state-map (kbd "SPC w") 'evil-ace-jump-word-mode)
-(define-key evil-normal-state-map (kbd "SPC b") 'evil-ace-jump-word-mode)
-(define-key evil-normal-state-map (kbd "SPC f") 'evil-ace-jump-char-mode)
-(define-key evil-normal-state-map (kbd "SPC F") 'evil-ace-jump-char-mode)
-(define-key evil-normal-state-map (kbd "SPC t") 'evil-ace-jump-char-mode)
-(define-key evil-normal-state-map (kbd "SPC T") 'evil-ace-jump-char-mode)
+(define-key evil-normal-state-map (kbd "\\") nil)
+(define-key evil-normal-state-map (kbd "\\ j") 'evil-ace-jump-line-mode)
+(define-key evil-normal-state-map (kbd "\\ k") 'evil-ace-jump-line-mode)
+(define-key evil-normal-state-map (kbd "\\ w") 'evil-ace-jump-word-mode)
+(define-key evil-normal-state-map (kbd "\\ b") 'evil-ace-jump-word-mode)
+(define-key evil-normal-state-map (kbd "\\ f") 'evil-ace-jump-char-mode)
+(define-key evil-normal-state-map (kbd "\\ F") 'evil-ace-jump-char-mode)
+(define-key evil-normal-state-map (kbd "\\ t") 'evil-ace-jump-char-mode)
+(define-key evil-normal-state-map (kbd "\\ T") 'evil-ace-jump-char-mode)
 
 ;; Same as vimrc
 (define-key evil-normal-state-map "H" 'move-beginning-of-line)
@@ -440,7 +440,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
 (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
 
-;; This seems the easiest way to get vim-style arbitrary prefixs
+;; This seems the easiest way to get vim-style arbitrary prefixes
 (require 'key-chord)
 (setq key-chord-two-keys-delay 0.4)
 (defun md/normal-state-and-save ()
@@ -533,6 +533,14 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
     (set-face-attribute 'warning nil :foreground solarized-red)))
 
+(defun md/org-timestamp-time-inactive-no-confirm ()
+    (interactive)
+  (org-insert-time-stamp (current-time) t t))
+
+(defun md/org-timestamp-date-inactive-no-confirm ()
+    (interactive)
+  (org-insert-time-stamp (current-time) nil t))
+
 (defun md/org-hook ()
   ;; Change tab widths to fit headline indents
   (setq tab-width 2)
@@ -547,6 +555,9 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
   ;; above mode functions. TODO - is this a bad thing?
   (setq-local line-number-mode 1)
   (setq-local column-number-mode nil)
+  
+  (define-key org-mode-map (kbd "C-c d") 'md/org-timestamp-date-inactive-no-confirm) 
+  (define-key org-mode-map (kbd "C-c t") 'md/org-timestamp-time-inactive-no-confirm)
 
   (md/org-solarized-faces))
 
@@ -561,8 +572,10 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
    href='https://mattduck.github.io/generic-css/css/generic-light.css'>
   <script type='text/javascript'
    src='https://mattduck.github.io/generic-css/js/generic-css.js'></script>")
-(setq org-export-headline-levels 6)
-(setq org-export-with-section-numbers 4)
+(setq org-export-headline-levels 6
+      org-export-with-section-numbers 4)
+
+
 
 ;;;; Org-evil
 ;; =============================================================================
