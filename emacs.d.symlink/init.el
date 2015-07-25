@@ -104,9 +104,9 @@
     ;;(set-face-attribute 'helm-bookmarks-su nil :foreground solarized-orange)
     (set-face-attribute 'helm-buffer-not-saved nil :foreground solarized-orange)
     (set-face-attribute 'helm-buffer-process nil :foreground solarized-magenta)
-    (set-face-attribute 'helm-buffer-saved-out nil 
-                        :inverse-video t 
-                        :foreground solarized-red 
+    (set-face-attribute 'helm-buffer-saved-out nil
+                        :inverse-video t
+                        :foreground solarized-red
                         :background solarized-base03)
     (set-face-attribute 'helm-buffer-size nil :foreground solarized-base01)
     (set-face-attribute 'helm-candidate-number nil
@@ -118,22 +118,22 @@
     (set-face-attribute 'helm-ff-directory nil
                         :background solarized-base03
                         :foreground solarized-blue)
-    (set-face-attribute 'helm-ff-executable nil 
+    (set-face-attribute 'helm-ff-executable nil
                         :weight 'bold
                         :foreground solarized-green)
     (set-face-attribute 'helm-ff-file nil :inherit 'default)
-    (set-face-attribute 'helm-ff-invalid-symlink nil 
+    (set-face-attribute 'helm-ff-invalid-symlink nil
                         :background solarized-base02
                         :foreground solarized-red)
-    (set-face-attribute 'helm-ff-prefix nil 
+    (set-face-attribute 'helm-ff-prefix nil
                         :inverse-video t
                         :foreground solarized-yellow)
-    (set-face-attribute 'helm-ff-symlink nil 
+    (set-face-attribute 'helm-ff-symlink nil
                         :weight 'bold
                         :foreground solarized-cyan)
     ;;(set-face-attribute 'helm-gentoo-match nil :inherit 'helm-match)
     (set-face-attribute 'helm-grep-cmd-line nil :inherit 'diff-added)
-    (set-face-attribute 'helm-grep-file nil 
+    (set-face-attribute 'helm-grep-file nil
                         :underline t
                         :foreground solarized-cyan)
     (set-face-attribute 'helm-grep-finish nil :foreground solarized-green)
@@ -144,31 +144,31 @@
     (set-face-attribute 'helm-history-deleted nil :inherit 'helm-ff-invalid-symlink)
     (set-face-attribute 'helm-history-remote nil :foreground solarized-red)
     (set-face-attribute 'helm-lisp-completion-info nil :foreground solarized-base0)
-    (set-face-attribute 'helm-lisp-show-completion nil 
+    (set-face-attribute 'helm-lisp-show-completion nil
                         :weight 'bold
                         :foreground solarized-yellow
                         :background solarized-base02)
     ;;(set-face-attribute 'helm-ls-git-added-copied-face nil :foreground solarized-green)
-    ;;(set-face-attribute 'helm-ls-git-conflict-face nil 
+    ;;(set-face-attribute 'helm-ls-git-conflict-face nil
     ;;                    :weight 'bold
     ;;                    :foreground solarized-red)
-    ;;(set-face-attribute 'helm-ls-git-deleted-and-staged-face nil 
+    ;;(set-face-attribute 'helm-ls-git-deleted-and-staged-face nil
     ;;                    :slant 'italic
     ;;                    :foreground solarized-base01)
-    ;;(set-face-attribute 'helm-ls-git-deleted-not-staged-face nil 
+    ;;(set-face-attribute 'helm-ls-git-deleted-not-staged-face nil
     ;;                    :weight 'bold
     ;;                    :foreground solarized-green)
-    ;;(set-face-attribute 'helm-ls-git-modified-and-staged-face nil 
+    ;;(set-face-attribute 'helm-ls-git-modified-and-staged-face nil
     ;;                    :slant 'italic
     ;;                    :foreground solarized-base01)
-    ;;(set-face-attribute 'helm-ls-git-modified-not-staged-face nil 
+    ;;(set-face-attribute 'helm-ls-git-modified-not-staged-face nil
     ;;                    :slant 'italic
     ;;                    :foreground solarized-base01)
     ;;(set-face-attribute 'helm-ls-git-renamed-modified-face nil :foreground solarized-green)
     ;;(set-face-attribute 'helm-ls-git-untracked-face nil :foreground solarized-red)
     (set-face-attribute 'helm-M-x-key nil :foreground solarized-orange)
     (set-face-attribute 'helm-match nil :inherit 'match)
-    (set-face-attribute 'helm-moccur-buffer nil 
+    (set-face-attribute 'helm-moccur-buffer nil
                         :underline t
                         :foreground solarized-cyan)
     (set-face-attribute 'helm-selection-line nil :inherit 'secondary-selection)
@@ -176,7 +176,7 @@
     (set-face-attribute 'helm-source-header nil :inherit 'helm-header)
     (set-face-attribute 'helm-time-zone-current nil :foreground solarized-green)
     (set-face-attribute 'helm-time-zone-home nil :foreground solarized-red)
-    (set-face-attribute 'helm-visible-mark nil 
+    (set-face-attribute 'helm-visible-mark nil
                         :weight 'bold
                         :background solarized-base03
                         :foreground solarized-magenta)
@@ -188,6 +188,7 @@
                         :foreground solarized-base01)
     ))
 
+
 (add-hook 'solarized-theme-hook 'md/helm-solarized-hook)
 (helm-mode 1)
 (helm-autoresize-mode 0)
@@ -196,7 +197,7 @@
 (define-key global-map [remap find-file] 'helm-find-files)
 (define-key global-map [remap occur] 'helm-occur)
 (define-key global-map [remap dabbrev-expand] 'helm-dabbrev)
-(define-key global-map [remap list-buffers] 'helm-buffers-list) ; This is probably C-x b
+(define-key global-map [remap list-buffers] 'helm-buffers-list)
 
 (global-set-key (kbd "M-x") 'helm-M-x)
 (global-set-key (kbd "C-x b") 'helm-mini)
@@ -205,6 +206,9 @@
   (define-key lisp-interaction-mode-map [remap completion-at-point] 'helm-lisp-completion-at-point)
   (define-key emacs-lisp-mode-map       [remap completion-at-point] 'helm-lisp-completion-at-point))
 
+;; Swap default bindings - use tab for completion, C-z for actions
+(define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+(define-key helm-map (kbd "C-z")  'helm-select-action)
 
 ;;;; SML
 (require 'smart-mode-line)
@@ -447,7 +451,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
   (interactive)
   (evil-normal-state)
   (save-buffer))
-  
+
 (key-chord-define evil-insert-state-map "jj" 'md/normal-state-and-save)
 (key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
 (key-chord-mode 1)
@@ -469,6 +473,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
 (add-hook 'outline-mode-hook 'md/outline-magic-mode-hook)
 (add-hook 'outline-minor-mode-hook 'md/outline-magic-minor-mode-hook)
+
 
 ;;;; Org
 ;; =============================================================================
@@ -629,7 +634,9 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
           (kbd "M-J") 'org-shiftmetadown
           ))
       '(normal insert))
+
 ;; evil-org-mode ends here
+
 ;;;; Solarized
 ;; =============================================================================
 ;; Load this last so any Solarized hooks run
