@@ -40,7 +40,6 @@ call vundle#rc()
     Bundle "davidhalter/jedi-vim"
     Bundle "bling/vim-airline"
     Bundle 'airblade/vim-gitgutter'
-    Bundle 'christoomey/vim-tmux-navigator'
     Bundle "mileszs/ack.vim"
 
 " syntax / indent
