@@ -125,6 +125,19 @@ set wildignore+=.webassets-cache/
 " }}}
 
 " General mappings {{{
+
+" SPC - leader
+" RET - fold toggle
+" \ - easymotion
+
+" Space leader
+nnoremap <Space> <Nop>
+let mapleader = "\<Space>"
+
+" list mapping
+let leader_ = "<leader>"
+nnoremap <leader>h<leader> :execute "map ".leader_<CR>
+
 " Use ; for cmdline. ; usually shows next results for f/F/t/T commands.
 noremap ; :
 
@@ -160,6 +173,7 @@ nnoremap <leader>O maO<Esc>`a:delmarks a<CR>:w<CR>
 nnoremap Y y$
 
 " Don't care about most NERDcomment functionality
+let g:NERDCreateDefaultMappings = 0
 function! OverrideNERDCommentMappings()
   nmap <leader>cc <Plug>NERDCommenterToggle
   vmap <leader>cc <Plug>NERDCommenterToggle
@@ -183,8 +197,8 @@ vmap gj ]m
 omap gk [m
 omap gj ]m
 
-" I'm used to this from org-mode
-"nnoremap <tab> za
+" Fold toggle
+nnoremap <Enter> za
 
 " :nohl
 nnoremap <leader>hl :nohl<CR>
@@ -271,10 +285,10 @@ endfunction
 nmap <leader>bg :call ToggleBg()<CR>
 
 autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi Todo ctermfg=1  " red
-autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffAdd cterm=reverse
-autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffChange ctermfg=4 cterm=reverse  " blue
-autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffText ctermfg=4 cterm=reverse  " blue
-autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffDelete cterm=reverse
+"autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffAdd cterm=reverse
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffChange ctermfg=4 " blue
+autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffText ctermfg=4 " blue
+"autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffDelete cterm=reverse
 
 " }}}
 
@@ -319,6 +333,7 @@ set foldlevelstart=0
 set foldminlines=0
 set foldnestmax=3
 
+autocmd vimrc FileType vim setlocal foldmethod=marker " For opening this file
 autocmd vimrc_enter VimEnter * autocmd vimrc FileType vim setlocal foldmethod=marker
 
 nmap <Leader>fsyn :let &l:foldmethod = 'syntax'<CR>
@@ -335,7 +350,7 @@ autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionTar
 autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionTarget2First Todo
 autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionTarget2Second Identifier
 autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionShade Comment
-map <Space> <Plug>(easymotion-prefix)
+map \ <Plug>(easymotion-prefix)
 " }}}
 
 " Syntastic {{{
@@ -352,7 +367,10 @@ let g:syntastic_loc_list_height = 3
 
 " Ctrl-p {{{
 let g:ctrlp_switch_buffer = 'et' " Don't jump to other tabs, open buffer in same window
+
+let g:ctrlp_map = "<leader>p"
 noremap <leader>bb :CtrlPBuffer<CR>
+
 if executable('ag')
     let g:ctrlp_user_command = 'ag %s --nocolor --nogroup --hidden --skip-vcs-ignores
                 \ --ignore ".git"
