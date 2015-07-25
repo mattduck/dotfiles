@@ -14,6 +14,8 @@
 ;;;; Download and install packages
 ;; =============================================================================
 
+(setq load-prefer-newer t)  ; new in v24.4
+
 (require 'package)
 (setq package-archives
       '(("gnu" . "http://elpa.gnu.org/packages/")
