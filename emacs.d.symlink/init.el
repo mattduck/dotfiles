@@ -34,6 +34,7 @@
     org
     smart-mode-line
     helm
+    elscreen
     key-chord
     undo-tree))
 
