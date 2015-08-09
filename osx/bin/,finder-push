@@ -2,8 +2,8 @@
 #
 # Open current directory or given path in finder
 if [ $@ ]; then
-    open -R $@
+    open $@
 else
-    open -R .
+    open .
 fi
 
