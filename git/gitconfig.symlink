@@ -4,8 +4,34 @@
     editor = vim
 
 [alias]
+    s = status
+    co = checkout
+    cob = checkout -b
+    ci = commit
+    b = branch
+
+    d = diff
+    dc = diff --cached
+    wd = diff --color-words
+    wdc = diff --color-words --cached
+
+    # %h   short hash
+    # %s   subject
+    # %cn  committer
+    # %ad  date
+    # %d   branch
+    l = log --pretty=format:'%C(yellow)%h %C(reset)%<(65)%s %C(blue)%cn %C(green)%ad%C(auto)%d' --decorate  --graph --date=short
+    ll = !git l --all
+    ld = !git l --date=relative
+    lp = log -p
+    lpw = log -p --word-diff
+
+
     # Some useful bits here are taken from
     # http://haacked.com/archive/2014/07/28/github-flow-aliases/
+
+    # List aliases
+    md-aliases=!git config -l | grep alias | cut -c 7-
 
     # An alternative to stash if I just want to save WIP for this branch
     md-savepoint = !git add -A && git commit -m 'SAVEPOINT'
@@ -29,21 +55,17 @@
     # Grep through all commits
     md-hgrep = "!f() { git rev-list --all | xargs git grep $@; }; f"
 
+    # Open merge conflicts in vim tabs
+    md-fix = "!f() { vim +/'<<<<<<<' -c 'redraw' -p `git diff --name-only --diff-filter=U`; }; f"
+
+    # Temporarily ignore files
+    md-ignore=update-index --assume-unchanged
+    md-unignore=update-index --no-assume-unchanged
+    md-ignored=!git ls-files -v | grep '^[[:lower:]]'
+
     md-vconfig = config --global -e
     md-vignore = !vi $DOTFILES/git/gitignore.symlink
 
-    lp = log -p
-    l = log --graph --oneline --abbrev-commit --decorate --all
-    ld = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative --graph
-    ll = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat --date=short
-
-    s = status
-    d = diff
-    dc = diff --cached
-    co = checkout
-    cob = checkout -b
-    ci = commit
-    b = branch
 
 [color]
     ui = true
