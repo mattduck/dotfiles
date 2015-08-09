@@ -23,6 +23,11 @@ else
     PS1="\n$_hostname: $_pwd$_git_info\n\[$Abase1\]$ "
 fi
 
+# Reset prompt, so first line of output doesn't appear in weird colours (eg. git
+# status output)
+reset=$(tput sgr0)
+PS1="$PS1\[$reset\]"
+
 export PROMPT_DIRTRIM=4
 
 # Write to history file on every prompt to make sure it always gets saved. Don't
