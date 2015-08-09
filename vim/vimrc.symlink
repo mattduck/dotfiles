@@ -433,7 +433,49 @@ autocmd vimrc_enter VimEnter * autocmd vimrc FileType python setlocal textwidth=
 
 " Python folding syntax isn't provided by default
 autocmd vimrc_enter VimEnter * autocmd vimrc FileType python source $DOTFILES/vim/vim.symlink/bundle/jpythonfold.vim/syntax/jpythonfold.vim
+
+" Get dotted path to python class / function. Adapted from
+" https://github.com/nicwest/.dotfiles
+function! PythonGetLabel(join_symbol)
+  if foldlevel('.') != 0
+    norm! zo
+  endif
+  let originalline = getpos('.')
+  let lnlist = []
+  let lastlineindent = indent(line('.'))
+  let objregexp = "^\\s*\\(class\\|def\\)\\s\\+[^:]\\+\\s*:"
+  if match(getline('.'),objregexp) != -1
+    let lastlineindent = indent(line('.'))
+    norm! ^wyt(
+    call insert(lnlist, @0, 0)
+  endif
+  while line('.') > 1
+    if indent('.') < lastlineindent
+      if match(getline('.'),objregexp) != -1
+        let lastlineindent = indent(line('.'))
+        norm! ^wyt(
+        call insert(lnlist, @0, 0)
+      endif
+    endif
+    norm! k
+  endwhile
+  let pathlist =  split(expand('%:r'), '/')
+  let pathlist_str = join(pathlist, '.')
+  let lnlist_str = join(lnlist, '.')
+  let @0 = join([pathlist_str, lnlist_str], a:join_symbol)
+  echo 'Python label:' @0
+  let @+ = @0
+  call setpos('.', originalline)
+endfunction
+
+" Copy class / function path to clipboard, in format expected by different
+" test tools
+autocmd FileType python nnoremap <buffer> <leader>getunit :call PythonGetLabel(".")<CR>
+autocmd FileType python nnoremap <buffer> <leader>getnose :call PythonGetLabel(":")<CR>
+autocmd FileType python nnoremap <buffer> <leader>getpy :call PythonGetLabel("::")<CR>
+
 " }}}
+
 
 " autocmd handling {{{
 
