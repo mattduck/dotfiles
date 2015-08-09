@@ -41,6 +41,8 @@ call vundle#rc()
     Bundle "bling/vim-airline"
     Bundle 'airblade/vim-gitgutter'
     Bundle "mileszs/ack.vim"
+    " Use isort to sort python imports
+    Plugin 'fisadev/vim-isort'
 
 " syntax / indent
     Bundle "rest.vim"
@@ -474,8 +476,12 @@ autocmd FileType python nnoremap <buffer> <leader>getunit :call PythonGetLabel("
 autocmd FileType python nnoremap <buffer> <leader>getnose :call PythonGetLabel(":")<CR>
 autocmd FileType python nnoremap <buffer> <leader>getpy :call PythonGetLabel("::")<CR>
 
-" }}}
+" vim-isort - sort python imports automatically
+autocmd FileType python nnoremap <buffer> <leader>imp :Isort<CR>:w<CR>
+let g:vim_isort_map = ''  " Disable the default visual mode <C-i> mapping
 
+
+" }}}
 
 " autocmd handling {{{
 
