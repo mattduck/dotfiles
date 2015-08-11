@@ -20,9 +20,10 @@
     # %cn  committer
     # %ad  date
     # %d   branch
-    l = log --pretty=format:'%C(yellow)%h %C(reset)%<(65)%s %C(blue)%cn %C(green)%ad%C(auto)%d' --decorate  --graph --date=short
+    l = log --pretty=format:'%C(yellow)%h %C(green)%ad %C(blue)%cn %C(reset)%s%C(auto)%d' --decorate  --graph --date=short
     ll = !git l --all
     ld = !git l --date=relative
+    ldd = !git l --date=rfc
     lp = log -p
     lpw = log -p --word-diff
 
