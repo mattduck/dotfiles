@@ -373,14 +373,12 @@ let g:ctrlp_map = "<leader>p"
 noremap <leader>bp :CtrlPBuffer<CR>
 
 if executable('ag')
-    let g:ctrlp_user_command = 'ag %s --nocolor --nogroup --hidden --skip-vcs-ignores
-                \ --ignore ".git"
-                \ --ignore ".DS_Store"
-                \ --ignore "*.pyc"
-                \ --ignore "*.egg"
-                \ --ignore "*.egg-info"
-                \ --ignore "__pycache__/"
-                \ -g ""'
+    let g:ctrlp_user_command = 'ag %s --nocolor --nogroup -g ""
+        \ --ignore "\v[\/](node_modules|target|dist|venv)|(\.(swp|ico|git|svn))$"'
+
+    "" Because who wants to reload
+    let g:ctrlp_use_caching = 0
+
 endif
 " }}}
 
@@ -392,6 +390,7 @@ if executable('ag')
                 \ --ignore "*.pyc"
                 \ --ignore "*.egg"
                 \ --ignore "*.egg-info"
+                \ --ignore "*node_modules/*"
                 \ --ignore "__pycache__/"'
 endif
 
@@ -477,7 +476,7 @@ autocmd FileType python nnoremap <buffer> <leader>getnose :call PythonGetLabel("
 autocmd FileType python nnoremap <buffer> <leader>getpy :call PythonGetLabel("::")<CR>
 
 " vim-isort - sort python imports automatically
-autocmd FileType python nnoremap <buffer> <leader>imp :Isort<CR>:w<CR>
+autocmd FileType python nnoremap <buffer> <leader>isort :Isort<CR>:w<CR>
 let g:vim_isort_map = ''  " Disable the default visual mode <C-i> mapping
 
 
