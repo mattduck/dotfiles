@@ -127,10 +127,6 @@ set wildignore+=.webassets-cache/
 
 " General mappings {{{
 
-" SPC - leader
-" RET - fold toggle
-" \ - easymotion
-
 " Space leader
 nnoremap <Space> <Nop>
 let mapleader = "\<Space>"
@@ -351,7 +347,7 @@ autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionTar
 autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionTarget2First Todo
 autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionTarget2Second Identifier
 autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi link EasyMotionShade Comment
-map <leader><leader> <Plug>(easymotion-prefix)
+map <leader>f <Plug>(easymotion-prefix)
 " }}}
 
 " Syntastic {{{
@@ -367,7 +363,8 @@ let g:syntastic_loc_list_height = 3
 " }}}
 
 " Ctrl-p {{{
-let g:ctrlp_switch_buffer = 'et' " Don't jump to other tabs, open buffer in same window
+" Don't jump to other tabs/buffers, always open new
+let g:ctrlp_switch_buffer = "0"
 
 let g:ctrlp_map = "<leader>p"
 noremap <leader>bp :CtrlPBuffer<CR>

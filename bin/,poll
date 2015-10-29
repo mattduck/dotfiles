@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Usage: ,poll seconds [command...]
+#
+# Run given command every n seconds
+SECONDS=$1
+shift
+while true; do $@; sleep "$SECONDS"; done
