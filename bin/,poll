@@ -3,6 +3,8 @@
 # Usage: ,poll seconds [command...]
 #
 # Run given command every n seconds
-SECONDS=$1
+
+# NOTE - '$SECONDS' is a builtin bash variable.
+SLEEP_SECONDS=$1
 shift
-while true; do $@; sleep "$SECONDS"; done
+while true; do $@; sleep "$SLEEP_SECONDS"; done
