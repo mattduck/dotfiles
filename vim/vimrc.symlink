@@ -55,6 +55,7 @@ call vundle#rc()
     Bundle "django.vim"
     " HTML-enhanced
     Bundle "php.vim"
+    Plugin 'fatih/vim-go'
 
 " fold
     Bundle "jpythonfold.vim"
