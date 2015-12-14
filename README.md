@@ -9,9 +9,10 @@
 
     $ source ~/dotfiles/activate.sh
 
-The activate script will:
+To always run your shell using the dotfiles environment, add the above line to
+`~/.bashrc`. The activate script will:
 
-- Export $DOTFILES as the path to the directory of the activation script.
+- Export $DOTFILES as the path to this dotfiles directory.
 
 - Add $DOTFILES/**/bin to $PATH.
 
@@ -40,20 +41,27 @@ The activate script will:
   schemes.
 
 
-## Fixes
+## Issues
 
-### Mac - Tmux $PATH
+### OS X - $PATH issues
 
-Mac - Tmux edits $PATH /after/ the environment has been setup, due to a
-utility called path_helper which is run in `/etc/profile`. Fix:
+Tmuxs always runs as a login shell, which means /etc/profile gets read. On some
+OS X releases, this will run a utility called `path_helper`, which will always
+prepend a set of directories to your $PATH /after/ `.bashrc` has run.
+
+To disable this, you can reset your $PATH as part of `.bashrc`, and run the
+dotfiles setup afterwards:
 
 ``` bash
+# .bashrc
 if [ -f /etc/profile ]; then
     PATH=""
     source /etc/profile
-    source ~/dotfiles/activate.sh
 fi
+source ~/dotfiles/activate.sh
 ```
+
+See https://superuser.com/questions/544989/does-tmux-sort-the-path-variable/583502#583502 for more info.
 
 
 # Thanks
@@ -63,7 +71,7 @@ fi
 - The \*.symlink and \*.sh features were taken from [Zach Holman's
   dotfiles](https://github.com/holman/dotfiles).
 
-- I liked [Brandon Rhodes' idea](https://github.com/brandon-rhodes/homedir) of
-  prefixing your custom commands with a comma.
+- I liked [Brandon Rhodes'](https://github.com/brandon-rhodes/homedir) idea of
+  prefixing your custom commands with a comma. Also stole some functions.
 
 - My old Emacs organisation was inspired by [Hans Engel](https://github.com/hans/dotfiles).
