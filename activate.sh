@@ -1,16 +1,18 @@
+#!/bin/bash
+#
 # activate.sh
-# Sets up the shell environment.
+#
+# - Sets up the shell environment.
+#
+# - Dependency functions are defined here for simplicity, rather than in
+#   separate scripts or ".dot.sh" files.
 
-# Get absolute path of this directory. Below snippet from
-# stackoverflow.com/questions/59895:
-SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do
-  THIS_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$THIS_DIR/$SOURCE"
-done
 
-export DOTFILES="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+function ,realpath() {
+    # Get absolute path without depending on `realpath` or `readlink`, which
+    # aren't installed on OS X by default (at least on some older versions).
+    echo "$(cd "$(dirname "$1")" && pwd -P)/$(basename "$1")"
+}
 
 
 function ,path-add() {
@@ -77,8 +79,14 @@ function ,dotfiles-ls {
 }
 
 
+# $DOTFILES represents this directory
+THIS_FILE=${BASH_SOURCE[0]}
+export DOTFILES=$(dirname "$(,realpath "$THIS_FILE")")
+
+# Append all "bin" directories in $DOTFILES to $PATH
 ,path-add $(find $DOTFILES -type d -name bin)
 
+# Source all ".dot.sh" files in $DOTFILES
 for f in $(,dotfiles-ls); do
     source "$f"
 done
