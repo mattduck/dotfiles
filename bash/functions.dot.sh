@@ -11,5 +11,5 @@ function ,mkd() {
 
 function ,history () {
     # Show timestamps, colour
-    HISTTIMEFORMAT=`echo -e "\033[31m%F \033[32m%T  \033[34m"` history
+    HISTTIMEFORMAT=`echo -e "\033[31m%F \033[32m%T \033[34m"` history
 }

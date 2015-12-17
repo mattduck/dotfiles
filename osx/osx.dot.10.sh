@@ -9,7 +9,7 @@ if [[ "$(uname -a)" != *Darwin* ]]; then return; fi
 # Use GNU coreutils - it's easier if programs have the same flags between
 # machines, same man pages etc.
 ,path-add --prepend "/usr/local/opt/coreutils/libexec/gnubin"
-,path-add --prepend "/usr/local/opt/coreutils/libexec/gnuman"
+export MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
 
 # git __ps1 and completion aren't available by default on my Yosemite machine -
 # either due to new git version or some OS change.
