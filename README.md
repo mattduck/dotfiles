@@ -41,7 +41,15 @@ To always run your shell using the dotfiles environment, add the above line to
   schemes.
 
 
-## Issues
+## Quick install for dev work
+
+Quick way for me to get started on ubuntu-like dev VMs. **Check the script that
+gets downloaded before piping into shell**.
+
+`sh <(curl https://raw.githubusercontent.com/mattduck/dotfiles/master/dev-quickstart/dev-quickstart.sh)`
+
+
+# Issues
 
 ### OS X - $PATH issues
 
