@@ -10,10 +10,10 @@ function usage
 if [ $@ ]; then
     if [ $@ = "mac-unblock" ]; then
         echo "Changing to Unblock-US DNS servers..."
-        networksetup -setdnsservers AirPort 208.122.23.22 208.122.23.23
+        networksetup -setdnsservers Wi-Fi 208.122.23.22 208.122.23.23
     elif [ $@ = "mac-home" ]; then
         echo "Changing to router DNS..."
-        networksetup -setdnsservers AirPort 192.168.1.254
+        networksetup -setdnsservers Wi-Fi 192.168.1.254
     else
         usage
     fi
