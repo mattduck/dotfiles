@@ -1,0 +1,5 @@
+#!/usr/bin/env python
+import getpass
+
+from passlib.hash import sha512_crypt
+print sha512_crypt.encrypt(getpass.getpass())
