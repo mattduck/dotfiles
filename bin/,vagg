@@ -1,0 +1,4 @@
+#!/bin/bash
+# Use vim as nice interface to ag, for the current git project
+cd "$(git rev-parse --show-toplevel)"
+,vag $@
