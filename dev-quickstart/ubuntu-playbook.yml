@@ -50,6 +50,7 @@
           - tmux
           - vim
           - tree
+          - ngrok-client
       sudo: yes
 
     - name: pip install useful tools
