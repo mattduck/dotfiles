@@ -2,5 +2,6 @@
 
 set hintchars=asdfghjklqwertyuiopzxcvbnm
 source! ~/.vimperatorrc.local
+set editor="/usr/local/Cellar/macvim/7.4-76/bin/gvim -f"
 
 " vim: set ft=vimperator:
