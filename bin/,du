@@ -1,0 +1,6 @@
+#!/bin/bash
+if [ -z "$1" ]; then
+    du -a | sort -n -r
+else
+    du -a | sort -n -r | head -n "$1"
+fi
