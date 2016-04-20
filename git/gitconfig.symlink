@@ -17,8 +17,6 @@
 
     sta = stash --all --keep-index
 
-    rebi = "!f() { if [ -z $1 ]; then echo 'No branch provided'; else git rebase -i `git merge-base head $1`; fi }; f"
-
     # %h   short hash
     # %s   subject
     # %cn  committer
@@ -70,6 +68,10 @@
 
     md-vconfig = config --global -e
     md-vignore = !vi $DOTFILES/git/gitignore.symlink
+
+    # rebase -i just for the commits that differ between HEAD and given branch
+    md-rebase = "!f() { if [ -z $1 ]; then echo 'No branch provided'; else git rebase -i `git merge-base head $1`; fi }; f"
+
 
 
 [color]

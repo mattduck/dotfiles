@@ -147,7 +147,7 @@ noremap , ;
 
 " Unbind C-z to stop accidentally stopping process.
 " Might put this back in soon.
-noremap <C-z> <Nop>
+"noremap <C-z> <Nop>
 
 " Unbind arrow keys
 noremap <Up> <Nop>
