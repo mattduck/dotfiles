@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Easily edit my config files
+cd "$DOTFILES"
+f=$(ag --files-with-matches \
+    --ignore-dir solarized \
+    | fzf-tmux --exact --query "$1" --header ",dotfiles-edit") \
+    && "${EDITOR:-vim}" "$f"

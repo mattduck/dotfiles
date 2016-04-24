@@ -1,0 +1,6 @@
+#!/bin/bash
+#
+# Edit recent files using fasd and fzf
+f=$(fasd -fRl \
+    | fzf-tmux --query "$1" --header ",edit") \
+    && "${EDITOR:-vim}" "$f"

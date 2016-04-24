@@ -13,6 +13,7 @@ alias lsd="ls -hlF ${colorflag} | grep --color=never '^d'" # List only directori
 alias sudo="sudo " # Enable aliases to be sudo'ed
 
 alias ag="ag --color-line-number=36 --color-path=32 --color-match=1\;4\;31"
+alias grep="grep --color=auto"
 
 # Setup autocompletion for git alias
 alias g="git"
@@ -26,3 +27,8 @@ alias ...="cd ../.."
 alias ....="cd ../../.."
 alias ~~="cd ~"
 alias -- -="cd -"
+
+alias v="vim"
+alias vv=",edit"
+alias f=",cd"
+alias d=",fzf"

@@ -1,0 +1,119 @@
+#!/usr/bin/env python
+import argparse
+import subprocess
+import os
+import sys
+
+
+def run(cmd, stdin=None):
+    if stdin:
+        p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        p.stdin.write(stdin)
+        out, err = p.communicate()
+        p.stdin.close()
+        if err:
+            raise ValueError(err)
+        return out
+    else:
+        return subprocess.check_output(cmd, shell=True)
+
+
+class Source(object):
+
+    def __init__(self, arg, fzf_input):
+        self.arg = arg
+        self.fzf_input = fzf_input
+
+        self.SOURCES = {
+            '1 - fzf': self.fzf,
+            '2 - fasd file': self.fasd_files,
+            '3 - fasd directory': self.fasd_dirs,
+            '4 - git branch': self.git_branch,
+            '5 - git commit': self.git_commit,
+            '6 - history': self.history,
+        }
+
+    def get_source(self):
+        if self.fzf_input:
+            return self.arbitrary().rstrip()
+
+        if self.arg:
+            real_arg = self.arg
+        else:
+            choices = "\n".join(sorted(self.SOURCES.keys()))
+            real_arg = run('fzf --exact --header=",fzf get_source"', stdin=choices).rstrip()
+        return self.SOURCES[real_arg]().rstrip()
+
+    def fzf(self):
+        return run('fzf --exact')
+
+    def arbitrary(self):
+        return run('fzf --ansi --exact', stdin=self.fzf_input)
+
+    def fasd_dirs(self):
+        return run('fasd -Rdl | fzf --exact')
+
+    def fasd_files(self):
+        return run('fasd -Rfl | fzf --exact')
+
+    def git_branch(self):
+        c = 'git branch --all | grep -v HEAD | fzf --exact | sed "s/.* //" | sed "s/remotes\///"'
+        return run(c)
+
+    def git_commit(self):
+        c = 'git log --pretty="%h %an :: %s" --abbrev-commit --reverse | fzf --tac --exact --no-sort | sed "s/ .*//"'
+        return run(c)
+
+    def history(self):
+        with open(os.path.expanduser('~/.bash_history')) as f:
+            hist = "\n".join(["%s  %s" % (i, s) for i, s in enumerate(f.read().splitlines())])
+
+        c = 'fzf --tac --exact | awk \'{$1=""; sub("  ", " "); print}\''
+        return run(c, stdin=hist).rstrip()
+
+
+class Action(object):
+
+    def __init__(self, arg):
+        self.arg = arg
+
+        self.ACTIONS = {
+            None: self.copy,
+            'cp': self.copy,
+            'copy': self.copy,
+            'send-keys': self.send_keys,
+            'send-keys-last-window': self.send_keys_last_window,
+        }
+
+    def do_action(self, source):
+        return self.ACTIONS[self.arg](source)
+
+    def copy(self, source):
+        cmd = 'pbcopy'
+        return run(cmd, source)
+
+    def send_keys(self, source):
+        cmd = 'tmux send-keys "%s"' % source
+        return run(cmd, source)
+
+    def send_keys_last_window(self, source):
+        run('tmux last-window')
+        run('tmux send-keys "%s"' % source)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Find common item, pick ')
+    parser.add_argument('--source')
+    parser.add_argument('--action')
+    parser.add_argument('-c', action='store_true')
+
+    args = parser.parse_args()
+    if args.c:
+        arbitrary_source = sys.stdin.read()
+    else:
+        arbitrary_source = None
+
+    source = Source(args.source, arbitrary_source)
+    action = Action(args.action)
+
+    action.do_action(source.get_source())

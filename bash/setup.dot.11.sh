@@ -37,10 +37,6 @@ export PYTHONDONTWRITEBYTECODE=1
 # active. Disable this.
 export VIRTUAL_ENV_DISABLE_PROMPT=1
 
-# TODO - these are deprecated and I should look at removing them
-export GREP_COLOR="1;4;31"
-export GREP_OPTIONS="--color=auto"
-
 # TODO - what was the reason I had to use this in the past?
 if [ $(command -v keychain) ]; then
     eval `keychain --quiet --eval --agents "ssh" --inherit "local-once"`

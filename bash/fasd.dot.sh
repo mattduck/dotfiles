@@ -1,9 +1,14 @@
-# NOTE - can see the default aliases by running $(fasd --init posix-alias)
+# NOTE - fasd installs some default aliases. I'm not explicitly removing them,
+# but I don't really use them either, except for "z".
 eval "$(fasd --init posix-alias bash-hook bash-ccomp bash-ccomp-install)"
 
-alias j="z" # Jump to best match dir
-alias jf="zz" # Jump to selected dir. Use jf instead of jj, because jj has a readline binding
-alias v="fasd -f -e vim" # Edit best match file
-alias vv="fasd -sia -e vim" # Edit selected file
+alias f=",cd"  # TODO fix so I can define this in aliases and fasd doesn't override
+alias d=",fzf"  # TODO fix so I can define this in aliases and fasd doesn't override
 
-_fasd_bash_hook_cmd_complete j jf v vv
+
+# Jump to best match. Use fzf interface if no arg given.
+function j () {
+    if [ -z "$1" ]; then ,cd; else z $@; fi
+}
+
+_fasd_bash_hook_cmd_complete j

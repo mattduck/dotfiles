@@ -100,3 +100,9 @@ bind-key -t vi-copy 'y' copy-pipe "if command -v reattach-to-user-namespace >/de
 # Do the same for the default copy binding of Enter
 unbind -t vi-copy Enter
 bind-key -t vi-copy Enter copy-pipe "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace pbcopy; else /dev/null; fi"
+
+# Shortcut for running the fzf goto command
+bind-key -r "C-p" new-window -n "goto" 'source "$DOTFILES/tmux/tmux_env.dot.sh" && ,tm-goto'
+
+bind-key -r "C-c" new-window -c "#{pane_current_path}" ",fzf --action copy"
+bind-key -r "C-v" new-window -c "#{pane_current_path}" ",fzf --action send-keys-last-window"
