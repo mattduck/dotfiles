@@ -32,6 +32,11 @@ export MITSCHEME_LIBRARY_PATH="/Applications/MIT\:GNU\ Scheme.app/Contents/Resou
 export MIT_SCHEME_EXE="/usr/local/scheme"
 
 alias emacs-app="/Applications/Emacs.app/Contents/MacOS/Emacs"
+alias emacs-app-server="/Applications/Emacs.app/Contents/MacOS/Emacs --daemon"
+alias emacs-app-client="/Applications/Emacs.app/Contents/MacOS/bin/emacsclient"
+alias e="emacs-app-client -n"
+alias et="emacs-app-client -t"
+
 alias vi="vim" # Otherwise vi will point to /usr/bin, and vim to the brew dir.
 
 function ,finder-pull() {

@@ -7,15 +7,6 @@
     (getenv "DOTFILES")
     (concat (expand-file-name "~") "/dotfiles")))
 
-;;;; Setup path
-;; =============================================================================
-;; If exec-path-from-shell is installed, use it to ensure that Emacs' exec-path
-;; inherits all of the values from $PATH in the shell.
-(when (and
-       (memq window-system '(mac ns)) 
-       (fboundp 'exec-path-from-shell-initialize))
-  (exec-path-from-shell-initialize))
-
 ;;;; Reload
 ;; =============================================================================
 (defun md/dotfiles-reload ()
@@ -37,7 +28,6 @@
 ;; Packages to install on launch
 (defvar md/required-packages
   '(ace-jump-mode
-    color-theme  ; TODO - can probably remove this sometime
     evil
     evil-surround  ; Port of the vim surround plugin
     evil-leader  ; Not sure why this isn't built into evil, but it's handy
@@ -47,7 +37,7 @@
     flycheck ; Syntax checker
     outline-magic
     org
-    smart-mode-line
+    powerline
     helm
     elscreen
     key-chord
@@ -78,6 +68,15 @@
                  (not (equal f ".."))
                  (not (equal f ".")))
         (add-to-list 'load-path name)))))
+
+;;;; Setup path
+;; =============================================================================
+;; If exec-path-from-shell is installed, use it to ensure that Emacs' exec-path
+;; inherits all of the values from $PATH in the shell.
+(require 'exec-path-from-shell)
+(when (memq window-system '(mac ns))
+  (exec-path-from-shell-initialize))
+
 
 ;;;; Add to custom-theme-load-path
 ;; =============================================================================
@@ -123,31 +122,133 @@
 (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
 (define-key helm-map (kbd "C-z")  'helm-select-action)
 
-;;;; SML
-;; TODO replace w/powerline?
-(require 'smart-mode-line)
+(require 'powerline)
+(require 'flycheck)  ; otherwise powerline breaks
 
-(setq sml/theme 'nil)
-(setq sml/shorten-directory t
-    sml/shorten-modes t
-    sml/extra-filler 0)
-(sml/setup)
+(defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
+(defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
+
+(setq flycheck-mode-line-prefix nil)
+(defun md/powerline-setup ()
+  (interactive)
+  (setq-default mode-line-format
+                '("%e"
+                  (:eval
+                   (let* ((active (powerline-selected-window-active))
+                          (mode-line (if active 'mode-line 'mode-line-inactive))
+                          (face1 (if active 'powerline-active1 'powerline-inactive1))
+                          (face2 (if active 'powerline-active2 'powerline-inactive2))
+                          (separator-left (intern (format "powerline-%s-%s"
+                                                          (powerline-current-separator)
+                                                          (car powerline-default-separator-dir))))
+                          (separator-right (intern (format "powerline-%s-%s"
+                                                           (powerline-current-separator)
+                                                           (cdr powerline-default-separator-dir))))
+
+                          (lhs (list (powerline-raw evil-mode-line-tag face2 'l)
+                                     (funcall separator-left face2 face1)
+                                     (powerline-raw (format "*%s* " (powerline-major-mode)) face1 'l)
+                                     (funcall separator-left face1 mode-line)
+                                     (powerline-raw "%b" mode-line 'l)
+                                     (when (buffer-modified-p)
+                                       (powerline-raw "+" mode-line 'l))
+                                     (when buffer-read-only
+                                       (powerline-raw "[RO]" mode-line 'l))
+                                     (when (buffer-narrowed-p)
+                                       (powerline-raw "  Narrow" mode-line 'l))
+                                     (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
+                                       (powerline-raw
+                                        (propertize
+                                         (format "  %s "
+                                                 (if (> (length org-mode-line-string) 50)
+                                                     (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
+                                                   org-mode-line-string))
+                                         'face nil)
+                                        mode-line 'l))))
+
+                          (rhs (list (funcall separator-right mode-line face1)
+                                     (powerline-vc face1 'r)
+                                     (when (or line-number-mode column-number-mode)
+                                       (cond ((and line-number-mode
+                                                   column-number-mode)
+                                              (powerline-raw "%5l:%2c" face2 'r))
+                                             (line-number-mode
+                                              (powerline-raw "%5l" face2 'r))
+                                             (column-number-mode
+                                              (powerline-raw ":%2c" face2 'r))))
+
+
+                                     ;; TODO: change colour when err/warn, and
+                                     ;; list line of first error
+                                     ;; (when flycheck-mode
+                                     ;;   (powerline-raw (format "%6s" (flycheck-mode-line-status-text)) 'error 'r))
+                                     (when (and active flycheck-mode (flycheck-has-current-errors-p))
+                                       (powerline-raw
+                                        (format " [line:%s (%s)] "
+                                         ;; Line of first err
+                                         (save-excursion
+                                           (flycheck-first-error)
+                                           (+ 1 (count-lines (point-min) (point))))
+                                         ;; Total lines
+                                         (length flycheck-current-errors))
+
+                                        ;; Face
+                                        (cond ((flycheck-has-current-errors-p 'error)
+                                               'md/modeline-flycheck-error)
+                                              ((flycheck-has-current-errors-p 'warning)
+                                               'md/modeline-flycheck-warning))
+                                        'r))
+                                             
+
+
+                                     ))
+                          )
+                     (concat (powerline-render lhs)
+                             (powerline-fill mode-line (powerline-width rhs))
+                             (powerline-render rhs)))))))
+
+(defun md/powerline-reset ()
+  (interactive)
+  (setq mode-line-format (md/powerline-setup))
+  (solarized-load-theme))
+
+(md/powerline-setup)
 
 
 ;;;; OS X
 ;; =============================================================================
 
-;; Map modifier keys so that all are accessible, but the left option key
-;; is kept free so can use it for character modifications, eg. alt+3 = #.
+;; NOTE: iTerm2
+;;      I use the right cmd key as Meta in the terminal:
+;; 
+;;     - Under the "keys" tab, set "right cmd" to send "right option", and "right
+;;       option" to send "left option".
+;;     - Under the "profiles" tab, set "Right option key acts as +Esc".
 ;;
-;; CTRL = ctrl
-;; LEFT ALT = none
-;; COMMAND = meta
-;; RIGHT ALT = super
+;; NOTE: GUI on Mac
+;;     LEFT ALT = none (ie. standard alt/option behaviour)
+;;     LEFT CMD = meta
+;;     RIGHT CMD = super (ie. standard cmd behaviour in GUI emacs)
+;;     RIGHT ALT = none (ie. standard alt/option behaviour) 
+;;
+(interactive)
 (if (eq system-type 'darwin)
-    (setq ns-option-modifier nil
-          ns-command-modifier 'meta
-          ns-right-option-modifier 'super))
+    (setq
+
+    ;; Alt/option acts as default, so I can do eg. alt+3 to insert #.
+    ;; By default this is Meta, but I find Meta more accessible on the left cmd key.
+    ns-option-modifier nil
+
+    ;; This is the default, and seems to handle the standard cmd key
+    ;; bindings, so apple cmd+c runs super+c in emacs, etc. I don't use them
+    ;; much, but they might be useful sometimes.
+    ns-right-command-modifier 'super
+
+    ;; Instead of the cmd bindings (that I don't use much), use the left cmd
+    ;; key for Meta bindings. This is easier to reach than the default Meta
+    ;; key (which is alt).
+    ns-command-modifier 'meta))
+
 
 ;;;; Custom
 ;; =============================================================================
@@ -212,9 +313,12 @@
 ;; Highlight cursor line
 (global-hl-line-mode 1)
 
-(if (string= system-name "mattmbp.local")
-    (set-frame-font "Monaco-12:antialias=subpixel")
-    (set-frame-font "Monaco-13:antialias=subpixel"))
+(defun md/set-default-font ()
+  (interactive)
+  (if (string= system-name "mattmbp.local")
+      (set-frame-font "Monaco-12:antialias=subpixel")
+    (set-frame-font "Monaco-13:antialias=subpixel")))
+(add-hook 'focus-in-hook 'md/set-default-font)
 
 ;; Necessary on v24.4 to display accurate Solarized colors, due to Emacs bug #8402.
 ;; v24.3 didn't set ns-use-sgrb-colorspace.
@@ -629,6 +733,15 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 (setq flycheck-flake8rc ".config/flake8")
 (setq flycheck-display-errors-delay 0.1)  ; defaults to 0.9, which is too slow
 (setq flycheck-highlighting-mode 'symbols)
+
+;; There's a short delay when flycheck runs, which causes the modeline to change
+;; its format (or in my custom powerline stuff, to disappear briefly). It's
+;; super annoying if this happens at random points during editing, so change it
+;; to only happen on save (and when enabling the mode). This is quite similar to how
+;; I had it setup in vim.
+(setq flycheck-check-syntax-automatically '(save mode-enabled))
+
+(add-hook 'prog-mode-hoook 'flycheck-model)               
 
 ;;;; Solarized
 ;; =============================================================================
