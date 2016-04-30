@@ -38,7 +38,10 @@
     outline-magic
     org
     powerline
+    projectile
     helm
+    helm-ag  ; I use this for the equivalent of :Ack
+    helm-projectile  ; Prefer the helm interface
     elscreen
     key-chord
     undo-tree))
@@ -149,7 +152,8 @@
                                      (funcall separator-left face2 face1)
                                      (powerline-raw (format "*%s* " (powerline-major-mode)) face1 'l)
                                      (funcall separator-left face1 mode-line)
-                                     (powerline-raw "%b" mode-line 'l)
+                                     (powerline-raw (concat (projectile-project-name) "::%b") 'l)
+                                     
                                      (when (buffer-modified-p)
                                        (powerline-raw "+" mode-line 'l))
                                      (when buffer-read-only
@@ -497,19 +501,28 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
   "W" (lambda () (interactive)
         (delete-trailing-whitespace) (save-buffer))
 
-  "bg" 'solarized-toggle-theme-mode ; TODO - font-lock-fontify-buffer in all
+  "sol" 'solarized-toggle-theme-mode ; TODO - font-lock-fontify-buffer in all
                                     ; open buffers? As currently eg. org-mode
-                                    ; buffers need to be fontified.
+                                      ; buffers need to be fontified.
 
   "cc" 'comment-or-uncomment-region ; TODO - do I want to behave like vim?
                                     ; ie. comment the line or the selection
   "chl" 'solarized-toggle-comment-visibility
 
+  "jsw" 'helm-projectile-switch-project
+  "ag" (lambda () (interactive) (helm-do-ag default-directory))
+  "jag" 'helm-projectile-ag
+  "b" 'helm-buffers-list  ; Equivalent to C-x C-b
+  "jb" 'helm-projectile-switch-to-buffer
   "f" 'helm-find-files
-  "C-p" 'helm-buffers-list  ; Equivalent to C-x C-b
-  "p" 'helm-mini  ; Equivalent to C-x b
-  "x" 'helm-M-x
+  "jf" 'helm-projectile-find-file  ; TODO - proper binding for invalidating cache
 
+  "x" 'helm-M-x
+  "p" 'helm-mini  ; Equivalent to C-x b
+
+  "k" 'kill-buffer
+  "jk" 'projectile-kill-buffers
+  
   "ef" 'eval-defun
   "ee" 'eval-last-sexp  ; Bound to e because I'm used to C-x e
   "eb" 'eval-buffer
@@ -743,9 +756,24 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
 (add-hook 'prog-mode-hoook 'flycheck-model)               
 
+
+;;;; Projectile
+;; =============================================================================
+
+(require 'projectile)
+
+(projectile-global-mode)
+
+(setq projectile-file-exists-local-cache-expire (* 10 60)
+      projectile-enable-caching t
+      )
+
+
 ;;;; Solarized
 ;; =============================================================================
 
 (require 'color-theme-solarized)
 (load-theme 'solarized t)  ; Defaults to light
 (solarized-enable-theme 'dark)
+
+

@@ -8,6 +8,9 @@ emacs.d.symlink/.backups
 emacs.d.symlink/custom.el
 emacs.d.symlink/recentf
 emacs.d.symlink/eshell/history
+emacs.d.symlink/projectile*
+emacs.d.symlink/#*
+emacs.d.symlink/.#*
 
 # .config might contain files that have been dumped by programs, so
 # don't include it by default
