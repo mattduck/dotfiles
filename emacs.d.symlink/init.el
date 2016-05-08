@@ -103,6 +103,8 @@
 
 ;;;; Helm
 (require 'helm)
+(require 'helm-ag)
+(require 'helm-projectile)
 (require 'helm-config)
 
 (helm-mode 1)
@@ -152,7 +154,9 @@
                                      (funcall separator-left face2 face1)
                                      (powerline-raw (format "*%s* " (powerline-major-mode)) face1 'l)
                                      (funcall separator-left face1 mode-line)
-                                     (powerline-raw (concat (projectile-project-name) "::%b") 'l)
+                                     (if projectile-mode
+                                         (powerline-raw (concat (projectile-project-name) "::%b") 'l)
+                                       (powerline-raw "%b" mode-line 'l))
                                      
                                      (when (buffer-modified-p)
                                        (powerline-raw "+" mode-line 'l))
@@ -298,6 +302,8 @@
 ;;;; Display
 ;; =============================================================================
 
+(add-hook 'after-save-hook 'font-lock-fontify-buffer)
+
 ;; Colour column
 (require 'fill-column-indicator)
 (setq fci-rule-width 5) ; 5 seems to be max width
@@ -309,6 +315,8 @@
 ;; (global-fci-mode t)
 ;; (require 'linum) ; numbers in margin
 ;; (global-linum-mode nil)
+
+;; TODO
 
 ;; Line and Column number in mode-line. These seem to be global.
 (line-number-mode 1)
@@ -509,7 +517,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
                                     ; ie. comment the line or the selection
   "chl" 'solarized-toggle-comment-visibility
 
-  "jsw" 'helm-projectile-switch-project
+  "jj" 'helm-projectile-switch-project
   "ag" (lambda () (interactive) (helm-do-ag default-directory))
   "jag" 'helm-projectile-ag
   "b" 'helm-buffers-list  ; Equivalent to C-x C-b
@@ -532,6 +540,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
          (message "Fontified buffer"))  ; So I know it's run
 
   "lw" 'toggle-truncate-lines
+  "ln" 'linum-mode
 
   ;; Same as vim - insert and save
   "o" (lambda () (interactive)
@@ -550,12 +559,21 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
   ";" 'goto-last-change
 
   ;; S prefix, ie. "syntax"
+  (kbd "s <RET>") 'flycheck-mode
   "sl" 'flycheck-list-errors
   "sn" 'flycheck-next-error
   "sj" 'flycheck-next-error
   "sp" 'flycheck-previous-error
   "sk" 'flycheck-previous-error
-  (kbd "s <RET>") 'flycheck-mode
+
+  (kbd "g <RET>") 'git-gutter-mode
+  "gk" 'git-gutter:previous-hunk
+  "gp" 'git-gutter:previous-hunk
+  "gj" 'git-gutter:next-hunk
+  "gn" 'git-gutter:next-hunk
+  "gadd" 'git-gutter:stage-hunk
+  "grev" 'git-gutter:revert-hunk
+  "gblame" 'magit-blame
   )
 
 (define-key help-map (kbd "x") 'describe-face)
@@ -765,8 +783,33 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 (projectile-global-mode)
 
 (setq projectile-file-exists-local-cache-expire (* 10 60)
-      projectile-enable-caching t
-      )
+      projectile-enable-caching t)
+
+
+;;;; Git
+;; =============================================================================
+
+(require 'git-gutter)
+
+;; NOTE - this means that the gitgutter thing won't appear unless linum-mode is
+;; enabled.
+;;(git-gutter:linum-setup)
+
+(add-hook 'prog-mode-hook 'git-gutter-mode)
+(setq git-gutter:modified-sign "~ "
+      git-gutter:added-sign "+ "
+      git-gutter:deleted-sign "- ")
+
+(add-to-list 'evil-emacs-state-modes 'git-blame-mode)
+
+;; TODO 
+(evil-leader/set-key-for-mode 'magit-blame-mode
+  (kbd "<RET>") 'magit-show-commit
+  "q" 'magit-blame-quit
+  "gj" 'magit-blame-next-chunk
+  "gn" 'magit-blame-next-chunk
+  "gk" 'magit-blame-previous-chunk
+  "gp" 'magit-blame-previous-chunk)
 
 
 ;;;; Solarized
