@@ -32,3 +32,5 @@ alias v="vim"
 alias vv=",edit"
 alias f=",cd"
 alias d=",fzf"
+
+alias vssh="vagrant ssh"
