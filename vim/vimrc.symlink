@@ -57,6 +57,8 @@ call vundle#rc()
     Bundle "php.vim"
     Plugin 'fatih/vim-go'
 
+    Plugin 'hashivim/vim-terraform'
+
 " fold
     Bundle "jpythonfold.vim"
 
