@@ -69,10 +69,8 @@
     md-vconfig = config --global -e
     md-vignore = !vi $DOTFILES/git/gitignore.symlink
 
-    # rebase -i just for the commits that differ between HEAD and given branch
-    md-rebase = "!f() { if [ -z $1 ]; then echo 'No branch provided'; else git rebase -i `git merge-base head $1`; fi }; f"
-
-
+    # List recent branches
+    md-recent = "for-each-ref --sort='-authordate:iso8601' --format='%(authordate:relative) %09%09 %(refname:short)' refs/heads"
 
 [color]
     ui = true
