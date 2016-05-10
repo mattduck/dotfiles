@@ -306,6 +306,10 @@
 ;;;; Display
 ;; =============================================================================
 
+;; Remove the menu bar, as it takes up space and I don't really use it. I think
+;; this only affects terminal emacs.
+(menu-bar-mode -1)
+
 (add-hook 'after-save-hook 'font-lock-fontify-buffer)
 
 ;; Colour column
