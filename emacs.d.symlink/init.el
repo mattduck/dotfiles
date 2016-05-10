@@ -1,3 +1,7 @@
+;; Increase GC threshold to 100MB. This decreases Emacs load time by
+;; ~600ms. This gets reset at the end of the file.
+(setq gc-cons-threshold 100000000)
+
 ;;;; Fix environment if called as GUI app
 ;; =============================================================================
 (defun md/get-dotfiles-path ()
@@ -819,4 +823,4 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 (load-theme 'solarized t)  ; Defaults to light
 (solarized-enable-theme 'dark)
 
-
+(setq gc-cons-threshold 800000)
