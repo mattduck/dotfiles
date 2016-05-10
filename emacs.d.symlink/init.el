@@ -800,7 +800,8 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 ;;(git-gutter:linum-setup)
 
 (add-hook 'prog-mode-hook 'git-gutter-mode)
-(setq git-gutter:modified-sign "~ "
+(setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
+      git-gutter:modified-sign "~ "
       git-gutter:added-sign "+ "
       git-gutter:deleted-sign "- ")
 
