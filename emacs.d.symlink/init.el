@@ -318,13 +318,17 @@
 
 ;; Note - fci-rule-color is defined in my solarized theme fork.
 
-;; Performance is too slow w/big files to enable these by default
-;; (define-globalized-minor-mode global-fci-mode fci-mode (lambda () (fci-mode 1)))
-;; (global-fci-mode t)
-;; (require 'linum) ; numbers in margin
-;; (global-linum-mode nil)
-
-;; TODO
+;; By default, in terminal emacs the linum margin terminates right against the
+;; code. This copies the code from linum's "dynamic" linum-format, but adds a
+;; space so there is some separation.
+(setq linum-format
+      (lambda (line-number)
+        (let ((w (length (number-to-string
+                          (count-lines (point-min) (point-max))))))
+          (propertize
+           (format
+            (concat "%" (number-to-string w) "d ")
+            line-number) 'face 'linum))))
 
 ;; Line and Column number in mode-line. These seem to be global.
 (line-number-mode 1)
@@ -338,6 +342,7 @@
   (if (string= system-name "mattmbp.local")
       (set-frame-font "Monaco-12:antialias=subpixel")
     (set-frame-font "Monaco-13:antialias=subpixel")))
+(md/set-default-font)
 (add-hook 'focus-in-hook 'md/set-default-font)
 
 ;; Necessary on v24.4 to display accurate Solarized colors, due to Emacs bug #8402.
@@ -582,6 +587,7 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
   "gadd" 'git-gutter:stage-hunk
   "grev" 'git-gutter:revert-hunk
   "gblame" 'magit-blame
+  "gdiff" 'magit-ediff-popup
   )
 
 (define-key help-map (kbd "x") 'describe-face)
@@ -799,26 +805,38 @@ then it takes a second \\[keyboard-quit] to abort the minibuffer."
 
 (require 'git-gutter)
 
-;; NOTE - this means that the gitgutter thing won't appear unless linum-mode is
-;; enabled.
-;;(git-gutter:linum-setup)
-
 (add-hook 'prog-mode-hook 'git-gutter-mode)
 (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
-      git-gutter:modified-sign "~ "
-      git-gutter:added-sign "+ "
-      git-gutter:deleted-sign "- ")
+      git-gutter:modified-sign "~"
+      git-gutter:added-sign "+"
+      git-gutter:deleted-sign "-"
+      git-gutter:separator-sign " "  ; Without this, there's no space between
+                                     ; the git-gutter column and the code
+      )
 
-(add-to-list 'evil-emacs-state-modes 'git-blame-mode)
+(delete 'magit-blame-mode evil-emacs-state-modes)
+(delete 'magit-revision-mode evil-emacs-state-modes)
 
-;; TODO 
-(evil-leader/set-key-for-mode 'magit-blame-mode
+;; I don't know why, but by default I can't get magit-blame to adhere to my
+;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
+;; calling evil-normal-state fixes it.
+(add-hook 'magit-blame-mode-hook 'evil-normal-state)
+(add-hook 'magit-revision-mode-hook 'evil-normal-state)
+
+(evil-define-key 'normal magit-blame-mode-map
   (kbd "<RET>") 'magit-show-commit
   "q" 'magit-blame-quit
   "gj" 'magit-blame-next-chunk
   "gn" 'magit-blame-next-chunk
   "gk" 'magit-blame-previous-chunk
   "gp" 'magit-blame-previous-chunk)
+
+(setq ediff-split-window-function 'split-window-horizontally)
+
+;; TODO - I want ediff to have evil-like bindings
+;; (define-key ediff-mode-map
+;;   "j" '(lambda () (ediff-scroll-vertically 1)))
+  
 
 
 ;;;; Solarized
