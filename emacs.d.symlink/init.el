@@ -117,6 +117,7 @@
   scroll-step 1)
 
 ;; Remove scrollbars (GUI only) to get extra screen space
+(require 'scroll-bar)
 (scroll-bar-mode -1)
 
 (blink-cursor-mode 0)
@@ -613,6 +614,9 @@
 
 (use-package
  git-gutter
+ :init
+ (progn
+   (add-hook 'prog-mode-hook 'git-gutter-mode))
  :config
  (progn
    (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
@@ -621,8 +625,7 @@
          git-gutter:deleted-sign "-"
 
          ;; Without this, there's no space between the git-gutter column and the code.
-         git-gutter:separator-sign " ")
-   (add-hook 'prog-mode-hook 'git-gutter-mode))
+         git-gutter:separator-sign " "))
  :bind (:map md/leader-map
        ("g <RET>" . git-gutter-mode)
        ("gk" . git-gutter:previous-hunk)
@@ -685,7 +688,6 @@
 
 (require 'evil)
 (require 'powerline)
-(require 'git-gutter)
 (require 'color-theme-solarized)
 
 (setq gc-cons-threshold 800000)

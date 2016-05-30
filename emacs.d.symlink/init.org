@@ -215,7 +215,7 @@ show their terminal/GUI-specific default fonts:
   scroll-step 1)
 
 ;; Remove scrollbars (GUI only) to get extra screen space
-(require 'scroll-bar-mode)
+(require 'scroll-bar)
 (scroll-bar-mode -1)
 #+END_SRC
 
@@ -781,26 +781,28 @@ although I don't remember exactly what the difference is:
 
 ** git-gutter
 #+BEGIN_SRC emacs-lisp
-(use-package
- git-gutter
- :config
- (progn
-   (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
-         git-gutter:modified-sign "~"
-         git-gutter:added-sign "+"
-         git-gutter:deleted-sign "-"
+  (use-package
+   git-gutter
+   :init
+   (progn
+     (add-hook 'prog-mode-hook 'git-gutter-mode))
+   :config
+   (progn
+     (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
+           git-gutter:modified-sign "~"
+           git-gutter:added-sign "+"
+           git-gutter:deleted-sign "-"
 
-         ;; Without this, there's no space between the git-gutter column and the code.
-         git-gutter:separator-sign " ")
-   (add-hook 'prog-mode-hook 'git-gutter-mode))
- :bind (:map md/leader-map
-       ("g <RET>" . git-gutter-mode)
-       ("gk" . git-gutter:previous-hunk)
-       ("gp" . git-gutter:previous-hunk)
-       ("gj" . git-gutter:next-hunk)
-       ("gn" . git-gutter:next-hunk)
-       ("gadd" . git-gutter:stage-hunk)
-       ("grev" . git-gutter:revert-hunk)))
+           ;; Without this, there's no space between the git-gutter column and the code.
+           git-gutter:separator-sign " "))
+   :bind (:map md/leader-map
+         ("g <RET>" . git-gutter-mode)
+         ("gk" . git-gutter:previous-hunk)
+         ("gp" . git-gutter:previous-hunk)
+         ("gj" . git-gutter:next-hunk)
+         ("gn" . git-gutter:next-hunk)
+         ("gadd" . git-gutter:stage-hunk)
+         ("grev" . git-gutter:revert-hunk)))
 
 #+END_SRC
 
@@ -872,7 +874,6 @@ I want these enabled on startup:
 #+BEGIN_SRC emacs-lisp
 (require 'evil)
 (require 'powerline)
-(require 'git-gutter)
 (require 'color-theme-solarized)
 #+END_SRC
 
