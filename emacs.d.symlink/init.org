@@ -1,16 +1,34 @@
+#+COMMENT (org-babel-tangle nil "init.el")
+* Initial Setup
 
+I'm using org-mode to structure my configuration. Inspired by [[https://github.com/sachac/.emacs.d][Sacha Chua]] and [[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
+
+** GC
+Increase the GC threshold to 100MB. This decreases Emacs load time by
+~600ms (at least, when I'm not using =use-package=). This gets reset at the end
+of the file.
+
+#+BEGIN_SRC emacs-lisp
 (setq gc-cons-threshold 100000000)
+#+END_SRC
 
+** Dotfiles
+#+BEGIN_SRC emacs-lisp
 (defun md/get-dotfiles-path ()
   (or
     (getenv "DOTFILES")
     (concat (expand-file-name "~") "/dotfiles")))
+#+END_SRC
 
+** Emacs Package setup
+#+BEGIN_SRC emacs-lisp
 (defun md/refresh-packages ()
   (interactive)
   (when (not package-archive-contents)
     (package-refresh-contents)))
+#+END_SRC
 
+#+BEGIN_SRC emacs-lisp
 (package-initialize)
 
 (setq package-archives
@@ -20,10 +38,18 @@
         ("org" . "http://orgmode.org/elpa/")))
 
 (setq load-prefer-newer t)  ; new in v24.4
+#+END_SRC
 
+** Custom file
+
+#+BEGIN_SRC emacs-lisp
 (setq custom-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/custom.el"))
 (load custom-file 'noerror)
+#+END_SRC
 
+** use-package setup
+
+#+BEGIN_SRC emacs-lisp
 (unless (package-installed-p 'use-package)
     (package-install 'use-package))
 (eval-when-compile
@@ -31,7 +57,10 @@
 (require 'bind-key)  ; Required for :bind in use-package
 (setq use-package-always-ensure nil
       use-package-verbose t)
+#+END_SRC
 
+** exec-path-from-shell
+#+BEGIN_SRC emacs-lisp
 (use-package
  exec-path-from-shell
  :demand t
@@ -39,7 +68,12 @@
  (progn
   (when (memq window-system '(mac ns))
     (exec-path-from-shell-initialize))))
+#+END_SRC
 
+* General utils
+
+** Odd functions
+#+BEGIN_SRC emacs-lisp
 (defun md/strip-whitespace-and-save ()
   (interactive)
   (delete-trailing-whitespace)
@@ -49,18 +83,41 @@
   (interactive)
   (font-lock-fontify-buffer)
   (message "Fontified buffer"))
+#+END_SRC
 
+** Leader
+I was using evil-leader, but think I can get the functionality I care about just
+by using a keymap:
+
+#+BEGIN_SRC emacs-lisp
 (defvar md/leader-map (make-sparse-keymap))
+#+END_SRC
 
+** Bindings
+I seem to use =describe-face= a lot:
+#+BEGIN_SRC emacs-lisp
 (bind-key "x" 'describe-face help-map)
+#+END_SRC
 
+* Backups
+#+BEGIN_SRC emacs-lisp
 ;; Backup everything to the same directory, rather than dropping
 ;; files all over the place
 (setq backup-directory-alist
       `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
+#+END_SRC
 
+* Sane display behaviour
+
+These are mostly to get the general appearance / behaviour of Emacs close to
+what I'm used to from vim.
+
+** Splash screen
+#+BEGIN_SRC emacs-lisp
 (setq inhibit-splash-screen t)
-
+#+END_SRC
+** Fill column
+#+BEGIN_SRC emacs-lisp
 (setq-default fill-column 80)
 
 (use-package
@@ -69,16 +126,43 @@
  (progn
    ;; Width of the fill column rule
    (setq fci-rule-width 5)))
+#+END_SRC
 
+** Menu bar
+By default, terminal emacs displays a menu bar. I don't use it, so remove
+it. This doesn't affect the OS X app.
+
+Also disable the toolbar - I'm not sure in what circumstances this is displayed,
+but I don't want it.
+
+#+BEGIN_SRC emacs-lisp
 (menu-bar-mode -1)
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
+#+END_SRC
 
+** Fontify
+Some things don't fontify quick enough (eg. fic-mode). This helps to contain
+that issue:
+
+#+BEGIN_SRC emacs-lisp
 (add-hook 'after-save-hook 'font-lock-fontify-buffer)
+#+END_SRC
 
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
-(add-hook 'prog-mode-hook 'turn-on-auto-fill)
-(add-hook 'org-mode-hook 'turn-on-auto-fill)
+** Text wrapping
 
+Auto-wrap text.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'text-mode-hook 'turn-on-auto-fill)
+  (add-hook 'prog-mode-hook 'turn-on-auto-fill)
+  (add-hook 'org-mode-hook 'turn-on-auto-fill)
+#+END_SRC
+
+** Linum / line numbers in left margin
+By default, in terminal Emacs the linum margic terminates right against the
+first column of the buffer. This copies the code from linum's =dynamic=
+linum-format, but adds a space so these is some separation:
+#+BEGIN_SRC emacs-lisp
 (setq linum-format
       (lambda (line-number)
         (let ((w (length (number-to-string
@@ -92,9 +176,15 @@
   linum-mode
   :bind (:map md/leader-map
          ("ln" . linum-mode)))
+#+END_SRC
 
+** Highlight cursor line
+#+BEGIN_SRC emacs-lisp
 (global-hl-line-mode 1)
+#+END_SRC
 
+** Default font
+#+BEGIN_SRC emacs-lisp
 (defun md/set-default-font ()
   (interactive)
   (if (string= system-name "mattmbp.local")
@@ -103,9 +193,17 @@
 (md/set-default-font)
 
 (md/set-default-font)
+#+END_SRC
 
+When using a server with both GUI and terminal clients attached, I want them to
+show their terminal/GUI-specific default fonts:
+
+#+BEGIN_SRC emacs-lisp
 (add-hook 'focus-in-hook 'md/set-default-font)
+#+END_SRC
 
+** Scroll behaviour
+#+BEGIN_SRC emacs-lisp
 (setq
 
   ;; TODO - do I need scroll-conservatively here? I used to use it, now not sure why.
@@ -117,10 +215,21 @@
   scroll-step 1)
 
 ;; Remove scrollbars (GUI only) to get extra screen space
+(require 'scroll-bar-mode)
 (scroll-bar-mode -1)
+#+END_SRC
 
+** Cursor blinking
+
+Ensure cursor isn't blinking:
+#+BEGIN_SRC emacs-lisp
 (blink-cursor-mode 0)
+#+END_SRC
 
+** Fringe
+NOTE: The Fringe only displays in GUI Emacs.
+
+#+BEGIN_SRC emacs-lisp
 (defun md/fringe-mode ()
   (interactive)
   ;; Create fringe at left side of screen.
@@ -130,6 +239,11 @@
 ;; I just want to use this for flycheck mode.
 (add-hook 'prog-mode-hook 'md/fringe-mode)
 
+#+END_SRC
+
+* Evil
+** Base evil
+#+BEGIN_SRC emacs-lisp
 (use-package
  evil
  :config
@@ -205,13 +319,19 @@
         ;; Same as vim - insert and save
         ("o" . md/insert-blank-line-before)
         ("O" . md/insert-blank-line-after)))
+#+END_SRC
 
+** Evil surround
+#+BEGIN_SRC emacs-lisp
 (use-package
  evil-surround
  :config
  (progn
    (global-evil-surround-mode 1)))
+#+END_SRC
 
+** Easymotion
+#+BEGIN_SRC emacs-lisp
 (use-package
  ace-jump-mode
 
@@ -232,7 +352,11 @@
              ("f F" . evil-ace-jump-char-mode)
              ("f t" . evil-ace-jump-char-mode)
              ("f T" . evil-ace-jump-char-mode)))
+#+END_SRC
 
+* Highlight keywords in comments
+
+#+BEGIN_SRC emacs-lisp
 (use-package
  fic-mode
  :config
@@ -252,7 +376,11 @@
    ;; By default this includes font-lock-string-face, but I don't want strings to
    ;; have these words formatted.
    (setq fic-activated-faces '(font-lock-doc-face font-lock-comment-face))))
+#+END_SRC
 
+* Helm
+** Base helm
+#+BEGIN_SRC emacs-lisp
 (use-package
  helm
  :config
@@ -285,17 +413,31 @@
         :map help-map
         ("X" . helm-colors)))
 
+
+#+END_SRC
+
+** Addons
+#+BEGIN_SRC emacs-lisp
 ;; TODO - why did I need this?
 (use-package helm-config)
+#+END_SRC
 
-(use-package
- paren
- :config
- (progn
-   (setq show-paren-style 'parenthesis
-         blink-matching-paren nil
-         blink-matching-paren-on-screen nil)))
+* Parentheses
+Basic paren matching is built in. I preferred these settings at one point,
+although I don't remember exactly what the difference is:
 
+#+BEGIN_SRC emacs-lisp
+  (use-package
+   paren
+   :config
+   (progn
+     (setq show-paren-style 'parenthesis
+           blink-matching-paren nil
+           blink-matching-paren-on-screen nil)))
+#+END_SRC
+
+* Elscreen
+#+BEGIN_SRC emacs-lisp
 (use-package
  elscreen
  :config
@@ -306,7 +448,10 @@
      (setq elscreen-display-tab nil)
      (elscreen-notify-screen-modification 'force))
    (md/elscreen-hide-tabs)))
+#+END_SRC
 
+* Splitscreen
+#+BEGIN_SRC emacs-lisp
 (setq md/splitscreen-path (concat (md/get-dotfiles-path) "/splitscreen/"))
 
 (use-package
@@ -315,7 +460,9 @@
  :config
  (progn
    (splitscreen-mode)))
-
+#+END_SRC
+* Org
+#+BEGIN_SRC emacs-lisp
 (use-package
  org
  :config
@@ -463,9 +610,16 @@
        ("C-c d" . md/org-timestamp-date-inactive-no-confirm)
        ("C-c t" . md/org-timestamp-time-inactive-no-confirm)))
 
+#+END_SRC
+* Modeline
+** General modeline
+#+BEGIN_SRC emacs-lisp
 (line-number-mode 1)
 (column-number-mode 1)
+#+END_SRC
 
+** Powerline
+#+BEGIN_SRC emacs-lisp
 (use-package
  powerline
  :config
@@ -558,7 +712,9 @@
      (solarized-load-theme))
 
    (md/powerline-setup)))
-
+#+END_SRC
+* Syntax checking
+#+BEGIN_SRC emacs-lisp
 (use-package
  flycheck
  :config
@@ -591,6 +747,10 @@
         ("sp" . flycheck-previous-error)
         ("sk" . flycheck-previous-error)))
 
+#+END_SRC
+* Projectile
+** Base projectile
+#+BEGIN_SRC emacs-lisp
 (use-package
  projectile
  :config
@@ -600,7 +760,10 @@
    (projectile-global-mode))
  :bind (:map md/leader-map
        ("jk" . projectile-kill-buffers)))
+#+END_SRC
 
+** Helm
+#+BEGIN_SRC emacs-lisp
 (use-package
  helm-projectile
  :bind (:map md/leader-map
@@ -611,6 +774,13 @@
        ;; TODO - proper binding for invalidating cache
        ("jf" . helm-projectile-find-file)))
 
+
+#+END_SRC
+
+* Git
+
+** git-gutter
+#+BEGIN_SRC emacs-lisp
 (use-package
  git-gutter
  :config
@@ -632,6 +802,10 @@
        ("gadd" . git-gutter:stage-hunk)
        ("grev" . git-gutter:revert-hunk)))
 
+#+END_SRC
+
+** magit
+#+BEGIN_SRC emacs-lisp
 (use-package
  magit
  :config
@@ -656,6 +830,10 @@
        ("gblame" . magit-blame)
        ("gdiff" . magit-ediff-popup)))
 
+#+END_SRC
+
+* Ediff
+#+BEGIN_SRC emacs-lisp
 (use-package
  ediff
  :config
@@ -663,29 +841,44 @@
    ;; TODO - I want ediff to have evil-like bindings
    (setq ediff-split-window-function 'split-window-horizontally)))
 
-(use-package
- color-theme-solarized
- :ensure nil
- :load-path "non-elpa/color-theme-solarized"
- :config
- (progn
-   (add-to-list 'custom-theme-load-path "non-elpa/color-theme-solarized")
+#+END_SRC
+* Solarized
+#+BEGIN_SRC emacs-lisp
+  (use-package
+   color-theme-solarized
+   :ensure nil
+   :load-path "non-elpa/color-theme-solarized"
+   :config
+   (progn
+     (add-to-list 'custom-theme-load-path "non-elpa/color-theme-solarized")
 
-   ;; Necessary on v24.4 to display accurate Solarized colors, due to Emacs bug
-   ;; #8402. v24.3 didn't set ns-use-sgrb-colorspace.
-   (setq ns-use-srgb-colorspace nil
-         solarized-broken-srgb t)
+     ;; Necessary on v24.4 to display accurate Solarized colors, due to Emacs bug
+     ;; #8402. v24.3 didn't set ns-use-sgrb-colorspace.
+     (setq ns-use-srgb-colorspace nil
+           solarized-broken-srgb t)
 
-   (load-theme 'solarized t)  ; Defaults to light
-   (solarized-enable-theme 'dark))
+     (load-theme 'solarized t)  ; Defaults to light
+     (solarized-enable-theme 'dark))
 
- :bind (:map md/leader-map
-        ("sol" . solarized-toggle-theme-mode)
-        ("chl" . solarized-toggle-comment-visibility)))
+   :bind (:map md/leader-map
+          ("sol" . solarized-toggle-theme-mode)
+          ("chl" . solarized-toggle-comment-visibility)))
 
+#+END_SRC
+
+* Teardown
+
+I want these enabled on startup:
+#+BEGIN_SRC emacs-lisp
 (require 'evil)
 (require 'powerline)
 (require 'git-gutter)
 (require 'color-theme-solarized)
+#+END_SRC
 
+#+BEGIN_SRC emacs-lisp
 (setq gc-cons-threshold 800000)
+#+END_SRC
+
+
+
