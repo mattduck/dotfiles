@@ -163,6 +163,27 @@
   (font-lock-fontify-buffer)
   (message "Fontified buffer"))
 
+(defun md/file-info ()
+  (interactive)
+  (message
+   "%s | %s lines | %3d%% | %s"
+           (buffer-file-name)
+           (count-lines (point-min) (point-max))
+           (/ (window-end) 0.01 (point-max))
+           major-mode)) 
+
+(defun md/mode-info ()
+  (interactive)
+  (message 
+   (format
+    "%s"
+    (with-temp-buffer
+      (let (mm result)
+        (dolist (mm (sort minor-mode-list 'string<) result)
+          (insert (format "%s\n" mm))
+          (setq result (buffer-substring (point-min) (point-max))))
+        result)))))
+
 (defvar md/leader-map (make-sparse-keymap))
 
 (bind-key "x" 'describe-face help-map)
