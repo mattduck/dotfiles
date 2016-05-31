@@ -40,43 +40,6 @@
   (when (memq window-system '(mac ns))
     (exec-path-from-shell-initialize))))
 
-;; Backup everything to the same directory, rather than dropping
-;; files all over the place
-(setq backup-directory-alist
-      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
-
-(if (eq system-type 'darwin)
-    (setq
-
-     ;; Set alt/option to use its default behaviour in OS X , so I can do
-     ;; eg. alt+3 to insert #. By default in Emacs this is Meta, but I find Meta more
-     ;; accessible on the left cmd key.
-     ns-option-modifier nil
-
-     ;; This is the default, and seems to handle the standard cmd key
-     ;; bindings, so apple cmd+c runs super+c in emacs, etc. I don't use them
-     ;; much, but they might be useful sometimes.
-     ns-right-command-modifier 'super
-
-     ;; Instead of the cmd bindings (that I don't use much), use the left
-     ;; cmd key for Meta bindings. This is easier to reach than the default Meta
-     ;; key (which is alt).
-     ns-command-modifier 'meta))
-
-(defun md/strip-whitespace-and-save ()
-  (interactive)
-  (delete-trailing-whitespace)
-  (save-buffer))
-
-(defun md/fontify-buffer ()
-  (interactive)
-  (font-lock-fontify-buffer)
-  (message "Fontified buffer"))
-
-(defvar md/leader-map (make-sparse-keymap))
-
-(bind-key "x" 'describe-face help-map)
-
 (setq inhibit-splash-screen t)
 
 (setq-default fill-column 80)
@@ -131,6 +94,10 @@
   ;; Start scrolling when the cursor is one line away from the top/bottom. Default
   scroll-margin 1
 
+  ;; If at the bottom of the file, don't scroll beyond that and show a lot of
+  ;; empty space - st scroll
+  scroll-conservatively 999
+
   ;; Only scroll one row at a time. Default behaviour is to centre the row.
   scroll-step 1)
 
@@ -148,6 +115,57 @@
 
 ;; I just want to use this for flycheck mode.
 (add-hook 'prog-mode-hook 'md/fringe-mode)
+
+(setq-default
+
+ ;; Use spaces instead of tabs
+ indent-tabs-mode nil
+
+ ;; Display tab as 4 chars wide
+ tab-width 4)
+
+;; Emable on-the-fly indenting. TODO - read docs for this
+(electric-indent-mode 1)
+
+(setq visible-bell nil
+      ring-bell-function 'ignore)
+
+;; Backup everything to the same directory, rather than dropping
+;; files all over the place
+(setq backup-directory-alist
+      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
+
+(if (eq system-type 'darwin)
+    (setq
+
+     ;; Set alt/option to use its default behaviour in OS X , so I can do
+     ;; eg. alt+3 to insert #. By default in Emacs this is Meta, but I find Meta more
+     ;; accessible on the left cmd key.
+     ns-option-modifier nil
+
+     ;; This is the default, and seems to handle the standard cmd key
+     ;; bindings, so apple cmd+c runs super+c in emacs, etc. I don't use them
+     ;; much, but they might be useful sometimes.
+     ns-right-command-modifier 'super
+
+     ;; Instead of the cmd bindings (that I don't use much), use the left
+     ;; cmd key for Meta bindings. This is easier to reach than the default Meta
+     ;; key (which is alt).
+     ns-command-modifier 'meta))
+
+(defun md/strip-whitespace-and-save ()
+  (interactive)
+  (delete-trailing-whitespace)
+  (save-buffer))
+
+(defun md/fontify-buffer ()
+  (interactive)
+  (font-lock-fontify-buffer)
+  (message "Fontified buffer"))
+
+(defvar md/leader-map (make-sparse-keymap))
+
+(bind-key "x" 'describe-face help-map)
 
 (use-package
  evil
@@ -199,11 +217,6 @@
         ("j" . evil-next-visual-line)
         ("k" . evil-previous-visual-line)
 
-        ;; Better than ESC
-        :map evil-insert-state-map
-        ("jj" . md/normal-state-and-save)
-        ("jk" . evil-normal-state)
-
         ;; Leader bindings
         :map md/leader-map
         ("w" . save-buffer)
@@ -251,6 +264,16 @@
              ("f F" . evil-ace-jump-char-mode)
              ("f t" . evil-ace-jump-char-mode)
              ("f T" . evil-ace-jump-char-mode)))
+
+(use-package
+  key-chord
+  :config
+  (progn
+    (setq key-chord-two-keys-delay 0.4)
+
+    (key-chord-define evil-insert-state-map "jj" 'md/normal-state-and-save)
+    (key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
+    (key-chord-mode 1)))
 
 (use-package
  fic-mode
