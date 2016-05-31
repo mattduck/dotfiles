@@ -1,4 +1,6 @@
 #+COMMENT (org-babel-tangle nil "init.el")
+* TODO 
+- [ ] savehist-mode
 * Initial Setup
 
 I'm using org-mode to structure my configuration. Inspired by [[https://github.com/sachac/.emacs.d][Sacha Chua]] and [[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
@@ -69,6 +71,56 @@ of the file.
   (when (memq window-system '(mac ns))
     (exec-path-from-shell-initialize))))
 #+END_SRC
+* Backups
+#+BEGIN_SRC emacs-lisp
+;; Backup everything to the same directory, rather than dropping
+;; files all over the place
+(setq backup-directory-alist
+      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
+#+END_SRC
+* Modifier keys
+** OS X
+
+- GUI
+	
+	- LEFT ALT :: nil (ie. standard alt/option behaviour)
+  - LEFT CMD :: Meta 
+	- RIGHT CMD :: Super (ie. standard cmd behaviour in GUI emacs)
+	- RIGHT ALT :: nil (ie. standard alt/option behaviour)
+		
+- iTerm2
+	
+	- LEFT ALT :: nil (ie. standard alt/option behaviour)
+  - LEFT CMD :: iTerm cmd key (so can do usual shortcuts eg. cmd-tab) 
+	- RIGHT CMD :: Meta
+	- RIGHT ALT :: nil (ie. standard alt/option behaviour)
+
+	- I use the right cmd key as Meta in the terminal:
+
+    - Under the "keys" tab, set "right cmd" to send "right option", and
+      "right option" to send "left option".
+
+    - Under the "profiles" tab, set "Right option key acts as +Esc".
+
+#+BEGIN_SRC emacs-lisp
+  (if (eq system-type 'darwin)
+      (setq
+
+       ;; Set alt/option to use its default behaviour in OS X , so I can do
+       ;; eg. alt+3 to insert #. By default in Emacs this is Meta, but I find Meta more
+       ;; accessible on the left cmd key.
+       ns-option-modifier nil
+
+       ;; This is the default, and seems to handle the standard cmd key
+       ;; bindings, so apple cmd+c runs super+c in emacs, etc. I don't use them
+       ;; much, but they might be useful sometimes.
+       ns-right-command-modifier 'super
+
+       ;; Instead of the cmd bindings (that I don't use much), use the left
+       ;; cmd key for Meta bindings. This is easier to reach than the default Meta
+       ;; key (which is alt).
+       ns-command-modifier 'meta))
+#+END_SRC
 
 * General utils
 
@@ -98,15 +150,6 @@ I seem to use =describe-face= a lot:
 #+BEGIN_SRC emacs-lisp
 (bind-key "x" 'describe-face help-map)
 #+END_SRC
-
-* Backups
-#+BEGIN_SRC emacs-lisp
-;; Backup everything to the same directory, rather than dropping
-;; files all over the place
-(setq backup-directory-alist
-      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
-#+END_SRC
-
 * Sane display behaviour
 
 These are mostly to get the general appearance / behaviour of Emacs close to

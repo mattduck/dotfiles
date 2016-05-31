@@ -40,6 +40,29 @@
   (when (memq window-system '(mac ns))
     (exec-path-from-shell-initialize))))
 
+;; Backup everything to the same directory, rather than dropping
+;; files all over the place
+(setq backup-directory-alist
+      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
+
+(if (eq system-type 'darwin)
+    (setq
+
+     ;; Set alt/option to use its default behaviour in OS X , so I can do
+     ;; eg. alt+3 to insert #. By default in Emacs this is Meta, but I find Meta more
+     ;; accessible on the left cmd key.
+     ns-option-modifier nil
+
+     ;; This is the default, and seems to handle the standard cmd key
+     ;; bindings, so apple cmd+c runs super+c in emacs, etc. I don't use them
+     ;; much, but they might be useful sometimes.
+     ns-right-command-modifier 'super
+
+     ;; Instead of the cmd bindings (that I don't use much), use the left
+     ;; cmd key for Meta bindings. This is easier to reach than the default Meta
+     ;; key (which is alt).
+     ns-command-modifier 'meta))
+
 (defun md/strip-whitespace-and-save ()
   (interactive)
   (delete-trailing-whitespace)
@@ -53,11 +76,6 @@
 (defvar md/leader-map (make-sparse-keymap))
 
 (bind-key "x" 'describe-face help-map)
-
-;; Backup everything to the same directory, rather than dropping
-;; files all over the place
-(setq backup-directory-alist
-      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
 
 (setq inhibit-splash-screen t)
 
