@@ -166,6 +166,7 @@
 (defvar md/leader-map (make-sparse-keymap))
 
 (bind-key "x" 'describe-face help-map)
+(bind-key "C-k" 'describe-personal-keybindings help-map)
 
 (use-package
  evil
@@ -296,39 +297,55 @@
    (setq fic-activated-faces '(font-lock-doc-face font-lock-comment-face))))
 
 (use-package
- helm
- :config
- (progn
-   (helm-mode 1)
-   (helm-autoresize-mode 0))
- :bind (([remap find-file] . helm-find-files)
-        ([remap occur] . helm-occur)
-        ([remap dabbrev-expand] . helm-dabbrev)
-        ([remap list-buffers] . helm-buffers-list)
-        ("M-x" . helm-M-x)
-        ("C-x b" . helm-mini)
+  helm
+  :config
+  (progn
+    (helm-mode 1)
+    (helm-autoresize-mode 0))
+  :bind (([remap find-file] . helm-find-files)
+         ([remap occur] . helm-occur)
+         ([remap dabbrev-expand] . helm-dabbrev)
+         ([remap list-buffers] . helm-buffers-list)
+         ("M-x" . helm-M-x)
+         ("C-x b" . helm-mini)
 
-        :map helm-map
-        ("<tab>" . helm-execute-persistent-action)
-        ("C-z" . helm-select-action)
+         :map helm-map
+         ("<tab>" . helm-execute-persistent-action)
+         ("C-z" . helm-select-action)
 
-        :map lisp-interaction-mode-map
-        ([remap completion-at-point] . helm-lisp-completion)
+         :map lisp-interaction-mode-map
+         ([remap completion-at-point] . helm-lisp-completion)
 
-        :map emacs-lisp-mode-map
-        ([remap completion-at-point] . helm-lisp-completion)
+         :map emacs-lisp-mode-map
+         ([remap completion-at-point] . helm-lisp-completion)
 
-        :map md/leader-map
-        ("b" . helm-buffers-list)
-        ("f" . helm-find-files)
-        ("x" . helm-M-x)
-        ("p" . helm-mini)
+         :map md/leader-map
+         ("b" . helm-buffers-list)
+         ("f" . helm-find-files)
+         ("x" . helm-M-x)
+         ("p" . helm-mini)
 
-        :map help-map
-        ("X" . helm-colors)))
+         :map help-map
+         ("X" . helm-colors)))
 
 ;; TODO - why did I need this?
 (use-package helm-config)
+(use-package helm-ag
+  :config
+  (defun md/ag ()
+    (interactive)
+    (helm-do-ag default-directory))
+  :bind (:map md/leader-map
+         ("ag" . helm-do-ag)))
+
+(evil-set-initial-state 'help-mode 'normal)
+(evil-define-key 'normal help-mode-map
+  "q" 'quit-window
+  (kbd "C-i") 'help-go-forward
+  (kbd "C-f") 'help-go-forward
+  (kbd "C-o") 'help-go-back
+  (kbd "C-b") 'help-go-back
+  (kbd "<RET>") 'help-follow-symbol)
 
 (use-package
  paren
@@ -336,7 +353,8 @@
  (progn
    (setq show-paren-style 'parenthesis
          blink-matching-paren nil
-         blink-matching-paren-on-screen nil)))
+         blink-matching-paren-on-screen nil)
+   (add-hook 'prog-mode-hook 'show-paren-mode)))
 
 (use-package
  elscreen
@@ -347,6 +365,7 @@
      ;; This is how elscreen hides tabs in (elscreen-toggle-display-tab)
      (setq elscreen-display-tab nil)
      (elscreen-notify-screen-modification 'force))
+
    (md/elscreen-hide-tabs)))
 
 (setq md/splitscreen-path (concat (md/get-dotfiles-path) "/splitscreen/"))
@@ -680,8 +699,8 @@
  magit
  :config
  (progn
-   (delete 'magit-blame-mode evil-emacs-state-modes)
-   (delete 'magit-revision-mode evil-emacs-state-modes)
+   (evil-set-initial-state 'magit-blame-mode 'normal)
+   (evil-set-initial-state 'magit-revision-mode 'normal)
 
    ;; I don't know why, but by default I can't get magit-blame to adhere to my
    ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
