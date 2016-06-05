@@ -20,6 +20,7 @@ brew install \
     oath-toolkit \
     ansible \
     fzf \
+    shellcheck \
 
 # Brew is easiest way to compile with python
 brew install vim
