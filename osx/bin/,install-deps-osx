@@ -27,3 +27,9 @@ brew install vim
 
 # Required to allow tmux to merge w/osx clipboard
 brew install reattach-to-user-namespace
+
+# JS linter including jsx / react.
+# I just copied these dependencies from
+# http://codewinds.com/blog/2015-04-02-emacs-flycheck-eslint-jsx.html and it
+# seems to work
+npm install -g eslint eslint-plugin-react babel-eslint
