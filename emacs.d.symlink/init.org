@@ -1,16 +1,5 @@
 #+COMMENT (org-babel-tangle nil "init.el")
-* TODO
-- [ ] problem with terminal colours - eg. the org checkbox.
-- [ ] terminal copy/paste thing
-- [ ] savehist-mode.
-- [ ] indents.
-- [ ] read electric-indent docs.
-- [ ] does electric-indent need different configuration in python? I used to
-  have something for this.
-- [ ] undo tree?
-- [ ] info / other help modes - use vi keys to navigate?
-- [ ] magit-blame colours
-
+#+TITLE init.org
 * Initial Setup
 
 I'm using org-mode to structure my configuration. Inspired by [[https://github.com/sachac/.emacs.d][Sacha Chua]] and [[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
@@ -25,6 +14,9 @@ of the file.
 #+END_SRC
 
 ** Dotfiles
+
+I use this to refer to this directory / file:
+
 #+BEGIN_SRC emacs-lisp
 (defun md/get-dotfiles-path ()
   (or
@@ -34,6 +26,7 @@ of the file.
 
 ** Emacs Package setup
 #+BEGIN_SRC emacs-lisp
+;; NOTE - this is old, maybe I can remove it
 (defun md/refresh-packages ()
   (interactive)
   (when (not package-archive-contents)
@@ -83,8 +76,14 @@ of the file.
 #+END_SRC
 * Sane general behaviour
 
-These are mostly to get the general appearance / behaviour of Emacs close to
+These are mostly to get the base appearance / behaviour of Emacs close to
 what I'm used to from vim.
+
+Some of this would not be necessary if I only used GUI Emacs. If I can work out
+how to manage several projects in Emacs whilst keeping good separation between
+them, I might be able to drop terminal support. For now though, I find it
+easiest to use an editor-inside-tmux workflow, with one or two Tmux windows per
+project.
 
 ** Splash screen
 #+BEGIN_SRC emacs-lisp
@@ -133,9 +132,9 @@ Auto-wrap text.
 #+END_SRC
 
 ** Linum / line numbers in left margin
-By default, in terminal Emacs the linum margic terminates right against the
+By default, in terminal Emacs the linum margin terminates right against the
 first column of the buffer. This copies the code from linum's =dynamic=
-linum-format, but adds a space so these is some separation:
+linum-format, but adds a space so there is some separation:
 #+BEGIN_SRC emacs-lisp
 (setq linum-format
       (lambda (line-number)
@@ -150,6 +149,10 @@ linum-format, but adds a space so these is some separation:
   linum-mode
   :bind (:map md/leader-map
          ("ln" . linum-mode)))
+
+;; TODO - I thought use-package would defer the loading of this until I do "ln",
+;; but "lb" doesn't work.  
+(require 'linum)
 #+END_SRC
 
 ** Highlight cursor line
@@ -179,8 +182,6 @@ show their terminal/GUI-specific default fonts:
 ** Scroll behaviour
 #+BEGIN_SRC emacs-lisp
 (setq
-
-  ;; TODO - do I need scroll-conservatively here? I used to use it, now not sure why.
 
   ;; Start scrolling when the cursor is one line away from the top/bottom. Default
   scroll-margin 1
@@ -236,6 +237,37 @@ NOTE: The Fringe only displays in GUI Emacs.
 #+BEGIN_SRC emacs-lisp
 (setq visible-bell nil
       ring-bell-function 'ignore)
+#+END_SRC
+
+** Terminal colour fixes
+
+Emacs can use bold fonts, but iTerm is set to display bold fonts as "bright"
+colours (which is necessary to support the Solarized 16-colour palette). This
+means iTerm interprets the bold Emacs colours as bright and changes their
+colour (eg. from yellow to grey), which I don't want.
+
+I'm not sure why I didn't run into this issue with vim, and this is surely not
+the right fix, but it works for now:
+
+#+BEGIN_SRC emacs-lisp
+  (when (not (display-graphic-p))
+    (mapc
+     (lambda (face)
+       (set-face-bold face nil (selected-frame)))
+     (face-list)))
+#+END_SRC
+
+** Terminal clipboard fixes
+
+Terminal Emacs doesn't integrate with the system clipboard by default. ~xclip~
+provides this behaviour in the same way that GUI Emacs has it.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package xclip
+    :config
+    (progn
+      (turn-on-xclip)))
+  (require 'xclip)
 #+END_SRC
 
 * Backups
@@ -412,6 +444,8 @@ I seem to use =describe-face= a lot:
         ;; Same as vim - insert and save
         ("o" . md/insert-blank-line-before)
         ("O" . md/insert-blank-line-after)))
+
+(require 'evil)
 #+END_SRC
 
 ** Evil surround
@@ -507,9 +541,9 @@ actually use it to insert anything in insert mode.
            ("M-x" . helm-M-x)
            ("C-x b" . helm-mini)
 
-           :map helm-map
-           ("<tab>" . helm-execute-persistent-action)
-           ("C-z" . helm-select-action)
+           ;;:map helm-map
+           ;;("<tab>" . helm-execute-persistent-action)
+           ;;("C-z" . helm-select-action)
 
            :map lisp-interaction-mode-map
            ([remap completion-at-point] . helm-lisp-completion)
@@ -542,8 +576,16 @@ actually use it to insert anything in insert mode.
            ("ag" . helm-do-ag)))
 #+END_SRC
 
-* Help mode
+* help-fns+
+This package provides ~describe-keymap~ to M-k in the help-map, which is
+handy. It does some other things too (TODO - read docs).
 
+#+BEGIN_SRC emacs-lisp
+(use-package help-fns+) 
+(require 'help-fns+)
+#+END_SRC
+
+* Help mode
 I prefer to use vi keys to navigate help-mode:
 
 #+BEGIN_SRC emacs-lisp
@@ -551,9 +593,7 @@ I prefer to use vi keys to navigate help-mode:
   (evil-define-key 'normal help-mode-map
     "q" 'quit-window
     (kbd "C-i") 'help-go-forward
-    (kbd "C-f") 'help-go-forward
     (kbd "C-o") 'help-go-back
-    (kbd "C-b") 'help-go-back
     (kbd "<RET>") 'help-follow-symbol)
 #+END_SRC
 
@@ -573,6 +613,11 @@ although I don't remember exactly what the difference is:
 #+END_SRC
 
 * Elscreen
+
+Elscreen provides "tabs" that let me sort of arrange windows how I did it in
+vim. They're not ideal though, because the tabs either appear in several places
+on the screen, or nowhere.
+
 #+BEGIN_SRC emacs-lisp
   (use-package
    elscreen
@@ -600,152 +645,165 @@ although I don't remember exactly what the difference is:
 #+END_SRC
 * Org
 #+BEGIN_SRC emacs-lisp
-(use-package
- org
- :config
- (progn
+  (use-package
+   org
+   :config
+   (progn
 
-   (defun md/org-timestamp-time-inactive-no-confirm ()
-     (interactive)
-     (org-insert-time-stamp (current-time) t t))
+     (defun md/org-timestamp-time-inactive-no-confirm ()
+       (interactive)
+       (org-insert-time-stamp (current-time) t t))
 
-   (defun md/org-timestamp-date-inactive-no-confirm ()
-     (interactive)
-     (org-insert-time-stamp (current-time) nil t))
+     (defun md/org-timestamp-date-inactive-no-confirm ()
+       (interactive)
+       (org-insert-time-stamp (current-time) nil t))
 
-   (defun md/org-hook ()
-     ;; Change tab widths to fit headline indents
-     (setq tab-width 2
-           evil-shift-width 2)
+     (defun md/org-insert-link-from-paste ()
+       (interactive)
+       (org-insert-link nil
+                        (with-temp-buffer
+                          (evil-paste-after nil)
+                          (delete-trailing-whitespace)
+                          (buffer-string))))
 
-     ;; Disable in-buffer line numbers and the colour column, as both decrease
-     ;; org-mode / outline performance significantly on large files.
-     (linum-mode 0)
-     (fci-mode 0)
+     (defun md/org-hook ()
+       ;; Change tab widths to fit headline indents
+       (setq tab-width 2
+             evil-shift-width 2)
 
-     ;; Also disable the row and column numbers in the modeline. Seems you have to set
-     ;; these manually to make them buffer-local, unlike the above functions - TODO
-     ;; is this a bad thing?
-     (setq-local line-number-mode nil)
-     (setq-local column-number-mode nil)
+       ;; Disable in-buffer line numbers and the colour column, as both decrease
+       ;; org-mode / outline performance significantly on large files.
+       (linum-mode 0)
+       (fci-mode 0)
 
-     ;; Also don't highlight the current line. For some reason this rquires making
-     ;; global-hl-line-mode buffer-local.
-     (make-variable-buffer-local 'global-hl-line-mode)
-     (setq-local global-hl-line-mode nil))
+       ;; Also disable the row and column numbers in the modeline. Seems you have to set
+       ;; these manually to make them buffer-local, unlike the above functions - TODO
+       ;; is this a bad thing?
+       (setq-local line-number-mode nil)
+       (setq-local column-number-mode nil)
 
-   (define-minor-mode md/evil-org-mode
-     "Buffer local minor mode for evil-org"
-     :init-value nil
-     :lighter " EvilOrg"
-     :keymap (make-sparse-keymap) ; defines md/evil-org-mode-map
-     :group 'md/evil-org)
+       ;; Also don't highlight the current line. For some reason this rquires making
+       ;; global-hl-line-mode buffer-local.
+       (make-variable-buffer-local 'global-hl-line-mode)
+       (setq-local global-hl-line-mode nil))
 
-   ;; NOTE - I don't think the use-package ":bind" arg allows defining evil keys
-   ;; for a specific evil-mode/map combination.
+     (define-minor-mode md/evil-org-mode
+       "Buffer local minor mode for evil-org"
+       :init-value nil
+       :lighter " EvilOrg"
+       :keymap (make-sparse-keymap) ; defines md/evil-org-mode-map
+       :group 'md/evil-org)
 
-   ;; Normal state shortcuts
-   (evil-define-key 'normal md/evil-org-mode-map
-     "gk" 'outline-previous-visible-heading
-     "gj" 'outline-next-visible-heading
-     "H" 'org-beginning-of-line
-     "L" 'org-end-of-line
-     "$" 'org-end-of-line
-     "^" 'org-beginning-of-line
-     "-" 'org-cycle-list-bullet
-     (kbd "RET") 'org-cycle
-     (kbd "TAB") 'org-cycle)
+     ;; NOTE - I don't think the use-package ":bind" arg allows defining evil keys
+     ;; for a specific evil-mode/map combination.
 
-   ;; Normal & insert state shortcuts.
-   (mapc (lambda (state)
-           (evil-define-key state md/evil-org-mode-map
-             (kbd "M-l") 'org-metaright
-             (kbd "M-h") 'org-metaleft
-             (kbd "M-k") 'org-metaup
-             (kbd "M-j") 'org-metadown
-             (kbd "M-L") 'org-shiftmetaright
-             (kbd "M-H") 'org-shiftmetaleft
-             (kbd "M-K") 'org-shiftmetaup
-             (kbd "M-J") 'org-shiftmetadown
-             ))
-         '(normal insert))
+     ;; Normal state shortcuts
+     (evil-define-key 'normal md/evil-org-mode-map
+       "gk" 'outline-previous-visible-heading
+       "gj" 'outline-next-visible-heading
+       "H" 'org-beginning-of-line
+       "L" 'org-end-of-line
+       "$" 'org-end-of-line
+       "^" 'org-beginning-of-line
+       "-" 'org-cycle-list-bullet
+       (kbd "RET") 'org-cycle
+       (kbd "TAB") 'org-cycle)
 
-   ;; I don't like the default org-agenda bindings - there are far more
-   ;; bindings/features than I should have to think about, and I usually try to
-   ;; navigate using evil bindings (and eg. accidentally hit "j" and bring up
-   ;; the calendar etc).
-   ;;
-   ;; Instead, open org-agenda in evil-normal-mode, with a couple of the useful
-   ;; bindings copied directly from emacs-mode.
-   (define-minor-mode md/evil-org-agenda-mode
-     "Buffer local minor mode for evil-org-agenda"
-     :init-value nil
-     :lighter " EvilOrgAgenda"
-     :keymap (make-sparse-keymap) ; defines evil-org-agenda-mode-map
-     :group 'evil-org-agenda
+     ;; Normal & insert state shortcuts.
+     (mapc (lambda (state)
+             (evil-define-key state md/evil-org-mode-map
+               (kbd "M-l") 'org-metaright
+               (kbd "M-h") 'org-metaleft
+               (kbd "M-k") 'org-metaup
+               (kbd "M-j") 'org-metadown
+               (kbd "M-L") 'org-shiftmetaright
+               (kbd "M-H") 'org-shiftmetaleft
+               (kbd "M-K") 'org-shiftmetaup
+               (kbd "M-J") 'org-shiftmetadown
+               ))
+           '(normal insert))
 
-     (evil-set-initial-state 'md/evil-org-agenda-mode 'normal))
+     ;; I don't like the default org-agenda bindings - there are far more
+     ;; bindings/features than I should have to think about, and I usually try to
+     ;; navigate using evil bindings (and eg. accidentally hit "j" and bring up
+     ;; the calendar etc).
+     ;;
+     ;; Instead, open org-agenda in evil-normal-mode, with a couple of the useful
+     ;; bindings copied directly from emacs-mode.
+     (define-minor-mode md/evil-org-agenda-mode
+       "Buffer local minor mode for evil-org-agenda"
+       :init-value nil
+       :lighter " EvilOrgAgenda"
+       :keymap (make-sparse-keymap) ; defines evil-org-agenda-mode-map
+       :group 'evil-org-agenda)
 
-   (evil-define-key 'normal md/evil-org-agenda-mode-map
-     ;; j / k
-     (kbd "j") 'org-agenda-next-line
-     (kbd "n") 'org-agenda-next-line
-     (kbd "C-n") 'org-agenda-next-line
-     (kbd "k") 'org-agenda-previous-line
-     (kbd "p") 'org-agenda-previous-line
-     (kbd "C-p") 'org-agenda-previous-line
+     (evil-set-initial-state 'org-agenda-mode 'normal)
 
-     (kbd "q") 'org-agenda-quit
-     (kbd "r") 'org-agenda-redo  ; Recalculate the agenda
-     (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view
-     (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
-     (kbd "=") 'org-agenda-filter-by-regexp  ; Search
-     (kbd "/") 'org-agenda-filter-by-tag  ; Tag filter
-     (kbd "^") 'org-agenda-filter-by-top-headline  ; Show other items with same
-                                        ; headline as current
-     (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
+     (evil-define-key 'normal md/evil-org-agenda-mode-map
+       ;; j / k
+       (kbd "j") 'org-agenda-next-line
+       (kbd "n") 'org-agenda-next-line
+       (kbd "C-n") 'org-agenda-next-line
+       (kbd "k") 'org-agenda-previous-line
+       (kbd "p") 'org-agenda-previous-line
+       (kbd "C-p") 'org-agenda-previous-line
 
-   (add-hook 'org-mode-hook 'md/org-hook)
-   (add-hook 'org-mode-hook 'md/evil-org-mode)
-   (add-hook 'org-mode-agenda-hook 'md/evil-org-agenda-mode)
+       (kbd "q") 'org-agenda-quit
+       (kbd "r") 'org-agenda-redo  ; Recalculate the agenda
+       (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view
+       (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
+       (kbd "=") 'org-agenda-filter-by-regexp  ; Search
+       (kbd "/") 'org-agenda-filter-by-tag  ; Tag filter
+       (kbd "^") 'org-agenda-filter-by-top-headline  ; Show other items with same
+                                          ; headline as current
+       (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
 
-   (setq org-agenda-restore-windows-after-quit t
+     (add-hook 'org-mode-hook 'md/org-hook)
+     (add-hook 'org-mode-hook 'md/evil-org-mode)
+     (add-hook 'org-mode-agenda-hook 'md/evil-org-agenda-mode)
 
-         ;; Add timestamp when set task as closed
-         org-log-done 'time
+     (setq org-agenda-restore-windows-after-quit t
 
-         ;; Fontify inline code
-         org-src-fontify-natively t
+           ;; Add timestamp when set task as closed
+           org-log-done 'time
 
-         ;; Colour the whole headline
-         org-level-color-stars-only nil
+           ;; Fontify inline code
+           org-src-fontify-natively t
 
-         ;; Try to prevent accidentally editing invisible lines
-         org-catch-invisible-edits 'show-and-error
+           ;; When editing code, I don't want to open another window. This
+           ;; just makes the screen tidier.
+           org-src-window-setup 'current-window
 
-         org-adapt-indentation nil
+           ;; Colour the whole headline
+           org-level-color-stars-only nil
 
-         org-clock-out-remove-zero-time-clocks t
+           ;; Try to prevent accidentally editing invisible lines
+           org-catch-invisible-edits 'show-and-error
 
-         ;; If press M-RET I want a new line, not to split the line
-         org-M-RET-may-split-line nil
+           org-adapt-indentation nil
 
-         ;; Default to using my CSS theme for html exports
-         org-html-head-extra "
-        <link id='generic-css-dark' rel='stylesheet' type='text/css'
-              href='https://mattduck.github.io/generic-css/css/generic-dark.css'>
-        <link id='generic-css-light' rel='stylesheet' type='text/css'
-              href='https://mattduck.github.io/generic-css/css/generic-light.css'>
-        <script type='text/javascript'src='https://mattduck.github.io/generic-css/js/generic-css.js'></script>"
+           org-clock-out-remove-zero-time-clocks t
 
-         org-export-headline-levels 6
-         org-export-with-section-numbers 4))
- :bind (:map global-map
-       ("C-c a" . org-agenda)
+           ;; If press M-RET I want a new line, not to split the line
+           org-M-RET-may-split-line nil
 
-       :map org-mode-map
-       ("C-c d" . md/org-timestamp-date-inactive-no-confirm)
-       ("C-c t" . md/org-timestamp-time-inactive-no-confirm)))
+           ;; Default to using my CSS theme for html exports
+           org-html-head-extra "
+          <link id='generic-css-dark' rel='stylesheet' type='text/css'
+                href='https://mattduck.github.io/generic-css/css/generic-dark.css'>
+          <link id='generic-css-light' rel='stylesheet' type='text/css'
+                href='https://mattduck.github.io/generic-css/css/generic-light.css'>
+          <script type='text/javascript'src='https://mattduck.github.io/generic-css/js/generic-css.js'></script>"
+
+           org-export-headline-levels 6
+           org-export-with-section-numbers 4))
+   :bind (:map global-map
+         ("C-c a" . org-agenda)
+
+         :map org-mode-map
+         ("C-c d" . md/org-timestamp-date-inactive-no-confirm)
+         ("C-c t" . md/org-timestamp-time-inactive-no-confirm)
+         ("C-c l" . md/org-insert-link-from-paste)))
 
 #+END_SRC
 * Modeline
@@ -849,6 +907,8 @@ although I don't remember exactly what the difference is:
      (solarized-load-theme))
 
    (md/powerline-setup)))
+
+(require 'powerline)
 #+END_SRC
 * Syntax checking
 #+BEGIN_SRC emacs-lisp
@@ -945,29 +1005,43 @@ although I don't remember exactly what the difference is:
 
 ** magit
 #+BEGIN_SRC emacs-lisp
+  (use-package
+   magit
+   :config
+   (progn
+     (evil-set-initial-state 'magit-blame-mode 'normal)
+     (evil-set-initial-state 'magit-revision-mode 'normal)
+
+     ;; I don't know why, but by default I can't get magit-blame to adhere to my
+     ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
+     ;; calling evil-normal-state fixes it.
+     (add-hook 'magit-blame-mode-hook 'evil-normal-state)
+     (evil-define-key 'normal magit-blame-mode-map
+       (kbd "<RET>") 'magit-show-commit
+       "q" 'magit-blame-quit
+       "gj" 'magit-blame-next-chunk
+       "gn" 'magit-blame-next-chunk
+       "gk" 'magit-blame-previous-chunk
+       "gp" 'magit-blame-previous-chunk)
+
+     (add-hook 'magit-revision-mode-hook 'evil-normal-state)
+     (evil-define-key 'normal magit-revision-mode-map
+       (kbd "<RET>") 'magit-diff-visit-file
+       "q" 'magit-mode-bury-buffer))  ;; This quits
+
+   :bind (:map md/leader-map
+         ("gblame" . magit-blame)
+         ("gdiff" . magit-ediff-popup)))
+
+#+END_SRC
+
+* Web mode
+This makes working with HTML/CSS/JS files much nicer. TODO - read documentation
+/ configure.
+
+#+BEGIN_SRC emacs-lisp
 (use-package
- magit
- :config
- (progn
-   (evil-set-initial-state 'magit-blame-mode 'normal)
-   (evil-set-initial-state 'magit-revision-mode 'normal)
-
-   ;; I don't know why, but by default I can't get magit-blame to adhere to my
-   ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
-   ;; calling evil-normal-state fixes it.
-   (add-hook 'magit-blame-mode-hook 'evil-normal-state)
-   (add-hook 'magit-revision-mode-hook 'evil-normal-state)
-
-   (evil-define-key 'normal magit-blame-mode-map
-     (kbd "<RET>") 'magit-show-commit
-     "q" 'magit-blame-quit
-     "gj" 'magit-blame-next-chunk
-     "gn" 'magit-blame-next-chunk
-     "gk" 'magit-blame-previous-chunk
-     "gp" 'magit-blame-previous-chunk))
- :bind (:map md/leader-map
-       ("gblame" . magit-blame)
-       ("gdiff" . magit-ediff-popup)))
+ web-mode)
 
 #+END_SRC
 
@@ -982,6 +1056,7 @@ although I don't remember exactly what the difference is:
 
 #+END_SRC
 * Solarized
+
 #+BEGIN_SRC emacs-lisp
   (use-package
    color-theme-solarized
@@ -996,27 +1071,54 @@ although I don't remember exactly what the difference is:
      (setq ns-use-srgb-colorspace nil
            solarized-broken-srgb t)
 
+     ;; See heading on terminal colour fixes near top of file
+     (when (not (display-graphic-p))
+       (setq solarized-bold nil))
+
      (load-theme 'solarized t)  ; Defaults to light
      (solarized-enable-theme 'dark))
 
    :bind (:map md/leader-map
           ("sol" . solarized-toggle-theme-mode)
           ("chl" . solarized-toggle-comment-visibility)))
+(require 'color-theme-solarized)
+#+END_SRC
 
+* Dotfiles
+
+Equivalent of my "ve" binding that would edit my vimrc:
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/dotfiles-edit ()
+    (interactive)
+    (find-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/init.org")))
+
+  (bind-key "ve" 'md/dotfiles-edit md/leader-map)
 #+END_SRC
 
 * Teardown
 
-I want these enabled on startup:
-#+BEGIN_SRC emacs-lisp
-(require 'evil)
-(require 'powerline)
-(require 'color-theme-solarized)
-#+END_SRC
+Reset the gc threshold to the default:
 
 #+BEGIN_SRC emacs-lisp
 (setq gc-cons-threshold 800000)
 #+END_SRC
 
 
+
+* TODO
+- [ ] tab key not inserting tabs in evil?
+- [ ] evil org agenda stuff not working?
+- [ ] savehist-mode.
+- [ ] indents.
+- [ ] read electric-indent docs.
+- [ ] does electric-indent need different configuration in python? I used to
+  have something for this.
+- [ ] undo tree?
+- [ ] info / other help modes - use vi keys to navigate?
+- [ ] how to preserve binding in map?
+  - Eg. I want to use normal mode for some magit modes, but I generally want to retain
+    the behaviour of RET. This is true for help modes too.
+- [ ] list TODO /FIX notes in files
+- [ ] can I get a persistent "ag" buffer, like in vim??
 

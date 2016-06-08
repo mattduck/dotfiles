@@ -6,6 +6,7 @@
     (getenv "DOTFILES")
     (concat (expand-file-name "~") "/dotfiles")))
 
+;; NOTE - this is old, maybe I can remove it
 (defun md/refresh-packages ()
   (interactive)
   (when (not package-archive-contents)
@@ -74,6 +75,10 @@
   :bind (:map md/leader-map
          ("ln" . linum-mode)))
 
+;; TODO - I thought use-package would defer the loading of this until I do "ln",
+;; but "lb" doesn't work.  
+(require 'linum)
+
 (global-hl-line-mode 1)
 
 (defun md/set-default-font ()
@@ -88,8 +93,6 @@
 (add-hook 'focus-in-hook 'md/set-default-font)
 
 (setq
-
-  ;; TODO - do I need scroll-conservatively here? I used to use it, now not sure why.
 
   ;; Start scrolling when the cursor is one line away from the top/bottom. Default
   scroll-margin 1
@@ -129,6 +132,18 @@
 
 (setq visible-bell nil
       ring-bell-function 'ignore)
+
+(when (not (display-graphic-p))
+  (mapc
+   (lambda (face)
+     (set-face-bold face nil (selected-frame)))
+   (face-list)))
+
+(use-package xclip
+  :config
+  (progn
+    (turn-on-xclip)))
+(require 'xclip)
 
 ;; Backup everything to the same directory, rather than dropping
 ;; files all over the place
@@ -260,6 +275,8 @@
         ("o" . md/insert-blank-line-before)
         ("O" . md/insert-blank-line-after)))
 
+(require 'evil)
+
 (use-package
  evil-surround
  :config
@@ -330,9 +347,9 @@
          ("M-x" . helm-M-x)
          ("C-x b" . helm-mini)
 
-         :map helm-map
-         ("<tab>" . helm-execute-persistent-action)
-         ("C-z" . helm-select-action)
+         ;;:map helm-map
+         ;;("<tab>" . helm-execute-persistent-action)
+         ;;("C-z" . helm-select-action)
 
          :map lisp-interaction-mode-map
          ([remap completion-at-point] . helm-lisp-completion)
@@ -359,13 +376,14 @@
   :bind (:map md/leader-map
          ("ag" . helm-do-ag)))
 
+(use-package help-fns+) 
+(require 'help-fns+)
+
 (evil-set-initial-state 'help-mode 'normal)
 (evil-define-key 'normal help-mode-map
   "q" 'quit-window
   (kbd "C-i") 'help-go-forward
-  (kbd "C-f") 'help-go-forward
   (kbd "C-o") 'help-go-back
-  (kbd "C-b") 'help-go-back
   (kbd "<RET>") 'help-follow-symbol)
 
 (use-package
@@ -410,6 +428,14 @@
    (defun md/org-timestamp-date-inactive-no-confirm ()
      (interactive)
      (org-insert-time-stamp (current-time) nil t))
+
+   (defun md/org-insert-link-from-paste ()
+     (interactive)
+     (org-insert-link nil
+                      (with-temp-buffer
+                        (evil-paste-after nil)
+                        (delete-trailing-whitespace)
+                        (buffer-string))))
 
    (defun md/org-hook ()
      ;; Change tab widths to fit headline indents
@@ -480,9 +506,9 @@
      :init-value nil
      :lighter " EvilOrgAgenda"
      :keymap (make-sparse-keymap) ; defines evil-org-agenda-mode-map
-     :group 'evil-org-agenda
+     :group 'evil-org-agenda)
 
-     (evil-set-initial-state 'md/evil-org-agenda-mode 'normal))
+   (evil-set-initial-state 'org-agenda-mode 'normal)
 
    (evil-define-key 'normal md/evil-org-agenda-mode-map
      ;; j / k
@@ -515,6 +541,10 @@
          ;; Fontify inline code
          org-src-fontify-natively t
 
+         ;; When editing code, I don't want to open another window. This
+         ;; just makes the screen tidier.
+         org-src-window-setup 'current-window
+
          ;; Colour the whole headline
          org-level-color-stars-only nil
 
@@ -543,7 +573,8 @@
 
        :map org-mode-map
        ("C-c d" . md/org-timestamp-date-inactive-no-confirm)
-       ("C-c t" . md/org-timestamp-time-inactive-no-confirm)))
+       ("C-c t" . md/org-timestamp-time-inactive-no-confirm)
+       ("C-c l" . md/org-insert-link-from-paste)))
 
 (line-number-mode 1)
 (column-number-mode 1)
@@ -641,6 +672,8 @@
 
    (md/powerline-setup)))
 
+(require 'powerline)
+
 (use-package
  flycheck
  :config
@@ -727,18 +760,25 @@
    ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
    ;; calling evil-normal-state fixes it.
    (add-hook 'magit-blame-mode-hook 'evil-normal-state)
-   (add-hook 'magit-revision-mode-hook 'evil-normal-state)
-
    (evil-define-key 'normal magit-blame-mode-map
      (kbd "<RET>") 'magit-show-commit
      "q" 'magit-blame-quit
      "gj" 'magit-blame-next-chunk
      "gn" 'magit-blame-next-chunk
      "gk" 'magit-blame-previous-chunk
-     "gp" 'magit-blame-previous-chunk))
+     "gp" 'magit-blame-previous-chunk)
+
+   (add-hook 'magit-revision-mode-hook 'evil-normal-state)
+   (evil-define-key 'normal magit-revision-mode-map
+     (kbd "<RET>") 'magit-diff-visit-file
+     "q" 'magit-mode-bury-buffer))  ;; This quits
+
  :bind (:map md/leader-map
        ("gblame" . magit-blame)
        ("gdiff" . magit-ediff-popup)))
+
+(use-package
+ web-mode)
 
 (use-package
  ediff
@@ -748,27 +788,34 @@
    (setq ediff-split-window-function 'split-window-horizontally)))
 
 (use-package
- color-theme-solarized
- :ensure nil
- :load-path "non-elpa/color-theme-solarized"
- :config
- (progn
-   (add-to-list 'custom-theme-load-path "non-elpa/color-theme-solarized")
+   color-theme-solarized
+   :ensure nil
+   :load-path "non-elpa/color-theme-solarized"
+   :config
+   (progn
+     (add-to-list 'custom-theme-load-path "non-elpa/color-theme-solarized")
 
-   ;; Necessary on v24.4 to display accurate Solarized colors, due to Emacs bug
-   ;; #8402. v24.3 didn't set ns-use-sgrb-colorspace.
-   (setq ns-use-srgb-colorspace nil
-         solarized-broken-srgb t)
+     ;; Necessary on v24.4 to display accurate Solarized colors, due to Emacs bug
+     ;; #8402. v24.3 didn't set ns-use-sgrb-colorspace.
+     (setq ns-use-srgb-colorspace nil
+           solarized-broken-srgb t)
 
-   (load-theme 'solarized t)  ; Defaults to light
-   (solarized-enable-theme 'dark))
+     ;; See heading on terminal colour fixes near top of file
+     (when (not (display-graphic-p))
+       (setq solarized-bold nil))
 
- :bind (:map md/leader-map
-        ("sol" . solarized-toggle-theme-mode)
-        ("chl" . solarized-toggle-comment-visibility)))
+     (load-theme 'solarized t)  ; Defaults to light
+     (solarized-enable-theme 'dark))
 
-(require 'evil)
-(require 'powerline)
+   :bind (:map md/leader-map
+          ("sol" . solarized-toggle-theme-mode)
+          ("chl" . solarized-toggle-comment-visibility)))
 (require 'color-theme-solarized)
+
+(defun md/dotfiles-edit ()
+  (interactive)
+  (find-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/init.org")))
+
+(bind-key "ve" 'md/dotfiles-edit md/leader-map)
 
 (setq gc-cons-threshold 800000)
