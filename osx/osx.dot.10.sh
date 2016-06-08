@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 if [[ "$(uname -a)" != *Darwin* ]]; then return; fi
 
 # Use Brew instead of system Ruby
@@ -45,3 +46,6 @@ function ,finder-pull() {
     # cd to topmost Finder window directory
     cd "$(osascript -e 'tell app "Finder" to POSIX path of (insertion location as alias)')"
 }
+
+# Try using this new iTerm shell integration
+test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
