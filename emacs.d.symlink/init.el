@@ -86,7 +86,6 @@
   (if (string= system-name "mattmbp.local")
       (set-frame-font "Monaco-12:antialias=subpixel")
     (set-frame-font "Monaco-13:antialias=subpixel")))
-(md/set-default-font)
 
 (md/set-default-font)
 
@@ -94,11 +93,11 @@
 
 (setq
 
-  ;; Start scrolling when the cursor is one line away from the top/bottom. Default
+  ;; Start scrolling when the cursor is one line away from the top/bottom.
   scroll-margin 1
 
-  ;; If at the bottom of the file, don't scroll beyond that and show a lot of
-  ;; empty space - st scroll
+  ;; If at the bottom of the file, don't allow scroll beyond that (because
+  ;; there's no use in having half a screen of empty space
   scroll-conservatively 999
 
   ;; Only scroll one row at a time. Default behaviour is to centre the row.
@@ -334,6 +333,10 @@
    ;; have these words formatted.
    (setq fic-activated-faces '(font-lock-doc-face font-lock-comment-face))))
 
+(defun md/insert-todo-regexp ()
+  (interactive)
+  (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
+
 (use-package
   helm
   :config
@@ -345,9 +348,13 @@
          ([remap dabbrev-expand] . helm-dabbrev)
          ([remap list-buffers] . helm-buffers-list)
          ("M-x" . helm-M-x)
-         ("C-x b" . helm-mini)
+         ("C-x b" . helm-buffers-list)
+         ("C-x p" . helm-mini)
 
-         ;;:map helm-map
+         :map helm-map
+         ;; This lets me quickly ag/grep for "todo" comments using the same
+         ;; ag/grep functions that I usually do.
+         ("C-c C-t" . md/insert-todo-regexp)
          ;;("<tab>" . helm-execute-persistent-action)
          ;;("C-z" . helm-select-action)
 
@@ -366,15 +373,14 @@
          :map help-map
          ("X" . helm-colors)))
 
-;; TODO - why did I need this?
-(use-package helm-config)
 (use-package helm-ag
   :config
   (defun md/ag ()
+    "Run helm-do-ag on the default-directory"
     (interactive)
     (helm-do-ag default-directory))
   :bind (:map md/leader-map
-         ("ag" . helm-do-ag)))
+              ("ag" . md/ag)))
 
 (use-package help-fns+) 
 (require 'help-fns+)
@@ -505,8 +511,8 @@
      "Buffer local minor mode for evil-org-agenda"
      :init-value nil
      :lighter " EvilOrgAgenda"
-     :keymap (make-sparse-keymap) ; defines evil-org-agenda-mode-map
-     :group 'evil-org-agenda)
+     :keymap (make-sparse-keymap) ; defines md/evil-org-agenda-mode-map
+     :group 'md/evil-org-agenda)
 
    (evil-set-initial-state 'org-agenda-mode 'normal)
 
@@ -531,7 +537,7 @@
 
    (add-hook 'org-mode-hook 'md/org-hook)
    (add-hook 'org-mode-hook 'md/evil-org-mode)
-   (add-hook 'org-mode-agenda-hook 'md/evil-org-agenda-mode)
+   (add-hook 'org-agenda-mode-hook 'md/evil-org-agenda-mode)
 
    (setq org-agenda-restore-windows-after-quit t
 
@@ -544,6 +550,9 @@
          ;; When editing code, I don't want to open another window. This
          ;; just makes the screen tidier.
          org-src-window-setup 'current-window
+
+         ;; tab / indentation is the main reason I would use C-' so prevent it if possible
+         org-src-tab-acts-natively t
 
          ;; Colour the whole headline
          org-level-color-stars-only nil
@@ -774,6 +783,7 @@
      "q" 'magit-mode-bury-buffer))  ;; This quits
 
  :bind (:map md/leader-map
+       ("gp" . magit-dispatch-popup)
        ("gblame" . magit-blame)
        ("gdiff" . magit-ediff-popup)))
 

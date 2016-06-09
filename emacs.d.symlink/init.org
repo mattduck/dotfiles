@@ -82,8 +82,8 @@ what I'm used to from vim.
 Some of this would not be necessary if I only used GUI Emacs. If I can work out
 how to manage several projects in Emacs whilst keeping good separation between
 them, I might be able to drop terminal support. For now though, I find it
-easiest to use an editor-inside-tmux workflow, with one or two Tmux windows per
-project.
+easiest to use a workflow with one or more Tmux panes per project, each using
+their own Emacs instances.
 
 ** Splash screen
 #+BEGIN_SRC emacs-lisp
@@ -167,7 +167,6 @@ linum-format, but adds a space so there is some separation:
   (if (string= system-name "mattmbp.local")
       (set-frame-font "Monaco-12:antialias=subpixel")
     (set-frame-font "Monaco-13:antialias=subpixel")))
-(md/set-default-font)
 
 (md/set-default-font)
 #+END_SRC
@@ -183,11 +182,11 @@ show their terminal/GUI-specific default fonts:
 #+BEGIN_SRC emacs-lisp
 (setq
 
-  ;; Start scrolling when the cursor is one line away from the top/bottom. Default
+  ;; Start scrolling when the cursor is one line away from the top/bottom.
   scroll-margin 1
 
-  ;; If at the bottom of the file, don't scroll beyond that and show a lot of
-  ;; empty space - st scroll
+  ;; If at the bottom of the file, don't allow scroll beyond that (because
+  ;; there's no use in having half a screen of empty space
   scroll-conservatively 999
 
   ;; Only scroll one row at a time. Default behaviour is to centre the row.
@@ -522,6 +521,13 @@ actually use it to insert anything in insert mode.
    (setq fic-activated-faces '(font-lock-doc-face font-lock-comment-face))))
 #+END_SRC
 
+I can use this with grep/ag to quickly find the todo comments:
+#+BEGIN_SRC emacs-lisp
+  (defun md/insert-todo-regexp ()
+    (interactive)
+    (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
+#+END_SRC
+
 * Helm
 ** Base helm
 - [ ] NOTE - describe-function and describe-variable don't use helm until helm
@@ -539,9 +545,13 @@ actually use it to insert anything in insert mode.
            ([remap dabbrev-expand] . helm-dabbrev)
            ([remap list-buffers] . helm-buffers-list)
            ("M-x" . helm-M-x)
-           ("C-x b" . helm-mini)
+           ("C-x b" . helm-buffers-list)
+           ("C-x p" . helm-mini)
 
-           ;;:map helm-map
+           :map helm-map
+           ;; This lets me quickly ag/grep for "todo" comments using the same
+           ;; ag/grep functions that I usually do.
+           ("C-c C-t" . md/insert-todo-regexp)
            ;;("<tab>" . helm-execute-persistent-action)
            ;;("C-z" . helm-select-action)
 
@@ -560,20 +570,18 @@ actually use it to insert anything in insert mode.
            :map help-map
            ("X" . helm-colors)))
 
-
 #+END_SRC
 
 ** Addons
 #+BEGIN_SRC emacs-lisp
-  ;; TODO - why did I need this?
-  (use-package helm-config)
   (use-package helm-ag
     :config
     (defun md/ag ()
+      "Run helm-do-ag on the default-directory"
       (interactive)
       (helm-do-ag default-directory))
     :bind (:map md/leader-map
-           ("ag" . helm-do-ag)))
+                ("ag" . md/ag)))
 #+END_SRC
 
 * help-fns+
@@ -734,8 +742,8 @@ on the screen, or nowhere.
        "Buffer local minor mode for evil-org-agenda"
        :init-value nil
        :lighter " EvilOrgAgenda"
-       :keymap (make-sparse-keymap) ; defines evil-org-agenda-mode-map
-       :group 'evil-org-agenda)
+       :keymap (make-sparse-keymap) ; defines md/evil-org-agenda-mode-map
+       :group 'md/evil-org-agenda)
 
      (evil-set-initial-state 'org-agenda-mode 'normal)
 
@@ -760,7 +768,7 @@ on the screen, or nowhere.
 
      (add-hook 'org-mode-hook 'md/org-hook)
      (add-hook 'org-mode-hook 'md/evil-org-mode)
-     (add-hook 'org-mode-agenda-hook 'md/evil-org-agenda-mode)
+     (add-hook 'org-agenda-mode-hook 'md/evil-org-agenda-mode)
 
      (setq org-agenda-restore-windows-after-quit t
 
@@ -773,6 +781,9 @@ on the screen, or nowhere.
            ;; When editing code, I don't want to open another window. This
            ;; just makes the screen tidier.
            org-src-window-setup 'current-window
+
+           ;; tab / indentation is the main reason I would use C-' so prevent it if possible
+           org-src-tab-acts-natively t
 
            ;; Colour the whole headline
            org-level-color-stars-only nil
@@ -961,21 +972,18 @@ on the screen, or nowhere.
 
 ** Helm
 #+BEGIN_SRC emacs-lisp
-(use-package
- helm-projectile
- :bind (:map md/leader-map
-       ("jj" . helm-projectile-switch-project)
-       ("jag" . helm-projectile-ag)
-       ("jb" . helm-projectile-switch-to-buffer)
+  (use-package
+   helm-projectile
+   :bind (:map md/leader-map
+         ("jj" . helm-projectile-switch-project)
+         ("jag" . helm-projectile-ag)
+         ("jb" . helm-projectile-switch-to-buffer)
 
-       ;; TODO - proper binding for invalidating cache
-       ("jf" . helm-projectile-find-file)))
-
-
+         ;; TODO - proper binding for invalidating cache
+         ("jf" . helm-projectile-find-file)))
 #+END_SRC
 
 * Git
-
 ** git-gutter
 #+BEGIN_SRC emacs-lisp
   (use-package
@@ -1030,6 +1038,7 @@ on the screen, or nowhere.
        "q" 'magit-mode-bury-buffer))  ;; This quits
 
    :bind (:map md/leader-map
+         ("gp" . magit-dispatch-popup)
          ("gblame" . magit-blame)
          ("gdiff" . magit-ediff-popup)))
 
@@ -1104,11 +1113,10 @@ Reset the gc threshold to the default:
 (setq gc-cons-threshold 800000)
 #+END_SRC
 
-
-
 * TODO
 - [ ] tab key not inserting tabs in evil?
-- [ ] evil org agenda stuff not working?
+  - it aligns but doesn't insert tab, not sure if this is behaviour i want. It
+    runs indent-for-tab-command. Try it for a while.
 - [ ] savehist-mode.
 - [ ] indents.
 - [ ] read electric-indent docs.
@@ -1119,6 +1127,3 @@ Reset the gc threshold to the default:
 - [ ] how to preserve binding in map?
   - Eg. I want to use normal mode for some magit modes, but I generally want to retain
     the behaviour of RET. This is true for help modes too.
-- [ ] list TODO /FIX notes in files
-- [ ] can I get a persistent "ag" buffer, like in vim??
-
