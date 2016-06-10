@@ -783,7 +783,7 @@
      "q" 'magit-mode-bury-buffer))  ;; This quits
 
  :bind (:map md/leader-map
-       ("gp" . magit-dispatch-popup)
+       ("gmag" . magit-dispatch-popup)
        ("gblame" . magit-blame)
        ("gdiff" . magit-ediff-popup)))
 

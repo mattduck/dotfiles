@@ -1038,7 +1038,7 @@ on the screen, or nowhere.
        "q" 'magit-mode-bury-buffer))  ;; This quits
 
    :bind (:map md/leader-map
-         ("gp" . magit-dispatch-popup)
+         ("gmag" . magit-dispatch-popup)
          ("gblame" . magit-blame)
          ("gdiff" . magit-ediff-popup)))
 
@@ -1127,3 +1127,18 @@ Reset the gc threshold to the default:
 - [ ] how to preserve binding in map?
   - Eg. I want to use normal mode for some magit modes, but I generally want to retain
     the behaviour of RET. This is true for help modes too.
+- [ ] jumping to definitions
+- [ ] finding uses of functions
+- [ ] ediff / git diff
+- [ ] git checkout would be nice
+- [ ] colour emacs state in modeline
+- [ ] checkout avy - improvement to acejump?
+- [ ] md/file-info binding
+- [ ] debugger
+- [ ] folding
+- [ ] autocomplete
+- [ ] spellcheck?
+- [ ] checkout slime
+- [ ] unfill paragraph
+- [ ] jumping forward back to markers including between files
+- [ ] stop littering # backup files

@@ -11,6 +11,7 @@ emacs.d.symlink/eshell/history
 emacs.d.symlink/projectile*
 emacs.d.symlink/#*
 emacs.d.symlink/.#*
+emacs.d.symlink/init.html
 
 # .config might contain files that have been dumped by programs, so
 # don't include it by default
