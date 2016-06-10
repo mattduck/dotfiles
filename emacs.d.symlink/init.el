@@ -174,6 +174,7 @@
   (save-buffer))
 
 (defun md/fontify-buffer ()
+  "Fontify the buffer and tell me it happened."
   (interactive)
   (font-lock-fontify-buffer)
   (message "Fontified buffer"))
@@ -198,6 +199,35 @@
           (insert (format "%s\n" mm))
           (setq result (buffer-substring (point-min) (point-max))))
         result)))))
+
+(defun md/unfill-paragraph ()
+  "Because I can't always wrap to 80 characters :("
+  (interactive)
+  (let ((fill-column most-positive-fixnum))
+    (fill-paragraph)))
+
+(defun md/unfill-region (start end)
+  (interactive "r")
+  (let ((fill-column most-positive-fixnum))
+    (fill-region start end)))
+
+(defun md/evil-fill (&optional start end)
+  (interactive
+   (if (use-region-p)
+       (list (region-beginning) (region-end))
+     (list nil nil)))
+  (if (string= evil-state "visual")
+      (fill-region start end)
+    (fill-paragraph)))
+
+(defun md/evil-unfill (&optional start end)
+  (interactive
+   (if (use-region-p)
+       (list (region-beginning) (region-end))
+     (list nil nil)))
+  (if (string= evil-state "visual")
+      (md/unfill-region start end)
+    (md/unfill-paragraph)))
 
 (defvar md/leader-map (make-sparse-keymap))
 
@@ -258,6 +288,9 @@
         :map md/leader-map
         ("w" . save-buffer)
         ("W" . md/strip-whitespace-and-save)
+
+        ("q" . md/evil-fill)
+        ("Q" . md/evil-unfill)
 
         ;; TODO behave like vim - ie. comment the line or the selection
         ("cc" . comment-or-uncomment-region)

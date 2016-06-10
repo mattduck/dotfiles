@@ -323,6 +323,7 @@ provides this behaviour in the same way that GUI Emacs has it.
 * General utils
 
 ** Odd functions
+
 #+BEGIN_SRC emacs-lisp
   (defun md/strip-whitespace-and-save ()
     (interactive)
@@ -330,6 +331,7 @@ provides this behaviour in the same way that GUI Emacs has it.
     (save-buffer))
 
   (defun md/fontify-buffer ()
+    "Fontify the buffer and tell me it happened."
     (interactive)
     (font-lock-fontify-buffer)
     (message "Fontified buffer"))
@@ -354,8 +356,51 @@ provides this behaviour in the same way that GUI Emacs has it.
             (insert (format "%s\n" mm))
             (setq result (buffer-substring (point-min) (point-max))))
           result)))))
-
 #+END_SRC
+
+
+It's a shame that "unfill" functions aren't included by default, but they're
+easy enough to implement:
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/unfill-paragraph ()
+    "Because I can't always wrap to 80 characters :("
+    (interactive)
+    (let ((fill-column most-positive-fixnum))
+      (fill-paragraph)))
+
+  (defun md/unfill-region (start end)
+    (interactive "r")
+    (let ((fill-column most-positive-fixnum))
+      (fill-region start end)))
+#+END_SRC
+
+
+Ideally, I would have a binding that maps to fill / unfill /paragraphs/ in
+normal mode, but /regions/ in visual mode. Currently I'm not sure how to get
+Evil to create different md/leader-map bindings for different Evil states, so
+for now I'll just use this workaround of checking the state in the function:
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/evil-fill (&optional start end)
+    (interactive
+     (if (use-region-p)
+         (list (region-beginning) (region-end))
+       (list nil nil)))
+    (if (string= evil-state "visual")
+        (fill-region start end)
+      (fill-paragraph)))
+
+  (defun md/evil-unfill (&optional start end)
+    (interactive
+     (if (use-region-p)
+         (list (region-beginning) (region-end))
+       (list nil nil)))
+    (if (string= evil-state "visual")
+        (md/unfill-region start end)
+      (md/unfill-paragraph)))
+#+END_SRC
+
 
 ** Leader
 I was using evil-leader, but think I can get the functionality I care about just
@@ -374,78 +419,81 @@ I seem to use =describe-face= a lot:
 * Evil
 ** Base evil
 #+BEGIN_SRC emacs-lisp
-(use-package
- evil
- :config
- (progn
-   (defun md/normal-state-and-save ()
-     (interactive)
-     (evil-normal-state)
-     (save-buffer))
+  (use-package
+   evil
+   :config
+   (progn
+     (defun md/normal-state-and-save ()
+       (interactive)
+       (evil-normal-state)
+       (save-buffer))
 
-   (defun md/insert-blank-line-before ()
-     (interactive)
-     (save-excursion
-       (end-of-line)
-       (open-line 1)
-       (save-buffer)))
+     (defun md/insert-blank-line-before ()
+       (interactive)
+       (save-excursion
+         (end-of-line)
+         (open-line 1)
+         (save-buffer)))
 
-   (defun md/insert-blank-line-after ()
-     (interactive)
-     (save-excursion
-       (evil-previous-visual-line)
-       (end-of-line)
-       (open-line 1)
-       (save-buffer)))
+     (defun md/insert-blank-line-after ()
+       (interactive)
+       (save-excursion
+         (evil-previous-visual-line)
+         (end-of-line)
+         (open-line 1)
+         (save-buffer)))
 
-   ;; Can't work out how to properly define map bindings using ":bind"
-   (bind-key "<SPC>" md/leader-map evil-normal-state-map)
-   (bind-key "<SPC>" md/leader-map evil-visual-state-map)
+     ;; Can't work out how to properly define map bindings using ":bind"
+     (bind-key "<SPC>" md/leader-map evil-normal-state-map)
+     (bind-key "<SPC>" md/leader-map evil-visual-state-map)
 
-   (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
+     (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
 
-   (evil-mode 1))
+     (evil-mode 1))
 
- :bind (;; Like my vimrc, remap  ; to : and , to ;
-        :map evil-motion-state-map
-        (";" . evil-ex)
-        ("," . evil-repeat-find-char)
+   :bind (;; Like my vimrc, remap  ; to : and , to ;
+          :map evil-motion-state-map
+          (";" . evil-ex)
+          ("," . evil-repeat-find-char)
 
-        ;; Use H/L instead of ^/$
-        :map evil-normal-state-map
-        ("H" . move-beginning-of-line)
-        ("L" . move-end-of-line)
-        :map evil-visual-state-map
-        ("H" . move-beginning-of-line)
-        ("L" . move-end-of-line)
+          ;; Use H/L instead of ^/$
+          :map evil-normal-state-map
+          ("H" . move-beginning-of-line)
+          ("L" . move-end-of-line)
+          :map evil-visual-state-map
+          ("H" . move-beginning-of-line)
+          ("L" . move-end-of-line)
 
-        ;; The equivalent of gj/gk
-        :map evil-normal-state-map
-        ("j" . evil-next-visual-line)
-        ("k" . evil-previous-visual-line)
+          ;; The equivalent of gj/gk
+          :map evil-normal-state-map
+          ("j" . evil-next-visual-line)
+          ("k" . evil-previous-visual-line)
 
-        ;; Leader bindings
-        :map md/leader-map
-        ("w" . save-buffer)
-        ("W" . md/strip-whitespace-and-save)
+          ;; Leader bindings
+          :map md/leader-map
+          ("w" . save-buffer)
+          ("W" . md/strip-whitespace-and-save)
 
-        ;; TODO behave like vim - ie. comment the line or the selection
-        ("cc" . comment-or-uncomment-region)
-        ("k" . kill-buffer)
+          ("q" . md/evil-fill)
+          ("Q" . md/evil-unfill)
 
-        ("ef" . eval-defun)
-        ("ee" . eval-last-sexp)  ; Bound to e because I'm used to C-x e
-        ("eb" . eval-buffer)
-        ("er" . eval-region)
-        ("ex" . md/fontify-buffer)  ; It's sort-of an eval
+          ;; TODO behave like vim - ie. comment the line or the selection
+          ("cc" . comment-or-uncomment-region)
+          ("k" . kill-buffer)
 
-        ("lw" . toggle-truncate-lines)
+          ("ef" . eval-defun)
+          ("ee" . eval-last-sexp)  ; Bound to e because I'm used to C-x e
+          ("eb" . eval-buffer)
+          ("er" . eval-region)
+          ("ex" . md/fontify-buffer)  ; It's sort-of an eval
 
-        ;; Same as vim - insert and save
-        ("o" . md/insert-blank-line-before)
-        ("O" . md/insert-blank-line-after)))
+          ("lw" . toggle-truncate-lines)
 
-(require 'evil)
+          ;; Same as vim - insert and save
+          ("o" . md/insert-blank-line-before)
+          ("O" . md/insert-blank-line-after)))
+
+  (require 'evil)
 #+END_SRC
 
 ** Evil surround
@@ -1153,10 +1201,11 @@ Reset the gc threshold to the default:
 - [ ] autocomplete
 - [ ] spellcheck?
 - [ ] checkout slime
-- [ ] unfill paragraph
 - [ ] jumping forward back to markers including between files
 - [ ] stop littering # backup files
 - [ ] markdown mode
 - [ ] startup time - still too slow. How to measure?
 - [ ] https://github.com/emacs-tw/awesome-emacs
 - [ ] gk/gj for next/prev functions
+- [ ] how to create different md/leader-map bindings for different evil states
+  and/or modes?
