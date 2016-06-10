@@ -157,7 +157,8 @@ linum-format, but adds a space so there is some separation:
 
 ** Highlight cursor line
 #+BEGIN_SRC emacs-lisp
-(global-hl-line-mode 1)
+;; Disable this for a minute
+;;(global-hl-line-mode 1)
 #+END_SRC
 
 ** Default font
@@ -1093,6 +1094,19 @@ This makes working with HTML/CSS/JS files much nicer. TODO - read documentation
 (require 'color-theme-solarized)
 #+END_SRC
 
+* Colour hex values
+#+BEGIN_SRC emacs-lisp
+  (use-package 
+    rainbow-mode
+    :config 
+    (progn
+       (add-hook 'css-mode-hook 'rainbow-mode)
+       (add-hook 'help-mode-hook 'rainbow-mode)
+       (add-hook 'html-mode-hook 'rainbow-mode)
+       (add-hook 'prog-mode-hook 'rainbow-mode)))
+    (require 'rainbow-mode)
+#+END_SRC
+
 * Dotfiles
 
 Equivalent of my "ve" binding that would edit my vimrc:
@@ -1142,3 +1156,7 @@ Reset the gc threshold to the default:
 - [ ] unfill paragraph
 - [ ] jumping forward back to markers including between files
 - [ ] stop littering # backup files
+- [ ] markdown mode
+- [ ] startup time - still too slow. How to measure?
+- [ ] https://github.com/emacs-tw/awesome-emacs
+- [ ] gk/gj for next/prev functions

@@ -79,7 +79,8 @@
 ;; but "lb" doesn't work.  
 (require 'linum)
 
-(global-hl-line-mode 1)
+;; Disable this for a minute
+;;(global-hl-line-mode 1)
 
 (defun md/set-default-font ()
   (interactive)
@@ -821,6 +822,16 @@
           ("sol" . solarized-toggle-theme-mode)
           ("chl" . solarized-toggle-comment-visibility)))
 (require 'color-theme-solarized)
+
+(use-package 
+  rainbow-mode
+  :config 
+  (progn
+     (add-hook 'css-mode-hook 'rainbow-mode)
+     (add-hook 'help-mode-hook 'rainbow-mode)
+     (add-hook 'html-mode-hook 'rainbow-mode)
+     (add-hook 'prog-mode-hook 'rainbow-mode)))
+  (require 'rainbow-mode)
 
 (defun md/dotfiles-edit ()
   (interactive)
