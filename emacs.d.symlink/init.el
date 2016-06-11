@@ -901,6 +901,12 @@
      (add-hook 'html-mode-hook 'rainbow-mode)
      (add-hook 'prog-mode-hook 'rainbow-mode)))
 
+(use-package markdown-mode
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode)))
+
 (use-package esup :defer 5)
 
 (defun md/dotfiles-edit ()

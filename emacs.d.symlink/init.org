@@ -1236,6 +1236,22 @@ This is the body
        (add-hook 'prog-mode-hook 'rainbow-mode)))
 #+END_SRC
 
+* Markdown 
+
+AFAICT markdown syntax highlighting isn't provided by default. [[https://github.com/jrblevin/markdown-mode][Markdown mode]]
+includes highlighting, plus some extra features like inserting elements and
+compiling. It also includes ~gfm-mode~ for Github-flavoured markdown.
+
+NOTE - compiling requires ~markdown~ to be installed.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package markdown-mode
+    :commands (markdown-mode gfm-mode)
+    :mode (("README\\.md\\'" . gfm-mode)
+           ("\\.md\\'" . markdown-mode)
+           ("\\.markdown\\'" . markdown-mode)))
+#+END_SRC
+
 * Profile Emacs startup
 
 Running ~esup~ will start Emacs and profile the startup time. To get GUI on par
@@ -1277,11 +1293,12 @@ Profiling. This number comes out slightly different to ~(emacs-init-time)~
 
 #+END_SRC
 
-* TEST
+Close paren for the wrapping ~let~:
 
 #+BEGIN_SRC emacs-lisp
 )
 #+END_SRC
+
 
 * TODO
 - [ ] tab key not inserting tabs in evil?

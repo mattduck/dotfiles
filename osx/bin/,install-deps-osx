@@ -21,6 +21,7 @@ brew install \
     ansible \
     fzf \
     shellcheck \
+    markdown \
 
 # Brew is easiest way to compile with python
 brew install vim
