@@ -1,5 +1,8 @@
 
-(setq gc-cons-threshold 100000000)
+(defconst md/emacs-init-start (current-time))
+
+(let ((file-handler-name-alist nil)
+       (gc-cons-threshold 100000000))
 
 (defun md/get-dotfiles-path ()
   (or
@@ -25,21 +28,23 @@
 (setq custom-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/custom.el"))
 (load custom-file 'noerror)
 
-(unless (package-installed-p 'use-package)
-    (package-install 'use-package))
+(setq use-package-always-ensure nil
+      use-package-verbose t
+      use-package-minimum-reported-time 0.01)
+
 (eval-when-compile
     (require 'use-package))
+
 (require 'bind-key)  ; Required for :bind in use-package
-(setq use-package-always-ensure nil
-      use-package-verbose t)
 
 (use-package
  exec-path-from-shell
+ :if (memq window-system '(mac ns))
  :demand t
  :config
- (progn
-  (when (memq window-system '(mac ns))
-    (exec-path-from-shell-initialize))))
+ (progn (exec-path-from-shell-initialize)))
+
+(defvar md/leader-map (make-sparse-keymap))
 
 (setq inhibit-splash-screen t)
 
@@ -47,13 +52,16 @@
 
 (use-package
  fill-column-indicator
+ :defer 1
  :config
  (progn
    ;; Width of the fill column rule
    (setq fci-rule-width 5)))
 
-(menu-bar-mode -1)
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
+
+(when (not (display-graphic-p))
+  (menu-bar-mode -1))
 
 (add-hook 'after-save-hook 'font-lock-fontify-buffer)
 
@@ -70,14 +78,13 @@
             (concat "%" (number-to-string w) "d ")
             line-number) 'face 'linum))))
 
+;; TODO - I thought use-package would defer the loading of this until I do "ln",
+;; but "ln" doesn't work.  
 (use-package
-  linum-mode
+  linum
+  :defer 1
   :bind (:map md/leader-map
          ("ln" . linum-mode)))
-
-;; TODO - I thought use-package would defer the loading of this until I do "ln",
-;; but "lb" doesn't work.  
-(require 'linum)
 
 ;; Disable this for a minute
 ;;(global-hl-line-mode 1)
@@ -105,8 +112,9 @@
   scroll-step 1)
 
 ;; Remove scrollbars (GUI only) to get extra screen space
-(require 'scroll-bar)
-(scroll-bar-mode -1)
+(use-package scroll-bar 
+  :defer 2
+  :config (scroll-bar-mode -1))
 
 (blink-cursor-mode 0)
 
@@ -140,10 +148,12 @@
    (face-list)))
 
 (use-package xclip
+  :defer 1
   :config
   (progn
     (turn-on-xclip)))
-(require 'xclip)
+
+(setq message-log-max 10000)
 
 ;; Backup everything to the same directory, rather than dropping
 ;; files all over the place
@@ -229,13 +239,14 @@
       (md/unfill-region start end)
     (md/unfill-paragraph)))
 
-(defvar md/leader-map (make-sparse-keymap))
-
 (bind-key "x" 'describe-face help-map)
 (bind-key "C-k" 'describe-personal-keybindings help-map)
 
+(setq delete-by-moving-to-trash t)
+
 (use-package
  evil
+ :demand t
  :config
  (progn
    (defun md/normal-state-and-save ()
@@ -308,8 +319,6 @@
         ("o" . md/insert-blank-line-before)
         ("O" . md/insert-blank-line-after)))
 
-(require 'evil)
-
 (use-package
  evil-surround
  :config
@@ -349,6 +358,10 @@
 
 (use-package
  fic-mode
+ :defer 1
+ :init
+ (progn
+   (add-hook 'prog-mode-hook 'fic-mode))
  :config
  (progn
    ;; NOTE: fic-mode doesn't seem to fontify the buffer, so words don't appear
@@ -357,8 +370,6 @@
    ;;
    ;; FIX: fic-mode doesn't seem to identify words on the same line as my cursor
    ;; when I change theme and then fontify the buffer. All other lines seem fine.
-
-   (add-hook 'prog-mode-hook 'fic-mode)
 
    (setq fic-highlighted-words
          '("TODO" "FIX" "FIXME" "BUG" "WARN" "WARNING" "HACK" "NOTE" "ERROR" "MATT"))
@@ -373,8 +384,17 @@
 
 (use-package
   helm
+  :defer 5
   :config
   (progn
+    ;; Putting these here to avoid byte-compiled issue where helm-map isn't defined.
+
+    ;; This lets me quickly ag/grep for "todo" comments using the same
+    ;; ag/grep functions that I usually do.
+    (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
+    ;;("<tab>" . helm-execute-persistent-action)
+    ;;("C-z" . helm-select-action)
+
     (helm-mode 1)
     (helm-autoresize-mode 0))
   :bind (([remap find-file] . helm-find-files)
@@ -384,13 +404,6 @@
          ("M-x" . helm-M-x)
          ("C-x b" . helm-buffers-list)
          ("C-x p" . helm-mini)
-
-         :map helm-map
-         ;; This lets me quickly ag/grep for "todo" comments using the same
-         ;; ag/grep functions that I usually do.
-         ("C-c C-t" . md/insert-todo-regexp)
-         ;;("<tab>" . helm-execute-persistent-action)
-         ;;("C-z" . helm-select-action)
 
          :map lisp-interaction-mode-map
          ([remap completion-at-point] . helm-lisp-completion)
@@ -408,6 +421,7 @@
          ("X" . helm-colors)))
 
 (use-package helm-ag
+  :defer 5
   :config
   (defun md/ag ()
     "Run helm-do-ag on the default-directory"
@@ -416,8 +430,7 @@
   :bind (:map md/leader-map
               ("ag" . md/ag)))
 
-(use-package help-fns+) 
-(require 'help-fns+)
+(use-package help-fns+ :defer 1)
 
 (evil-set-initial-state 'help-mode 'normal)
 (evil-define-key 'normal help-mode-map
@@ -427,7 +440,21 @@
   (kbd "<RET>") 'help-follow-symbol)
 
 (use-package
+  which-key
+  :defer 2
+  :config
+  (progn
+    (setq which-key-idle-delay 0.5
+          which-key-max-description-length 20)
+
+    ;; Alow show evil motion keys. This is an experimental feature.
+    (setq which-key-allow-evil-operators t
+          which-key-show-operator-state-maps t)
+    (which-key-mode)))
+
+(use-package
  paren
+ :defer 1
  :config
  (progn
    (setq show-paren-style 'parenthesis
@@ -437,6 +464,7 @@
 
 (use-package
  elscreen
+ :defer 1
  :config
  (progn
    (defun md/elscreen-hide-tabs ()
@@ -449,15 +477,18 @@
 
 (setq md/splitscreen-path (concat (md/get-dotfiles-path) "/splitscreen/"))
 
+;; NOTE - for some reason this doesn't seem to load with "defer"
 (use-package
  splitscreen
  :load-path md/splitscreen-path
+ :demand t
  :config
  (progn
    (splitscreen-mode)))
 
 (use-package
  org
+ :defer 5
  :config
  (progn
 
@@ -610,20 +641,22 @@
         <script type='text/javascript'src='https://mattduck.github.io/generic-css/js/generic-css.js'></script>"
 
          org-export-headline-levels 6
-         org-export-with-section-numbers 4))
- :bind (:map global-map
-       ("C-c a" . org-agenda)
+         org-export-with-section-numbers 4)
 
-       :map org-mode-map
-       ("C-c d" . md/org-timestamp-date-inactive-no-confirm)
-       ("C-c t" . md/org-timestamp-time-inactive-no-confirm)
-       ("C-c l" . md/org-insert-link-from-paste)))
+        
+   ;; Putting these here to avoid byte-compiled issue where org-mode-map isn't defined.
+   (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
+   (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
+   (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map))
+ :bind (:map global-map
+       ("C-c a" . org-agenda)))
 
 (line-number-mode 1)
 (column-number-mode 1)
 
 (use-package
  powerline
+ :defer 1
  :config
  (progn
    (defun md/powerline-setup ()
@@ -713,9 +746,8 @@
      (setq mode-line-format (md/powerline-setup))
      (solarized-load-theme))
 
-   (md/powerline-setup)))
-
-(require 'powerline)
+   (md/powerline-setup)
+   (md/powerline-reset)))
 
 (use-package
  flycheck
@@ -821,50 +853,55 @@
        ("gblame" . magit-blame)
        ("gdiff" . magit-ediff-popup)))
 
-(use-package
- web-mode)
+(use-package web-mode :defer 1)
+
+(use-package restclient :defer 1)
+(use-package restclient-helm :defer 5)
 
 (use-package
  ediff
+ :defer 1
  :config
  (progn
    ;; TODO - I want ediff to have evil-like bindings
    (setq ediff-split-window-function 'split-window-horizontally)))
 
 (use-package
-   color-theme-solarized
-   :ensure nil
-   :load-path "non-elpa/color-theme-solarized"
-   :config
-   (progn
-     (add-to-list 'custom-theme-load-path "non-elpa/color-theme-solarized")
+ color-theme-solarized
+ :demand t
+ :ensure nil
+ :load-path "non-elpa/color-theme-solarized"
+ :config
+ (progn
+   (add-to-list 'custom-theme-load-path "non-elpa/color-theme-solarized")
 
-     ;; Necessary on v24.4 to display accurate Solarized colors, due to Emacs bug
-     ;; #8402. v24.3 didn't set ns-use-sgrb-colorspace.
-     (setq ns-use-srgb-colorspace nil
-           solarized-broken-srgb t)
+   ;; Necessary on v24.4 to display accurate Solarized colors, due to Emacs bug
+   ;; #8402. v24.3 didn't set ns-use-sgrb-colorspace.
+   (setq ns-use-srgb-colorspace nil
+         solarized-broken-srgb t)
 
-     ;; See heading on terminal colour fixes near top of file
-     (when (not (display-graphic-p))
-       (setq solarized-bold nil))
+   ;; See heading on terminal colour fixes near top of file
+   (when (not (display-graphic-p))
+     (setq solarized-bold nil))
 
-     (load-theme 'solarized t)  ; Defaults to light
-     (solarized-enable-theme 'dark))
+   (load-theme 'solarized t)  ; Defaults to light
+   (solarized-enable-theme 'dark))
 
-   :bind (:map md/leader-map
-          ("sol" . solarized-toggle-theme-mode)
-          ("chl" . solarized-toggle-comment-visibility)))
-(require 'color-theme-solarized)
+ :bind (:map md/leader-map
+        ("sol" . solarized-toggle-theme-mode)
+        ("chl" . solarized-toggle-comment-visibility)))
 
 (use-package 
   rainbow-mode
+  :defer 1
   :config 
   (progn
      (add-hook 'css-mode-hook 'rainbow-mode)
      (add-hook 'help-mode-hook 'rainbow-mode)
      (add-hook 'html-mode-hook 'rainbow-mode)
      (add-hook 'prog-mode-hook 'rainbow-mode)))
-  (require 'rainbow-mode)
+
+(use-package esup :defer 5)
 
 (defun md/dotfiles-edit ()
   (interactive)
@@ -872,4 +909,13 @@
 
 (bind-key "ve" 'md/dotfiles-edit md/leader-map)
 
-(setq gc-cons-threshold 800000)
+;;(setq gc-cons-threshold 800000)
+
+(defconst md/emacs-init-end (current-time))
+
+;;(setq message-log-max 10000)
+
+(defconst md/emacs-boot-time (float-time (time-subtract md/emacs-init-end md/emacs-init-start)))
+(message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
+
+)

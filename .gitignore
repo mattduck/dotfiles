@@ -12,7 +12,9 @@ emacs.d.symlink/projectile*
 emacs.d.symlink/#*
 emacs.d.symlink/.#*
 emacs.d.symlink/init.html
+emacs.d.symlink/*.elc
 
 # .config might contain files that have been dumped by programs, so
 # don't include it by default
 config.symlink/*
+
