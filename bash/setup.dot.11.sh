@@ -30,6 +30,11 @@ shopt -s cmdhist
 # ~/bin takes precedence over most of the $PATH
 ,path-add --prepend $HOME/bin
 
+# TODO - what was the reason I had to use this in the past?
+if [ $(command -v keychain) ]; then
+    eval `keychain --quiet --eval --agents "ssh" --inherit "local-once"`
+fi
+
 # Create neither *.pyc files nor __pycache__ directories.
 export PYTHONDONTWRITEBYTECODE=1
 
@@ -37,7 +42,14 @@ export PYTHONDONTWRITEBYTECODE=1
 # active. Disable this.
 export VIRTUAL_ENV_DISABLE_PROMPT=1
 
-# TODO - what was the reason I had to use this in the past?
-if [ $(command -v keychain) ]; then
-    eval `keychain --quiet --eval --agents "ssh" --inherit "local-once"`
-fi
+# Setup virtualenvwrapper
+# NOTE - I won't use PROJECT_HOME for now.
+# NOTE - for this to work I might need to run /usr/local/opt/python/bin/pip
+# install virtualenv virtualenvwrapper
+export VIRTUALENVWRAPPER_PYTHON=$(brew --prefix)/bin/python
+export VIRTUALENVWRAPPER_VIRTUALENV=$(brew --prefix)/bin/virtualenv
+export VIRTUALENVWRAPPER_HOOK_DIR="$DOTFILES/virtualenvwrapper_hooks"
+export WORKON_HOME=$HOME/.virtualenvs
+
+mkdir -p "$WORKON_HOME"
+source $(which virtualenvwrapper.sh)

@@ -1,7 +1,8 @@
 #+TITLE init.org
 * Compile
 
-I'm using org-mode to structure my configuration. Inspired by [[https://github.com/sachac/.emacs.d][Sacha Chua]] and [[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
+I'm using org-mode to structure my configuration. Inspired by [[https://github.com/sachac/.emacs.d][Sacha Chua]] and
+[[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
 
 #+BEGIN_SRC emacs-lisp :results silent :tangle no
 (setq-local org-confirm-babel-evaluate nil)
@@ -91,8 +92,7 @@ If ~use-package~ isn't installed, I should install it.
 
 ** exec-path-from-shell
 #+BEGIN_SRC emacs-lisp
-  (use-package
-   exec-path-from-shell
+  (use-package exec-path-from-shell
    :if (memq window-system '(mac ns))
    :demand t
    :config
@@ -106,15 +106,21 @@ what I'm used to from vim.
 Some of this would not be necessary if I only used GUI Emacs. If I can work out
 how to manage several projects in Emacs whilst keeping good separation between
 them, I might be able to drop terminal support. For now though, I find it
-easiest to use a workflow with one or more Tmux panes per project, each using
+easiest to use a workflow with one or more Tmux windows per project, each using
 their own Emacs instances.
 
-** Leader
+** Leader map(s)
 I was using evil-leader, but think I can get the functionality I care about just
 by using a keymap:
 
+Use ~md/leader-map~ for my general-purpose leader. Mode-specific leader maps
+inherit from the ~md/leader-map~.
+
 #+BEGIN_SRC emacs-lisp
-(defvar md/leader-map (make-sparse-keymap))
+  (defvar md/leader-map (make-sparse-keymap))
+
+  (defvar md/python-mode-leader-map (make-sparse-keymap))
+  (set-keymap-parent md/python-mode-leader-map md/leader-map)
 #+END_SRC
 
 ** Splash screen
@@ -125,8 +131,7 @@ by using a keymap:
 #+BEGIN_SRC emacs-lisp
 (setq-default fill-column 80)
 
-(use-package
- fill-column-indicator
+(use-package fill-column-indicator
  :defer 1
  :config
  (progn
@@ -184,8 +189,7 @@ linum-format, but adds a space so there is some separation:
 
 ;; TODO - I thought use-package would defer the loading of this until I do "ln",
 ;; but "ln" doesn't work.  
-(use-package
-  linum
+(use-package linum
   :defer 1
   :bind (:map md/leader-map
          ("ln" . linum-mode)))
@@ -231,7 +235,8 @@ show their terminal/GUI-specific default fonts:
 
 ;; Remove scrollbars (GUI only) to get extra screen space
 (use-package scroll-bar 
-  :defer 2
+  :if (display-graphic-p)
+  :demand t
   :config (scroll-bar-mode -1))
 #+END_SRC
 
@@ -301,6 +306,7 @@ provides this behaviour in the same way that GUI Emacs has it.
 
 #+BEGIN_SRC emacs-lisp
   (use-package xclip
+    :if (not (display-graphic-p))
     :defer 1
     :config
     (progn
@@ -418,32 +424,6 @@ easy enough to implement:
       (fill-region start end)))
 #+END_SRC
 
-
-Ideally, I would have a binding that maps to fill / unfill /paragraphs/ in
-normal mode, but /regions/ in visual mode. Currently I'm not sure how to get
-Evil to create different md/leader-map bindings for different Evil states, so
-for now I'll just use this workaround of checking the state in the function:
-
-#+BEGIN_SRC emacs-lisp
-  (defun md/evil-fill (&optional start end)
-    (interactive
-     (if (use-region-p)
-         (list (region-beginning) (region-end))
-       (list nil nil)))
-    (if (string= evil-state "visual")
-        (fill-region start end)
-      (fill-paragraph)))
-
-  (defun md/evil-unfill (&optional start end)
-    (interactive
-     (if (use-region-p)
-         (list (region-beginning) (region-end))
-       (list nil nil)))
-    (if (string= evil-state "visual")
-        (md/unfill-region start end)
-      (md/unfill-paragraph)))
-#+END_SRC
-
 ** Bindings
 I seem to use =describe-face= a lot:
 #+BEGIN_SRC emacs-lisp
@@ -456,9 +436,17 @@ I seem to use =describe-face= a lot:
 #+END_SRC
 * Evil
 ** Base evil
+
+- Note on md/evil-fill and unfill:
+
+  - Ideally, I would have a binding that maps to fill / unfill /paragraphs/ in
+    normal mode, but /regions/ in visual mode. Currently I'm not sure how to get
+    Evil to create different md/leader-map bindings for different Evil states,
+    so for now I'll just use this workaround of checking the state in the
+    function:
+
 #+BEGIN_SRC emacs-lisp
-  (use-package
-   evil
+  (use-package evil
    :demand t
    :config
    (progn
@@ -481,6 +469,24 @@ I seem to use =describe-face= a lot:
          (end-of-line)
          (open-line 1)
          (save-buffer)))
+
+     (defun md/evil-fill (&optional start end)
+       (interactive
+        (if (use-region-p)
+            (list (region-beginning) (region-end))
+          (list nil nil)))
+       (if (string= evil-state "visual")
+           (fill-region start end)
+         (fill-paragraph)))
+
+     (defun md/evil-unfill (&optional start end)
+       (interactive
+        (if (use-region-p)
+            (list (region-beginning) (region-end))
+          (list nil nil)))
+       (if (string= evil-state "visual")
+           (md/unfill-region start end)
+         (md/unfill-paragraph)))
 
      ;; Can't work out how to properly define map bindings using ":bind"
      (bind-key "<SPC>" md/leader-map evil-normal-state-map)
@@ -535,8 +541,7 @@ I seem to use =describe-face= a lot:
 
 ** Evil surround
 #+BEGIN_SRC emacs-lisp
-(use-package
- evil-surround
+(use-package evil-surround
  :config
  (progn
    (global-evil-surround-mode 1)))
@@ -544,8 +549,7 @@ I seem to use =describe-face= a lot:
 
 ** Easymotion
 #+BEGIN_SRC emacs-lisp
-(use-package
- ace-jump-mode
+(use-package ace-jump-mode
 
  :config
  (progn
@@ -572,8 +576,7 @@ because if I do that then "j" gets assigned as a prefix key, and I can't
 actually use it to insert anything in insert mode.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package
-    key-chord
+  (use-package key-chord
     :config
     (progn
       (setq key-chord-two-keys-delay 0.4)
@@ -586,8 +589,7 @@ actually use it to insert anything in insert mode.
 * Highlight keywords in comments
 
 #+BEGIN_SRC emacs-lisp
-(use-package
- fic-mode
+(use-package fic-mode
  :defer 1
  :init
  (progn
@@ -622,8 +624,7 @@ I can use this with grep/ag to quickly find the todo comments:
   has been configured. Work out how to load helm when they're called.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package
-    helm
+  (use-package helm
     :defer 5
     :config
     (progn
@@ -637,7 +638,7 @@ I can use this with grep/ag to quickly find the todo comments:
 
       (helm-mode 1)
       (helm-autoresize-mode 0))
-    :bind (([remap find-file] . helm-find-files)
+    :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
            ([remap occur] . helm-occur)
            ([remap dabbrev-expand] . helm-dabbrev)
            ([remap list-buffers] . helm-buffers-list)
@@ -701,13 +702,12 @@ I prefer to use vi keys to navigate help-mode:
 easier to discover features / work out where I am:
 
 #+BEGIN_SRC emacs-lisp
-  (use-package
-    which-key
+  (use-package which-key
     :defer 2
     :config
     (progn
       (setq which-key-idle-delay 0.5
-            which-key-max-description-length 20)
+            which-key-max-description-length 30)
 
       ;; Alow show evil motion keys. This is an experimental feature.
       (setq which-key-allow-evil-operators t
@@ -720,8 +720,7 @@ Basic paren matching is built in. I preferred these settings at one point,
 although I don't remember exactly what the difference is:
 
 #+BEGIN_SRC emacs-lisp
-    (use-package
-     paren
+    (use-package paren
      :defer 1
      :config
      (progn
@@ -738,8 +737,7 @@ vim. They're not ideal though, because the tabs either appear in several places
 on the screen, or nowhere.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package
-   elscreen
+  (use-package elscreen
    :defer 1
    :config
    (progn
@@ -757,8 +755,7 @@ on the screen, or nowhere.
 (setq md/splitscreen-path (concat (md/get-dotfiles-path) "/splitscreen/"))
 
 ;; NOTE - for some reason this doesn't seem to load with "defer"
-(use-package
- splitscreen
+(use-package splitscreen
  :load-path md/splitscreen-path
  :demand t
  :config
@@ -767,8 +764,7 @@ on the screen, or nowhere.
 #+END_SRC
 * Org
 #+BEGIN_SRC emacs-lisp
-    (use-package
-     org
+    (use-package org
      :defer 5
      :config
      (progn
@@ -942,8 +938,7 @@ on the screen, or nowhere.
 
 ** Powerline
 #+BEGIN_SRC emacs-lisp
-(use-package
- powerline
+(use-package powerline
  :defer 1
  :config
  (progn
@@ -1037,11 +1032,48 @@ on the screen, or nowhere.
    (md/powerline-setup)
    (md/powerline-reset)))
 #+END_SRC
+* List unbound keys
+
+This is handy sometimes - it provides ~free-keys~, which lists unbound keys.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package free-keys
+    :defer 10
+    :config
+      (progn
+        (bind-key "@" 'free-keys help-map)))
+#+END_SRC
+
+* Autocompletion
+
+Company seems to work nicely without much configuration.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package company
+    :defer 2
+    :config
+    (progn
+      ;; Bind here rather than in ":bind" to avoid complaints about
+      ;; company-mode-map not existing.
+      (bind-key "C-n" 'company-select-next company-active-map)
+      (bind-key "C-p" 'company-select-previous company-active-map)
+
+      ;; By default this performs company-complete-common, but I don't
+      ;; think I'll want to use that
+      (bind-key "TAB" 'company-complete-selection company-active-map)
+
+      (bind-key "C-n" 'company-complete evil-insert-state-map)
+
+      (global-company-mode)))
+#+END_SRC
+
 * Syntax checking
 #+BEGIN_SRC emacs-lisp
-(use-package
- flycheck
+(use-package flycheck
  :config
+ :init
+ (progn
+   (add-hook 'prog-mode-hook 'flycheck-mode))
  (progn
    (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
    (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
@@ -1059,9 +1091,7 @@ on the screen, or nowhere.
          ;; I had it setup in vim.
          flycheck-check-syntax-automatically '(save mode-enabled)
 
-         flycheck-mode-line-prefix nil)
-
-   (add-hook 'prog-mode-hook 'flycheck-mode))
+         flycheck-mode-line-prefix nil))
  :bind (:map md/leader-map
         ;; S prefix, ie. "syntax"
         ("s <RET>" . flycheck-mode)
@@ -1075,8 +1105,7 @@ on the screen, or nowhere.
 * Projectile
 ** Base projectile
 #+BEGIN_SRC emacs-lisp
-(use-package
- projectile
+(use-package projectile
  :config
  (progn
    (setq projectile-file-exists-local-cache-expire (* 10 60)
@@ -1088,8 +1117,7 @@ on the screen, or nowhere.
 
 ** Helm
 #+BEGIN_SRC emacs-lisp
-  (use-package
-   helm-projectile
+  (use-package helm-projectile
    :bind (:map md/leader-map
          ("jj" . helm-projectile-switch-project)
          ("jag" . helm-projectile-ag)
@@ -1102,8 +1130,7 @@ on the screen, or nowhere.
 * Git
 ** git-gutter
 #+BEGIN_SRC emacs-lisp
-  (use-package
-   git-gutter
+  (use-package git-gutter
    :init
    (progn
      (add-hook 'prog-mode-hook 'git-gutter-mode))
@@ -1129,8 +1156,7 @@ on the screen, or nowhere.
 
 ** magit
 #+BEGIN_SRC emacs-lisp
-  (use-package
-   magit
+  (use-package magit
    :config
    (progn
      (evil-set-initial-state 'magit-blame-mode 'normal)
@@ -1165,15 +1191,19 @@ This makes working with HTML/CSS/JS files much nicer. TODO - read documentation
 / configure.
 
 #+BEGIN_SRC emacs-lisp
-(use-package web-mode :defer 1)
+(use-package web-mode 
+  :defer 1)
 
 #+END_SRC
 
-* Rest client
+* Restclient
 For 80% of use-cases, I think [[https://github.com/pashky/restclient.el][restclient]] will be more convenient than Postman.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package restclient :defer 1)
+  (use-package restclient
+    :defer 1
+    :mode (("\\.http\\'" . restclient-mode)))
+
   (use-package restclient-helm :defer 5)
 #+END_SRC
 
@@ -1185,8 +1215,7 @@ This is the body
 
 * Ediff
 #+BEGIN_SRC emacs-lisp
-(use-package
- ediff
+(use-package ediff
  :defer 1
  :config
  (progn
@@ -1197,8 +1226,7 @@ This is the body
 * Solarized
 
 #+BEGIN_SRC emacs-lisp
-  (use-package
-   color-theme-solarized
+  (use-package color-theme-solarized
    :demand t
    :ensure nil
    :load-path "non-elpa/color-theme-solarized"
@@ -1225,8 +1253,7 @@ This is the body
 
 * Colour hex values
 #+BEGIN_SRC emacs-lisp
-  (use-package 
-    rainbow-mode
+  (use-package rainbow-mode
     :defer 1
     :config 
     (progn
@@ -1258,7 +1285,8 @@ Running ~esup~ will start Emacs and profile the startup time. To get GUI on par
 w/terminal, I can disable exec-path-from-shell.
 
 #+BEGIN_SRC emacs-lisp
-(use-package esup :defer 5)
+(use-package esup 
+  :defer 5)
 #+END_SRC
 
 * Dotfiles
@@ -1273,20 +1301,58 @@ Equivalent of my "ve" binding that would edit my vimrc:
   (bind-key "ve" 'md/dotfiles-edit md/leader-map)
 #+END_SRC
 
-* Teardown
+* Python
 
-Reset the gc threshold to the default:
+Elpy combines a few different Python packages / features.
 
 #+BEGIN_SRC emacs-lisp
-;;(setq gc-cons-threshold 800000)
+    (use-package elpy
+      :defer 1  ;; Defer this just because it's slow to load.
+      :config
+      (progn
+        (elpy-enable)
+
+        ;; - Remove elpy-module-flymake because I already have flymake configured.
+        ;; - Remove elpy-module-highlight indentation because it's distracting.
+        (setq elpy-modules (list
+                            'elpy-module-sane-defaults
+                            'elpy-module-company
+                            'elpy-module-eldoc
+                            'elpy-module-pyvenv
+                            'elpy-module-yasnippet))
+
+        (setq elpy-rpc-backend "jedi")
+
+        ;; Setup leader map for python
+        (evil-define-key 'normal python-mode-map (kbd "SPC") md/python-mode-leader-map)
+
+        (evil-define-key 'insert elpy-mode-map "C-n" 'elpy-company-backend)
+        
+        (if (string= major-mode "python-mode")
+          (progn
+            ;; If I've opened a Python file make sure everything loads properly
+            ;; on this buffer.  
+            (python-mode)
+            (elpy-mode 1))))
+
+      :bind (:map md/python-mode-leader-map
+                  ("SPC v" . pyvenv-workon)
+                  ("SPC V" . pyvenv-activate)
+                  ("SPC f" . elpy-format-code)
+                  ("SPC t" . elpy-test)
+                  ("SPC d" . elpy-doc)
+                  ("SPC g" . elpy-goto-definition-other-window)
+                  ("SPC r" . elpy-multiedit-python-symbol-at-point)))
+
 #+END_SRC
+
+
+* Teardown
 
 Profiling. This number comes out slightly different to ~(emacs-init-time)~
 
 #+BEGIN_SRC emacs-lisp
 (defconst md/emacs-init-end (current-time))
-
-;;(setq message-log-max 10000)
 
 (defconst md/emacs-boot-time (float-time (time-subtract md/emacs-init-end md/emacs-init-start)))
 (message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
@@ -1299,13 +1365,13 @@ Close paren for the wrapping ~let~:
 )
 #+END_SRC
 
-
 * TODO
 - [ ] tab key not inserting tabs in evil?
   - it aligns but doesn't insert tab, not sure if this is behaviour i want. It
     runs indent-for-tab-command. Try it for a while.
 - [ ] savehist-mode.
 - [ ] indents.
+- [ ] paren match not working in terminal? Is it due to underline?
 - [ ] read electric-indent docs.
 - [ ] does electric-indent need different configuration in python? I used to
   have something for this.
@@ -1326,16 +1392,25 @@ Close paren for the wrapping ~let~:
 - [ ] autocomplete
 - [ ] spellcheck?
 - [ ] checkout slime
-- [ ] jump to definition
-- [ ] jedi
 - [ ] jumping forward/back to markers including between files
 - [ ] stop littering # backup files
-- [ ] markdown mode
-- [ ] startup time - still too slow
+- [ ] startup time?
+  - bottleneck is down to ~(package-initialize)~ and evil startup.
+  - elpy is slow.
 - [ ] https://github.com/emacs-tw/awesome-emacs
+  - [ ] multi cursor?
 - [ ] gk/gj for next/prev functions
 - [ ] how to create different md/leader-map bindings for different evil states
   and/or modes?
 - [ ] why can't I select something and then paste when in visual mode? This used
   to work
-  
+- [ ] binding for file info - equivalent to C-g in vim
+- [ ] go mode
+- [ ] python development / elpy
+  - [ ] gk/gj
+  - [ ] open documentation
+  - [ ] run tests
+  - [ ] refactoring
+- [ ] the elpy flycheck colours aren't bad, and work in terminal - consider
+  using them for full flycheck.
+- [ ] eldoc mode?

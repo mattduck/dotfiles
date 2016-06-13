@@ -1,0 +1,4 @@
+#!/bin/bash
+# This hook is sourced after a new virtualenv is activated.
+pip install -r $DOTFILES/virtualenvwrapper_hooks/pip_dev_requirements.txt 
+

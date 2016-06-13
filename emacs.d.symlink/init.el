@@ -37,8 +37,7 @@
 
 (require 'bind-key)  ; Required for :bind in use-package
 
-(use-package
- exec-path-from-shell
+(use-package exec-path-from-shell
  :if (memq window-system '(mac ns))
  :demand t
  :config
@@ -46,12 +45,14 @@
 
 (defvar md/leader-map (make-sparse-keymap))
 
+(defvar md/python-mode-leader-map (make-sparse-keymap))
+(set-keymap-parent md/python-mode-leader-map md/leader-map)
+
 (setq inhibit-splash-screen t)
 
 (setq-default fill-column 80)
 
-(use-package
- fill-column-indicator
+(use-package fill-column-indicator
  :defer 1
  :config
  (progn
@@ -80,8 +81,7 @@
 
 ;; TODO - I thought use-package would defer the loading of this until I do "ln",
 ;; but "ln" doesn't work.  
-(use-package
-  linum
+(use-package linum
   :defer 1
   :bind (:map md/leader-map
          ("ln" . linum-mode)))
@@ -113,7 +113,8 @@
 
 ;; Remove scrollbars (GUI only) to get extra screen space
 (use-package scroll-bar 
-  :defer 2
+  :if (display-graphic-p)
+  :demand t
   :config (scroll-bar-mode -1))
 
 (blink-cursor-mode 0)
@@ -148,6 +149,7 @@
    (face-list)))
 
 (use-package xclip
+  :if (not (display-graphic-p))
   :defer 1
   :config
   (progn
@@ -221,31 +223,12 @@
   (let ((fill-column most-positive-fixnum))
     (fill-region start end)))
 
-(defun md/evil-fill (&optional start end)
-  (interactive
-   (if (use-region-p)
-       (list (region-beginning) (region-end))
-     (list nil nil)))
-  (if (string= evil-state "visual")
-      (fill-region start end)
-    (fill-paragraph)))
-
-(defun md/evil-unfill (&optional start end)
-  (interactive
-   (if (use-region-p)
-       (list (region-beginning) (region-end))
-     (list nil nil)))
-  (if (string= evil-state "visual")
-      (md/unfill-region start end)
-    (md/unfill-paragraph)))
-
 (bind-key "x" 'describe-face help-map)
 (bind-key "C-k" 'describe-personal-keybindings help-map)
 
 (setq delete-by-moving-to-trash t)
 
-(use-package
- evil
+(use-package evil
  :demand t
  :config
  (progn
@@ -268,6 +251,24 @@
        (end-of-line)
        (open-line 1)
        (save-buffer)))
+
+   (defun md/evil-fill (&optional start end)
+     (interactive
+      (if (use-region-p)
+          (list (region-beginning) (region-end))
+        (list nil nil)))
+     (if (string= evil-state "visual")
+         (fill-region start end)
+       (fill-paragraph)))
+
+   (defun md/evil-unfill (&optional start end)
+     (interactive
+      (if (use-region-p)
+          (list (region-beginning) (region-end))
+        (list nil nil)))
+     (if (string= evil-state "visual")
+         (md/unfill-region start end)
+       (md/unfill-paragraph)))
 
    ;; Can't work out how to properly define map bindings using ":bind"
    (bind-key "<SPC>" md/leader-map evil-normal-state-map)
@@ -319,14 +320,12 @@
         ("o" . md/insert-blank-line-before)
         ("O" . md/insert-blank-line-after)))
 
-(use-package
- evil-surround
+(use-package evil-surround
  :config
  (progn
    (global-evil-surround-mode 1)))
 
-(use-package
- ace-jump-mode
+(use-package ace-jump-mode
 
  :config
  (progn
@@ -346,8 +345,7 @@
              ("f t" . evil-ace-jump-char-mode)
              ("f T" . evil-ace-jump-char-mode)))
 
-(use-package
-  key-chord
+(use-package key-chord
   :config
   (progn
     (setq key-chord-two-keys-delay 0.4)
@@ -356,8 +354,7 @@
     (key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
     (key-chord-mode 1)))
 
-(use-package
- fic-mode
+(use-package fic-mode
  :defer 1
  :init
  (progn
@@ -382,8 +379,7 @@
   (interactive)
   (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
 
-(use-package
-  helm
+(use-package helm
   :defer 5
   :config
   (progn
@@ -397,7 +393,7 @@
 
     (helm-mode 1)
     (helm-autoresize-mode 0))
-  :bind (([remap find-file] . helm-find-files)
+  :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
          ([remap occur] . helm-occur)
          ([remap dabbrev-expand] . helm-dabbrev)
          ([remap list-buffers] . helm-buffers-list)
@@ -439,21 +435,19 @@
   (kbd "C-o") 'help-go-back
   (kbd "<RET>") 'help-follow-symbol)
 
-(use-package
-  which-key
+(use-package which-key
   :defer 2
   :config
   (progn
     (setq which-key-idle-delay 0.5
-          which-key-max-description-length 20)
+          which-key-max-description-length 30)
 
     ;; Alow show evil motion keys. This is an experimental feature.
     (setq which-key-allow-evil-operators t
           which-key-show-operator-state-maps t)
     (which-key-mode)))
 
-(use-package
- paren
+(use-package paren
  :defer 1
  :config
  (progn
@@ -462,8 +456,7 @@
          blink-matching-paren-on-screen nil)
    (add-hook 'prog-mode-hook 'show-paren-mode)))
 
-(use-package
- elscreen
+(use-package elscreen
  :defer 1
  :config
  (progn
@@ -478,16 +471,14 @@
 (setq md/splitscreen-path (concat (md/get-dotfiles-path) "/splitscreen/"))
 
 ;; NOTE - for some reason this doesn't seem to load with "defer"
-(use-package
- splitscreen
+(use-package splitscreen
  :load-path md/splitscreen-path
  :demand t
  :config
  (progn
    (splitscreen-mode)))
 
-(use-package
- org
+(use-package org
  :defer 5
  :config
  (progn
@@ -654,8 +645,7 @@
 (line-number-mode 1)
 (column-number-mode 1)
 
-(use-package
- powerline
+(use-package powerline
  :defer 1
  :config
  (progn
@@ -749,9 +739,34 @@
    (md/powerline-setup)
    (md/powerline-reset)))
 
-(use-package
- flycheck
+(use-package free-keys
+  :defer 10
+  :config
+    (progn
+      (bind-key "@" 'free-keys help-map)))
+
+(use-package company
+  :defer 2
+  :config
+  (progn
+    ;; Bind here rather than in ":bind" to avoid complaints about
+    ;; company-mode-map not existing.
+    (bind-key "C-n" 'company-select-next company-active-map)
+    (bind-key "C-p" 'company-select-previous company-active-map)
+
+    ;; By default this performs company-complete-common, but I don't
+    ;; think I'll want to use that
+    (bind-key "TAB" 'company-complete-selection company-active-map)
+
+    (bind-key "C-n" 'company-complete evil-insert-state-map)
+
+    (global-company-mode)))
+
+(use-package flycheck
  :config
+ :init
+ (progn
+   (add-hook 'prog-mode-hook 'flycheck-mode))
  (progn
    (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
    (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
@@ -769,9 +784,7 @@
          ;; I had it setup in vim.
          flycheck-check-syntax-automatically '(save mode-enabled)
 
-         flycheck-mode-line-prefix nil)
-
-   (add-hook 'prog-mode-hook 'flycheck-mode))
+         flycheck-mode-line-prefix nil))
  :bind (:map md/leader-map
         ;; S prefix, ie. "syntax"
         ("s <RET>" . flycheck-mode)
@@ -781,8 +794,7 @@
         ("sp" . flycheck-previous-error)
         ("sk" . flycheck-previous-error)))
 
-(use-package
- projectile
+(use-package projectile
  :config
  (progn
    (setq projectile-file-exists-local-cache-expire (* 10 60)
@@ -791,8 +803,7 @@
  :bind (:map md/leader-map
        ("jk" . projectile-kill-buffers)))
 
-(use-package
- helm-projectile
+(use-package helm-projectile
  :bind (:map md/leader-map
        ("jj" . helm-projectile-switch-project)
        ("jag" . helm-projectile-ag)
@@ -801,8 +812,7 @@
        ;; TODO - proper binding for invalidating cache
        ("jf" . helm-projectile-find-file)))
 
-(use-package
- git-gutter
+(use-package git-gutter
  :init
  (progn
    (add-hook 'prog-mode-hook 'git-gutter-mode))
@@ -824,8 +834,7 @@
        ("gadd" . git-gutter:stage-hunk)
        ("grev" . git-gutter:revert-hunk)))
 
-(use-package
- magit
+(use-package magit
  :config
  (progn
    (evil-set-initial-state 'magit-blame-mode 'normal)
@@ -853,21 +862,23 @@
        ("gblame" . magit-blame)
        ("gdiff" . magit-ediff-popup)))
 
-(use-package web-mode :defer 1)
+(use-package web-mode 
+  :defer 1)
 
-(use-package restclient :defer 1)
+(use-package restclient
+  :defer 1
+  :mode (("\\.http\\'" . restclient-mode)))
+
 (use-package restclient-helm :defer 5)
 
-(use-package
- ediff
+(use-package ediff
  :defer 1
  :config
  (progn
    ;; TODO - I want ediff to have evil-like bindings
    (setq ediff-split-window-function 'split-window-horizontally)))
 
-(use-package
- color-theme-solarized
+(use-package color-theme-solarized
  :demand t
  :ensure nil
  :load-path "non-elpa/color-theme-solarized"
@@ -891,8 +902,7 @@
         ("sol" . solarized-toggle-theme-mode)
         ("chl" . solarized-toggle-comment-visibility)))
 
-(use-package 
-  rainbow-mode
+(use-package rainbow-mode
   :defer 1
   :config 
   (progn
@@ -907,7 +917,8 @@
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode)))
 
-(use-package esup :defer 5)
+(use-package esup 
+  :defer 5)
 
 (defun md/dotfiles-edit ()
   (interactive)
@@ -915,11 +926,45 @@
 
 (bind-key "ve" 'md/dotfiles-edit md/leader-map)
 
-;;(setq gc-cons-threshold 800000)
+(use-package elpy
+  :defer 1  ;; Defer this just because it's slow to load.
+  :config
+  (progn
+    (elpy-enable)
+
+    ;; - Remove elpy-module-flymake because I already have flymake configured.
+    ;; - Remove elpy-module-highlight indentation because it's distracting.
+    (setq elpy-modules (list
+                        'elpy-module-sane-defaults
+                        'elpy-module-company
+                        'elpy-module-eldoc
+                        'elpy-module-pyvenv
+                        'elpy-module-yasnippet))
+
+    (setq elpy-rpc-backend "jedi")
+
+    ;; Setup leader map for python
+    (evil-define-key 'normal python-mode-map (kbd "SPC") md/python-mode-leader-map)
+
+    (evil-define-key 'insert elpy-mode-map "C-n" 'elpy-company-backend)
+    
+    (if (string= major-mode "python-mode")
+      (progn
+        ;; If I've opened a Python file make sure everything loads properly
+        ;; on this buffer.  
+        (python-mode)
+        (elpy-mode 1))))
+
+  :bind (:map md/python-mode-leader-map
+              ("SPC v" . pyvenv-workon)
+              ("SPC V" . pyvenv-activate)
+              ("SPC f" . elpy-format-code)
+              ("SPC t" . elpy-test)
+              ("SPC d" . elpy-doc)
+              ("SPC g" . elpy-goto-definition-other-window)
+              ("SPC r" . elpy-multiedit-python-symbol-at-point)))
 
 (defconst md/emacs-init-end (current-time))
-
-;;(setq message-log-max 10000)
 
 (defconst md/emacs-boot-time (float-time (time-subtract md/emacs-init-end md/emacs-init-start)))
 (message (format "md/emacs-boot-time: %s" md/emacs-boot-time))

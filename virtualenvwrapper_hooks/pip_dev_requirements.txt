@@ -1,0 +1,5 @@
+# Development packages that I want in all my envs or are expected by Emacs.
+flake8
+jedi
+yapf
+ipython
