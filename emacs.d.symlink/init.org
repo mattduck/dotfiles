@@ -1207,6 +1207,15 @@ For 80% of use-cases, I think [[https://github.com/pashky/restclient.el][restcli
   (use-package restclient-helm :defer 5)
 #+END_SRC
 
+Add company completion for restclient:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package company-restclient
+    :config
+    (progn
+        (add-to-list 'company-backends 'company-restclient)))
+#+END_SRC
+
 #+BEGIN_EXAMPLE
 POST https://httpbin.org/post
 
@@ -1414,3 +1423,6 @@ Close paren for the wrapping ~let~:
 - [ ] the elpy flycheck colours aren't bad, and work in terminal - consider
   using them for full flycheck.
 - [ ] eldoc mode?
+- [ ] check company addons
+  - there's one for restclient.
+- [ ] binding for narrow to defun / widen.

@@ -871,6 +871,11 @@
 
 (use-package restclient-helm :defer 5)
 
+(use-package company-restclient
+  :config
+  (progn
+      (add-to-list 'company-backends 'company-restclient)))
+
 (use-package ediff
  :defer 1
  :config
