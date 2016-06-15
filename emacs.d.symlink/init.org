@@ -1188,6 +1188,12 @@ Company seems to work nicely without much configuration.
    :bind (:map md/leader-map
          ("gmag" . magit-dispatch-popup)
          ("gblame" . magit-blame)
+         
+         ;; NOTE - this doesn't play nicely with mode-line:
+         ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
+         ;; - https://github.com/syl20bnr/spacemacs/issues/2172
+         ("gco" . magit-checkout) 
+
          ("gdiff" . magit-ediff-popup)))
 
 #+END_SRC
@@ -1399,7 +1405,6 @@ Close paren for the wrapping ~let~:
 - [ ] jumping to definitions
 - [ ] finding uses of functions
 - [ ] ediff / git diff
-- [ ] git checkout would be nice
 - [ ] colour emacs state in modeline
 - [ ] checkout avy - improvement to acejump?
 - [ ] md/file-info binding

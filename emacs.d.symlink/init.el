@@ -866,6 +866,7 @@
  :bind (:map md/leader-map
        ("gmag" . magit-dispatch-popup)
        ("gblame" . magit-blame)
+       ("gco" . magit-checkout)
        ("gdiff" . magit-ediff-popup)))
 
 (use-package web-mode 
