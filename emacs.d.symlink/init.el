@@ -276,6 +276,8 @@
 
    (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
 
+   (bind-key "n" (lookup-key global-map (kbd "C-x n")) md/leader-map)
+
    (evil-mode 1))
 
  :bind (;; Like my vimrc, remap  ; to : and , to ;
@@ -978,3 +980,5 @@
 (message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
 
 )
+(put 'narrow-to-region 'disabled nil)
+(put 'narrow-to-page 'disabled nil)

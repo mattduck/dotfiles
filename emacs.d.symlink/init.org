@@ -494,6 +494,8 @@ I seem to use =describe-face= a lot:
 
      (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
 
+     (bind-key "n" (lookup-key global-map (kbd "C-x n")) md/leader-map)
+
      (evil-mode 1))
 
    :bind (;; Like my vimrc, remap  ; to : and , to ;
@@ -1426,4 +1428,3 @@ Close paren for the wrapping ~let~:
 - [ ] eldoc mode?
 - [ ] check company addons
   - there's one for restclient.
-- [ ] binding for narrow to defun / widen.
