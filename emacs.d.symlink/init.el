@@ -145,7 +145,9 @@
 (when (not (display-graphic-p))
   (mapc
    (lambda (face)
+     ;; Same issue with underline too.
      (set-face-underline face nil (selected-frame))
+
      (set-face-bold face nil (selected-frame)))
    (face-list)))
 
@@ -452,12 +454,13 @@
 
 (use-package paren
  :defer 1
+ :init (progn
+        (add-hook 'prog-mode-hook 'show-paren-mode)) 
  :config
  (progn
    (setq show-paren-style 'parenthesis
          blink-matching-paren nil
-         blink-matching-paren-on-screen nil)
-   (add-hook 'prog-mode-hook 'show-paren-mode)))
+         blink-matching-paren-on-screen nil)))
 
 (use-package elscreen
  :defer 1

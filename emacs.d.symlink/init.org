@@ -725,14 +725,15 @@ Basic paren matching is built in. I preferred these settings at one point,
 although I don't remember exactly what the difference is:
 
 #+BEGIN_SRC emacs-lisp
-    (use-package paren
-     :defer 1
-     :config
-     (progn
-       (setq show-paren-style 'parenthesis
-             blink-matching-paren nil
-             blink-matching-paren-on-screen nil)
-       (add-hook 'prog-mode-hook 'show-paren-mode)))
+  (use-package paren
+   :defer 1
+   :init (progn
+          (add-hook 'prog-mode-hook 'show-paren-mode)) 
+   :config
+   (progn
+     (setq show-paren-style 'parenthesis
+           blink-matching-paren nil
+           blink-matching-paren-on-screen nil)))
 #+END_SRC
 
 * Elscreen
