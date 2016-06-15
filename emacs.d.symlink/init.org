@@ -295,6 +295,9 @@ the right fix, but it works for now:
   (when (not (display-graphic-p))
     (mapc
      (lambda (face)
+       ;; Same issue with underline too.
+       (set-face-underline face nil (selected-frame))
+
        (set-face-bold face nil (selected-frame)))
      (face-list)))
 #+END_SRC
@@ -1384,7 +1387,6 @@ Close paren for the wrapping ~let~:
     runs indent-for-tab-command. Try it for a while.
 - [ ] savehist-mode.
 - [ ] indents.
-- [ ] paren match not working in terminal? Is it due to underline?
 - [ ] read electric-indent docs.
 - [ ] does electric-indent need different configuration in python? I used to
   have something for this.

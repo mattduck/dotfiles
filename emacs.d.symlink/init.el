@@ -145,6 +145,7 @@
 (when (not (display-graphic-p))
   (mapc
    (lambda (face)
+     (set-face-underline face nil (selected-frame))
      (set-face-bold face nil (selected-frame)))
    (face-list)))
 
@@ -980,5 +981,3 @@
 (message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
 
 )
-(put 'narrow-to-region 'disabled nil)
-(put 'narrow-to-page 'disabled nil)
