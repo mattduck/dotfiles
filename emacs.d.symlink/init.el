@@ -949,7 +949,10 @@
     (setq elpy-rpc-backend "jedi")
 
     ;; Setup leader map for python
-    (evil-define-key 'normal python-mode-map (kbd "SPC") md/python-mode-leader-map)
+    (evil-define-key 'normal python-mode-map 
+      (kbd "SPC") md/python-mode-leader-map
+      "gk" 'python-nav-backward-defun
+      "gj" 'python-nav-forward-defun)
 
     (evil-define-key 'insert elpy-mode-map "C-n" 'elpy-company-backend)
     
