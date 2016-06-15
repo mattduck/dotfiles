@@ -319,6 +319,8 @@
         ("er" . eval-region)
         ("ex" . md/fontify-buffer)  ; It's sort-of an eval
 
+        ("?" . flyspell-mode)
+
         ("lw" . toggle-truncate-lines)
 
         ;; Same as vim - insert and save
@@ -866,7 +868,12 @@
  :bind (:map md/leader-map
        ("gmag" . magit-dispatch-popup)
        ("gblame" . magit-blame)
-       ("gco" . magit-checkout)
+       
+       ;; NOTE - this doesn't play nicely with mode-line:
+       ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
+       ;; - https://github.com/syl20bnr/spacemacs/issues/2172
+       ("gco" . magit-checkout) 
+
        ("gdiff" . magit-ediff-popup)))
 
 (use-package web-mode 

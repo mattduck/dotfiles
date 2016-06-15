@@ -537,11 +537,14 @@ I seem to use =describe-face= a lot:
           ("er" . eval-region)
           ("ex" . md/fontify-buffer)  ; It's sort-of an eval
 
+          ("?" . flyspell-mode)
+
           ("lw" . toggle-truncate-lines)
 
           ;; Same as vim - insert and save
           ("o" . md/insert-blank-line-before)
           ("O" . md/insert-blank-line-after)))
+
 #+END_SRC
 
 ** Evil surround
