@@ -968,7 +968,7 @@
       "gk" 'python-nav-backward-defun
       "gj" 'python-nav-forward-defun)
 
-    (evil-define-key 'insert elpy-mode-map "C-n" 'elpy-company-backend)
+    (evil-define-key 'insert elpy-mode-map (kbd "C-n") 'elpy-company-backend)
     
     (if (string= major-mode "python-mode")
       (progn
