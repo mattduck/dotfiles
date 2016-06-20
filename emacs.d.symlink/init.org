@@ -1373,6 +1373,11 @@ Elpy combines a few different Python packages / features.
 
 #+END_SRC
 
+* Golang
+#+BEGIN_SRC emacs-lisp
+  (use-package go-mode)
+#+END_SRC
+
 * Teardown
 
 Profiling. This number comes out slightly different to ~(emacs-init-time)~

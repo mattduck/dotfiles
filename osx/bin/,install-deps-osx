@@ -22,6 +22,7 @@ brew install \
     fzf \
     shellcheck \
     markdown \
+    go \
 
 # Brew is easiest way to compile with python
 brew install vim

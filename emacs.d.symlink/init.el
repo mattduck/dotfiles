@@ -986,6 +986,8 @@
               ("SPC g" . elpy-goto-definition-other-window)
               ("SPC r" . elpy-multiedit-python-symbol-at-point)))
 
+(use-package go-mode)
+
 (defconst md/emacs-init-end (current-time))
 
 (defconst md/emacs-boot-time (float-time (time-subtract md/emacs-init-end md/emacs-init-start)))
