@@ -988,6 +988,10 @@
 
 (use-package go-mode)
 
+(use-package yaml-mode)
+
+(use-package terraform-mode)
+
 (defconst md/emacs-init-end (current-time))
 
 (defconst md/emacs-boot-time (float-time (time-subtract md/emacs-init-end md/emacs-init-start)))

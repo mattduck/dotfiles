@@ -1378,6 +1378,22 @@ Elpy combines a few different Python packages / features.
   (use-package go-mode)
 #+END_SRC
 
+* Yaml
+Not sure if this provides anything beyond syntax highlighting, but that's enough
+for now:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package yaml-mode)
+#+END_SRC
+
+* Terraform
+Not sure if this provides anything beyond syntax highlighting, but that's enough
+for now:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package terraform-mode)
+#+END_SRC
+
 * Teardown
 
 Profiling. This number comes out slightly different to ~(emacs-init-time)~
