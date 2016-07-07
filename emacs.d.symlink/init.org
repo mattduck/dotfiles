@@ -174,9 +174,11 @@ Auto-wrap text.
 #+END_SRC
 
 ** Linum / line numbers in left margin
+
 By default, in terminal Emacs the linum margin terminates right against the
 first column of the buffer. This copies the code from linum's =dynamic=
 linum-format, but adds a space so there is some separation:
+
 #+BEGIN_SRC emacs-lisp
 (setq linum-format
       (lambda (line-number)
@@ -1151,6 +1153,10 @@ Company seems to work nicely without much configuration.
            git-gutter:modified-sign "~"
            git-gutter:added-sign "+"
            git-gutter:deleted-sign "-"
+
+           ;; This ensures the separator is always displayed
+           git-gutter:unchanged-sign " "  
+           git-gutter:always-show-separator t
 
            ;; Without this, there's no space between the git-gutter column and the code.
            git-gutter:separator-sign " "))

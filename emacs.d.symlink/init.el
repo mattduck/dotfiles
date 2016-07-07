@@ -833,6 +833,10 @@
          git-gutter:added-sign "+"
          git-gutter:deleted-sign "-"
 
+         ;; This ensures the separator is always displayed
+         git-gutter:unchanged-sign " "  
+         git-gutter:always-show-separator t
+
          ;; Without this, there's no space between the git-gutter column and the code.
          git-gutter:separator-sign " "))
  :bind (:map md/leader-map
