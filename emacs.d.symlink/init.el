@@ -319,9 +319,11 @@
         ("er" . eval-region)
         ("ex" . md/fontify-buffer)  ; It's sort-of an eval
 
-        ("?" . flyspell-mode)
+        ("check" . flyspell-mode)
 
         ("lw" . toggle-truncate-lines)
+
+        ("i" . md/file-info)
 
         ;; Same as vim - insert and save
         ("o" . md/insert-blank-line-before)

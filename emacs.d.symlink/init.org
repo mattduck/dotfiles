@@ -537,9 +537,11 @@ I seem to use =describe-face= a lot:
           ("er" . eval-region)
           ("ex" . md/fontify-buffer)  ; It's sort-of an eval
 
-          ("?" . flyspell-mode)
+          ("check" . flyspell-mode)
 
           ("lw" . toggle-truncate-lines)
+
+          ("i" . md/file-info)
 
           ;; Same as vim - insert and save
           ("o" . md/insert-blank-line-before)
@@ -1431,7 +1433,6 @@ Close paren for the wrapping ~let~:
 - [ ] ediff / git diff
 - [ ] colour emacs state in modeline
 - [ ] checkout avy - improvement to acejump?
-- [ ] md/file-info binding
 - [ ] debugger
 - [ ] folding
 - [ ] autocomplete
@@ -1449,7 +1450,7 @@ Close paren for the wrapping ~let~:
   and/or modes?
 - [ ] why can't I select something and then paste when in visual mode? This used
   to work
-- [ ] binding for file info - equivalent to C-g in vim
+  - [2016-07-08 Fri] seem to work now?
 - [ ] go mode
 - [ ] python development / elpy
   - [ ] open documentation
