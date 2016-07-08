@@ -825,7 +825,17 @@
 (use-package git-gutter
  :init
  (progn
-   (add-hook 'prog-mode-hook 'git-gutter-mode))
+   (defun md/set-sensible-column ()
+     "Unless file is too big, either use git-gutter mode (when in
+git dir) or linum mode"
+     (interactive)
+     (when (< (count-lines (point-min) (point-max)) 2000)
+       (if (string= "git" (downcase (format "%s" (vc-backend
+                                                  (buffer-file-name
+                                                   (current-buffer))))))
+           (git-gutter-mode 1)
+         (linum-mode 1))))
+   (add-hook 'find-file-hook 'md/set-sensible-column))
  :config
  (progn
    (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
