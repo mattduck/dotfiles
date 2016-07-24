@@ -6,7 +6,7 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
 
 #+BEGIN_SRC emacs-lisp :results silent :tangle no
 (setq-local org-confirm-babel-evaluate nil)
-(org-babel-tangle nil "init.el") 
+(org-babel-tangle nil "init.el")
 
 ;; Byte-compiling seems to take ~0.1s off startup time.
 (byte-compile-file "init.el")
@@ -26,7 +26,7 @@ This wraps the rest of the file.
 - Increase the GC threshold to 100MB. This decreases Emacs load time by approx
   600ms when not using ~use-package~. With ~use-package~, it still decreases load
   time by 250ms.
-  
+
 - The default file-handler-name-alist contains some regexps that are run against
   every .el/.elc loaded on startup. Preventing this apparently decreases load
   time, although I haven't noticed much.
@@ -190,7 +190,7 @@ linum-format, but adds a space so there is some separation:
             line-number) 'face 'linum))))
 
 ;; TODO - I thought use-package would defer the loading of this until I do "ln",
-;; but "ln" doesn't work.  
+;; but "ln" doesn't work.
 (use-package linum
   :defer 1
   :bind (:map md/leader-map
@@ -236,7 +236,7 @@ show their terminal/GUI-specific default fonts:
   scroll-step 1)
 
 ;; Remove scrollbars (GUI only) to get extra screen space
-(use-package scroll-bar 
+(use-package scroll-bar
   :if (display-graphic-p)
   :demand t
   :config (scroll-bar-mode -1))
@@ -397,11 +397,11 @@ Increase the number of messages:
              (buffer-file-name)
              (count-lines (point-min) (point-max))
              (/ (window-end) 0.01 (point-max))
-             major-mode)) 
+             major-mode))
 
   (defun md/mode-info ()
     (interactive)
-    (message 
+    (message
      (format
       "%s"
       (with-temp-buffer
@@ -735,7 +735,7 @@ although I don't remember exactly what the difference is:
   (use-package paren
    :defer 1
    :init (progn
-          (add-hook 'prog-mode-hook 'show-paren-mode)) 
+          (add-hook 'prog-mode-hook 'show-paren-mode))
    :config
    (progn
      (setq show-paren-style 'parenthesis
@@ -933,7 +933,7 @@ on the screen, or nowhere.
              org-export-headline-levels 6
              org-export-with-section-numbers 4)
 
-            
+
        ;; Putting these here to avoid byte-compiled issue where org-mode-map isn't defined.
        (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
        (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
@@ -1166,7 +1166,7 @@ Company seems to work nicely without much configuration.
            git-gutter:deleted-sign "-"
 
            ;; This ensures the separator is always displayed
-           git-gutter:unchanged-sign " "  
+           git-gutter:unchanged-sign " "
            git-gutter:always-show-separator t
 
            ;; Without this, there's no space between the git-gutter column and the code.
@@ -1210,11 +1210,11 @@ Company seems to work nicely without much configuration.
    :bind (:map md/leader-map
          ("gmag" . magit-dispatch-popup)
          ("gblame" . magit-blame)
-         
+
          ;; NOTE - this doesn't play nicely with mode-line:
          ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
          ;; - https://github.com/syl20bnr/spacemacs/issues/2172
-         ("gco" . magit-checkout) 
+         ("gco" . magit-checkout)
 
          ("gdiff" . magit-ediff-popup)))
 
@@ -1225,7 +1225,7 @@ This makes working with HTML/CSS/JS files much nicer. TODO - read documentation
 / configure.
 
 #+BEGIN_SRC emacs-lisp
-(use-package web-mode 
+(use-package web-mode
   :defer 1)
 
 #+END_SRC
@@ -1298,7 +1298,7 @@ This is the body
 #+BEGIN_SRC emacs-lisp
   (use-package rainbow-mode
     :defer 1
-    :config 
+    :config
     (progn
        (add-hook 'css-mode-hook 'rainbow-mode)
        (add-hook 'help-mode-hook 'rainbow-mode)
@@ -1306,7 +1306,7 @@ This is the body
        (add-hook 'prog-mode-hook 'rainbow-mode)))
 #+END_SRC
 
-* Markdown 
+* Markdown
 
 AFAICT markdown syntax highlighting isn't provided by default. [[https://github.com/jrblevin/markdown-mode][Markdown mode]]
 includes highlighting, plus some extra features like inserting elements and
@@ -1328,7 +1328,7 @@ Running ~esup~ will start Emacs and profile the startup time. To get GUI on par
 w/terminal, I can disable exec-path-from-shell.
 
 #+BEGIN_SRC emacs-lisp
-(use-package esup 
+(use-package esup
   :defer 5)
 #+END_SRC
 
@@ -1367,17 +1367,17 @@ Elpy combines a few different Python packages / features.
       (setq elpy-rpc-backend "jedi")
 
       ;; Setup leader map for python
-      (evil-define-key 'normal python-mode-map 
+      (evil-define-key 'normal python-mode-map
         (kbd "SPC") md/python-mode-leader-map
         "gk" 'python-nav-backward-defun
         "gj" 'python-nav-forward-defun)
 
       (evil-define-key 'insert elpy-mode-map (kbd "C-n") 'elpy-company-backend)
-      
+
       (if (string= major-mode "python-mode")
         (progn
           ;; If I've opened a Python file make sure everything loads properly
-          ;; on this buffer.  
+          ;; on this buffer.
           (python-mode)
           (elpy-mode 1))))
 
@@ -1482,4 +1482,5 @@ Close paren for the wrapping ~let~:
   - slower
   - no ag ignore
 - [ ] how does flyspell work? doesn't seem to show anything?
-
+- [ ] git gutter mode should be by default for every opened file
+- [ ] want to open file/mark in github
