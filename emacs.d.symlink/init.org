@@ -1478,3 +1478,8 @@ Close paren for the wrapping ~let~:
 - [ ] eldoc mode?
 - [ ] check company addons
   - there's one for restclient.
+- [ ] helm-projectile-find-file is worse than ctrlp
+  - slower
+  - no ag ignore
+- [ ] how does flyspell work? doesn't seem to show anything?
+
