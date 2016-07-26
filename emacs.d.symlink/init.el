@@ -80,7 +80,7 @@
             line-number) 'face 'linum))))
 
 ;; TODO - I thought use-package would defer the loading of this until I do "ln",
-;; but "ln" doesn't work.  
+;; but "ln" doesn't work.
 (use-package linum
   :defer 1
   :bind (:map md/leader-map
@@ -112,7 +112,7 @@
   scroll-step 1)
 
 ;; Remove scrollbars (GUI only) to get extra screen space
-(use-package scroll-bar 
+(use-package scroll-bar
   :if (display-graphic-p)
   :demand t
   :config (scroll-bar-mode -1))
@@ -201,11 +201,11 @@
            (buffer-file-name)
            (count-lines (point-min) (point-max))
            (/ (window-end) 0.01 (point-max))
-           major-mode)) 
+           major-mode))
 
 (defun md/mode-info ()
   (interactive)
-  (message 
+  (message
    (format
     "%s"
     (with-temp-buffer
@@ -459,7 +459,7 @@
 (use-package paren
  :defer 1
  :init (progn
-        (add-hook 'prog-mode-hook 'show-paren-mode)) 
+        (add-hook 'prog-mode-hook 'show-paren-mode))
  :config
  (progn
    (setq show-paren-style 'parenthesis
@@ -644,7 +644,7 @@
          org-export-headline-levels 6
          org-export-with-section-numbers 4)
 
-        
+
    ;; Putting these here to avoid byte-compiled issue where org-mode-map isn't defined.
    (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
    (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
@@ -844,7 +844,7 @@ git dir) or linum mode"
          git-gutter:deleted-sign "-"
 
          ;; This ensures the separator is always displayed
-         git-gutter:unchanged-sign " "  
+         git-gutter:unchanged-sign " "
          git-gutter:always-show-separator t
 
          ;; Without this, there's no space between the git-gutter column and the code.
@@ -884,15 +884,15 @@ git dir) or linum mode"
  :bind (:map md/leader-map
        ("gmag" . magit-dispatch-popup)
        ("gblame" . magit-blame)
-       
+
        ;; NOTE - this doesn't play nicely with mode-line:
        ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
        ;; - https://github.com/syl20bnr/spacemacs/issues/2172
-       ("gco" . magit-checkout) 
+       ("gco" . magit-checkout)
 
        ("gdiff" . magit-ediff-popup)))
 
-(use-package web-mode 
+(use-package web-mode
   :defer 1)
 
 (use-package restclient
@@ -939,7 +939,7 @@ git dir) or linum mode"
 
 (use-package rainbow-mode
   :defer 1
-  :config 
+  :config
   (progn
      (add-hook 'css-mode-hook 'rainbow-mode)
      (add-hook 'help-mode-hook 'rainbow-mode)
@@ -952,7 +952,7 @@ git dir) or linum mode"
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode)))
 
-(use-package esup 
+(use-package esup
   :defer 5)
 
 (defun md/dotfiles-edit ()
@@ -979,17 +979,17 @@ git dir) or linum mode"
     (setq elpy-rpc-backend "jedi")
 
     ;; Setup leader map for python
-    (evil-define-key 'normal python-mode-map 
+    (evil-define-key 'normal python-mode-map
       (kbd "SPC") md/python-mode-leader-map
       "gk" 'python-nav-backward-defun
       "gj" 'python-nav-forward-defun)
 
     (evil-define-key 'insert elpy-mode-map (kbd "C-n") 'elpy-company-backend)
-    
+
     (if (string= major-mode "python-mode")
       (progn
         ;; If I've opened a Python file make sure everything loads properly
-        ;; on this buffer.  
+        ;; on this buffer.
         (python-mode)
         (elpy-mode 1))))
 
