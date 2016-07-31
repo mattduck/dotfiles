@@ -363,6 +363,30 @@
     (key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
     (key-chord-mode 1)))
 
+(use-package dired
+  :demand t
+  :init
+  (progn
+    ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
+    ;; makes dired-mode-map an overriding keymap, which means that the default
+    ;; dired-mode bindings take precendence over the normal-state bindings.
+    ;;
+    ;; There's no obvious way to undo that code, so I'm just replacing
+    ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
+    (setq dired-mode-map (make-sparse-keymap))
+    (evil-define-key 'normal dired-mode-map
+      "q" 'quit-window
+      "d" 'dired-flag-file-deletion
+      "u" 'dired-unmark
+      "D" 'dired-do-delete
+      (kbd "RET") 'dired-find-file
+      "J" 'dired-jump
+      "o" 'dired-find-file-other-window
+      "R" 'dired-do-rename
+      "C" 'dired-do-copy
+      "i" 'dired-maybe-insert-subdir
+      "+" 'dired-create-directory)))
+
 (use-package fic-mode
  :defer 1
  :init
@@ -952,9 +976,6 @@ git dir) or linum mode"
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode)))
 
-(use-package esup
-  :defer 5)
-
 (defun md/dotfiles-edit ()
   (interactive)
   (find-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/init.org")))
@@ -1007,6 +1028,9 @@ git dir) or linum mode"
 (use-package yaml-mode)
 
 (use-package terraform-mode)
+
+(use-package esup
+  :defer 5)
 
 (defconst md/emacs-init-end (current-time))
 
