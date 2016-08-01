@@ -42,6 +42,10 @@ alias en="emacs-app -nw"  # new emacs in terminal
 
 alias vi="vim" # Otherwise vi will point to /usr/bin, and vim to the brew dir.
 
+function eview() {
+    emacs-app -nw "$1" --eval '(setq buffer-read-only t)'
+}
+
 function ,finder-pull() {
     # cd to topmost Finder window directory
     cd "$(osascript -e 'tell app "Finder" to POSIX path of (insertion location as alias)')"

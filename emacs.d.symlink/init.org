@@ -1514,4 +1514,3 @@ Close paren for the wrapping ~let~:
 - [ ] how does flyspell work? doesn't seem to show anything?
 - [ ] git gutter mode should be by default for every opened file
 - [ ] want to open file/mark in github
-- [ ] eview to open in read-only mode
