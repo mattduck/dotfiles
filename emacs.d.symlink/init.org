@@ -1161,13 +1161,16 @@ Company seems to work nicely without much configuration.
 ** Helm
 #+BEGIN_SRC emacs-lisp
   (use-package helm-projectile
-   :bind (:map md/leader-map
-         ("jj" . helm-projectile-switch-project)
-         ("jag" . helm-projectile-ag)
-         ("jb" . helm-projectile-switch-to-buffer)
+    :init (progn
+            ;; This has to be set before loading helm-projectile
+            (setq helm-projectile-fuzzy-match nil))
+    :bind (:map md/leader-map
+                ("jj" . helm-projectile-switch-project)
+                ("jag" . helm-projectile-ag)
+                ("jb" . helm-projectile-switch-to-buffer)
 
-         ;; TODO - proper binding for invalidating cache
-         ("jf" . helm-projectile-find-file)))
+                ;; TODO - proper binding for invalidating cache
+                ("jf" . helm-projectile-find-file)))
 #+END_SRC
 
 * Git

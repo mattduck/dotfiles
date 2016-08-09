@@ -368,7 +368,7 @@
   :init
   (progn
     ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
-    ;; makes dired-mode-map an overriding keymap, which means that the default
+    ;; makes dired-mode-map an overriding keymap, which means that the default 
     ;; dired-mode bindings take precendence over the normal-state bindings.
     ;;
     ;; There's no obvious way to undo that code, so I'm just replacing
@@ -838,13 +838,16 @@
        ("jk" . projectile-kill-buffers)))
 
 (use-package helm-projectile
- :bind (:map md/leader-map
-       ("jj" . helm-projectile-switch-project)
-       ("jag" . helm-projectile-ag)
-       ("jb" . helm-projectile-switch-to-buffer)
+  :init (progn
+          ;; This has to be set before loading helm-projectile
+          (setq helm-projectile-fuzzy-match nil))
+  :bind (:map md/leader-map
+              ("jj" . helm-projectile-switch-project)
+              ("jag" . helm-projectile-ag)
+              ("jb" . helm-projectile-switch-to-buffer)
 
-       ;; TODO - proper binding for invalidating cache
-       ("jf" . helm-projectile-find-file)))
+              ;; TODO - proper binding for invalidating cache
+              ("jf" . helm-projectile-find-file)))
 
 (use-package git-gutter
  :init
