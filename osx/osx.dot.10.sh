@@ -28,10 +28,21 @@ if [ -f $(brew --prefix)/etc/bash_completion ]; then
   . $(brew --prefix)/etc/bash_completion
 fi
 
-# MIT-Scheme
+function ,finder-pull() {
+    # cd to topmost Finder window directory
+    cd "$(osascript -e 'tell app "Finder" to POSIX path of (insertion location as alias)')"
+}
+
+# Try using this new iTerm shell integration
+test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
+
+
+# MIT-Scheme -------------
 export MITSCHEME_LIBRARY_PATH="/Applications/MIT\:GNU\ Scheme.app/Contents/Resources"
 export MIT_SCHEME_EXE="/usr/local/scheme"
 
+
+# Emacs ------------------
 alias emacs-app="/Applications/Emacs.app/Contents/MacOS/Emacs"
 alias emacs-app-server="/Applications/Emacs.app/Contents/MacOS/Emacs --daemon"
 alias emacs-app-client="/Applications/Emacs.app/Contents/MacOS/bin/emacsclient"
@@ -57,10 +68,15 @@ function eview() {
     fi
 }
 
-function ,finder-pull() {
-    # cd to topmost Finder window directory
-    cd "$(osascript -e 'tell app "Finder" to POSIX path of (insertion location as alias)')"
-}
 
-# Try using this new iTerm shell integration
-test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
+# Virtualenvwrapper -------------
+# NOTE - I won't use PROJECT_HOME for now.
+# NOTE - for this to work I might need to run /usr/local/opt/python/bin/pip
+# install virtualenv virtualenvwrapper
+export VIRTUALENVWRAPPER_PYTHON=$(brew --prefix)/bin/python
+export VIRTUALENVWRAPPER_VIRTUALENV=$(brew --prefix)/bin/virtualenv
+export VIRTUALENVWRAPPER_HOOK_DIR="$DOTFILES/virtualenvwrapper_hooks"
+export WORKON_HOME=$HOME/.virtualenvs
+
+mkdir -p "$WORKON_HOME"
+source $(which virtualenvwrapper.sh)

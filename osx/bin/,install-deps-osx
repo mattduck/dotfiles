@@ -22,7 +22,7 @@ brew install \
     fzf \
     shellcheck \
     markdown \
-    go \
+    golang \
     moreutils \
 
 # Brew is easiest way to compile with python

@@ -34,22 +34,3 @@ shopt -s cmdhist
 if [ $(command -v keychain) ]; then
     eval `keychain --quiet --eval --agents "ssh" --inherit "local-once"`
 fi
-
-# Create neither *.pyc files nor __pycache__ directories.
-export PYTHONDONTWRITEBYTECODE=1
-
-# By default, Python's virtualenv will modify the prompt when a virtualenv is
-# active. Disable this.
-export VIRTUAL_ENV_DISABLE_PROMPT=1
-
-# Setup virtualenvwrapper
-# NOTE - I won't use PROJECT_HOME for now.
-# NOTE - for this to work I might need to run /usr/local/opt/python/bin/pip
-# install virtualenv virtualenvwrapper
-export VIRTUALENVWRAPPER_PYTHON=$(brew --prefix)/bin/python
-export VIRTUALENVWRAPPER_VIRTUALENV=$(brew --prefix)/bin/virtualenv
-export VIRTUALENVWRAPPER_HOOK_DIR="$DOTFILES/virtualenvwrapper_hooks"
-export WORKON_HOME=$HOME/.virtualenvs
-
-mkdir -p "$WORKON_HOME"
-source $(which virtualenvwrapper.sh)

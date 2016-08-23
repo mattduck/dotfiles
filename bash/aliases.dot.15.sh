@@ -28,6 +28,9 @@ alias ....="cd ../../.."
 alias ~~="cd ~"
 alias -- -="cd -"
 
+# Resolve symlinks
+alias cdp="cd -P"
+
 alias v="vim"
 alias vv=",edit"
 alias f=",cd"
