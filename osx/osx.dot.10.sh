@@ -80,3 +80,7 @@ export WORKON_HOME=$HOME/.virtualenvs
 
 mkdir -p "$WORKON_HOME"
 source $(which virtualenvwrapper.sh)
+
+
+# Golang -------------
+,path-add "/usr/local/opt/go/libexec/bin/"
