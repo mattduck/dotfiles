@@ -121,6 +121,9 @@ inherit from the ~md/leader-map~.
 
   (defvar md/python-mode-leader-map (make-sparse-keymap))
   (set-keymap-parent md/python-mode-leader-map md/leader-map)
+
+  (defvar md/go-mode-leader-map (make-sparse-keymap))
+  (set-keymap-parent md/go-mode-leader-map md/leader-map)
 #+END_SRC
 
 ** Splash screen
@@ -437,6 +440,7 @@ I seem to use =describe-face= a lot:
 #+END_SRC
 ** Settings
 #+BEGIN_SRC emacs-lisp
+  (setq debug-on-error t)
   (setq delete-by-moving-to-trash t)
 #+END_SRC
 * Evil
@@ -981,99 +985,117 @@ on the screen, or nowhere.
 
 ** Powerline
 #+BEGIN_SRC emacs-lisp
-(use-package powerline
- :defer 1
- :config
- (progn
-   (defun md/powerline-setup ()
-     (interactive)
-     (require 'flycheck)
-     (setq-default mode-line-format
-                   '("%e"
-                     (:eval
-                      (let* ((active (powerline-selected-window-active))
-                             (mode-line (if active 'mode-line 'mode-line-inactive))
-                             (face1 (if active 'powerline-active1 'powerline-inactive1))
-                             (face2 (if active 'powerline-active2 'powerline-inactive2))
-                             (separator-left (intern (format "powerline-%s-%s"
-                                                             (powerline-current-separator)
-                                                             (car powerline-default-separator-dir))))
-                             (separator-right (intern (format "powerline-%s-%s"
-                                                              (powerline-current-separator)
-                                                              (cdr powerline-default-separator-dir))))
+  (use-package powerline
+   :defer 1
+   :config
+   (progn
+     (defface md/powerline-inactive '((t (:inherit 'modeline))) "")
+     (defface md/powerline-normal '((t (:inherit 'modeline))) "")
+     (defface md/powerline-insert '((t (:inherit 'modeline))) "")
+     (defface md/powerline-visual '((t (:inherit 'modeline))) "")
+     (defface md/powerline-replace '((t (:inherit 'modeline))) "")
+     (defface md/powerline-emacs '((t (:inherit 'modeline))) "")
+     (defun md/powerline-setup ()
+       (interactive)
+       (require 'flycheck)
+       (setq-default mode-line-format
+                     '("%e"
+                       (:eval
+                        (let* ((active (powerline-selected-window-active))
+                               (mode-line (if active 'mode-line 'mode-line-inactive))
+                               (face1 (if active 'powerline-active1 'powerline-inactive1))
+                               (face2 (if active 'powerline-active2 'powerline-inactive2))
 
-                             (lhs (list (powerline-raw evil-mode-line-tag face2 'l)
-                                        (funcall separator-left face2 face1)
-                                        (powerline-raw (format "*%s* " (powerline-major-mode)) face1 'l)
-                                        (funcall separator-left face1 mode-line)
-                                        (if (and (boundp 'projectile-mode) projectile-mode)
-                                            (powerline-raw (concat (projectile-project-name) "::%b") 'l)
-                                          (powerline-raw "%b" mode-line 'l))
+                               ;; Set face3 depending on Evil state
+                               (face3 (if active
+                                          (cond ((evil-normal-state-p) 'md/powerline-normal)
+                                                ((evil-insert-state-p) 'md/powerline-insert)
+                                                ((evil-visual-state-p) 'md/powerline-visual)
+                                                ((evil-replace-state-p) 'md/powerline-replace)
+                                                ((evil-emacs-state-p) 'md/powerline-emacs)
+                                                (t 'md/powerline-normal))
+                                        'md/powerline-inactive))
+                               (separator-left (intern (format "powerline-%s-%s"
+                                                               (powerline-current-separator)
+                                                               (car powerline-default-separator-dir))))
+                               (separator-right (intern (format "powerline-%s-%s"
+                                                                (powerline-current-separator)
+                                                                (cdr powerline-default-separator-dir))))
 
-                                        (when (buffer-modified-p)
-                                          (powerline-raw "+" mode-line 'l))
-                                        (when buffer-read-only
-                                          (powerline-raw "[RO]" mode-line 'l))
-                                        (when (buffer-narrowed-p)
-                                          (powerline-raw "  Narrow" mode-line 'l))
-                                        (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
-                                          (powerline-raw
-                                           (propertize
-                                            (format "  %s "
-                                                    (if (> (length org-mode-line-string) 50)
-                                                        (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
-                                                      org-mode-line-string))
-                                            'face nil)
-                                           mode-line 'l))))
+                               (lhs (list
+                                     ;; Line / column numbers
+                                     (when (or line-number-mode column-number-mode)
+                                       (cond ((and line-number-mode
+                                                   column-number-mode)
+                                              (powerline-raw "%4l:%2c " face3 'l))
+                                             (line-number-mode
+                                              (powerline-raw "%4l" face3 'l))
+                                             (column-number-mode
+                                              (powerline-raw ":%2c " face3 'l))))
+                                     (powerline-raw evil-mode-line-tag face3 'l)
+                                     (funcall separator-left face3 face1)
 
-                             (rhs (list (funcall separator-right mode-line face1)
-                                        (powerline-vc face1 'r)
-                                        (when (or line-number-mode column-number-mode)
-                                          (cond ((and line-number-mode
-                                                      column-number-mode)
-                                                 (powerline-raw "%5l:%2c" face2 'r))
-                                                (line-number-mode
-                                                 (powerline-raw "%5l" face2 'r))
-                                                (column-number-mode
-                                                 (powerline-raw ":%2c" face2 'r))))
+                                     ;; Major mode
+                                     (powerline-raw (format "*%s* " (powerline-major-mode)) face1 'l)
+                                     (funcall separator-left face1 mode-line)
 
+                                     ;; Projectile project
+                                     (if (and (boundp 'projectile-mode) projectile-mode)
+                                         (powerline-raw (concat (projectile-project-name) "::%b") 'l)
+                                       (powerline-raw "%b" mode-line 'l))
 
-                                        ;; TODO: change colour when err/warn, and
-                                        ;; list line of first error
-                                        ;; (when flycheck-mode
-                                        ;;   (powerline-raw (format "%6s" (flycheck-mode-line-status-text)) 'error 'r))
-                                        (when (and active flycheck-mode (flycheck-has-current-errors-p))
-                                          (powerline-raw
-                                           (format " [line:%s (%s)] "
-                                                   ;; Line of first err
-                                                   (save-excursion
-                                                     (flycheck-first-error)
-                                                     (+ 1 (count-lines (point-min) (point))))
-                                                   ;; Total lines
-                                                   (length flycheck-current-errors))
+                                     ;; File state
+                                     (when (buffer-modified-p)
+                                       (powerline-raw "+" mode-line 'l))
+                                     (when buffer-read-only
+                                       (powerline-raw "[RO]" mode-line 'l))
+                                     (when (buffer-narrowed-p)
+                                       (powerline-raw "  Narrow" mode-line 'l))
+                                     (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
+                                       (powerline-raw
+                                        (propertize
+                                         (format "  %s "
+                                                 (if (> (length org-mode-line-string) 50)
+                                                     (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
+                                                   org-mode-line-string))
+                                         'face nil)
+                                        mode-line 'l))))
 
-                                           ;; Face
-                                           (cond ((flycheck-has-current-errors-p 'error)
-                                                  'md/modeline-flycheck-error)
-                                                 ((flycheck-has-current-errors-p 'warning)
-                                                  'md/modeline-flycheck-warning))
-                                           'r))
+                               (rhs (list
 
+                                     ;; Git
+                                     (funcall separator-right mode-line face1)
+                                     (powerline-vc face1 'r)
 
+                                     ;; Flycheck
+                                     (when (and active flycheck-mode (flycheck-has-current-errors-p))
+                                       (powerline-raw
+                                        (format " [line:%s (%s)] "
+                                                ;; Line of first err
+                                                (save-excursion
+                                                  (flycheck-first-error)
+                                                  (+ 1 (count-lines (point-min) (point))))
+                                                ;; Total lines
+                                                (length flycheck-current-errors))
 
-                                        ))
-                             )
-                        (concat (powerline-render lhs)
-                                (powerline-fill mode-line (powerline-width rhs))
-                                (powerline-render rhs)))))))
+                                        ;; Face
+                                        (cond ((flycheck-has-current-errors-p 'error)
+                                               'md/modeline-flycheck-error)
+                                              ((flycheck-has-current-errors-p 'warning)
+                                               'md/modeline-flycheck-warning))
+                                        'r))
+                                     )))
+                          (concat (powerline-render lhs)
+                                  (powerline-fill mode-line (powerline-width rhs))
+                                  (powerline-render rhs)))))))
 
-   (defun md/powerline-reset ()
-     (interactive)
-     (setq mode-line-format (md/powerline-setup))
-     (solarized-load-theme))
+     (defun md/powerline-reset ()
+       (interactive)
+       (setq mode-line-format (md/powerline-setup))
+       (solarized-load-theme))
 
-   (md/powerline-setup)
-   (md/powerline-reset)))
+     (md/powerline-setup)
+     (md/powerline-reset)))
 #+END_SRC
 * List unbound keys
 
@@ -1374,6 +1396,11 @@ Elpy combines a few different Python packages / features.
 #+BEGIN_SRC emacs-lisp
   (use-package elpy
     :defer 1  ;; Defer this just because it's slow to load.
+    :init
+    (progn
+      (add-hook 'elpy-mode-hook
+                (lambda ()
+                  (set (make-local-variable 'company-backends) '(elpy-company-backend)))))
     :config
     (progn
       (elpy-enable)
@@ -1417,7 +1444,26 @@ Elpy combines a few different Python packages / features.
 
 * Golang
 #+BEGIN_SRC emacs-lisp
-  (use-package go-mode)
+  (use-package go-mode
+    :config
+    (progn
+      (add-hook 'before-save-hook 'gofmt-before-save)
+
+      ;; Make sure SPC uses the go-mode leader map rather than my default leader
+      ;; map
+      (evil-define-key 'normal go-mode-map
+        (kbd "SPC") md/go-mode-leader-map))
+
+    :bind (:map md/go-mode-leader-map
+                ("SPC =" . gofmt)))
+
+  (use-package company-go
+    :init
+    (progn
+      (add-hook 'go-mode-hook
+                (lambda ()
+                  (set (make-local-variable 'company-backends) '(company-go))))))
+      
 #+END_SRC
 
 * Yaml
@@ -1501,7 +1547,7 @@ Close paren for the wrapping ~let~:
 - [ ] why can't I select something and then paste when in visual mode? This used
   to work
   - [2016-07-08 Fri] seem to work now?
-- [ ] go mode
+- [ ] [2016-08-20 Sat] getting helm "operator" keymap error in fundamental mode.
 - [ ] python development / elpy
   - [ ] open documentation
   - [ ] run tests
@@ -1517,3 +1563,4 @@ Close paren for the wrapping ~let~:
 - [ ] how does flyspell work? doesn't seem to show anything?
 - [ ] git gutter mode should be by default for every opened file
 - [ ] want to open file/mark in github
+- [ ] go mode

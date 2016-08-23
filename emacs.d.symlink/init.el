@@ -48,6 +48,9 @@
 (defvar md/python-mode-leader-map (make-sparse-keymap))
 (set-keymap-parent md/python-mode-leader-map md/leader-map)
 
+(defvar md/go-mode-leader-map (make-sparse-keymap))
+(set-keymap-parent md/go-mode-leader-map md/leader-map)
+
 (setq inhibit-splash-screen t)
 
 (setq-default fill-column 80)
@@ -229,6 +232,7 @@
 (bind-key "x" 'describe-face help-map)
 (bind-key "C-k" 'describe-personal-keybindings help-map)
 
+(setq debug-on-error t)
 (setq delete-by-moving-to-trash t)
 
 (use-package evil
@@ -683,6 +687,12 @@
  :defer 1
  :config
  (progn
+   (defface md/powerline-inactive '((t (:inherit 'modeline))) "")
+   (defface md/powerline-normal '((t (:inherit 'modeline))) "")
+   (defface md/powerline-insert '((t (:inherit 'modeline))) "")
+   (defface md/powerline-visual '((t (:inherit 'modeline))) "")
+   (defface md/powerline-replace '((t (:inherit 'modeline))) "")
+   (defface md/powerline-emacs '((t (:inherit 'modeline))) "")
    (defun md/powerline-setup ()
      (interactive)
      (require 'flycheck)
@@ -693,6 +703,16 @@
                              (mode-line (if active 'mode-line 'mode-line-inactive))
                              (face1 (if active 'powerline-active1 'powerline-inactive1))
                              (face2 (if active 'powerline-active2 'powerline-inactive2))
+
+                             ;; Set face3 depending on Evil state
+                             (face3 (if active
+                                        (cond ((evil-normal-state-p) 'md/powerline-normal)
+                                              ((evil-insert-state-p) 'md/powerline-insert)
+                                              ((evil-visual-state-p) 'md/powerline-visual)
+                                              ((evil-replace-state-p) 'md/powerline-replace)
+                                              ((evil-emacs-state-p) 'md/powerline-emacs)
+                                              (t 'md/powerline-normal))
+                                      'md/powerline-inactive))
                              (separator-left (intern (format "powerline-%s-%s"
                                                              (powerline-current-separator)
                                                              (car powerline-default-separator-dir))))
@@ -700,67 +720,69 @@
                                                               (powerline-current-separator)
                                                               (cdr powerline-default-separator-dir))))
 
-                             (lhs (list (powerline-raw evil-mode-line-tag face2 'l)
-                                        (funcall separator-left face2 face1)
-                                        (powerline-raw (format "*%s* " (powerline-major-mode)) face1 'l)
-                                        (funcall separator-left face1 mode-line)
-                                        (if (and (boundp 'projectile-mode) projectile-mode)
-                                            (powerline-raw (concat (projectile-project-name) "::%b") 'l)
-                                          (powerline-raw "%b" mode-line 'l))
+                             (lhs (list
+                                   ;; Line / column numbers
+                                   (when (or line-number-mode column-number-mode)
+                                     (cond ((and line-number-mode
+                                                 column-number-mode)
+                                            (powerline-raw "%4l:%2c " face3 'l))
+                                           (line-number-mode
+                                            (powerline-raw "%4l" face3 'l))
+                                           (column-number-mode
+                                            (powerline-raw ":%2c " face3 'l))))
+                                   (powerline-raw evil-mode-line-tag face3 'l)
+                                   (funcall separator-left face3 face1)
 
-                                        (when (buffer-modified-p)
-                                          (powerline-raw "+" mode-line 'l))
-                                        (when buffer-read-only
-                                          (powerline-raw "[RO]" mode-line 'l))
-                                        (when (buffer-narrowed-p)
-                                          (powerline-raw "  Narrow" mode-line 'l))
-                                        (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
-                                          (powerline-raw
-                                           (propertize
-                                            (format "  %s "
-                                                    (if (> (length org-mode-line-string) 50)
-                                                        (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
-                                                      org-mode-line-string))
-                                            'face nil)
-                                           mode-line 'l))))
+                                   ;; Major mode
+                                   (powerline-raw (format "*%s* " (powerline-major-mode)) face1 'l)
+                                   (funcall separator-left face1 mode-line)
 
-                             (rhs (list (funcall separator-right mode-line face1)
-                                        (powerline-vc face1 'r)
-                                        (when (or line-number-mode column-number-mode)
-                                          (cond ((and line-number-mode
-                                                      column-number-mode)
-                                                 (powerline-raw "%5l:%2c" face2 'r))
-                                                (line-number-mode
-                                                 (powerline-raw "%5l" face2 'r))
-                                                (column-number-mode
-                                                 (powerline-raw ":%2c" face2 'r))))
+                                   ;; Projectile project
+                                   (if (and (boundp 'projectile-mode) projectile-mode)
+                                       (powerline-raw (concat (projectile-project-name) "::%b") 'l)
+                                     (powerline-raw "%b" mode-line 'l))
 
+                                   ;; File state
+                                   (when (buffer-modified-p)
+                                     (powerline-raw "+" mode-line 'l))
+                                   (when buffer-read-only
+                                     (powerline-raw "[RO]" mode-line 'l))
+                                   (when (buffer-narrowed-p)
+                                     (powerline-raw "  Narrow" mode-line 'l))
+                                   (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
+                                     (powerline-raw
+                                      (propertize
+                                       (format "  %s "
+                                               (if (> (length org-mode-line-string) 50)
+                                                   (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
+                                                 org-mode-line-string))
+                                       'face nil)
+                                      mode-line 'l))))
 
-                                        ;; TODO: change colour when err/warn, and
-                                        ;; list line of first error
-                                        ;; (when flycheck-mode
-                                        ;;   (powerline-raw (format "%6s" (flycheck-mode-line-status-text)) 'error 'r))
-                                        (when (and active flycheck-mode (flycheck-has-current-errors-p))
-                                          (powerline-raw
-                                           (format " [line:%s (%s)] "
-                                                   ;; Line of first err
-                                                   (save-excursion
-                                                     (flycheck-first-error)
-                                                     (+ 1 (count-lines (point-min) (point))))
-                                                   ;; Total lines
-                                                   (length flycheck-current-errors))
+                             (rhs (list
 
-                                           ;; Face
-                                           (cond ((flycheck-has-current-errors-p 'error)
-                                                  'md/modeline-flycheck-error)
-                                                 ((flycheck-has-current-errors-p 'warning)
-                                                  'md/modeline-flycheck-warning))
-                                           'r))
+                                   ;; Git
+                                   (funcall separator-right mode-line face1)
+                                   (powerline-vc face1 'r)
 
+                                   ;; Flycheck
+                                   (when (and active flycheck-mode (flycheck-has-current-errors-p))
+                                     (powerline-raw
+                                      (format " [line:%s (%s)] "
+                                              ;; Line of first err
+                                              (save-excursion
+                                                (flycheck-first-error)
+                                                (+ 1 (count-lines (point-min) (point))))
+                                              ;; Total lines
+                                              (length flycheck-current-errors))
 
-
-                                        ))
-                             )
+                                      ;; Face
+                                      (cond ((flycheck-has-current-errors-p 'error)
+                                             'md/modeline-flycheck-error)
+                                            ((flycheck-has-current-errors-p 'warning)
+                                             'md/modeline-flycheck-warning))
+                                      'r))
+                                   )))
                         (concat (powerline-render lhs)
                                 (powerline-fill mode-line (powerline-width rhs))
                                 (powerline-render rhs)))))))
@@ -987,6 +1009,11 @@ git dir) or linum mode"
 
 (use-package elpy
   :defer 1  ;; Defer this just because it's slow to load.
+  :init
+  (progn
+    (add-hook 'elpy-mode-hook
+              (lambda ()
+                (set (make-local-variable 'company-backends) '(elpy-company-backend)))))
   :config
   (progn
     (elpy-enable)
@@ -1026,7 +1053,25 @@ git dir) or linum mode"
               ("SPC g" . elpy-goto-definition-other-window)
               ("SPC r" . elpy-multiedit-python-symbol-at-point)))
 
-(use-package go-mode)
+(use-package go-mode
+  :config
+  (progn
+    (add-hook 'before-save-hook 'gofmt-before-save)
+
+    ;; Make sure SPC uses the go-mode leader map rather than my default leader
+    ;; map
+    (evil-define-key 'normal go-mode-map
+      (kbd "SPC") md/go-mode-leader-map))
+
+  :bind (:map md/go-mode-leader-map
+              ("SPC =" . gofmt)))
+
+(use-package company-go
+  :init
+  (progn
+    (add-hook 'go-mode-hook
+              (lambda ()
+                (set (make-local-variable 'company-backends) '(company-go))))))
 
 (use-package yaml-mode)
 
