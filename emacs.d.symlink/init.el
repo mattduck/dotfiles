@@ -941,6 +941,13 @@ git dir) or linum mode"
 
        ("gdiff" . magit-ediff-popup)))
 
+(use-package git-browse-file
+  :config
+  (progn
+    (setq github-browse-file-show-line-at-point t))
+  :bind (:map md/leader-map
+        ("go" . github-browse-file)))
+
 (use-package web-mode
   :defer 1)
 

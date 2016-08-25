@@ -1272,7 +1272,19 @@ Company seems to work nicely without much configuration.
          ("gco" . magit-checkout)
 
          ("gdiff" . magit-ediff-popup)))
+#+END_SRC
 
+** github-browse-file
+
+I miss :Gbrowse from fugitive:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package git-browse-file
+    :config
+    (progn
+      (setq github-browse-file-show-line-at-point t))
+    :bind (:map md/leader-map
+          ("go" . github-browse-file)))
 #+END_SRC
 
 * Web mode
@@ -1562,5 +1574,4 @@ Close paren for the wrapping ~let~:
   - no ag ignore
 - [ ] how does flyspell work? doesn't seem to show anything?
 - [ ] git gutter mode should be by default for every opened file
-- [ ] want to open file/mark in github
 - [ ] go mode
