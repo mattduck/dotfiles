@@ -1,16 +1,19 @@
 --[[
 My hammerspoon setup. Provides some tmux-like window manager bindings.
    
+External dependencies:
+- cmd+alt+ctrl left / right: BTT move to next / previous space.
+- cmd+alt+ctrl [ / ]: BTT move to next / previous space.
+   
 General features:
-- change focus: hjkl np qQ
-- reposition window: HJKL Zz ;
+- change focus: hjkl o np qQ
+- reposition window: HJKL Zz ; {}
 - launch/focus on apps: cmd
 - toggle sticky mode: .
 
 TODO:
-- Disable modal keys that aren't bound?
-  - Doing this manually atm.
-- Preset layouts?
+- the "hints" feature - any way to allow the iterm titleless windows?
+- a better way to resize the fullscreen split.
 --]]
 
 
@@ -42,7 +45,7 @@ positions = {
 
 -- Window configuration.
 hs.window.animationDuration = 0
-
+hs.window.setFrameCorrectness = true
 
 -- The magic starts here. Modal ftw!
 tmuxirl = hs.hotkey.modal.new({"ctrl"}, "`")
@@ -106,15 +109,33 @@ movement_bindings = {
 }
 hs.fnutils.each(movement_bindings, function(entry)
   tmuxirl:bind('', entry.key, function ()
-  local fn = "focusWindow" .. (entry.direction:gsub("^%l", string.upper))
-  local win = hs.window.focusedWindow()
-  if win then
-    win[fn]()
-  end
+    local fn = "focusWindow" .. (entry.direction:gsub("^%l", string.upper))
+    local win = hs.window.focusedWindow()
+    if win then
+      if win:isFullScreen() then
+        -- In fullscreen split mode on El capitan, the focusWindowEast (etc) functions
+        -- don't work. However, we can still switch directly to named windows, so
+        -- switchFocus() works fine.
+        switchFocus()
+      else
+        win[fn]()
+      end
+    end
     tmuxirl:stickyExit()
   end)
 end)
 
+
+-- o to between the two most recent windows
+function switchFocus ()
+  local win = hs.window.filter.default:getWindows(hs.window.filter.sortByFocusedLast)[2]
+  if win then
+    win:focus()
+  end
+  tmuxirl:stickyExit()
+end
+tmuxirl:bind('', "o", function () switchFocus() end)
+  
 
 -- HJKL to reposition the current window.
 -- Repeat to cycle through the size variations.
@@ -138,6 +159,17 @@ hs.fnutils.each(grid, function(entry)
     gridIndex[entry.key] = index
     tmuxirl:stickyExit()
   end)
+end)
+
+
+-- { } to open fullscreen splits
+tmuxirl:bind('shift', '[', function ()
+  hs.eventtap.keyStroke({"ctrl", "alt", "cmd", "shift"}, "left")
+  tmuxirl:stickyExit()
+end)
+tmuxirl:bind('shift', ']', function ()
+  hs.eventtap.keyStroke({"ctrl", "alt", "cmd", "shift"}, "right")
+  tmuxirl:stickyExit()
 end)
 
 
@@ -181,6 +213,9 @@ tmuxirl:bind('shift', "p", function ()
   hs.eventtap.keyStroke({"ctrl", "alt", "cmd"}, "left")
   tmuxirl:stickyExit()
 end)
+
+
+-- "o" to toggle focus between 
                                    
 
 -- Z to toggle fullscreen...
@@ -258,9 +293,13 @@ end)
 
 -- For safety, disable some keys that I dn't want to pass through.
 -- I'd like it if all keys were disabled, but don't think this is a feature.
-nil_chars = {"`", "'", "[", "]", ",", "\\", "i", "e", "f", "s", "o", "r", "t"}
+nil_chars = {"`", "'", "[", "]", ",", "\\", "i", "e", "f", "s", "r", "t"}
 hs.fnutils.each(nil_chars, function(nil_char)
   tmuxirl:bind('', nil_char, function () return end)
+end)
+nil_chars_ctrl = {"z"}
+hs.fnutils.each(nil_chars_ctrl, function(nil_char)
+  tmuxirl:bind('ctrl', nil_char, function () return end)
 end)
 
 hs.alert("Hammerspoon!", 0.5)
