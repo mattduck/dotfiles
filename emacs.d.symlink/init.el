@@ -498,13 +498,16 @@
  :defer 1
  :config
  (progn
-   (defun md/elscreen-hide-tabs ()
+   (defun md/elscreen-display-tabs ()
      (interactive)
-     ;; This is how elscreen hides tabs in (elscreen-toggle-display-tab)
-     (setq elscreen-display-tab nil)
+     (setq elscreen-display-tab t
+           elscreen-tab-display-kill-screen nil
+           elscreen-tab-display-control nil)
+
+     ;; This is how elscreen redraws
      (elscreen-notify-screen-modification 'force))
 
-   (md/elscreen-hide-tabs)))
+   (md/elscreen-display-tabs)))
 
 (setq md/splitscreen-path (concat (md/get-dotfiles-path) "/splitscreen/"))
 
@@ -730,6 +733,8 @@
                                             (powerline-raw "%4l" face3 'l))
                                            (column-number-mode
                                             (powerline-raw ":%2c " face3 'l))))
+
+                                   ;; Evil status
                                    (powerline-raw evil-mode-line-tag face3 'l)
                                    (funcall separator-left face3 face1)
 
@@ -1081,6 +1086,8 @@ git dir) or linum mode"
                 (set (make-local-variable 'company-backends) '(company-go))))))
 
 (use-package yaml-mode)
+
+(use-package lua-mode)
 
 (use-package terraform-mode)
 

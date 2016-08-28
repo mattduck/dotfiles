@@ -788,13 +788,16 @@ on the screen, or nowhere.
    :defer 1
    :config
    (progn
-     (defun md/elscreen-hide-tabs ()
+     (defun md/elscreen-display-tabs ()
        (interactive)
-       ;; This is how elscreen hides tabs in (elscreen-toggle-display-tab)
-       (setq elscreen-display-tab nil)
+       (setq elscreen-display-tab t
+             elscreen-tab-display-kill-screen nil
+             elscreen-tab-display-control nil)
+
+       ;; This is how elscreen redraws
        (elscreen-notify-screen-modification 'force))
 
-     (md/elscreen-hide-tabs)))
+     (md/elscreen-display-tabs)))
 #+END_SRC
 
 * Splitscreen
@@ -1032,6 +1035,8 @@ on the screen, or nowhere.
                                               (powerline-raw "%4l" face3 'l))
                                              (column-number-mode
                                               (powerline-raw ":%2c " face3 'l))))
+
+                                     ;; Evil status
                                      (powerline-raw evil-mode-line-tag face3 'l)
                                      (funcall separator-left face3 face1)
 
@@ -1486,6 +1491,12 @@ for now:
   (use-package yaml-mode)
 #+END_SRC
 
+* Lua
+
+#+BEGIN_SRC emacs-lisp
+  (use-package lua-mode)
+#+END_SRC
+
 * Terraform
 Not sure if this provides anything beyond syntax highlighting, but that's enough
 for now:
@@ -1554,8 +1565,6 @@ Close paren for the wrapping ~let~:
 - [ ] https://github.com/emacs-tw/awesome-emacs
   - [ ] multi cursor?
 - [ ] gk/gj for next/prev functions
-- [ ] how to create different md/leader-map bindings for different evil states
-  and/or modes?
 - [ ] why can't I select something and then paste when in visual mode? This used
   to work
   - [2016-07-08 Fri] seem to work now?
@@ -1575,3 +1584,4 @@ Close paren for the wrapping ~let~:
 - [ ] how does flyspell work? doesn't seem to show anything?
 - [ ] git gutter mode should be by default for every opened file
 - [ ] go mode
+- [ ] helm - how to kill buffer?
