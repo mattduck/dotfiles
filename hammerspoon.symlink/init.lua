@@ -201,8 +201,8 @@ tmuxirl:bind('', "z", function ()
   else
     center_toggle[win:id()] = win:frame()
     win:moveToUnit(positions.maximized)
-  tmuxirl:stickyExit()
   end
+  tmuxirl:stickyExit()
 end)
 
 
