@@ -3,7 +3,7 @@ My hammerspoon setup. Provides some tmux-like window manager bindings.
    
 External dependencies:
 - cmd+alt+ctrl left / right: BTT move to next / previous space.
-- cmd+alt+ctrl [ / ]: BTT move to next / previous space.
+- cmd+alt+ctrl+shift left/right: BTT fullscreen left/right.
    
 General features:
 - change focus: hjkl o np qQ
