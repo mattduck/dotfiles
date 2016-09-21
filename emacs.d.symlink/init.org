@@ -813,6 +813,8 @@ on the screen, or nowhere.
    (splitscreen-mode)))
 #+END_SRC
 * Org
+
+** org-mode
 #+BEGIN_SRC emacs-lisp
     (use-package org
      :defer 5
@@ -979,6 +981,15 @@ on the screen, or nowhere.
            ("C-c a" . org-agenda)))
 
 #+END_SRC
+** ox-reveal
+
+- Export org-mode files to reveal.js for presentations. I think this works
+  quite nicely.
+  
+#+BEGIN_SRC emacs-lisp
+  (use-package ox-reveal)
+#+END_SRC
+
 * Modeline
 ** General modeline
 #+BEGIN_SRC emacs-lisp

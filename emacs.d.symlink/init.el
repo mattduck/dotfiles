@@ -1,3 +1,4 @@
+
 (defconst md/emacs-init-start (current-time))
 
 (let ((file-handler-name-alist nil)
@@ -681,6 +682,8 @@
    (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map))
  :bind (:map global-map
        ("C-c a" . org-agenda)))
+
+(use-package ox-reveal)
 
 (line-number-mode 1)
 (column-number-mode 1)
