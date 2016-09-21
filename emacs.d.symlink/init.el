@@ -232,7 +232,7 @@
 (bind-key "x" 'describe-face help-map)
 (bind-key "C-k" 'describe-personal-keybindings help-map)
 
-(setq debug-on-error t)
+(setq debug-on-error nil)
 (setq delete-by-moving-to-trash t)
 
 (use-package evil

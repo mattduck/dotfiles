@@ -440,7 +440,7 @@ I seem to use =describe-face= a lot:
 #+END_SRC
 ** Settings
 #+BEGIN_SRC emacs-lisp
-  (setq debug-on-error t)
+  (setq debug-on-error nil)
   (setq delete-by-moving-to-trash t)
 #+END_SRC
 * Evil
