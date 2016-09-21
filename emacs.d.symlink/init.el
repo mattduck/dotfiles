@@ -1,4 +1,3 @@
-
 (defconst md/emacs-init-start (current-time))
 
 (let ((file-handler-name-alist nil)
@@ -372,7 +371,7 @@
   :init
   (progn
     ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
-    ;; makes dired-mode-map an overriding keymap, which means that the default 
+    ;; makes dired-mode-map an overriding keymap, which means that the default
     ;; dired-mode bindings take precendence over the normal-state bindings.
     ;;
     ;; There's no obvious way to undo that code, so I'm just replacing
@@ -665,12 +664,12 @@
          org-M-RET-may-split-line nil
 
          ;; Default to using my CSS theme for html exports
-         org-html-head-extra "
-        <link id='generic-css-dark' rel='stylesheet' type='text/css'
-              href='https://mattduck.github.io/generic-css/css/generic-dark.css'>
-        <link id='generic-css-light' rel='stylesheet' type='text/css'
-              href='https://mattduck.github.io/generic-css/css/generic-light.css'>
-        <script type='text/javascript'src='https://mattduck.github.io/generic-css/js/generic-css.js'></script>"
+        ;; org-html-head-extra "
+        ;;<link id='generic-css-dark' rel='stylesheet' type='text/css'
+        ;;      href='https://mattduck.github.io/generic-css/css/generic-dark.css'>
+        ;;<link id='generic-css-light' rel='stylesheet' type='text/css'
+        ;;      href='https://mattduck.github.io/generic-css/css/generic-light.css'>
+        ;;<script type='text/javascript'src='https://mattduck.github.io/generic-css/js/generic-css.js'></script>"
 
          org-export-headline-levels 6
          org-export-with-section-numbers 4)
