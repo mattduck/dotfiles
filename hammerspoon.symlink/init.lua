@@ -12,8 +12,8 @@ General features:
 - toggle sticky mode: .
 
 TODO:
-- the "hints" feature - any way to allow the iterm titleless windows?
 - a better way to resize the fullscreen split.
+- the "hints" feature - any way to allow the iterm titleless windows?
 --]]
 
 
@@ -45,7 +45,8 @@ positions = {
 
 -- Window configuration.
 hs.window.animationDuration = 0
-hs.window.setFrameCorrectness = true
+hs.window.setFrameCorrectness = false  -- false by default. I set to true but seems slow, trying false again
+
 
 -- The magic starts here. Modal ftw!
 tmuxirl = hs.hotkey.modal.new({"ctrl"}, "`")
@@ -69,107 +70,160 @@ hs.window.highlight.ui.frameColor = {1, 1, 0, 0.8}
 hs.window.highlight.ui.overlay = false
 
 
--- "Sticky" feature. When enabled, remain inside tmuxirl
+-- Sticky / exit feature. When enabled, remain inside tmuxirl
 -- mode after commands are pressed. When disabled, exit after each command.
-TMUXIRL_STICKY_MODE = false
+TmuxIRLStickyMode = false
 
 function tmuxirl:stickyToggle ()
-  if TMUXIRL_STICKY_MODE then
-    TMUXIRL_STICKY_MODE = false
-    hs.alert('STICKY: disabled')
+  if TmuxIRLStickyMode then
+    TmuxIRLStickyMode = false
+    hs.alert('STICKY: Disabled')
   else
-    TMUXIRL_STICKY_MODE = true
-    hs.alert('STICKY: enabled')
+    TmuxIRLStickyMode = true
+    hs.alert('STICKY: Enabled')
   end
 end
 
-function tmuxirl:stickyExit (force)
-  if TMUXIRL_STICKY_MODE and not force then
-    return
-  end
-  TMUXIRL_STICKY_MODE = false
-  tmuxirl:exit() 
+function tmuxirl:exitUnlessStickyMode ()
+   if TmuxIRLStickyMode then
+      return
+   end
+   tmuxirl:forceExit() 
 end
 
+function tmuxirl:forceExit ()
+   TmuxIRLStickyMode = false
+   tmuxirl:exit()
+end
 
--- sticky / exit keys
-tmuxirl:bind('', '.', function () tmuxirl:stickyToggle() end)
-tmuxirl:bind('', "escape", function () tmuxirl:stickyExit(true) end)
-tmuxirl:bind('', "return", function () tmuxirl:stickyExit(true) end)
-tmuxirl:bind('ctrl', "g", function () tmuxirl:stickyExit(true) end)
-tmuxirl:bind('ctrl', "`", function () tmuxirl:stickyExit(true) end)
+tmuxirl:bind('', '.', tmuxirl.stickyToggle)
+tmuxirl:bind('', "escape", tmuxirl.forceExit)
+tmuxirl:bind('', "return", tmuxirl.forceExit)
+tmuxirl:bind('ctrl', "g", tmuxirl.forceExit)
+tmuxirl:bind('ctrl', "`", tmuxirl.forceExit)
 
 
 -- hjkl move focus to another window
-movement_bindings = {
+movementBindings = {
    {key="h", direction="west"},
    {key="j", direction="south"},
    {key="k", direction="north"},
    {key="l", direction="east"},
 }
-hs.fnutils.each(movement_bindings, function(entry)
+hs.fnutils.each(movementBindings, function(entry)
   tmuxirl:bind('', entry.key, function ()
-    local fn = "focusWindow" .. (entry.direction:gsub("^%l", string.upper))
+    local focusFn = "focusWindow" .. (entry.direction:gsub("^%l", string.upper))
     local win = hs.window.focusedWindow()
     if win then
       if win:isFullScreen() then
         -- In fullscreen split mode on El capitan, the focusWindowEast (etc) functions
-        -- don't work. However, we can still switch directly to named windows, so
-        -- switchFocus() works fine.
-        switchFocus()
+        -- don't work. However, we can still switch directly to named windows.
+        switchFocusWithinCurrentSpace()
       else
-        win[fn]()
+        win[focusFn]()
       end
     end
-    tmuxirl:stickyExit()
+    tmuxirl:exitUnlessStickyMode()
   end)
 end)
 
 
--- o to between the two most recent windows
-function switchFocus ()
+-- Rotate between all windows in the current space.
+-- TODO: reset index when moving spaces
+currentSpaceWindowIndex = 0
+function switchFocusWithinCurrentSpace ()
+  local thisWin = hs.window.focusedWindow()
+  local allWins = hs.window.filter.defaultCurrentSpace:getWindows(hs.window.filter.sortByCreated)
+
+  local fullscreenWins = {}
+
+  hs.fnutils.each(allWins, function(win)
+    if hs.window.isFullScreen(win) and win:screen() == thisWin:screen() then
+      fullscreenWins[#fullscreenWins + 1] = win
+    end
+  end)
+
+  if fullscreenWins[currentSpaceWindowIndex +1] == thisWin then
+    currentSpaceWindowIndex = currentSpaceWindowIndex + 1
+  end
+  if currentSpaceWindowIndex >= #fullscreenWins then currentSpaceWindowIndex = 0 end
+  fullscreenWins[currentSpaceWindowIndex + 1]:focus()
+  tmuxirl:exitUnlessStickyMode()
+  currentSpaceWindowIndex = currentSpaceWindowIndex + 1
+end
+tmuxirl:bind('', "o", function () switchFocusWithinCurrentSpace() end)
+
+
+-- swap to between the two most recent windows (from anywhere)
+function switchFocusRecent ()
   local win = hs.window.filter.default:getWindows(hs.window.filter.sortByFocusedLast)[2]
   if win then
     win:focus()
   end
-  tmuxirl:stickyExit()
+  tmuxirl:exitUnlessStickyMode()
 end
-tmuxirl:bind('', "o", function () switchFocus() end)
+tmuxirl:bind('ctrl', "`", function () switchFocusRecent() end)
   
 
 -- HJKL to reposition the current window.
 -- Repeat to cycle through the size variations.
-grid = {
+hjklGrid = {
   {key="h", units={positions.left50, positions.left66, positions.left34}},
   {key="j", units={positions.bottom50, positions.bottom66, positions.bottom34}},
   {key="k", units={positions.top50, positions.top66, positions.top34}},
   {key="l", units={positions.right50, positions.right66, positions.right34}},
 }
-gridIndex = {}
-hs.fnutils.each(grid, function(entry)
+hjklGridIndexes = {}
+hjklTimeoutFns = {}
+hs.fnutils.each(hjklGrid, function(entry)
+  hjklGridIndexes[entry.key] = {}
+  hjklTimeoutFns[entry.key] = {}
   tmuxirl:bind({'shift'}, entry.key, function()
-    local units = entry.units
-    local window = hs.window.focusedWindow()
-    local index = gridIndex[entry.key]
+    local thisWindow = hs.window.focusedWindow()
+    local thisIndex = hjklGridIndexes[entry.key][thisWindow:id()]
+    local thisTimeoutFn = hjklTimeoutFns[entry.key][thisWindow:id()]
 
-    if index == nil then index = 0 end
-    if index == #units then index = 0 end
-    window:moveToUnit(units[index + 1])
-    index = index + 1
-    gridIndex[entry.key] = index
-    tmuxirl:stickyExit()
+    -- Stop existing timer, start new one
+    if thisTimeoutFn then thisTimeoutFn:stop() end
+    thisTimeoutFn = function ()
+      hjklGridIndexes[entry.key][thisWindow:id()] = 0
+    end
+    hs.timer.doAfter(10, thisTimeoutFn)
+    hjklTimeoutFns[entry.key][thisWindow:id()] = timeoutFn
+
+    if thisIndex == nil then thisIndex = 0 end
+    if thisIndex == #entry.units then thisIndex = 0 end
+    thisWindow:moveToUnit(entry.units[thisIndex + 1])
+    thisIndex = thisIndex + 1
+    hjklGridIndexes[entry.key][thisWindow:id()] = thisIndex
+    tmuxirl:exitUnlessStickyMode()
   end)
 end)
 
 
 -- { } to open fullscreen splits
 tmuxirl:bind('shift', '[', function ()
-  hs.eventtap.keyStroke({"ctrl", "alt", "cmd", "shift"}, "left")
-  tmuxirl:stickyExit()
+  local win = hs.window.focusedWindow()
+  if win:isFullScreen() then
+    win:toggleFullScreen()
+    hs.timer.doAfter(1, function ()
+      hs.eventtap.keyStroke({"ctrl", "alt", "cmd", "shift"}, "left")
+    end)
+  else
+    hs.eventtap.keyStroke({"ctrl", "alt", "cmd", "shift"}, "left")
+  end
+  tmuxirl:exitUnlessStickyMode()
 end)
 tmuxirl:bind('shift', ']', function ()
-  hs.eventtap.keyStroke({"ctrl", "alt", "cmd", "shift"}, "right")
-  tmuxirl:stickyExit()
+  local win = hs.window.focusedWindow()
+  if win:isFullScreen() then
+    hs.timer.doAfter(1, function ()
+      hs.eventtap.keyStroke({"ctrl", "alt", "cmd", "shift"}, "right")
+    end)
+  else
+    hs.eventtap.keyStroke({"ctrl", "alt", "cmd", "shift"}, "right")
+  end
+  tmuxirl:exitUnlessStickyMode()
 end)
 
 
@@ -183,7 +237,7 @@ tmuxirl:bind('shift', ";", function ()
   if screenIndex == #screens then screenIndex = 0 end
   win:moveToScreen(screens[screenIndex + 1])
   screenIndex = screenIndex + 1
-  tmuxirl:stickyExit()
+  tmuxirl:exitUnlessStickyMode()
 end)
 
 
@@ -193,11 +247,11 @@ end)
 -- shortcuts.
 tmuxirl:bind('', "n", function ()
   hs.eventtap.keyStroke({"ctrl"}, "right")
-  tmuxirl:stickyExit()
+  tmuxirl:exitUnlessStickyMode()
 end)
 tmuxirl:bind('', "p", function ()
   hs.eventtap.keyStroke({"ctrl"}, "left")
-  tmuxirl:stickyExit()
+  tmuxirl:exitUnlessStickyMode()
 end)
 
 
@@ -207,22 +261,19 @@ end)
 -- to bindings that I've setup in BetterTouchTool.
 tmuxirl:bind('shift', "n", function ()
   hs.eventtap.keyStroke({"ctrl", "alt", "cmd"}, "right")
-  tmuxirl:stickyExit()
+  tmuxirl:exitUnlessStickyMode()
 end)
 tmuxirl:bind('shift', "p", function ()
   hs.eventtap.keyStroke({"ctrl", "alt", "cmd"}, "left")
-  tmuxirl:stickyExit()
+  tmuxirl:exitUnlessStickyMode()
 end)
 
-
--- "o" to toggle focus between 
-                                   
 
 -- Z to toggle fullscreen...
 tmuxirl:bind('shift', "z", function ()
   local win = hs.window.focusedWindow()
   win:toggleFullScreen()
-  tmuxirl:stickyExit()
+  tmuxirl:exitUnlessStickyMode()
 end)
 
 
@@ -230,14 +281,8 @@ end)
 center_toggle = {}
 tmuxirl:bind('', "z", function ()
   local win = hs.window.focusedWindow()
-  if win and center_toggle[win:id()] then
-    win:setFrame(center_toggle[win:id()])
-    center_toggle[win:id()] = nil
-  else
-    center_toggle[win:id()] = win:frame()
-    win:moveToUnit(positions.maximized)
-  end
-  tmuxirl:stickyExit()
+  win:moveToUnit(positions.maximized)
+  tmuxirl:exitUnlessStickyMode()
 end)
 
 
@@ -266,13 +311,13 @@ hs.expose.ui.fitWindowsInBackground=True
 expose = hs.expose.new(nil)
 tmuxirl:bind('shift', "q", function ()
   expose:show()
-  tmuxirl:stickyExit()
+  tmuxirl:exitUnlessStickyMode()
 end)
 
 hs.hints.hintChars = {"j", "f", "k", "d", "l", "s", "a"}
 tmuxirl:bind('', "q", function ()
   hs.hints.windowHints()
-  tmuxirl:stickyExit()
+  tmuxirl:exitUnlessStickyMode()
 end)
 
 
@@ -282,18 +327,38 @@ launch_bindings = {
    {key="i", app="iTerm"},
    {key="f", app="Firefox"},
    {key="s", app="Slack"},
+   {key="t", app="TogglDesktop"},
 }
 hs.fnutils.each(launch_bindings, function(entry)
-  tmuxirl:bind('cmd', entry.key, function ()
+  tmuxirl:bind('', entry.key, function ()
     hs.application.launchOrFocus(entry.app)
-    tmuxirl:stickyExit()
+    tmuxirl:exitUnlessStickyMode(5)
   end)
+end)
+
+
+-- Quick switching
+tmuxirl:bind('', ';', function ()
+  local win = hs.window.focusedWindow()
+  if win:application():name() == "Emacs" then
+     hs.application.launchOrFocus("iTerm")
+  else
+     hs.application.launchOrFocus("Emacs")
+  end
+  tmuxirl:exitUnlessStickyMode()
+end)
+
+
+-- Expose
+tmuxirl:bind('', 'space', function ()
+  hs.eventtap.keyStroke({"ctrl", "cmd", "alt"}, "space")
+  tmuxirl:exitUnlessStickyMode()
 end)
 
 
 -- For safety, disable some keys that I dn't want to pass through.
 -- I'd like it if all keys were disabled, but don't think this is a feature.
-nil_chars = {"`", "'", "[", "]", ",", "\\", "i", "e", "f", "s", "r", "t"}
+nil_chars = {"'", "[", "]", ",", "\\", "r"}
 hs.fnutils.each(nil_chars, function(nil_char)
   tmuxirl:bind('', nil_char, function () return end)
 end)
@@ -301,6 +366,7 @@ nil_chars_ctrl = {"z"}
 hs.fnutils.each(nil_chars_ctrl, function(nil_char)
   tmuxirl:bind('ctrl', nil_char, function () return end)
 end)
+
 
 hs.alert("Hammerspoon!", 0.5)
 logger.f('...done.')
