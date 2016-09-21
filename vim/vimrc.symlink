@@ -1,10 +1,37 @@
+" TODO {{{
+
+" - Full refactor
+" - Outline-mode / better folding
+"   - How to tab to toggle fold? As C-i clashes
+" - Fix modeline display
+" - Better file / buffer switching
+" - Better help functions
+"   - Is there an equivalent to C-h v? C-h k?
+"   - Describe face?
+" - Restclient?
+" - Highlight custom keywords?
+" - <leader>o and <leader>O
+" - equivalent to tmux zoom?
+" - proper fill/unfill region/paragraph
+" - M-x?
+" - git open
+" - colour hex strings
+" - python IDE
+" - go IDE
+" - terraform
+" - gvim fonts
+" - equivalent to use-package?
+
+
+" }}}
+
 " Init {{{
 
 " This line should not be removed as it ensures that various options are
 " properly set to work with the Vim-related packages available in Debian.
 runtime! debian.vim
 
-set nocompatible " Vim improvements
+set nocompatible " Remove vi compatibility to allow vim improvements
 set runtimepath+=$HOME/.vim/
 
 " Correct OS X path and some other stuff:
@@ -69,12 +96,6 @@ call vundle#rc()
 " my plugins
     Bundle "file://" . $DOTFILES . "/splitscreen"
 
-" }}}
-
-" Source {{{
-"for f in split(glob('$DOTFILES/vim/vim.symlink/source/*.vim'), '\n')
-    "exe 'source' f
-"endfor
 " }}}
 
 " General {{{
