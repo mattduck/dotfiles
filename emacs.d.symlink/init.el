@@ -831,36 +831,41 @@
     (global-company-mode)))
 
 (use-package flycheck
- :config
- :init
- (progn
-   (add-hook 'prog-mode-hook 'flycheck-mode))
- (progn
-   (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
-   (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
+  :init
+  (progn
+    (add-hook 'prog-mode-hook 'flycheck-mode))
+  :config
+  (progn
+    (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
+    (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
 
-   (setq flycheck-flake8rc ".config/flake8"
-         flycheck-highlighting-mode 'symbols
+    (setq flycheck-flake8rc ".config/flake8"
+          flycheck-highlighting-mode 'symbols
 
-         ;; defaults to 0.9, which is too slow
-         flycheck-display-errors-delay 0.1
+          ;; defaults to 0.9, which is too slow
+          flycheck-display-errors-delay 0.1
 
-         ;; There's a short delay when flycheck runs, which causes the modeline to change
-         ;; its format (or in my custom powerline stuff, to disappear briefly). It's
-         ;; super annoying if this happens at random points during editing, so change it
-         ;; to only happen on save (and when enabling the mode). This is quite similar to how
-         ;; I had it setup in vim.
-         flycheck-check-syntax-automatically '(save mode-enabled)
+          ;; There's a short delay when flycheck runs, which causes the modeline to change
+          ;; its format (or in my custom powerline stuff, to disappear briefly). It's
+          ;; super annoying if this happens at random points during editing, so change it
+          ;; to only happen on save (and when enabling the mode). This is quite similar to how
+          ;; I had it setup in vim.
+          flycheck-check-syntax-automatically '(save mode-enabled)
 
-         flycheck-mode-line-prefix nil))
- :bind (:map md/leader-map
-        ;; S prefix, ie. "syntax"
-        ("s <RET>" . flycheck-mode)
-        ("sl" . flycheck-list-errors)
-        ("sn" . flycheck-next-error)
-        ("sj" . flycheck-next-error)
-        ("sp" . flycheck-previous-error)
-        ("sk" . flycheck-previous-error)))
+          flycheck-mode-line-prefix nil)
+
+    ;; For some reason in the flycheck mode list map it just uses all vi
+    ;; keys. Mostly this is fine but I need an easy way to quit.
+    (evil-define-key 'normal flycheck-error-list-mode-map "q" 'quit-window))
+  :bind (:map md/leader-map
+              ;; S prefix, ie. "syntax"
+              ("s <RET>" . flycheck-mode)
+              ("sl" . flycheck-list-errors)
+              ("sn" . flycheck-next-error)
+              ("sj" . flycheck-next-error)
+              ("sp" . flycheck-previous-error)
+              ("sk" . flycheck-previous-error)
+              ))
 
 (use-package projectile
  :config
