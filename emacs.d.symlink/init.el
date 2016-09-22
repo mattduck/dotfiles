@@ -426,7 +426,7 @@
       ;; This lets me quickly ag/grep for "todo" comments using the same
       ;; ag/grep functions that I usually do.
       (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
-   
+
       ;; Put C-j / C-l the sane way around.
       (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
       (bind-key "C-l" 'helm-execute-persistent-action helm-map)
@@ -434,7 +434,7 @@
       (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map)
 
 )
-      
+
     :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
            ([remap occur] . helm-occur)
            ([remap dabbrev-expand] . helm-dabbrev)
@@ -866,7 +866,47 @@
  :config
  (progn
    (setq projectile-file-exists-local-cache-expire 30
-         projectile-enable-caching t)
+         projectile-enable-caching t
+         projectile-globally-ignored-file-suffixes
+         '("pyc"
+           "png"
+           "jpg"
+           "gif"
+           "zip"
+           "Trash"
+           "swp"
+           "swo"
+           "DS_Store"
+           "swn"
+           "ico"
+           "o"
+           "elc"
+           "a"
+           "so"
+           "exe"
+           "egg-info"
+           "egg"
+           "dmg")
+         projectile-globally-ignored-directories
+         '(".tmp"
+           ".coverage"
+           ".git"
+           ".hg"
+           ".idea"
+           ".flsckout"
+           ".bzr"
+           "_darcs"
+           ".tox"
+           ".svn"
+           ".egg"
+           ".egg-info"
+           ".sass-cache"
+           "__pycache__"
+           ".webassets-cache"
+           "node_modules"
+           "venv"
+           "elpa"
+           ".stack-work"))
    (projectile-global-mode))
  :bind (:map md/leader-map
        ("j!" . projectile-invalidate-cache)
