@@ -1192,14 +1192,15 @@ Company seems to work nicely without much configuration.
 * Projectile
 ** Base projectile
 #+BEGIN_SRC emacs-lisp
-(use-package projectile
- :config
- (progn
-   (setq projectile-file-exists-local-cache-expire (* 10 60)
-         projectile-enable-caching t)
-   (projectile-global-mode))
- :bind (:map md/leader-map
-       ("jk" . projectile-kill-buffers)))
+  (use-package projectile
+   :config
+   (progn
+     (setq projectile-file-exists-local-cache-expire 30
+           projectile-enable-caching t)
+     (projectile-global-mode))
+   :bind (:map md/leader-map
+         ("j!" . projectile-invalidate-cache)
+         ("jk" . projectile-kill-buffers)))
 #+END_SRC
 
 ** Helm
@@ -1212,8 +1213,6 @@ Company seems to work nicely without much configuration.
                 ("jj" . helm-projectile-switch-project)
                 ("jag" . helm-projectile-ag)
                 ("jb" . helm-projectile-switch-to-buffer)
-
-                ;; TODO - proper binding for invalidating cache
                 ("jf" . helm-projectile-find-file)))
 #+END_SRC
 

@@ -1,4 +1,3 @@
-
 (defconst md/emacs-init-start (current-time))
 
 (let ((file-handler-name-alist nil)
@@ -866,10 +865,11 @@
 (use-package projectile
  :config
  (progn
-   (setq projectile-file-exists-local-cache-expire (* 10 60)
+   (setq projectile-file-exists-local-cache-expire 30
          projectile-enable-caching t)
    (projectile-global-mode))
  :bind (:map md/leader-map
+       ("j!" . projectile-invalidate-cache)
        ("jk" . projectile-kill-buffers)))
 
 (use-package helm-projectile
@@ -880,8 +880,6 @@
               ("jj" . helm-projectile-switch-project)
               ("jag" . helm-projectile-ag)
               ("jb" . helm-projectile-switch-to-buffer)
-
-              ;; TODO - proper binding for invalidating cache
               ("jf" . helm-projectile-find-file)))
 
 (use-package git-gutter
