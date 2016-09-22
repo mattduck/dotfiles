@@ -417,41 +417,47 @@
   (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
 
 (use-package helm
-  :defer 5
-  :config
-  (progn
-    ;; Putting these here to avoid byte-compiled issue where helm-map isn't defined.
+    :defer 5
+    :config
+    (progn
+      ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
+      (helm-mode 1)
+      (helm-autoresize-mode 0)
 
-    ;; This lets me quickly ag/grep for "todo" comments using the same
-    ;; ag/grep functions that I usually do.
-    (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
-    ;;("<tab>" . helm-execute-persistent-action)
-    ;;("C-z" . helm-select-action)
+      ;; This lets me quickly ag/grep for "todo" comments using the same
+      ;; ag/grep functions that I usually do.
+      (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
+   
+      ;; Put C-j / C-l the sane way around.
+      (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
+      (bind-key "C-l" 'helm-execute-persistent-action helm-map)
+      (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
+      (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map)
 
-    (helm-mode 1)
-    (helm-autoresize-mode 0))
-  :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
-         ([remap occur] . helm-occur)
-         ([remap dabbrev-expand] . helm-dabbrev)
-         ([remap list-buffers] . helm-buffers-list)
-         ("M-x" . helm-M-x)
-         ("C-x b" . helm-buffers-list)
-         ("C-x p" . helm-mini)
+)
+      
+    :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
+           ([remap occur] . helm-occur)
+           ([remap dabbrev-expand] . helm-dabbrev)
+           ([remap list-buffers] . helm-buffers-list)
+           ("M-x" . helm-M-x)
+           ("C-x b" . helm-buffers-list)
+           ("C-x p" . helm-mini)
 
-         :map lisp-interaction-mode-map
-         ([remap completion-at-point] . helm-lisp-completion)
+           :map lisp-interaction-mode-map
+           ([remap completion-at-point] . helm-lisp-completion)
 
-         :map emacs-lisp-mode-map
-         ([remap completion-at-point] . helm-lisp-completion)
+           :map emacs-lisp-mode-map
+           ([remap completion-at-point] . helm-lisp-completion)
 
-         :map md/leader-map
-         ("b" . helm-buffers-list)
-         ("f" . helm-find-files)
-         ("x" . helm-M-x)
-         ("p" . helm-mini)
+           :map md/leader-map
+           ("b" . helm-buffers-list)
+           ("f" . helm-find-files)
+           ("x" . helm-M-x)
+           ("p" . helm-mini)
 
-         :map help-map
-         ("X" . helm-colors)))
+           :map help-map
+           ("X" . helm-colors)))
 
 (use-package helm-ag
   :defer 5

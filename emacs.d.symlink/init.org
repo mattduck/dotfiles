@@ -674,16 +674,22 @@ I can use this with grep/ag to quickly find the todo comments:
     :defer 5
     :config
     (progn
-      ;; Putting these here to avoid byte-compiled issue where helm-map isn't defined.
+      ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
+      (helm-mode 1)
+      (helm-autoresize-mode 0)
 
       ;; This lets me quickly ag/grep for "todo" comments using the same
       ;; ag/grep functions that I usually do.
       (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
-      ;;("<tab>" . helm-execute-persistent-action)
-      ;;("C-z" . helm-select-action)
+   
+      ;; Put C-j / C-l the sane way around.
+      (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
+      (bind-key "C-l" 'helm-execute-persistent-action helm-map)
+      (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
+      (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map)
 
-      (helm-mode 1)
-      (helm-autoresize-mode 0))
+)
+      
     :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
            ([remap occur] . helm-occur)
            ([remap dabbrev-expand] . helm-dabbrev)
