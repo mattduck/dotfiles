@@ -46,12 +46,34 @@ export MIT_SCHEME_EXE="/usr/local/scheme"
 alias emacs-app="/Applications/Emacs.app/Contents/MacOS/Emacs"
 alias emacs-app-server="/Applications/Emacs.app/Contents/MacOS/Emacs --daemon"
 alias emacs-app-client="/Applications/Emacs.app/Contents/MacOS/bin/emacsclient"
-alias et="emacs-app-client -t"  # emacs client in terminal
-alias egui="emacs-app-client -n"  # emacs client in gui
-alias en="emacs-app -nw"  # new emacs in terminal
 
-alias vi="vim" # Otherwise vi will point to /usr/bin, and vim to the brew dir.
+# New emacs in terminal
+alias en="emacs-app -nw"
 
+# New emacs in terminal, read-only
+function eview() {
+    if [ $# -eq 0 ]; then
+        emacs-app -nw "." --eval '(setq buffer-read-only t)'
+    else
+        emacs-app -nw "$1" --eval '(setq buffer-read-only t)'
+    fi
+}
+
+# Emacs gui client.
+function egui () {
+    if [ $# -eq 0 ]; then
+        args='.'
+    else
+        args=$@
+    fi
+    # Create a new elscreen tab before visiting the file. I prefer this because
+    # it ensures that opening a file from the terminal doesn't interfere with
+    # existing windows.
+    emacs-app-client -n --eval "(elscreen-goto (elscreen-create))" &>/dev/null
+    emacs-app-client -n $args
+}
+
+# Emacs terminal client.
 function e () {
     if [ $# -eq 0 ]; then
         emacs-app-client -t .
@@ -60,13 +82,9 @@ function e () {
     fi
 }
 
-function eview() {
-    if [ $# -eq 0 ]; then
-        emacs-app -nw "." --eval '(setq buffer-read-only t)'
-    else
-        emacs-app -nw "$1" --eval '(setq buffer-read-only t)'
-    fi
-}
+
+# vim -------------
+alias vi="vim" # Otherwise vi will point to /usr/bin, and vim to the brew dir.
 
 
 # Virtualenvwrapper -------------
