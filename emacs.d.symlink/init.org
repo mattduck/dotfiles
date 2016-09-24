@@ -1,5 +1,5 @@
 #+TITLE init.org
-* Compile
+* Compile init.el
 
 I'm using org-mode to structure my configuration. Inspired by [[https://github.com/sachac/.emacs.d][Sacha Chua]] and
 [[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
@@ -49,14 +49,6 @@ I use this to refer to this directory / file:
 
 ** Emacs Package setup
 #+BEGIN_SRC emacs-lisp
-;; NOTE - this is old, maybe I can remove it
-(defun md/refresh-packages ()
-  (interactive)
-  (when (not package-archive-contents)
-    (package-refresh-contents)))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
     (package-initialize)
 
     (setq package-archives
@@ -98,7 +90,7 @@ If ~use-package~ isn't installed, I should install it.
    :config
    (progn (exec-path-from-shell-initialize)))
 #+END_SRC
-* Sane general behaviour
+* Sane Emacs behaviour
 
 These are mostly to get the base appearance / behaviour of Emacs close to
 what I'm used to from vim.
@@ -328,15 +320,8 @@ Increase the number of messages:
 #+BEGIN_SRC emacs-lisp
 (setq message-log-max 10000)
 #+END_SRC
-* Backups
-#+BEGIN_SRC emacs-lisp
-;; Backup everything to the same directory, rather than dropping
-;; files all over the place
-(setq backup-directory-alist
-      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
-#+END_SRC
-* Modifier keys
-** OS X
+** Modifier keys
+*** OS X
 
 - GUI
 
@@ -377,6 +362,13 @@ Increase the number of messages:
        ;; cmd key for Meta bindings. This is easier to reach than the default Meta
        ;; key (which is alt).
        ns-command-modifier 'meta))
+#+END_SRC
+** Backups
+#+BEGIN_SRC emacs-lisp
+;; Backup everything to the same directory, rather than dropping
+;; files all over the place
+(setq backup-directory-alist
+      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
 #+END_SRC
 * General utils
 ** Odd functions
@@ -572,7 +564,7 @@ I seem to use =describe-face= a lot:
    (setq
     ace-jump-mode-move-keys '(?f ?j ?d ?k ?s ?l ?a ?\; ?g ?h ?r ?u ?e ?i ?w ?o ?t ?y ?b ?v ?n ?c ?m ?x)
     ace-jump-mode-scope 'window  ; If scope is wider than window performance drops a lot
-    ace-jump-word-mode-use-query-char))
+    ace-jump-word-mode-use-query-char nil))
 
  :bind (:map evil-normal-state-map
              ("f" . nil)
@@ -586,7 +578,7 @@ I seem to use =describe-face= a lot:
              ("f T" . evil-ace-jump-char-mode)))
 #+END_SRC
 
-* Key Chord
+** Key Chord
 I can't just set my insert mode "jj" and "jk" bindings in the insert-mode-map,
 because if I do that then "j" gets assigned as a prefix key, and I can't
 actually use it to insert anything in insert mode.
@@ -601,69 +593,6 @@ actually use it to insert anything in insert mode.
       (key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
       (key-chord-mode 1)))
 #+END_SRC
-
-* Dired
-Dired mode has a lot of features / keys that I don't care about. Start it in
-evil mode, and just add in the dired bindings that I want.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package dired
-    :demand t
-    :init
-    (progn
-      ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
-      ;; makes dired-mode-map an overriding keymap, which means that the default
-      ;; dired-mode bindings take precendence over the normal-state bindings.
-      ;;
-      ;; There's no obvious way to undo that code, so I'm just replacing
-      ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
-      (setq dired-mode-map (make-sparse-keymap))
-      (evil-define-key 'normal dired-mode-map
-        "q" 'quit-window
-        "d" 'dired-flag-file-deletion
-        "u" 'dired-unmark
-        "D" 'dired-do-delete
-        (kbd "RET") 'dired-find-file
-        "J" 'dired-jump
-        "o" 'dired-find-file-other-window
-        "R" 'dired-do-rename
-        "C" 'dired-do-copy
-        "i" 'dired-maybe-insert-subdir
-        "+" 'dired-create-directory)))
-#+END_SRC
-
-* Highlight keywords in comments
-
-#+BEGIN_SRC emacs-lisp
-(use-package fic-mode
- :defer 1
- :init
- (progn
-   (add-hook 'prog-mode-hook 'fic-mode))
- :config
- (progn
-   ;; NOTE: fic-mode doesn't seem to fontify the buffer, so words don't appear
-   ;; highlighted unless either something else fontifies the buffer, or we do it
-   ;; manually. Would like to improve this.
-   ;;
-   ;; FIX: fic-mode doesn't seem to identify words on the same line as my cursor
-   ;; when I change theme and then fontify the buffer. All other lines seem fine.
-
-   (setq fic-highlighted-words
-         '("TODO" "FIX" "FIXME" "BUG" "WARN" "WARNING" "HACK" "NOTE" "ERROR" "MATT"))
-
-   ;; By default this includes font-lock-string-face, but I don't want strings to
-   ;; have these words formatted.
-   (setq fic-activated-faces '(font-lock-doc-face font-lock-comment-face))))
-#+END_SRC
-
-I can use this with grep/ag to quickly find the todo comments:
-#+BEGIN_SRC emacs-lisp
-  (defun md/insert-todo-regexp ()
-    (interactive)
-    (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
-#+END_SRC
-
 * Helm
 ** Base helm
 - [ ] NOTE - describe-function and describe-variable don't use helm until helm
@@ -728,7 +657,481 @@ I can use this with grep/ag to quickly find the todo comments:
                 ("ag" . md/ag)))
 #+END_SRC
 
-* help-fns+
+* Applications
+** Dired
+Dired mode has a lot of features / keys that I don't care about. Start it in
+evil mode, and just add in the dired bindings that I want.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package dired
+    :demand t
+    :init
+    (progn
+      ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
+      ;; makes dired-mode-map an overriding keymap, which means that the default
+      ;; dired-mode bindings take precendence over the normal-state bindings.
+      ;;
+      ;; There's no obvious way to undo that code, so I'm just replacing
+      ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
+      (setq dired-mode-map (make-sparse-keymap))
+      (evil-define-key 'normal dired-mode-map
+        "q" 'quit-window
+        "d" 'dired-flag-file-deletion
+        "u" 'dired-unmark
+        "D" 'dired-do-delete
+        (kbd "RET") 'dired-find-file
+        "J" 'dired-jump
+        "o" 'dired-find-file-other-window
+        "R" 'dired-do-rename
+        "C" 'dired-do-copy
+        "i" 'dired-maybe-insert-subdir
+        "+" 'dired-create-directory)))
+#+END_SRC
+
+** Restclient
+For 80% of use-cases, I think [[https://github.com/pashky/restclient.el][restclient]] will be more convenient than Postman.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package restclient
+    :defer 1
+    :mode (("\\.http\\'" . restclient-mode)))
+
+  (use-package restclient-helm :defer 5)
+#+END_SRC
+
+Add company completion for restclient:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package company-restclient
+    :config
+    (progn
+        (add-to-list 'company-backends 'company-restclient)))
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+POST https://httpbin.org/post
+
+This is the body
+#+END_EXAMPLE
+* IDE features
+** Autocompletion
+
+Company seems to work nicely without much configuration.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package company
+    :defer 2
+    :config
+    (progn
+      ;; Bind here rather than in ":bind" to avoid complaints about
+      ;; company-mode-map not existing.
+      (bind-key "C-n" 'company-select-next company-active-map)
+      (bind-key "C-p" 'company-select-previous company-active-map)
+
+      ;; By default this performs company-complete-common, but I don't
+      ;; think I'll want to use that
+      (bind-key "TAB" 'company-complete-selection company-active-map)
+
+      (bind-key "C-n" 'company-complete evil-insert-state-map)
+
+      (global-company-mode)))
+#+END_SRC
+
+** Syntax checking
+#+BEGIN_SRC emacs-lisp
+  (use-package flycheck
+    :init
+    (progn
+      (add-hook 'prog-mode-hook 'flycheck-mode))
+    :config
+    (progn
+      (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
+      (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
+
+      (setq flycheck-flake8rc ".config/flake8"
+            flycheck-highlighting-mode 'symbols
+
+            ;; defaults to 0.9, which is too slow
+            flycheck-display-errors-delay 0.1
+
+            ;; There's a short delay when flycheck runs, which causes the modeline to change
+            ;; its format (or in my custom powerline stuff, to disappear briefly). It's
+            ;; super annoying if this happens at random points during editing, so change it
+            ;; to only happen on save (and when enabling the mode). This is quite similar to how
+            ;; I had it setup in vim.
+            flycheck-check-syntax-automatically '(save mode-enabled)
+
+            flycheck-mode-line-prefix nil)
+
+      ;; For some reason in the flycheck mode list map it just uses all vi
+      ;; keys. Mostly this is fine but I need an easy way to quit.
+      (evil-define-key 'normal flycheck-error-list-mode-map "q" 'quit-window))
+    :bind (:map md/leader-map
+                ;; S prefix, ie. "syntax"
+                ("s <RET>" . flycheck-mode)
+                ("sl" . flycheck-list-errors)
+                ("sn" . flycheck-next-error)
+                ("sj" . flycheck-next-error)
+                ("sp" . flycheck-previous-error)
+                ("sk" . flycheck-previous-error)
+                ))
+
+#+END_SRC
+** Projectile
+*** Base projectile
+#+BEGIN_SRC emacs-lisp
+  (use-package projectile
+   :config
+   (progn
+     (setq projectile-file-exists-local-cache-expire 30
+           projectile-enable-caching t
+           projectile-globally-ignored-file-suffixes
+           '("pyc"
+             "png"
+             "jpg"
+             "gif"
+             "zip"
+             "Trash"
+             "swp"
+             "swo"
+             "DS_Store"
+             "swn"
+             "ico"
+             "o"
+             "elc"
+             "a"
+             "so"
+             "exe"
+             "egg-info"
+             "egg"
+             "dmg")
+           projectile-globally-ignored-directories
+           '(".tmp"
+             ".coverage"
+             ".git"
+             ".hg"
+             ".idea"
+             ".flsckout"
+             ".bzr"
+             "_darcs"
+             ".tox"
+             ".svn"
+             ".egg"
+             ".egg-info"
+             ".sass-cache"
+             "__pycache__"
+             ".webassets-cache"
+             "node_modules"
+             "venv"
+             "elpa"
+             ".stack-work"))
+     (projectile-global-mode))
+   :bind (:map md/leader-map
+         ("j!" . projectile-invalidate-cache)
+         ("jk" . projectile-kill-buffers)))
+#+END_SRC
+
+*** Helm
+#+BEGIN_SRC emacs-lisp
+  (use-package helm-projectile
+    :init (progn
+            ;; This has to be set before loading helm-projectile
+            (setq helm-projectile-fuzzy-match nil))
+    :bind (:map md/leader-map
+                ("jj" . helm-projectile-switch-project)
+                ("jag" . helm-projectile-ag)
+                ("jb" . helm-projectile-switch-to-buffer)
+                ("jf" . helm-projectile-find-file)))
+#+END_SRC
+
+** Git
+*** git-gutter
+#+BEGIN_SRC emacs-lisp
+
+  (use-package git-gutter
+   :init
+   (progn
+     (defun md/set-sensible-column ()
+       "Unless file is too big, either use git-gutter mode (when in
+  git dir) or linum mode"
+       (interactive)
+       (when (< (count-lines (point-min) (point-max)) 2000)
+         (if (string= "git" (downcase (format "%s" (vc-backend
+                                                    (buffer-file-name
+                                                     (current-buffer))))))
+             (git-gutter-mode 1)
+           (linum-mode 1))))
+     (add-hook 'find-file-hook 'md/set-sensible-column))
+   :config
+   (progn
+     (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
+           git-gutter:modified-sign "~"
+           git-gutter:added-sign "+"
+           git-gutter:deleted-sign "-"
+
+           ;; This ensures the separator is always displayed
+           git-gutter:unchanged-sign " "
+           git-gutter:always-show-separator t
+
+           ;; Without this, there's no space between the git-gutter column and the code.
+           git-gutter:separator-sign " "))
+   :bind (:map md/leader-map
+         ("g <RET>" . git-gutter-mode)
+         ("gk" . git-gutter:previous-hunk)
+         ("gp" . git-gutter:previous-hunk)
+         ("gj" . git-gutter:next-hunk)
+         ("gn" . git-gutter:next-hunk)
+         ("gadd" . git-gutter:stage-hunk)
+         ("grev" . git-gutter:revert-hunk)))
+
+#+END_SRC
+
+*** magit
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+   :config
+   (progn
+     (evil-set-initial-state 'magit-blame-mode 'normal)
+     (evil-set-initial-state 'magit-revision-mode 'normal)
+
+     ;; I don't know why, but by default I can't get magit-blame to adhere to my
+     ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
+     ;; calling evil-normal-state fixes it.
+     (add-hook 'magit-blame-mode-hook 'evil-normal-state)
+     (evil-define-key 'normal magit-blame-mode-map
+       (kbd "<RET>") 'magit-show-commit
+       "q" 'magit-blame-quit
+       "gj" 'magit-blame-next-chunk
+       "gn" 'magit-blame-next-chunk
+       "gk" 'magit-blame-previous-chunk
+       "gp" 'magit-blame-previous-chunk)
+
+     (add-hook 'magit-revision-mode-hook 'evil-normal-state)
+     (evil-define-key 'normal magit-revision-mode-map
+       (kbd "<RET>") 'magit-diff-visit-file
+       "q" 'magit-mode-bury-buffer))  ;; This quits
+
+   :bind (:map md/leader-map
+         ("gmag" . magit-dispatch-popup)
+         ("gblame" . magit-blame)
+
+         ;; NOTE - this doesn't play nicely with mode-line:
+         ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
+         ;; - https://github.com/syl20bnr/spacemacs/issues/2172
+         ("gco" . magit-checkout)
+
+         ("gdiff" . magit-ediff-popup)))
+#+END_SRC
+
+*** github-browse-file
+
+I miss :Gbrowse from fugitive:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package github-browse-file
+    :config
+    (progn
+      (setq github-browse-file-show-line-at-point t))
+    :bind (:map md/leader-map
+          ("go" . github-browse-file)))
+#+END_SRC
+
+** Ediff
+#+BEGIN_SRC emacs-lisp
+(use-package ediff
+ :defer 1
+ :config
+ (progn
+   ;; TODO - I want ediff to have evil-like bindings
+   (setq ediff-split-window-function 'split-window-horizontally)))
+
+#+END_SRC
+** Highlight keywords in comments
+
+#+BEGIN_SRC emacs-lisp
+(use-package fic-mode
+ :defer 1
+ :init
+ (progn
+   (add-hook 'prog-mode-hook 'fic-mode))
+ :config
+ (progn
+   ;; NOTE: fic-mode doesn't seem to fontify the buffer, so words don't appear
+   ;; highlighted unless either something else fontifies the buffer, or we do it
+   ;; manually. Would like to improve this.
+   ;;
+   ;; FIX: fic-mode doesn't seem to identify words on the same line as my cursor
+   ;; when I change theme and then fontify the buffer. All other lines seem fine.
+
+   (setq fic-highlighted-words
+         '("TODO" "FIX" "FIXME" "BUG" "WARN" "WARNING" "HACK" "NOTE" "ERROR" "MATT"))
+
+   ;; By default this includes font-lock-string-face, but I don't want strings to
+   ;; have these words formatted.
+   (setq fic-activated-faces '(font-lock-doc-face font-lock-comment-face))))
+#+END_SRC
+
+I can use this with grep/ag to quickly find the todo comments:
+#+BEGIN_SRC emacs-lisp
+  (defun md/insert-todo-regexp ()
+    (interactive)
+    (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
+#+END_SRC
+** Parentheses
+Basic paren matching is built in. I preferred these settings at one point,
+although I don't remember exactly what the difference is:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package paren
+   :defer 1
+   :init (progn
+          (add-hook 'prog-mode-hook 'show-paren-mode))
+   :config
+   (progn
+     (setq show-paren-style 'parenthesis
+           blink-matching-paren nil
+           blink-matching-paren-on-screen nil)))
+#+END_SRC
+
+** Colour hex values
+#+BEGIN_SRC emacs-lisp
+  (use-package rainbow-mode
+    :defer 1
+    :config
+    (progn
+       (add-hook 'css-mode-hook 'rainbow-mode)
+       (add-hook 'help-mode-hook 'rainbow-mode)
+       (add-hook 'html-mode-hook 'rainbow-mode)
+       (add-hook 'prog-mode-hook 'rainbow-mode)))
+#+END_SRC
+
+* Languages
+** Python
+
+Elpy combines a few different Python packages / features.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package elpy
+    :defer 1  ;; Defer this just because it's slow to load.
+    :init
+    (progn
+      (add-hook 'elpy-mode-hook
+                (lambda ()
+                  (set (make-local-variable 'company-backends) '(elpy-company-backend)))))
+    :config
+    (progn
+      (elpy-enable)
+
+      ;; - Remove elpy-module-flymake because I already have flymake configured.
+      ;; - Remove elpy-module-highlight indentation because it's distracting.
+      (setq elpy-modules (list
+                          'elpy-module-sane-defaults
+                          'elpy-module-company
+                          'elpy-module-eldoc
+                          'elpy-module-pyvenv
+                          'elpy-module-yasnippet))
+
+      (setq elpy-rpc-backend "jedi")
+
+      ;; Setup leader map for python
+      (evil-define-key 'normal python-mode-map
+        (kbd "SPC") md/python-mode-leader-map
+        "gk" 'python-nav-backward-defun
+        "gj" 'python-nav-forward-defun)
+
+      (evil-define-key 'insert elpy-mode-map (kbd "C-n") 'elpy-company-backend)
+
+      (if (string= major-mode "python-mode")
+        (progn
+          ;; If I've opened a Python file make sure everything loads properly
+          ;; on this buffer.
+          (python-mode)
+          (elpy-mode 1))))
+
+    :bind (:map md/python-mode-leader-map
+                ("SPC v" . pyvenv-workon)
+                ("SPC V" . pyvenv-activate)
+                ("SPC f" . elpy-format-code)
+                ("SPC t" . elpy-test)
+                ("SPC d" . elpy-doc)
+                ("SPC g" . elpy-goto-definition-other-window)
+                ("SPC r" . elpy-multiedit-python-symbol-at-point)))
+
+#+END_SRC
+
+** Golang
+#+BEGIN_SRC emacs-lisp
+  (use-package go-mode
+    :config
+    (progn
+      (add-hook 'before-save-hook 'gofmt-before-save)
+
+      ;; Make sure SPC uses the go-mode leader map rather than my default leader
+      ;; map
+      (evil-define-key 'normal go-mode-map
+        (kbd "SPC") md/go-mode-leader-map))
+
+    :bind (:map md/go-mode-leader-map
+                ("SPC =" . gofmt)))
+
+  (use-package company-go
+    :init
+    (progn
+      (add-hook 'go-mode-hook
+                (lambda ()
+                  (set (make-local-variable 'company-backends) '(company-go))))))
+
+#+END_SRC
+
+** Yaml
+Not sure if this provides anything beyond syntax highlighting, but that's enough
+for now:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package yaml-mode)
+#+END_SRC
+
+** Lua
+
+#+BEGIN_SRC emacs-lisp
+  (use-package lua-mode)
+#+END_SRC
+
+** Terraform
+Not sure if this provides anything beyond syntax highlighting, but that's enough
+for now:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package terraform-mode)
+#+END_SRC
+
+** Web mode
+This makes working with HTML/CSS/JS files much nicer. TODO - read documentation
+/ configure.
+
+#+BEGIN_SRC emacs-lisp
+(use-package web-mode
+  :defer 1)
+
+#+END_SRC
+
+** Markdown
+
+AFAICT markdown syntax highlighting isn't provided by default. [[https://github.com/jrblevin/markdown-mode][Markdown mode]]
+includes highlighting, plus some extra features like inserting elements and
+compiling. It also includes ~gfm-mode~ for Github-flavoured markdown.
+
+NOTE - compiling requires ~markdown~ to be installed.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package markdown-mode
+    :commands (markdown-mode gfm-mode)
+    :mode (("README\\.md\\'" . gfm-mode)
+           ("\\.md\\'" . markdown-mode)
+           ("\\.markdown\\'" . markdown-mode)))
+#+END_SRC
+* Help
+** help-fns+
 This package provides ~describe-keymap~ to M-k in the help-map, which is
 handy. It does some other things too (TODO - read docs).
 
@@ -736,7 +1139,7 @@ handy. It does some other things too (TODO - read docs).
 (use-package help-fns+ :defer 1)
 #+END_SRC
 
-* Help mode
+** Help mode
 I prefer to use vi keys to navigate help-mode:
 
 #+BEGIN_SRC emacs-lisp
@@ -748,7 +1151,7 @@ I prefer to use vi keys to navigate help-mode:
     (kbd "<RET>") 'help-follow-symbol)
 #+END_SRC
 
-* Which-key
+** Which-key
 
 [[https://github.com/justbur/emacs-which-key][which-key]] displays available bindings for the current prefix, which makes it
 easier to discover features / work out where I am:
@@ -767,23 +1170,20 @@ easier to discover features / work out where I am:
       (which-key-mode)))
 #+END_SRC
 
-* Parentheses
-Basic paren matching is built in. I preferred these settings at one point,
-although I don't remember exactly what the difference is:
+** List unbound keys
+
+This is handy sometimes - it provides ~free-keys~, which lists unbound keys.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package paren
-   :defer 1
-   :init (progn
-          (add-hook 'prog-mode-hook 'show-paren-mode))
-   :config
-   (progn
-     (setq show-paren-style 'parenthesis
-           blink-matching-paren nil
-           blink-matching-paren-on-screen nil)))
+  (use-package free-keys
+    :defer 10
+    :config
+      (progn
+        (bind-key "@" 'free-keys help-map)))
 #+END_SRC
 
-* Elscreen
+* Window manager
+** Elscreen
 
 Elscreen provides "tabs" that let me sort of arrange windows how I did it in
 vim. They're not ideal though, because the tabs either appear in several places
@@ -806,7 +1206,7 @@ on the screen, or nowhere.
      (md/elscreen-display-tabs)))
 #+END_SRC
 
-* Splitscreen
+** Splitscreen
 #+BEGIN_SRC emacs-lisp
 (setq md/splitscreen-path (concat (md/get-dotfiles-path) "/splitscreen/"))
 
@@ -818,7 +1218,7 @@ on the screen, or nowhere.
  (progn
    (splitscreen-mode)))
 #+END_SRC
-* Org
+* Org mode
 
 ** org-mode
 #+BEGIN_SRC emacs-lisp
@@ -1119,287 +1519,7 @@ on the screen, or nowhere.
      (md/powerline-setup)
      (md/powerline-reset)))
 #+END_SRC
-* List unbound keys
-
-This is handy sometimes - it provides ~free-keys~, which lists unbound keys.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package free-keys
-    :defer 10
-    :config
-      (progn
-        (bind-key "@" 'free-keys help-map)))
-#+END_SRC
-
-* Autocompletion
-
-Company seems to work nicely without much configuration.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package company
-    :defer 2
-    :config
-    (progn
-      ;; Bind here rather than in ":bind" to avoid complaints about
-      ;; company-mode-map not existing.
-      (bind-key "C-n" 'company-select-next company-active-map)
-      (bind-key "C-p" 'company-select-previous company-active-map)
-
-      ;; By default this performs company-complete-common, but I don't
-      ;; think I'll want to use that
-      (bind-key "TAB" 'company-complete-selection company-active-map)
-
-      (bind-key "C-n" 'company-complete evil-insert-state-map)
-
-      (global-company-mode)))
-#+END_SRC
-
-* Syntax checking
-#+BEGIN_SRC emacs-lisp
-  (use-package flycheck
-    :init
-    (progn
-      (add-hook 'prog-mode-hook 'flycheck-mode))
-    :config
-    (progn
-      (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
-      (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
-
-      (setq flycheck-flake8rc ".config/flake8"
-            flycheck-highlighting-mode 'symbols
-
-            ;; defaults to 0.9, which is too slow
-            flycheck-display-errors-delay 0.1
-
-            ;; There's a short delay when flycheck runs, which causes the modeline to change
-            ;; its format (or in my custom powerline stuff, to disappear briefly). It's
-            ;; super annoying if this happens at random points during editing, so change it
-            ;; to only happen on save (and when enabling the mode). This is quite similar to how
-            ;; I had it setup in vim.
-            flycheck-check-syntax-automatically '(save mode-enabled)
-
-            flycheck-mode-line-prefix nil)
-
-      ;; For some reason in the flycheck mode list map it just uses all vi
-      ;; keys. Mostly this is fine but I need an easy way to quit.
-      (evil-define-key 'normal flycheck-error-list-mode-map "q" 'quit-window))
-    :bind (:map md/leader-map
-                ;; S prefix, ie. "syntax"
-                ("s <RET>" . flycheck-mode)
-                ("sl" . flycheck-list-errors)
-                ("sn" . flycheck-next-error)
-                ("sj" . flycheck-next-error)
-                ("sp" . flycheck-previous-error)
-                ("sk" . flycheck-previous-error)
-                ))
-
-#+END_SRC
-* Projectile
-** Base projectile
-#+BEGIN_SRC emacs-lisp
-  (use-package projectile
-   :config
-   (progn
-     (setq projectile-file-exists-local-cache-expire 30
-           projectile-enable-caching t
-           projectile-globally-ignored-file-suffixes
-           '("pyc"
-             "png"
-             "jpg"
-             "gif"
-             "zip"
-             "Trash"
-             "swp"
-             "swo"
-             "DS_Store"
-             "swn"
-             "ico"
-             "o"
-             "elc"
-             "a"
-             "so"
-             "exe"
-             "egg-info"
-             "egg"
-             "dmg")
-           projectile-globally-ignored-directories
-           '(".tmp"
-             ".coverage"
-             ".git"
-             ".hg"
-             ".idea"
-             ".flsckout"
-             ".bzr"
-             "_darcs"
-             ".tox"
-             ".svn"
-             ".egg"
-             ".egg-info"
-             ".sass-cache"
-             "__pycache__"
-             ".webassets-cache"
-             "node_modules"
-             "venv"
-             "elpa"
-             ".stack-work"))
-     (projectile-global-mode))
-   :bind (:map md/leader-map
-         ("j!" . projectile-invalidate-cache)
-         ("jk" . projectile-kill-buffers)))
-#+END_SRC
-
-** Helm
-#+BEGIN_SRC emacs-lisp
-  (use-package helm-projectile
-    :init (progn
-            ;; This has to be set before loading helm-projectile
-            (setq helm-projectile-fuzzy-match nil))
-    :bind (:map md/leader-map
-                ("jj" . helm-projectile-switch-project)
-                ("jag" . helm-projectile-ag)
-                ("jb" . helm-projectile-switch-to-buffer)
-                ("jf" . helm-projectile-find-file)))
-#+END_SRC
-
-* Git
-** git-gutter
-#+BEGIN_SRC emacs-lisp
-
-  (use-package git-gutter
-   :init
-   (progn
-     (defun md/set-sensible-column ()
-       "Unless file is too big, either use git-gutter mode (when in
-  git dir) or linum mode"
-       (interactive)
-       (when (< (count-lines (point-min) (point-max)) 2000)
-         (if (string= "git" (downcase (format "%s" (vc-backend
-                                                    (buffer-file-name
-                                                     (current-buffer))))))
-             (git-gutter-mode 1)
-           (linum-mode 1))))
-     (add-hook 'find-file-hook 'md/set-sensible-column))
-   :config
-   (progn
-     (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
-           git-gutter:modified-sign "~"
-           git-gutter:added-sign "+"
-           git-gutter:deleted-sign "-"
-
-           ;; This ensures the separator is always displayed
-           git-gutter:unchanged-sign " "
-           git-gutter:always-show-separator t
-
-           ;; Without this, there's no space between the git-gutter column and the code.
-           git-gutter:separator-sign " "))
-   :bind (:map md/leader-map
-         ("g <RET>" . git-gutter-mode)
-         ("gk" . git-gutter:previous-hunk)
-         ("gp" . git-gutter:previous-hunk)
-         ("gj" . git-gutter:next-hunk)
-         ("gn" . git-gutter:next-hunk)
-         ("gadd" . git-gutter:stage-hunk)
-         ("grev" . git-gutter:revert-hunk)))
-
-#+END_SRC
-
-** magit
-#+BEGIN_SRC emacs-lisp
-  (use-package magit
-   :config
-   (progn
-     (evil-set-initial-state 'magit-blame-mode 'normal)
-     (evil-set-initial-state 'magit-revision-mode 'normal)
-
-     ;; I don't know why, but by default I can't get magit-blame to adhere to my
-     ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
-     ;; calling evil-normal-state fixes it.
-     (add-hook 'magit-blame-mode-hook 'evil-normal-state)
-     (evil-define-key 'normal magit-blame-mode-map
-       (kbd "<RET>") 'magit-show-commit
-       "q" 'magit-blame-quit
-       "gj" 'magit-blame-next-chunk
-       "gn" 'magit-blame-next-chunk
-       "gk" 'magit-blame-previous-chunk
-       "gp" 'magit-blame-previous-chunk)
-
-     (add-hook 'magit-revision-mode-hook 'evil-normal-state)
-     (evil-define-key 'normal magit-revision-mode-map
-       (kbd "<RET>") 'magit-diff-visit-file
-       "q" 'magit-mode-bury-buffer))  ;; This quits
-
-   :bind (:map md/leader-map
-         ("gmag" . magit-dispatch-popup)
-         ("gblame" . magit-blame)
-
-         ;; NOTE - this doesn't play nicely with mode-line:
-         ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
-         ;; - https://github.com/syl20bnr/spacemacs/issues/2172
-         ("gco" . magit-checkout)
-
-         ("gdiff" . magit-ediff-popup)))
-#+END_SRC
-
-** github-browse-file
-
-I miss :Gbrowse from fugitive:
-
-#+BEGIN_SRC emacs-lisp
-  (use-package git-browse-file
-    :config
-    (progn
-      (setq github-browse-file-show-line-at-point t))
-    :bind (:map md/leader-map
-          ("go" . github-browse-file)))
-#+END_SRC
-
-* Web mode
-This makes working with HTML/CSS/JS files much nicer. TODO - read documentation
-/ configure.
-
-#+BEGIN_SRC emacs-lisp
-(use-package web-mode
-  :defer 1)
-
-#+END_SRC
-
-* Restclient
-For 80% of use-cases, I think [[https://github.com/pashky/restclient.el][restclient]] will be more convenient than Postman.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package restclient
-    :defer 1
-    :mode (("\\.http\\'" . restclient-mode)))
-
-  (use-package restclient-helm :defer 5)
-#+END_SRC
-
-Add company completion for restclient:
-
-#+BEGIN_SRC emacs-lisp
-  (use-package company-restclient
-    :config
-    (progn
-        (add-to-list 'company-backends 'company-restclient)))
-#+END_SRC
-
-#+BEGIN_EXAMPLE
-POST https://httpbin.org/post
-
-This is the body
-#+END_EXAMPLE
-
-* Ediff
-#+BEGIN_SRC emacs-lisp
-(use-package ediff
- :defer 1
- :config
- (progn
-   ;; TODO - I want ediff to have evil-like bindings
-   (setq ediff-split-window-function 'split-window-horizontally)))
-
-#+END_SRC
-* Solarized
+* Solarized theme
 
 #+BEGIN_SRC emacs-lisp
   (use-package color-theme-solarized
@@ -1427,34 +1547,6 @@ This is the body
           ("chl" . solarized-toggle-comment-visibility)))
 #+END_SRC
 
-* Colour hex values
-#+BEGIN_SRC emacs-lisp
-  (use-package rainbow-mode
-    :defer 1
-    :config
-    (progn
-       (add-hook 'css-mode-hook 'rainbow-mode)
-       (add-hook 'help-mode-hook 'rainbow-mode)
-       (add-hook 'html-mode-hook 'rainbow-mode)
-       (add-hook 'prog-mode-hook 'rainbow-mode)))
-#+END_SRC
-
-* Markdown
-
-AFAICT markdown syntax highlighting isn't provided by default. [[https://github.com/jrblevin/markdown-mode][Markdown mode]]
-includes highlighting, plus some extra features like inserting elements and
-compiling. It also includes ~gfm-mode~ for Github-flavoured markdown.
-
-NOTE - compiling requires ~markdown~ to be installed.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package markdown-mode
-    :commands (markdown-mode gfm-mode)
-    :mode (("README\\.md\\'" . gfm-mode)
-           ("\\.md\\'" . markdown-mode)
-           ("\\.markdown\\'" . markdown-mode)))
-#+END_SRC
-
 * Dotfiles
 
 Equivalent of my "ve" binding that would edit my vimrc:
@@ -1465,105 +1557,6 @@ Equivalent of my "ve" binding that would edit my vimrc:
     (find-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/init.org")))
 
   (bind-key "ve" 'md/dotfiles-edit md/leader-map)
-#+END_SRC
-
-* Python
-
-Elpy combines a few different Python packages / features.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package elpy
-    :defer 1  ;; Defer this just because it's slow to load.
-    :init
-    (progn
-      (add-hook 'elpy-mode-hook
-                (lambda ()
-                  (set (make-local-variable 'company-backends) '(elpy-company-backend)))))
-    :config
-    (progn
-      (elpy-enable)
-
-      ;; - Remove elpy-module-flymake because I already have flymake configured.
-      ;; - Remove elpy-module-highlight indentation because it's distracting.
-      (setq elpy-modules (list
-                          'elpy-module-sane-defaults
-                          'elpy-module-company
-                          'elpy-module-eldoc
-                          'elpy-module-pyvenv
-                          'elpy-module-yasnippet))
-
-      (setq elpy-rpc-backend "jedi")
-
-      ;; Setup leader map for python
-      (evil-define-key 'normal python-mode-map
-        (kbd "SPC") md/python-mode-leader-map
-        "gk" 'python-nav-backward-defun
-        "gj" 'python-nav-forward-defun)
-
-      (evil-define-key 'insert elpy-mode-map (kbd "C-n") 'elpy-company-backend)
-
-      (if (string= major-mode "python-mode")
-        (progn
-          ;; If I've opened a Python file make sure everything loads properly
-          ;; on this buffer.
-          (python-mode)
-          (elpy-mode 1))))
-
-    :bind (:map md/python-mode-leader-map
-                ("SPC v" . pyvenv-workon)
-                ("SPC V" . pyvenv-activate)
-                ("SPC f" . elpy-format-code)
-                ("SPC t" . elpy-test)
-                ("SPC d" . elpy-doc)
-                ("SPC g" . elpy-goto-definition-other-window)
-                ("SPC r" . elpy-multiedit-python-symbol-at-point)))
-
-#+END_SRC
-
-* Golang
-#+BEGIN_SRC emacs-lisp
-  (use-package go-mode
-    :config
-    (progn
-      (add-hook 'before-save-hook 'gofmt-before-save)
-
-      ;; Make sure SPC uses the go-mode leader map rather than my default leader
-      ;; map
-      (evil-define-key 'normal go-mode-map
-        (kbd "SPC") md/go-mode-leader-map))
-
-    :bind (:map md/go-mode-leader-map
-                ("SPC =" . gofmt)))
-
-  (use-package company-go
-    :init
-    (progn
-      (add-hook 'go-mode-hook
-                (lambda ()
-                  (set (make-local-variable 'company-backends) '(company-go))))))
-
-#+END_SRC
-
-* Yaml
-Not sure if this provides anything beyond syntax highlighting, but that's enough
-for now:
-
-#+BEGIN_SRC emacs-lisp
-  (use-package yaml-mode)
-#+END_SRC
-
-* Lua
-
-#+BEGIN_SRC emacs-lisp
-  (use-package lua-mode)
-#+END_SRC
-
-* Terraform
-Not sure if this provides anything beyond syntax highlighting, but that's enough
-for now:
-
-#+BEGIN_SRC emacs-lisp
-  (use-package terraform-mode)
 #+END_SRC
 
 * Profile Emacs startup
@@ -1646,3 +1639,51 @@ Close paren for the wrapping ~let~:
 - [ ] git gutter mode should be by default for every opened file
 - [ ] go mode
 - [ ] helm - how to kill buffer?
+- [ ] org - shorcut to add =- [ ]= syntax to beginning of line
+- [ ] cask?
+- [2016-09-24 Sat] elscreen not actively developed
+- [ ] spacemacs - provide anything good?
+  - which-key - I should name prefixes
+  - [ ] paradox-list-packages
+  - [ ] a prefix - applications
+  - [ ] list-processes?
+  - [ ] undo tree visualiser?
+  - [ ] ! to execute shell command
+  - [ ] b prefix - buffers
+    - next-useful-buffer / previous
+    - buffer-micro-state looks handy
+    - read-only toggle
+    - s to switch to scratch
+    - y to copy buffer to clipboard
+  - [ ] c - compiling
+    - helm-make-projectile
+    - helm-make
+    - compile
+    - recompile
+    - projectile-compile is under 
+  - [ ] f - file prefix
+    - dired jump
+    - open in external app
+    - neotree toggle looks cool
+  - [ ] i - insert prefix
+  - [ ] n - narrow commands
+  - [ ] p - projectile run shell
+    - and async
+    - projectile-compile
+    - multi-occur
+    - neotree
+  - [ ] q - some quit functions
+    - kill-emacs
+    - restart-emacs-resume-layouts?
+  - [ ] s - search prefix
+    - "smart" search?
+  - [ ] S - symbol highlight. Is this useful?
+  - [ ] t / T - various toggles, eg. linum, line wrapping. Perhaps solarized bg mode.
+  - [ ] w - window commands. The popup window looks like it might be good
+    - for messages, compiling, generally temp stuff.
+  - [ ] z - zoom text
+- [ ] Emacs 25 / package upgrades
+  - [2016-09-24 Sat] just upgraded everything
+  - [ ] not getting native colours in org-mode code blocks, despite
+    fontify-natively t.
+  - [ ] faces buffer doesn't show right face colors - they're all white-/grey.

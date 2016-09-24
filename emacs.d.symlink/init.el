@@ -8,12 +8,6 @@
     (getenv "DOTFILES")
     (concat (expand-file-name "~") "/dotfiles")))
 
-;; NOTE - this is old, maybe I can remove it
-(defun md/refresh-packages ()
-  (interactive)
-  (when (not package-archive-contents)
-    (package-refresh-contents)))
-
 (package-initialize)
 
 (setq package-archives
@@ -162,11 +156,6 @@
 
 (setq message-log-max 10000)
 
-;; Backup everything to the same directory, rather than dropping
-;; files all over the place
-(setq backup-directory-alist
-      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
-
 (if (eq system-type 'darwin)
     (setq
 
@@ -184,6 +173,11 @@
      ;; cmd key for Meta bindings. This is easier to reach than the default Meta
      ;; key (which is alt).
      ns-command-modifier 'meta))
+
+;; Backup everything to the same directory, rather than dropping
+;; files all over the place
+(setq backup-directory-alist
+      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
 
 (defun md/strip-whitespace-and-save ()
   (interactive)
@@ -344,7 +338,7 @@
    (setq
     ace-jump-mode-move-keys '(?f ?j ?d ?k ?s ?l ?a ?\; ?g ?h ?r ?u ?e ?i ?w ?o ?t ?y ?b ?v ?n ?c ?m ?x)
     ace-jump-mode-scope 'window  ; If scope is wider than window performance drops a lot
-    ace-jump-word-mode-use-query-char))
+    ace-jump-word-mode-use-query-char nil))
 
  :bind (:map evil-normal-state-map
              ("f" . nil)
@@ -365,55 +359,6 @@
     (key-chord-define evil-insert-state-map "jj" 'md/normal-state-and-save)
     (key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
     (key-chord-mode 1)))
-
-(use-package dired
-  :demand t
-  :init
-  (progn
-    ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
-    ;; makes dired-mode-map an overriding keymap, which means that the default
-    ;; dired-mode bindings take precendence over the normal-state bindings.
-    ;;
-    ;; There's no obvious way to undo that code, so I'm just replacing
-    ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
-    (setq dired-mode-map (make-sparse-keymap))
-    (evil-define-key 'normal dired-mode-map
-      "q" 'quit-window
-      "d" 'dired-flag-file-deletion
-      "u" 'dired-unmark
-      "D" 'dired-do-delete
-      (kbd "RET") 'dired-find-file
-      "J" 'dired-jump
-      "o" 'dired-find-file-other-window
-      "R" 'dired-do-rename
-      "C" 'dired-do-copy
-      "i" 'dired-maybe-insert-subdir
-      "+" 'dired-create-directory)))
-
-(use-package fic-mode
- :defer 1
- :init
- (progn
-   (add-hook 'prog-mode-hook 'fic-mode))
- :config
- (progn
-   ;; NOTE: fic-mode doesn't seem to fontify the buffer, so words don't appear
-   ;; highlighted unless either something else fontifies the buffer, or we do it
-   ;; manually. Would like to improve this.
-   ;;
-   ;; FIX: fic-mode doesn't seem to identify words on the same line as my cursor
-   ;; when I change theme and then fontify the buffer. All other lines seem fine.
-
-   (setq fic-highlighted-words
-         '("TODO" "FIX" "FIXME" "BUG" "WARN" "WARNING" "HACK" "NOTE" "ERROR" "MATT"))
-
-   ;; By default this includes font-lock-string-face, but I don't want strings to
-   ;; have these words formatted.
-   (setq fic-activated-faces '(font-lock-doc-face font-lock-comment-face))))
-
-(defun md/insert-todo-regexp ()
-  (interactive)
-  (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
 
 (use-package helm
     :defer 5
@@ -468,6 +413,364 @@
   :bind (:map md/leader-map
               ("ag" . md/ag)))
 
+(use-package dired
+  :demand t
+  :init
+  (progn
+    ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
+    ;; makes dired-mode-map an overriding keymap, which means that the default
+    ;; dired-mode bindings take precendence over the normal-state bindings.
+    ;;
+    ;; There's no obvious way to undo that code, so I'm just replacing
+    ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
+    (setq dired-mode-map (make-sparse-keymap))
+    (evil-define-key 'normal dired-mode-map
+      "q" 'quit-window
+      "d" 'dired-flag-file-deletion
+      "u" 'dired-unmark
+      "D" 'dired-do-delete
+      (kbd "RET") 'dired-find-file
+      "J" 'dired-jump
+      "o" 'dired-find-file-other-window
+      "R" 'dired-do-rename
+      "C" 'dired-do-copy
+      "i" 'dired-maybe-insert-subdir
+      "+" 'dired-create-directory)))
+
+(use-package restclient
+  :defer 1
+  :mode (("\\.http\\'" . restclient-mode)))
+
+(use-package restclient-helm :defer 5)
+
+(use-package company-restclient
+  :config
+  (progn
+      (add-to-list 'company-backends 'company-restclient)))
+
+(use-package company
+  :defer 2
+  :config
+  (progn
+    ;; Bind here rather than in ":bind" to avoid complaints about
+    ;; company-mode-map not existing.
+    (bind-key "C-n" 'company-select-next company-active-map)
+    (bind-key "C-p" 'company-select-previous company-active-map)
+
+    ;; By default this performs company-complete-common, but I don't
+    ;; think I'll want to use that
+    (bind-key "TAB" 'company-complete-selection company-active-map)
+
+    (bind-key "C-n" 'company-complete evil-insert-state-map)
+
+    (global-company-mode)))
+
+(use-package flycheck
+  :init
+  (progn
+    (add-hook 'prog-mode-hook 'flycheck-mode))
+  :config
+  (progn
+    (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
+    (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
+
+    (setq flycheck-flake8rc ".config/flake8"
+          flycheck-highlighting-mode 'symbols
+
+          ;; defaults to 0.9, which is too slow
+          flycheck-display-errors-delay 0.1
+
+          ;; There's a short delay when flycheck runs, which causes the modeline to change
+          ;; its format (or in my custom powerline stuff, to disappear briefly). It's
+          ;; super annoying if this happens at random points during editing, so change it
+          ;; to only happen on save (and when enabling the mode). This is quite similar to how
+          ;; I had it setup in vim.
+          flycheck-check-syntax-automatically '(save mode-enabled)
+
+          flycheck-mode-line-prefix nil)
+
+    ;; For some reason in the flycheck mode list map it just uses all vi
+    ;; keys. Mostly this is fine but I need an easy way to quit.
+    (evil-define-key 'normal flycheck-error-list-mode-map "q" 'quit-window))
+  :bind (:map md/leader-map
+              ;; S prefix, ie. "syntax"
+              ("s <RET>" . flycheck-mode)
+              ("sl" . flycheck-list-errors)
+              ("sn" . flycheck-next-error)
+              ("sj" . flycheck-next-error)
+              ("sp" . flycheck-previous-error)
+              ("sk" . flycheck-previous-error)
+              ))
+
+(use-package projectile
+ :config
+ (progn
+   (setq projectile-file-exists-local-cache-expire 30
+         projectile-enable-caching t
+         projectile-globally-ignored-file-suffixes
+         '("pyc"
+           "png"
+           "jpg"
+           "gif"
+           "zip"
+           "Trash"
+           "swp"
+           "swo"
+           "DS_Store"
+           "swn"
+           "ico"
+           "o"
+           "elc"
+           "a"
+           "so"
+           "exe"
+           "egg-info"
+           "egg"
+           "dmg")
+         projectile-globally-ignored-directories
+         '(".tmp"
+           ".coverage"
+           ".git"
+           ".hg"
+           ".idea"
+           ".flsckout"
+           ".bzr"
+           "_darcs"
+           ".tox"
+           ".svn"
+           ".egg"
+           ".egg-info"
+           ".sass-cache"
+           "__pycache__"
+           ".webassets-cache"
+           "node_modules"
+           "venv"
+           "elpa"
+           ".stack-work"))
+   (projectile-global-mode))
+ :bind (:map md/leader-map
+       ("j!" . projectile-invalidate-cache)
+       ("jk" . projectile-kill-buffers)))
+
+(use-package helm-projectile
+  :init (progn
+          ;; This has to be set before loading helm-projectile
+          (setq helm-projectile-fuzzy-match nil))
+  :bind (:map md/leader-map
+              ("jj" . helm-projectile-switch-project)
+              ("jag" . helm-projectile-ag)
+              ("jb" . helm-projectile-switch-to-buffer)
+              ("jf" . helm-projectile-find-file)))
+
+(use-package git-gutter
+ :init
+ (progn
+   (defun md/set-sensible-column ()
+     "Unless file is too big, either use git-gutter mode (when in
+git dir) or linum mode"
+     (interactive)
+     (when (< (count-lines (point-min) (point-max)) 2000)
+       (if (string= "git" (downcase (format "%s" (vc-backend
+                                                  (buffer-file-name
+                                                   (current-buffer))))))
+           (git-gutter-mode 1)
+         (linum-mode 1))))
+   (add-hook 'find-file-hook 'md/set-sensible-column))
+ :config
+ (progn
+   (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
+         git-gutter:modified-sign "~"
+         git-gutter:added-sign "+"
+         git-gutter:deleted-sign "-"
+
+         ;; This ensures the separator is always displayed
+         git-gutter:unchanged-sign " "
+         git-gutter:always-show-separator t
+
+         ;; Without this, there's no space between the git-gutter column and the code.
+         git-gutter:separator-sign " "))
+ :bind (:map md/leader-map
+       ("g <RET>" . git-gutter-mode)
+       ("gk" . git-gutter:previous-hunk)
+       ("gp" . git-gutter:previous-hunk)
+       ("gj" . git-gutter:next-hunk)
+       ("gn" . git-gutter:next-hunk)
+       ("gadd" . git-gutter:stage-hunk)
+       ("grev" . git-gutter:revert-hunk)))
+
+(use-package magit
+ :config
+ (progn
+   (evil-set-initial-state 'magit-blame-mode 'normal)
+   (evil-set-initial-state 'magit-revision-mode 'normal)
+
+   ;; I don't know why, but by default I can't get magit-blame to adhere to my
+   ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
+   ;; calling evil-normal-state fixes it.
+   (add-hook 'magit-blame-mode-hook 'evil-normal-state)
+   (evil-define-key 'normal magit-blame-mode-map
+     (kbd "<RET>") 'magit-show-commit
+     "q" 'magit-blame-quit
+     "gj" 'magit-blame-next-chunk
+     "gn" 'magit-blame-next-chunk
+     "gk" 'magit-blame-previous-chunk
+     "gp" 'magit-blame-previous-chunk)
+
+   (add-hook 'magit-revision-mode-hook 'evil-normal-state)
+   (evil-define-key 'normal magit-revision-mode-map
+     (kbd "<RET>") 'magit-diff-visit-file
+     "q" 'magit-mode-bury-buffer))  ;; This quits
+
+ :bind (:map md/leader-map
+       ("gmag" . magit-dispatch-popup)
+       ("gblame" . magit-blame)
+
+       ;; NOTE - this doesn't play nicely with mode-line:
+       ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
+       ;; - https://github.com/syl20bnr/spacemacs/issues/2172
+       ("gco" . magit-checkout)
+
+       ("gdiff" . magit-ediff-popup)))
+
+(use-package github-browse-file
+  :config
+  (progn
+    (setq github-browse-file-show-line-at-point t))
+  :bind (:map md/leader-map
+        ("go" . github-browse-file)))
+
+(use-package ediff
+ :defer 1
+ :config
+ (progn
+   ;; TODO - I want ediff to have evil-like bindings
+   (setq ediff-split-window-function 'split-window-horizontally)))
+
+(use-package fic-mode
+ :defer 1
+ :init
+ (progn
+   (add-hook 'prog-mode-hook 'fic-mode))
+ :config
+ (progn
+   ;; NOTE: fic-mode doesn't seem to fontify the buffer, so words don't appear
+   ;; highlighted unless either something else fontifies the buffer, or we do it
+   ;; manually. Would like to improve this.
+   ;;
+   ;; FIX: fic-mode doesn't seem to identify words on the same line as my cursor
+   ;; when I change theme and then fontify the buffer. All other lines seem fine.
+
+   (setq fic-highlighted-words
+         '("TODO" "FIX" "FIXME" "BUG" "WARN" "WARNING" "HACK" "NOTE" "ERROR" "MATT"))
+
+   ;; By default this includes font-lock-string-face, but I don't want strings to
+   ;; have these words formatted.
+   (setq fic-activated-faces '(font-lock-doc-face font-lock-comment-face))))
+
+(defun md/insert-todo-regexp ()
+  (interactive)
+  (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
+
+(use-package paren
+ :defer 1
+ :init (progn
+        (add-hook 'prog-mode-hook 'show-paren-mode))
+ :config
+ (progn
+   (setq show-paren-style 'parenthesis
+         blink-matching-paren nil
+         blink-matching-paren-on-screen nil)))
+
+(use-package rainbow-mode
+  :defer 1
+  :config
+  (progn
+     (add-hook 'css-mode-hook 'rainbow-mode)
+     (add-hook 'help-mode-hook 'rainbow-mode)
+     (add-hook 'html-mode-hook 'rainbow-mode)
+     (add-hook 'prog-mode-hook 'rainbow-mode)))
+
+(use-package elpy
+  :defer 1  ;; Defer this just because it's slow to load.
+  :init
+  (progn
+    (add-hook 'elpy-mode-hook
+              (lambda ()
+                (set (make-local-variable 'company-backends) '(elpy-company-backend)))))
+  :config
+  (progn
+    (elpy-enable)
+
+    ;; - Remove elpy-module-flymake because I already have flymake configured.
+    ;; - Remove elpy-module-highlight indentation because it's distracting.
+    (setq elpy-modules (list
+                        'elpy-module-sane-defaults
+                        'elpy-module-company
+                        'elpy-module-eldoc
+                        'elpy-module-pyvenv
+                        'elpy-module-yasnippet))
+
+    (setq elpy-rpc-backend "jedi")
+
+    ;; Setup leader map for python
+    (evil-define-key 'normal python-mode-map
+      (kbd "SPC") md/python-mode-leader-map
+      "gk" 'python-nav-backward-defun
+      "gj" 'python-nav-forward-defun)
+
+    (evil-define-key 'insert elpy-mode-map (kbd "C-n") 'elpy-company-backend)
+
+    (if (string= major-mode "python-mode")
+      (progn
+        ;; If I've opened a Python file make sure everything loads properly
+        ;; on this buffer.
+        (python-mode)
+        (elpy-mode 1))))
+
+  :bind (:map md/python-mode-leader-map
+              ("SPC v" . pyvenv-workon)
+              ("SPC V" . pyvenv-activate)
+              ("SPC f" . elpy-format-code)
+              ("SPC t" . elpy-test)
+              ("SPC d" . elpy-doc)
+              ("SPC g" . elpy-goto-definition-other-window)
+              ("SPC r" . elpy-multiedit-python-symbol-at-point)))
+
+(use-package go-mode
+  :config
+  (progn
+    (add-hook 'before-save-hook 'gofmt-before-save)
+
+    ;; Make sure SPC uses the go-mode leader map rather than my default leader
+    ;; map
+    (evil-define-key 'normal go-mode-map
+      (kbd "SPC") md/go-mode-leader-map))
+
+  :bind (:map md/go-mode-leader-map
+              ("SPC =" . gofmt)))
+
+(use-package company-go
+  :init
+  (progn
+    (add-hook 'go-mode-hook
+              (lambda ()
+                (set (make-local-variable 'company-backends) '(company-go))))))
+
+(use-package yaml-mode)
+
+(use-package lua-mode)
+
+(use-package terraform-mode)
+
+(use-package web-mode
+  :defer 1)
+
+(use-package markdown-mode
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode)))
+
 (use-package help-fns+ :defer 1)
 
 (evil-set-initial-state 'help-mode 'normal)
@@ -489,15 +792,11 @@
           which-key-show-operator-state-maps t)
     (which-key-mode)))
 
-(use-package paren
- :defer 1
- :init (progn
-        (add-hook 'prog-mode-hook 'show-paren-mode))
- :config
- (progn
-   (setq show-paren-style 'parenthesis
-         blink-matching-paren nil
-         blink-matching-paren-on-screen nil)))
+(use-package free-keys
+  :defer 10
+  :config
+    (progn
+      (bind-key "@" 'free-keys help-map)))
 
 (use-package elscreen
  :defer 1
@@ -807,224 +1106,6 @@
    (md/powerline-setup)
    (md/powerline-reset)))
 
-(use-package free-keys
-  :defer 10
-  :config
-    (progn
-      (bind-key "@" 'free-keys help-map)))
-
-(use-package company
-  :defer 2
-  :config
-  (progn
-    ;; Bind here rather than in ":bind" to avoid complaints about
-    ;; company-mode-map not existing.
-    (bind-key "C-n" 'company-select-next company-active-map)
-    (bind-key "C-p" 'company-select-previous company-active-map)
-
-    ;; By default this performs company-complete-common, but I don't
-    ;; think I'll want to use that
-    (bind-key "TAB" 'company-complete-selection company-active-map)
-
-    (bind-key "C-n" 'company-complete evil-insert-state-map)
-
-    (global-company-mode)))
-
-(use-package flycheck
-  :init
-  (progn
-    (add-hook 'prog-mode-hook 'flycheck-mode))
-  :config
-  (progn
-    (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
-    (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
-
-    (setq flycheck-flake8rc ".config/flake8"
-          flycheck-highlighting-mode 'symbols
-
-          ;; defaults to 0.9, which is too slow
-          flycheck-display-errors-delay 0.1
-
-          ;; There's a short delay when flycheck runs, which causes the modeline to change
-          ;; its format (or in my custom powerline stuff, to disappear briefly). It's
-          ;; super annoying if this happens at random points during editing, so change it
-          ;; to only happen on save (and when enabling the mode). This is quite similar to how
-          ;; I had it setup in vim.
-          flycheck-check-syntax-automatically '(save mode-enabled)
-
-          flycheck-mode-line-prefix nil)
-
-    ;; For some reason in the flycheck mode list map it just uses all vi
-    ;; keys. Mostly this is fine but I need an easy way to quit.
-    (evil-define-key 'normal flycheck-error-list-mode-map "q" 'quit-window))
-  :bind (:map md/leader-map
-              ;; S prefix, ie. "syntax"
-              ("s <RET>" . flycheck-mode)
-              ("sl" . flycheck-list-errors)
-              ("sn" . flycheck-next-error)
-              ("sj" . flycheck-next-error)
-              ("sp" . flycheck-previous-error)
-              ("sk" . flycheck-previous-error)
-              ))
-
-(use-package projectile
- :config
- (progn
-   (setq projectile-file-exists-local-cache-expire 30
-         projectile-enable-caching t
-         projectile-globally-ignored-file-suffixes
-         '("pyc"
-           "png"
-           "jpg"
-           "gif"
-           "zip"
-           "Trash"
-           "swp"
-           "swo"
-           "DS_Store"
-           "swn"
-           "ico"
-           "o"
-           "elc"
-           "a"
-           "so"
-           "exe"
-           "egg-info"
-           "egg"
-           "dmg")
-         projectile-globally-ignored-directories
-         '(".tmp"
-           ".coverage"
-           ".git"
-           ".hg"
-           ".idea"
-           ".flsckout"
-           ".bzr"
-           "_darcs"
-           ".tox"
-           ".svn"
-           ".egg"
-           ".egg-info"
-           ".sass-cache"
-           "__pycache__"
-           ".webassets-cache"
-           "node_modules"
-           "venv"
-           "elpa"
-           ".stack-work"))
-   (projectile-global-mode))
- :bind (:map md/leader-map
-       ("j!" . projectile-invalidate-cache)
-       ("jk" . projectile-kill-buffers)))
-
-(use-package helm-projectile
-  :init (progn
-          ;; This has to be set before loading helm-projectile
-          (setq helm-projectile-fuzzy-match nil))
-  :bind (:map md/leader-map
-              ("jj" . helm-projectile-switch-project)
-              ("jag" . helm-projectile-ag)
-              ("jb" . helm-projectile-switch-to-buffer)
-              ("jf" . helm-projectile-find-file)))
-
-(use-package git-gutter
- :init
- (progn
-   (defun md/set-sensible-column ()
-     "Unless file is too big, either use git-gutter mode (when in
-git dir) or linum mode"
-     (interactive)
-     (when (< (count-lines (point-min) (point-max)) 2000)
-       (if (string= "git" (downcase (format "%s" (vc-backend
-                                                  (buffer-file-name
-                                                   (current-buffer))))))
-           (git-gutter-mode 1)
-         (linum-mode 1))))
-   (add-hook 'find-file-hook 'md/set-sensible-column))
- :config
- (progn
-   (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
-         git-gutter:modified-sign "~"
-         git-gutter:added-sign "+"
-         git-gutter:deleted-sign "-"
-
-         ;; This ensures the separator is always displayed
-         git-gutter:unchanged-sign " "
-         git-gutter:always-show-separator t
-
-         ;; Without this, there's no space between the git-gutter column and the code.
-         git-gutter:separator-sign " "))
- :bind (:map md/leader-map
-       ("g <RET>" . git-gutter-mode)
-       ("gk" . git-gutter:previous-hunk)
-       ("gp" . git-gutter:previous-hunk)
-       ("gj" . git-gutter:next-hunk)
-       ("gn" . git-gutter:next-hunk)
-       ("gadd" . git-gutter:stage-hunk)
-       ("grev" . git-gutter:revert-hunk)))
-
-(use-package magit
- :config
- (progn
-   (evil-set-initial-state 'magit-blame-mode 'normal)
-   (evil-set-initial-state 'magit-revision-mode 'normal)
-
-   ;; I don't know why, but by default I can't get magit-blame to adhere to my
-   ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
-   ;; calling evil-normal-state fixes it.
-   (add-hook 'magit-blame-mode-hook 'evil-normal-state)
-   (evil-define-key 'normal magit-blame-mode-map
-     (kbd "<RET>") 'magit-show-commit
-     "q" 'magit-blame-quit
-     "gj" 'magit-blame-next-chunk
-     "gn" 'magit-blame-next-chunk
-     "gk" 'magit-blame-previous-chunk
-     "gp" 'magit-blame-previous-chunk)
-
-   (add-hook 'magit-revision-mode-hook 'evil-normal-state)
-   (evil-define-key 'normal magit-revision-mode-map
-     (kbd "<RET>") 'magit-diff-visit-file
-     "q" 'magit-mode-bury-buffer))  ;; This quits
-
- :bind (:map md/leader-map
-       ("gmag" . magit-dispatch-popup)
-       ("gblame" . magit-blame)
-
-       ;; NOTE - this doesn't play nicely with mode-line:
-       ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
-       ;; - https://github.com/syl20bnr/spacemacs/issues/2172
-       ("gco" . magit-checkout)
-
-       ("gdiff" . magit-ediff-popup)))
-
-(use-package git-browse-file
-  :config
-  (progn
-    (setq github-browse-file-show-line-at-point t))
-  :bind (:map md/leader-map
-        ("go" . github-browse-file)))
-
-(use-package web-mode
-  :defer 1)
-
-(use-package restclient
-  :defer 1
-  :mode (("\\.http\\'" . restclient-mode)))
-
-(use-package restclient-helm :defer 5)
-
-(use-package company-restclient
-  :config
-  (progn
-      (add-to-list 'company-backends 'company-restclient)))
-
-(use-package ediff
- :defer 1
- :config
- (progn
-   ;; TODO - I want ediff to have evil-like bindings
-   (setq ediff-split-window-function 'split-window-horizontally)))
-
 (use-package color-theme-solarized
  :demand t
  :ensure nil
@@ -1049,98 +1130,11 @@ git dir) or linum mode"
         ("sol" . solarized-toggle-theme-mode)
         ("chl" . solarized-toggle-comment-visibility)))
 
-(use-package rainbow-mode
-  :defer 1
-  :config
-  (progn
-     (add-hook 'css-mode-hook 'rainbow-mode)
-     (add-hook 'help-mode-hook 'rainbow-mode)
-     (add-hook 'html-mode-hook 'rainbow-mode)
-     (add-hook 'prog-mode-hook 'rainbow-mode)))
-
-(use-package markdown-mode
-  :commands (markdown-mode gfm-mode)
-  :mode (("README\\.md\\'" . gfm-mode)
-         ("\\.md\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode)))
-
 (defun md/dotfiles-edit ()
   (interactive)
   (find-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/init.org")))
 
 (bind-key "ve" 'md/dotfiles-edit md/leader-map)
-
-(use-package elpy
-  :defer 1  ;; Defer this just because it's slow to load.
-  :init
-  (progn
-    (add-hook 'elpy-mode-hook
-              (lambda ()
-                (set (make-local-variable 'company-backends) '(elpy-company-backend)))))
-  :config
-  (progn
-    (elpy-enable)
-
-    ;; - Remove elpy-module-flymake because I already have flymake configured.
-    ;; - Remove elpy-module-highlight indentation because it's distracting.
-    (setq elpy-modules (list
-                        'elpy-module-sane-defaults
-                        'elpy-module-company
-                        'elpy-module-eldoc
-                        'elpy-module-pyvenv
-                        'elpy-module-yasnippet))
-
-    (setq elpy-rpc-backend "jedi")
-
-    ;; Setup leader map for python
-    (evil-define-key 'normal python-mode-map
-      (kbd "SPC") md/python-mode-leader-map
-      "gk" 'python-nav-backward-defun
-      "gj" 'python-nav-forward-defun)
-
-    (evil-define-key 'insert elpy-mode-map (kbd "C-n") 'elpy-company-backend)
-
-    (if (string= major-mode "python-mode")
-      (progn
-        ;; If I've opened a Python file make sure everything loads properly
-        ;; on this buffer.
-        (python-mode)
-        (elpy-mode 1))))
-
-  :bind (:map md/python-mode-leader-map
-              ("SPC v" . pyvenv-workon)
-              ("SPC V" . pyvenv-activate)
-              ("SPC f" . elpy-format-code)
-              ("SPC t" . elpy-test)
-              ("SPC d" . elpy-doc)
-              ("SPC g" . elpy-goto-definition-other-window)
-              ("SPC r" . elpy-multiedit-python-symbol-at-point)))
-
-(use-package go-mode
-  :config
-  (progn
-    (add-hook 'before-save-hook 'gofmt-before-save)
-
-    ;; Make sure SPC uses the go-mode leader map rather than my default leader
-    ;; map
-    (evil-define-key 'normal go-mode-map
-      (kbd "SPC") md/go-mode-leader-map))
-
-  :bind (:map md/go-mode-leader-map
-              ("SPC =" . gofmt)))
-
-(use-package company-go
-  :init
-  (progn
-    (add-hook 'go-mode-hook
-              (lambda ()
-                (set (make-local-variable 'company-backends) '(company-go))))))
-
-(use-package yaml-mode)
-
-(use-package lua-mode)
-
-(use-package terraform-mode)
 
 (use-package esup
   :defer 5)
