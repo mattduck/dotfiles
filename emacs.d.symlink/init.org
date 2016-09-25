@@ -5,11 +5,12 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
 [[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
 
 #+BEGIN_SRC emacs-lisp :results silent :tangle no
-(setq-local org-confirm-babel-evaluate nil)
-(org-babel-tangle nil "init.el")
+;; TODO - function to eval this from anywhere
+  (setq-local org-confirm-babel-evaluate nil)
+  (org-babel-tangle nil "init.el")
 
-;; Byte-compiling seems to take ~0.1s off startup time.
-(byte-compile-file "init.el")
+  ;; Byte-compiling seems to take ~0.1s off startup time.
+  (byte-compile-file "init.el")
 #+END_SRC
 
 * Initialise
@@ -189,7 +190,7 @@ linum-format, but adds a space so there is some separation:
 (use-package linum
   :defer 1
   :bind (:map md/leader-map
-         ("ln" . linum-mode)))
+         ("tn" . linum-mode)))
 #+END_SRC
 
 ** Highlight cursor line
@@ -370,7 +371,7 @@ Increase the number of messages:
 (setq backup-directory-alist
       `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
 #+END_SRC
-* General utils
+* Misc utils
 ** Odd functions
 
 #+BEGIN_SRC emacs-lisp
@@ -527,7 +528,12 @@ I seem to use =describe-face= a lot:
 
           ;; TODO behave like vim - ie. comment the line or the selection
           ("cc" . comment-or-uncomment-region)
-          ("k" . kill-buffer)
+
+          ("bk" . kill-buffer)
+          ("bi" . md/file-info)
+          ("bw" . save-buffer)
+          ("bW" . md/strip-whitespace-and-save)
+          ("br" . read-only-mode)
 
           ("ef" . eval-defun)
           ("ee" . eval-last-sexp)  ; Bound to e because I'm used to C-x e
@@ -535,11 +541,7 @@ I seem to use =describe-face= a lot:
           ("er" . eval-region)
           ("ex" . md/fontify-buffer)  ; It's sort-of an eval
 
-          ("check" . flyspell-mode)
-
-          ("lw" . toggle-truncate-lines)
-
-          ("i" . md/file-info)
+          ("tw" . toggle-truncate-lines)
 
           ;; Same as vim - insert and save
           ("o" . md/insert-blank-line-before)
@@ -634,7 +636,7 @@ actually use it to insert anything in insert mode.
            ([remap completion-at-point] . helm-lisp-completion)
 
            :map md/leader-map
-           ("b" . helm-buffers-list)
+           ("bb" . helm-buffers-list)
            ("f" . helm-find-files)
            ("x" . helm-M-x)
            ("p" . helm-mini)
@@ -679,13 +681,25 @@ evil mode, and just add in the dired bindings that I want.
         "d" 'dired-flag-file-deletion
         "u" 'dired-unmark
         "D" 'dired-do-delete
-        (kbd "RET") 'dired-find-file
+        (kbd "RET") 'dired-single-buffer
         "J" 'dired-jump
         "o" 'dired-find-file-other-window
         "R" 'dired-do-rename
         "C" 'dired-do-copy
         "i" 'dired-maybe-insert-subdir
         "+" 'dired-create-directory)))
+#+END_SRC
+
+*** Dired-single
+
+I don't use Dired much and would prefer it to be contained to fewer buffers.
+Would like this to work with popwin, but currently pressing RET on a directory 
+causes it to jump out of the popwin window.
+
+#+BEGIN_SRC emacs-lisp
+(use-package dired-single
+  :demand t)
+
 #+END_SRC
 
 ** Restclient
@@ -779,9 +793,10 @@ Company seems to work nicely without much configuration.
                 ("sj" . flycheck-next-error)
                 ("sp" . flycheck-previous-error)
                 ("sk" . flycheck-previous-error)
-                ))
+                ("ss" . flyspell-mode)))
 
 #+END_SRC
+
 ** Projectile
 *** Base projectile
 #+BEGIN_SRC emacs-lisp
@@ -937,8 +952,8 @@ eg. one terminal popwin per project.
          ("gp" . git-gutter:previous-hunk)
          ("gj" . git-gutter:next-hunk)
          ("gn" . git-gutter:next-hunk)
-         ("gadd" . git-gutter:stage-hunk)
-         ("grev" . git-gutter:revert-hunk)))
+         ("g+" . git-gutter:stage-hunk)
+         ("g-" . git-gutter:revert-hunk)))
 
 #+END_SRC
 
@@ -968,15 +983,15 @@ eg. one terminal popwin per project.
        "q" 'magit-mode-bury-buffer))  ;; This quits
 
    :bind (:map md/leader-map
-         ("gmag" . magit-dispatch-popup)
-         ("gblame" . magit-blame)
+         ("gm" . magit-dispatch-popup)
+         ("gb" . magit-blame)
 
          ;; NOTE - this doesn't play nicely with mode-line:
          ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
          ;; - https://github.com/syl20bnr/spacemacs/issues/2172
-         ("gco" . magit-checkout)
+         ("gc" . magit-checkout)
 
-         ("gdiff" . magit-ediff-popup)))
+         ("gd" . magit-ediff-popup)))
 #+END_SRC
 
 *** github-browse-file
@@ -1218,11 +1233,29 @@ easier to discover features / work out where I am:
     :config
     (progn
       (setq which-key-idle-delay 0.5
-            which-key-max-description-length 30)
+            which-key-max-description-length 30
+            which-key-allow-evil-operators nil
+            which-key-show-operator-state-maps nil)
 
-      ;; Alow show evil motion keys. This is an experimental feature.
-      (setq which-key-allow-evil-operators t
-            which-key-show-operator-state-maps t)
+      ;; Use ESC/C-g to quit which-key. Not sure why the default key is 'a'.
+      (bind-key "ESC" 'which-key-abort which-key-C-h-map)
+      (bind-key "C-g" 'which-key-abort which-key-C-h-map)
+
+      ;; TODO - extend these
+      (which-key-declare-prefixes
+        "SPC b" "buffers"
+        "SPC c" "comments"
+        "SPC C" "compile"
+        "SPC e" "eval"
+        "SPC g" "git"
+        "SPC h" "help"
+        "SPC j" "project"
+        "SPC j ;" "project-popwin"
+        "SPC n" "narrow"
+        "SPC s" "flycheck"
+        "SPC t" "toggle-misc"
+        "SPC v" "dotfiles"
+        "SPC ;" "popwin")
       (which-key-mode)))
 #+END_SRC
 
@@ -1336,6 +1369,14 @@ edges.
              (save-window-excursion
                (call-interactively 'eshell)))))
 
+      (defun md/popwin-dired-single ()
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (popwin:display-buffer
+         (or (get-buffer dired-single-magic-buffer-name)
+             (save-window-excursion
+               (call-interactively 'dired-single-magic-buffer)))))
+
       ;; Disable popwin-mode in an active Helm session, to prevent it from conflicting
       ;; with Helm windows.
       (add-hook 'helm-after-initialize-hook
@@ -1348,12 +1389,12 @@ edges.
 
       ;; TODO why isn't dired working? Judging by the examples it should, but
       ;; dired buffers just appear in their own windows. Tried on 24.5 and 25.1.
-      (push '(dired-mode :dedicated t :height 15) popwin:special-display-config)
+      (push '(dired-mode :dedicated nil :width 40) popwin:special-display-config)
 
       ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
       ;; Generally I only ever want one popwin window open.
       (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
-      (push '("^\*helm.+\*$" :regexp t :dedicated t :height 15) popwin:special-display-config)
+      (push '("^\*helm.+\*$" :regexp t :dedicated nil :height 15) popwin:special-display-config)
       (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
       (push '(help-mode :dedicated t) popwin:special-display-config)
       (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
@@ -1367,6 +1408,7 @@ edges.
       (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
       (push '("*HTTP Response*" :height 20 :dedicated t :stick t :noselect t) popwin:special-display-config)
       (push '("*Shell Command Output*" :dedicated t :tail t) popwin:special-display-config)
+      (push '("*Async Shell Command*" :dedicated t :tail t) popwin:special-display-config)
       (push '(shell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
       (push '(eshell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
       (push '(term-mode :dedicated t :height 15 :stick t :tail t)
@@ -1377,6 +1419,7 @@ edges.
                 ;; I can't get arbitrary buffers/files to play nicely, so
                 ;; just have the dedicated buffers.
                 (";a" . md/popwin-toggle)
+                (";d" . md/popwin-dired-single)
                 (";i" . md/popwin-org)
                 (";s" . md/popwin-scratch)
                 (";t" . md/popwin-ansi-term)
@@ -1709,7 +1752,7 @@ edges.
      (solarized-enable-theme 'dark))
 
    :bind (:map md/leader-map
-          ("sol" . solarized-toggle-theme-mode)
+          ("ts" . solarized-toggle-theme-mode)
           ("chl" . solarized-toggle-comment-visibility)))
 #+END_SRC
 
@@ -1718,11 +1761,11 @@ edges.
 Equivalent of my "ve" binding that would edit my vimrc:
 
 #+BEGIN_SRC emacs-lisp
-  (defun md/dotfiles-edit ()
+  (defun md/dotfiles-edit-init ()
     (interactive)
     (find-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/init.org")))
 
-  (bind-key "ve" 'md/dotfiles-edit md/leader-map)
+  (bind-key "ve" 'md/dotfiles-edit-init md/leader-map)
 #+END_SRC
 
 * Profile Emacs startup
@@ -1770,7 +1813,6 @@ Close paren for the wrapping ~let~:
 - [ ] jumping to definitions
 - [ ] finding uses of functions
 - [ ] ediff / git diff
-- [ ] colour emacs state in modeline
 - [ ] checkout avy - improvement to acejump?
 - [ ] debugger
 - [ ] folding
@@ -1801,10 +1843,10 @@ Close paren for the wrapping ~let~:
 - [ ] helm-projectile-find-file is worse than ctrlp
   - slower
   - no ag ignore
+- [ ] grep / ag results should hang around in popwin window
 - [ ] how does flyspell work? doesn't seem to show anything?
 - [ ] git gutter mode should be by default for every opened file
 - [ ] go mode
-- [ ] helm - how to kill buffer?
 - [ ] org - shorcut to add =- [ ]= syntax to beginning of line
 - [ ] cask?
 - [2016-09-24 Sat] elscreen not actively developed
@@ -1862,3 +1904,6 @@ Close paren for the wrapping ~let~:
   - [ ] not getting native colours in org-mode code blocks, despite
     fontify-natively t.
   - [ ] faces buffer doesn't show right face colors - they're all white-/grey.
+- [ ] helm-all-mark-rings?
+- [ ] persist helm grep buffer
+- [ ] helm grep within current file - currently don't have binding for this.

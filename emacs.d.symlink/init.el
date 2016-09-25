@@ -80,7 +80,7 @@
 (use-package linum
   :defer 1
   :bind (:map md/leader-map
-         ("ln" . linum-mode)))
+         ("tn" . linum-mode)))
 
 ;; Disable this for a minute
 ;;(global-hl-line-mode 1)
@@ -308,7 +308,12 @@
 
         ;; TODO behave like vim - ie. comment the line or the selection
         ("cc" . comment-or-uncomment-region)
-        ("k" . kill-buffer)
+
+        ("bk" . kill-buffer)
+        ("bi" . md/file-info)
+        ("bw" . save-buffer)
+        ("bW" . md/strip-whitespace-and-save)
+        ("br" . read-only-mode)
 
         ("ef" . eval-defun)
         ("ee" . eval-last-sexp)  ; Bound to e because I'm used to C-x e
@@ -316,11 +321,7 @@
         ("er" . eval-region)
         ("ex" . md/fontify-buffer)  ; It's sort-of an eval
 
-        ("check" . flyspell-mode)
-
-        ("lw" . toggle-truncate-lines)
-
-        ("i" . md/file-info)
+        ("tw" . toggle-truncate-lines)
 
         ;; Same as vim - insert and save
         ("o" . md/insert-blank-line-before)
@@ -395,7 +396,7 @@
            ([remap completion-at-point] . helm-lisp-completion)
 
            :map md/leader-map
-           ("b" . helm-buffers-list)
+           ("bb" . helm-buffers-list)
            ("f" . helm-find-files)
            ("x" . helm-M-x)
            ("p" . helm-mini)
@@ -429,13 +430,16 @@
       "d" 'dired-flag-file-deletion
       "u" 'dired-unmark
       "D" 'dired-do-delete
-      (kbd "RET") 'dired-find-file
+      (kbd "RET") 'dired-single-buffer
       "J" 'dired-jump
       "o" 'dired-find-file-other-window
       "R" 'dired-do-rename
       "C" 'dired-do-copy
       "i" 'dired-maybe-insert-subdir
       "+" 'dired-create-directory)))
+
+(use-package dired-single
+  :demand t)
 
 (use-package restclient
   :defer 1
@@ -505,7 +509,7 @@
               ("sj" . flycheck-next-error)
               ("sp" . flycheck-previous-error)
               ("sk" . flycheck-previous-error)
-              ))
+              ("ss" . flyspell-mode)))
 
 (use-package projectile
  :config
@@ -643,8 +647,8 @@ git dir) or linum mode"
        ("gp" . git-gutter:previous-hunk)
        ("gj" . git-gutter:next-hunk)
        ("gn" . git-gutter:next-hunk)
-       ("gadd" . git-gutter:stage-hunk)
-       ("grev" . git-gutter:revert-hunk)))
+       ("g+" . git-gutter:stage-hunk)
+       ("g-" . git-gutter:revert-hunk)))
 
 (use-package magit
  :config
@@ -670,15 +674,15 @@ git dir) or linum mode"
      "q" 'magit-mode-bury-buffer))  ;; This quits
 
  :bind (:map md/leader-map
-       ("gmag" . magit-dispatch-popup)
-       ("gblame" . magit-blame)
+       ("gm" . magit-dispatch-popup)
+       ("gb" . magit-blame)
 
        ;; NOTE - this doesn't play nicely with mode-line:
        ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
        ;; - https://github.com/syl20bnr/spacemacs/issues/2172
-       ("gco" . magit-checkout)
+       ("gc" . magit-checkout)
 
-       ("gdiff" . magit-ediff-popup)))
+       ("gd" . magit-ediff-popup)))
 
 (use-package github-browse-file
   :config
@@ -833,11 +837,29 @@ git dir) or linum mode"
   :config
   (progn
     (setq which-key-idle-delay 0.5
-          which-key-max-description-length 30)
+          which-key-max-description-length 30
+          which-key-allow-evil-operators nil
+          which-key-show-operator-state-maps nil)
 
-    ;; Alow show evil motion keys. This is an experimental feature.
-    (setq which-key-allow-evil-operators t
-          which-key-show-operator-state-maps t)
+    ;; Use ESC/C-g to quit which-key. Not sure why the default key is 'a'.
+    (bind-key "ESC" 'which-key-abort which-key-C-h-map)
+    (bind-key "C-g" 'which-key-abort which-key-C-h-map)
+
+    ;; TODO - extend these
+    (which-key-declare-prefixes
+      "SPC b" "buffers"
+      "SPC c" "comments"
+      "SPC C" "compile"
+      "SPC e" "eval"
+      "SPC g" "git"
+      "SPC h" "help"
+      "SPC j" "project"
+      "SPC j ;" "project-popwin"
+      "SPC n" "narrow"
+      "SPC s" "flycheck"
+      "SPC t" "toggle-misc"
+      "SPC v" "dotfiles"
+      "SPC ;" "popwin")
     (which-key-mode)))
 
 (use-package free-keys
@@ -919,6 +941,14 @@ out of the box."
            (save-window-excursion
              (call-interactively 'eshell)))))
 
+    (defun md/popwin-dired-single ()
+      (interactive)
+      (when popwin:focus-window (popwin:close-popup-window))
+      (popwin:display-buffer
+       (or (get-buffer dired-single-magic-buffer-name)
+           (save-window-excursion
+             (call-interactively 'dired-single-magic-buffer)))))
+
     ;; Disable popwin-mode in an active Helm session, to prevent it from conflicting
     ;; with Helm windows.
     (add-hook 'helm-after-initialize-hook
@@ -931,12 +961,14 @@ out of the box."
 
     ;; TODO why isn't dired working? Judging by the examples it should, but
     ;; dired buffers just appear in their own windows. Tried on 24.5 and 25.1.
-    (push '(dired-mode :dedicated t :height 15) popwin:special-display-config)
+    (push '(dired-mode :dedicated nil :width 40) popwin:special-display-config)
+    ;;(push '(dired-single-magic-buffer-name :dedicated t) popwin:special-display-config)
+    ;;(push '("*dired*" :dedicated t) popwin:special-display-config)
 
     ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
     ;; Generally I only ever want one popwin window open.
     (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
-    (push '("^\*helm.+\*$" :regexp t :dedicated t :height 15) popwin:special-display-config)
+    (push '("^\*helm.+\*$" :regexp t :dedicated nil :height 15) popwin:special-display-config)
     (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
     (push '(help-mode :dedicated t) popwin:special-display-config)
     (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
@@ -950,6 +982,7 @@ out of the box."
     (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
     (push '("*HTTP Response*" :height 20 :dedicated t :stick t :noselect t) popwin:special-display-config)
     (push '("*Shell Command Output*" :dedicated t :tail t) popwin:special-display-config)
+    (push '("*Async Shell Command*" :dedicated t :tail t) popwin:special-display-config)
     (push '(shell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
     (push '(eshell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
     (push '(term-mode :dedicated t :height 15 :stick t :tail t)
@@ -960,6 +993,7 @@ out of the box."
               ;; I can't get arbitrary buffers/files to play nicely, so
               ;; just have the dedicated buffers.
               (";a" . md/popwin-toggle)
+              (";d" . md/popwin-dired-single)
               (";i" . md/popwin-org)
               (";s" . md/popwin-scratch)
               (";t" . md/popwin-ansi-term)
@@ -1270,14 +1304,14 @@ out of the box."
    (solarized-enable-theme 'dark))
 
  :bind (:map md/leader-map
-        ("sol" . solarized-toggle-theme-mode)
+        ("ts" . solarized-toggle-theme-mode)
         ("chl" . solarized-toggle-comment-visibility)))
 
-(defun md/dotfiles-edit ()
+(defun md/dotfiles-edit-init ()
   (interactive)
   (find-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/init.org")))
 
-(bind-key "ve" 'md/dotfiles-edit md/leader-map)
+(bind-key "ve" 'md/dotfiles-edit-init md/leader-map)
 
 (use-package esup
   :defer 5)
