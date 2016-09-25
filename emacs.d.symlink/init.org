@@ -737,7 +737,7 @@ Company seems to work nicely without much configuration.
       (global-company-mode)))
 #+END_SRC
 
-** Syntax checking
+** Flycheck
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
     :init
@@ -753,6 +753,11 @@ Company seems to work nicely without much configuration.
 
             ;; defaults to 0.9, which is too slow
             flycheck-display-errors-delay 0.1
+
+            ;; Disabling this at is annoys me to have errors appearing
+            ;; and disappearing quickly and messing with the size of the
+            ;; window. I will just check the error list and the fringe.
+            flycheck-display-errors-function nil
 
             ;; There's a short delay when flycheck runs, which causes the modeline to change
             ;; its format (or in my custom powerline stuff, to disappear briefly). It's
@@ -1218,6 +1223,116 @@ on the screen, or nowhere.
  (progn
    (splitscreen-mode)))
 #+END_SRC
+** Popwin
+
+https://github.com/m2ym/popwin-el.
+
+Popwin helps bring some sanity to Emacs windows. By default, Emacs tends to
+clobber the windows that I'm working on with various other applications
+(eg. for help, flycheck, shell/term). Popwin lets me contain all of these
+less-important buffers in a single window and then dismiss it. This way they
+don't interfere with the buffers I'm actually working on.
+
+It hasn't been maintained for a while, but hopefully I won't see too many rough
+edges.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package popwin
+    :demand t
+    :config
+    (progn
+      (defun md/popwin-toggle ()
+        "Either close popwin or open it in its last buffer"
+        (interactive)
+        (if popwin:focus-window
+            (popwin:close-popup-window)
+          (popwin:display-last-buffer)))
+
+      (defun md/popwin-org ()
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (if (get-buffer "index.org")
+            (popwin:display-buffer "index.org")
+          (message "No buffer: index.org")))
+
+      (defun md/popwin-scratch ()
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (popwin:display-buffer "*scratch*"))
+
+      (defun md/popwin-messages ()
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (popwin:display-buffer "*Messages*"))
+
+      (defun md/popwin-ansi-term ()
+        "Copied from
+  https://github.com/m2ym/popwin-el/blob/master/misc/popwin-term.el. For some
+  reason this is necessary to open term in a popwin window. Shell and eshell work
+  out of the box."
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (popwin:display-buffer
+         (or (get-buffer "*ansi-term*")
+             (save-window-excursion
+               (call-interactively 'ansi-term)))))
+
+      (defun md/popwin-eshell ()
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (popwin:display-buffer
+         (or (get-buffer "*eshell*")
+             (save-window-excursion
+               (call-interactively 'eshell)))))
+
+      ;; Disable popwin-mode in an active Helm session, to prevent it from conflicting
+      ;; with Helm windows.
+      (add-hook 'helm-after-initialize-hook
+                (lambda ()
+                  (popwin:display-buffer helm-buffer t)
+                  (popwin-mode -1)))
+      (add-hook 'helm-cleanup-hook (lambda () (popwin-mode 1)))
+
+      (setq popwin:popup-window-height 10)
+
+      ;; TODO why isn't dired working? Judging by the examples it should, but
+      ;; dired buffers just appear in their own windows. Tried on 24.5 and 25.1.
+      (push '(dired-mode :dedicated t :height 15) popwin:special-display-config)
+
+      ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
+      ;; Generally I only ever want one popwin window open.
+      (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
+      (push '("^\*helm.+\*$" :regexp t :dedicated t :height 15) popwin:special-display-config)
+      (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
+      (push '(help-mode :dedicated t) popwin:special-display-config)
+      (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
+      (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
+      (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
+      (push '(completion-list-mode :noselect t :dedicated t) popwin:special-display-config)
+      (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
+      (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
+      (push '(occur-mode :noselect t :dedicated t) popwin:special-display-config)
+      (push '("*vc-change-log*" :dedicated t) popwin:special-display-config)
+      (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
+      (push '("*HTTP Response*" :height 20 :dedicated t :stick t :noselect t) popwin:special-display-config)
+      (push '("*Shell Command Output*" :dedicated t :tail t) popwin:special-display-config)
+      (push '("^\\*shell.*$" :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
+      (push '("^\\*eshell.*$" :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
+      (push '(term-mode :dedicated t :height 15 :stick t :tail t)
+            popwin:special-display-config)  ; only works with md/popwin-ansi-term
+
+      (popwin-mode 1))
+    :bind (:map md/leader-map
+                ;; I can't get arbitrary buffers/files to play nicely, so
+                ;; just have the dedicated buffers.
+                (";a" . md/popwin-toggle)
+                (";i" . md/popwin-org)
+                (";s" . md/popwin-scratch)
+                (";t" . md/popwin-ansi-term)
+                (";e" . md/popwin-eshell)
+                (";m" . md/popwin-messages)))
+#+END_SRC
+
 * Org mode
 
 ** org-mode
@@ -1642,6 +1757,15 @@ Close paren for the wrapping ~let~:
 - [ ] org - shorcut to add =- [ ]= syntax to beginning of line
 - [ ] cask?
 - [2016-09-24 Sat] elscreen not actively developed
+- [ ] popwin is useful
+  - why can't match dired or some of the term modes?
+    - dired doesn't match even with helm disabled and all other dired config
+      disabled.
+    - HEAD and 25 is same. So is 24.
+    - can forget this if ansi-term works
+  - want shortcuts for opening terminals in the popup
+  - shortcut for jumping to a restclient file?
+    - or opening new restclient buffer?
 - [ ] spacemacs - provide anything good?
   - which-key - I should name prefixes
   - [ ] paradox-list-packages
@@ -1682,6 +1806,7 @@ Close paren for the wrapping ~let~:
   - [ ] w - window commands. The popup window looks like it might be good
     - for messages, compiling, generally temp stuff.
   - [ ] z - zoom text
+- [ ] ipython?
 - [ ] Emacs 25 / package upgrades
   - [2016-09-24 Sat] just upgraded everything
   - [ ] not getting native colours in org-mode code blocks, despite

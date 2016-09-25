@@ -480,6 +480,11 @@
           ;; defaults to 0.9, which is too slow
           flycheck-display-errors-delay 0.1
 
+          ;; Disabling this at is annoys me to have errors appearing
+          ;; and disappearing quickly and messing with the size of the
+          ;; window. I will just check the error list and the fringe.
+          flycheck-display-errors-function nil
+
           ;; There's a short delay when flycheck runs, which causes the modeline to change
           ;; its format (or in my custom powerline stuff, to disappear briefly). It's
           ;; super annoying if this happens at random points during editing, so change it
@@ -822,6 +827,101 @@ git dir) or linum mode"
  :config
  (progn
    (splitscreen-mode)))
+
+(use-package popwin
+  :demand t
+  :config
+  (progn
+    (defun md/popwin-toggle ()
+      "Either close popwin or open it in its last buffer"
+      (interactive)
+      (if popwin:focus-window
+          (popwin:close-popup-window)
+        (popwin:display-last-buffer)))
+
+    (defun md/popwin-org ()
+      (interactive)
+      (when popwin:focus-window (popwin:close-popup-window))
+      (if (get-buffer "index.org")
+          (popwin:display-buffer "index.org")
+        (message "No buffer: index.org")))
+
+    (defun md/popwin-scratch ()
+      (interactive)
+      (when popwin:focus-window (popwin:close-popup-window))
+      (popwin:display-buffer "*scratch*"))
+
+    (defun md/popwin-messages ()
+      (interactive)
+      (when popwin:focus-window (popwin:close-popup-window))
+      (popwin:display-buffer "*Messages*"))
+
+    (defun md/popwin-ansi-term ()
+      "Copied from
+https://github.com/m2ym/popwin-el/blob/master/misc/popwin-term.el. For some
+reason this is necessary to open term in a popwin window. Shell and eshell work
+out of the box."
+      (interactive)
+      (when popwin:focus-window (popwin:close-popup-window))
+      (popwin:display-buffer
+       (or (get-buffer "*ansi-term*")
+           (save-window-excursion
+             (call-interactively 'ansi-term)))))
+
+    (defun md/popwin-eshell ()
+      (interactive)
+      (when popwin:focus-window (popwin:close-popup-window))
+      (popwin:display-buffer
+       (or (get-buffer "*eshell*")
+           (save-window-excursion
+             (call-interactively 'eshell)))))
+
+    ;; Disable popwin-mode in an active Helm session, to prevent it from conflicting
+    ;; with Helm windows.
+    (add-hook 'helm-after-initialize-hook
+              (lambda ()
+                (popwin:display-buffer helm-buffer t)
+                (popwin-mode -1)))
+    (add-hook 'helm-cleanup-hook (lambda () (popwin-mode 1)))
+
+    (setq popwin:popup-window-height 10)
+
+    ;; TODO why isn't dired working? Judging by the examples it should, but
+    ;; dired buffers just appear in their own windows. Tried on 24.5 and 25.1.
+    (push '(dired-mode :dedicated t :height 15) popwin:special-display-config)
+
+    ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
+    ;; Generally I only ever want one popwin window open.
+    (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
+    (push '("^\*helm.+\*$" :regexp t :dedicated t :height 15) popwin:special-display-config)
+    (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
+    (push '(help-mode :dedicated t) popwin:special-display-config)
+    (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
+    (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
+    (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
+    (push '(completion-list-mode :noselect t :dedicated t) popwin:special-display-config)
+    (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
+    (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
+    (push '(occur-mode :noselect t :dedicated t) popwin:special-display-config)
+    (push '("*vc-change-log*" :dedicated t) popwin:special-display-config)
+    (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
+    (push '("*HTTP Response*" :height 20 :dedicated t :stick t :noselect t) popwin:special-display-config)
+    (push '("*Shell Command Output*" :dedicated t :tail t) popwin:special-display-config)
+    (push '("^\\*shell.*$" :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
+    (push '("^\\*eshell.*$" :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
+    (push '(term-mode :dedicated t :height 15 :stick t :tail t)
+          popwin:special-display-config)  ; only works with md/popwin-ansi-term
+
+    (popwin-mode 1))
+  :bind (:map md/leader-map
+              ;; I can't get arbitrary buffers/files to play nicely, so
+              ;; just have the dedicated buffers.
+              (";a" . md/popwin-toggle)
+              (";i" . md/popwin-org)
+              (";s" . md/popwin-scratch)
+              (";t" . md/popwin-ansi-term)
+              (";e" . md/popwin-eshell)
+              (";m" . md/popwin-messages)))
 
 (use-package org
  :defer 5
