@@ -713,7 +713,7 @@ POST https://httpbin.org/post
 
 This is the body
 #+END_EXAMPLE
-* IDE features
+* General IDE features
 ** Autocompletion
 
 Company seems to work nicely without much configuration.
@@ -847,6 +847,57 @@ Company seems to work nicely without much configuration.
                 ("jag" . helm-projectile-ag)
                 ("jb" . helm-projectile-switch-to-buffer)
                 ("jf" . helm-projectile-find-file)))
+#+END_SRC
+
+*** Popwin
+
+Sometimes I want popwin buffers to be dedicated to a project, so I can have
+eg. one terminal popwin per project.
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/projectile-popwin-ansi-term ()
+    "Open project-dedicated ansi-term buffer in popwin. Renames the term buffer to
+  match the project."
+    (interactive)
+    (when popwin:focus-window (popwin:close-popup-window))
+    (popwin:display-buffer
+     (or (get-buffer (format "*ansi-term-(%s)*" (projectile-project-name)))
+          (save-window-excursion
+            (with-current-buffer 
+              (call-interactively 'projectile-run-term)
+              (rename-buffer
+               (format "*ansi-term-(%s)*" (projectile-project-name))))))))
+
+  (defun md/projectile-popwin-shell ()
+    "Open project-dedicated shell buffer in popwin. Renames the term buffer to
+  match the project."
+    (interactive)
+    (when popwin:focus-window (popwin:close-popup-window))
+    (popwin:display-buffer
+     (or (get-buffer (format "*shell-(%s)*" (projectile-project-name)))
+          (save-window-excursion
+            (with-current-buffer 
+              (call-interactively 'projectile-run-shell)
+              (rename-buffer
+               (format "*shell-(%s)*" (projectile-project-name))))))))
+
+  (defun md/projectile-popwin-eshell ()
+    "Open project-dedicated eshell buffer in popwin. Renames the term buffer to
+  match the project."
+    (interactive)
+    (when popwin:focus-window (popwin:close-popup-window))
+    (popwin:display-buffer
+     (or (get-buffer (format "*eshell-(%s)*" (projectile-project-name)))
+          (save-window-excursion
+            (with-current-buffer 
+              (call-interactively 'projectile-run-eshell)
+              (rename-buffer
+               (format "*eshell-(%s)*" (projectile-project-name))))))))
+
+  (bind-key "j;t" 'md/projectile-popwin-ansi-term md/leader-map)
+  (bind-key "j;s" 'md/projectile-popwin-shell md/leader-map)
+  (bind-key "j;e" 'md/projectile-popwin-eshell md/leader-map)
+
 #+END_SRC
 
 ** Git
@@ -1316,8 +1367,8 @@ edges.
       (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
       (push '("*HTTP Response*" :height 20 :dedicated t :stick t :noselect t) popwin:special-display-config)
       (push '("*Shell Command Output*" :dedicated t :tail t) popwin:special-display-config)
-      (push '("^\\*shell.*$" :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
-      (push '("^\\*eshell.*$" :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
+      (push '(shell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
+      (push '(eshell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
       (push '(term-mode :dedicated t :height 15 :stick t :tail t)
             popwin:special-display-config)  ; only works with md/popwin-ansi-term
 
@@ -1763,7 +1814,6 @@ Close paren for the wrapping ~let~:
       disabled.
     - HEAD and 25 is same. So is 24.
     - can forget this if ansi-term works
-  - want shortcuts for opening terminals in the popup
   - shortcut for jumping to a restclient file?
     - or opening new restclient buffer?
 - [ ] spacemacs - provide anything good?

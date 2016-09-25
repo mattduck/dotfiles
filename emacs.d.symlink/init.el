@@ -567,6 +567,49 @@
               ("jb" . helm-projectile-switch-to-buffer)
               ("jf" . helm-projectile-find-file)))
 
+(defun md/projectile-popwin-ansi-term ()
+  "Open project-dedicated ansi-term buffer in popwin. Renames the term buffer to
+match the project."
+  (interactive)
+  (when popwin:focus-window (popwin:close-popup-window))
+  (popwin:display-buffer
+   (or (get-buffer (format "*ansi-term-(%s)*" (projectile-project-name)))
+        (save-window-excursion
+          (with-current-buffer 
+            (call-interactively 'projectile-run-term)
+            (rename-buffer
+             (format "*ansi-term-(%s)*" (projectile-project-name))))))))
+
+(defun md/projectile-popwin-shell ()
+  "Open project-dedicated shell buffer in popwin. Renames the term buffer to
+match the project."
+  (interactive)
+  (when popwin:focus-window (popwin:close-popup-window))
+  (popwin:display-buffer
+   (or (get-buffer (format "*shell-(%s)*" (projectile-project-name)))
+        (save-window-excursion
+          (with-current-buffer 
+            (call-interactively 'projectile-run-shell)
+            (rename-buffer
+             (format "*shell-(%s)*" (projectile-project-name))))))))
+
+(defun md/projectile-popwin-eshell ()
+  "Open project-dedicated eshell buffer in popwin. Renames the term buffer to
+match the project."
+  (interactive)
+  (when popwin:focus-window (popwin:close-popup-window))
+  (popwin:display-buffer
+   (or (get-buffer (format "*eshell-(%s)*" (projectile-project-name)))
+        (save-window-excursion
+          (with-current-buffer 
+            (call-interactively 'projectile-run-eshell)
+            (rename-buffer
+             (format "*eshell-(%s)*" (projectile-project-name))))))))
+
+(bind-key "j;t" 'md/projectile-popwin-ansi-term md/leader-map)
+(bind-key "j;s" 'md/projectile-popwin-shell md/leader-map)
+(bind-key "j;e" 'md/projectile-popwin-eshell md/leader-map)
+
 (use-package git-gutter
  :init
  (progn
@@ -907,8 +950,8 @@ out of the box."
     (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
     (push '("*HTTP Response*" :height 20 :dedicated t :stick t :noselect t) popwin:special-display-config)
     (push '("*Shell Command Output*" :dedicated t :tail t) popwin:special-display-config)
-    (push '("^\\*shell.*$" :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
-    (push '("^\\*eshell.*$" :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
+    (push '(shell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
+    (push '(eshell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
     (push '(term-mode :dedicated t :height 15 :stick t :tail t)
           popwin:special-display-config)  ; only works with md/popwin-ansi-term
 
