@@ -211,6 +211,10 @@
           (setq result (buffer-substring (point-min) (point-max))))
         result)))))
 
+(defun md/switch-to-buffer-scratch ()
+  (interactive)
+  (switch-to-buffer "*scratch*"))
+
 (defun md/unfill-paragraph ()
   "Because I can't always wrap to 80 characters :("
   (interactive)
@@ -227,105 +231,6 @@
 
 (setq debug-on-error nil)
 (setq delete-by-moving-to-trash t)
-
-(use-package evil
- :demand t
- :config
- (progn
-   (defun md/normal-state-and-save ()
-     (interactive)
-     (evil-normal-state)
-     (save-buffer))
-
-   (defun md/insert-blank-line-before ()
-     (interactive)
-     (save-excursion
-       (end-of-line)
-       (open-line 1)
-       (save-buffer)))
-
-   (defun md/insert-blank-line-after ()
-     (interactive)
-     (save-excursion
-       (evil-previous-visual-line)
-       (end-of-line)
-       (open-line 1)
-       (save-buffer)))
-
-   (defun md/evil-fill (&optional start end)
-     (interactive
-      (if (use-region-p)
-          (list (region-beginning) (region-end))
-        (list nil nil)))
-     (if (string= evil-state "visual")
-         (fill-region start end)
-       (fill-paragraph)))
-
-   (defun md/evil-unfill (&optional start end)
-     (interactive
-      (if (use-region-p)
-          (list (region-beginning) (region-end))
-        (list nil nil)))
-     (if (string= evil-state "visual")
-         (md/unfill-region start end)
-       (md/unfill-paragraph)))
-
-   ;; Can't work out how to properly define map bindings using ":bind"
-   (bind-key "<SPC>" md/leader-map evil-normal-state-map)
-   (bind-key "<SPC>" md/leader-map evil-visual-state-map)
-
-   (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
-
-   (bind-key "n" (lookup-key global-map (kbd "C-x n")) md/leader-map)
-
-   (evil-mode 1))
-
- :bind (;; Like my vimrc, remap  ; to : and , to ;
-        :map evil-motion-state-map
-        (";" . evil-ex)
-        ("," . evil-repeat-find-char)
-
-        ;; Use H/L instead of ^/$
-        :map evil-normal-state-map
-        ("H" . move-beginning-of-line)
-        ("L" . move-end-of-line)
-        :map evil-visual-state-map
-        ("H" . move-beginning-of-line)
-        ("L" . move-end-of-line)
-
-        ;; The equivalent of gj/gk
-        :map evil-normal-state-map
-        ("j" . evil-next-visual-line)
-        ("k" . evil-previous-visual-line)
-
-        ;; Leader bindings
-        :map md/leader-map
-        ("w" . save-buffer)
-        ("W" . md/strip-whitespace-and-save)
-
-        ("q" . md/evil-fill)
-        ("Q" . md/evil-unfill)
-
-        ;; TODO behave like vim - ie. comment the line or the selection
-        ("cc" . comment-or-uncomment-region)
-
-        ("bk" . kill-buffer)
-        ("bi" . md/file-info)
-        ("bw" . save-buffer)
-        ("bW" . md/strip-whitespace-and-save)
-        ("br" . read-only-mode)
-
-        ("ef" . eval-defun)
-        ("ee" . eval-last-sexp)  ; Bound to e because I'm used to C-x e
-        ("eb" . eval-buffer)
-        ("er" . eval-region)
-        ("ex" . md/fontify-buffer)  ; It's sort-of an eval
-
-        ("tw" . toggle-truncate-lines)
-
-        ;; Same as vim - insert and save
-        ("o" . md/insert-blank-line-before)
-        ("O" . md/insert-blank-line-after)))
 
 (use-package evil-surround
  :config
@@ -962,8 +867,6 @@ out of the box."
     ;; TODO why isn't dired working? Judging by the examples it should, but
     ;; dired buffers just appear in their own windows. Tried on 24.5 and 25.1.
     (push '(dired-mode :dedicated nil :width 40) popwin:special-display-config)
-    ;;(push '(dired-single-magic-buffer-name :dedicated t) popwin:special-display-config)
-    ;;(push '("*dired*" :dedicated t) popwin:special-display-config)
 
     ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
     ;; Generally I only ever want one popwin window open.

@@ -406,6 +406,10 @@ Increase the number of messages:
             (insert (format "%s\n" mm))
             (setq result (buffer-substring (point-min) (point-max))))
           result)))))
+
+  (defun md/switch-to-buffer-scratch ()
+    (interactive)
+    (switch-to-buffer "*scratch*"))
 #+END_SRC
 
 
@@ -437,7 +441,7 @@ I seem to use =describe-face= a lot:
   (setq delete-by-moving-to-trash t)
 #+END_SRC
 * Evil
-** Base evil
+** COMMENT Base evil
 
 - Note on md/evil-fill and unfill:
 
@@ -529,19 +533,27 @@ I seem to use =describe-face= a lot:
           ;; TODO behave like vim - ie. comment the line or the selection
           ("cc" . comment-or-uncomment-region)
 
+          ;; Buffers
+          ("k" . kill-buffer)
           ("bk" . kill-buffer)
           ("bi" . md/file-info)
           ("bw" . save-buffer)
           ("bW" . md/strip-whitespace-and-save)
           ("br" . read-only-mode)
+          ("bs" . md/switch-to-buffer-scratch)
 
+          ;; Eval
           ("ef" . eval-defun)
           ("ee" . eval-last-sexp)  ; Bound to e because I'm used to C-x e
           ("eb" . eval-buffer)
           ("er" . eval-region)
           ("ex" . md/fontify-buffer)  ; It's sort-of an eval
 
+          ;; Toggle misc
           ("tw" . toggle-truncate-lines)
+
+          ;; This could be useful
+          ("U" . undo-tree-visualize)
 
           ;; Same as vim - insert and save
           ("o" . md/insert-blank-line-before)
@@ -1844,8 +1856,6 @@ Close paren for the wrapping ~let~:
   - slower
   - no ag ignore
 - [ ] grep / ag results should hang around in popwin window
-- [ ] how does flyspell work? doesn't seem to show anything?
-- [ ] git gutter mode should be by default for every opened file
 - [ ] go mode
 - [ ] org - shorcut to add =- [ ]= syntax to beginning of line
 - [ ] cask?
@@ -1865,12 +1875,6 @@ Close paren for the wrapping ~let~:
   - [ ] list-processes?
   - [ ] undo tree visualiser?
   - [ ] ! to execute shell command
-  - [ ] b prefix - buffers
-    - next-useful-buffer / previous
-    - buffer-micro-state looks handy
-    - read-only toggle
-    - s to switch to scratch
-    - y to copy buffer to clipboard
   - [ ] c - compiling
     - helm-make-projectile
     - helm-make
@@ -1882,7 +1886,6 @@ Close paren for the wrapping ~let~:
     - open in external app
     - neotree toggle looks cool
   - [ ] i - insert prefix
-  - [ ] n - narrow commands
   - [ ] p - projectile run shell
     - and async
     - projectile-compile
@@ -1903,7 +1906,9 @@ Close paren for the wrapping ~let~:
   - [2016-09-24 Sat] just upgraded everything
   - [ ] not getting native colours in org-mode code blocks, despite
     fontify-natively t.
-  - [ ] faces buffer doesn't show right face colors - they're all white-/grey.
+  - [ ] faces buffer doesn't show right face colors? they're all white-/grey.
 - [ ] helm-all-mark-rings?
 - [ ] persist helm grep buffer
 - [ ] helm grep within current file - currently don't have binding for this.
+- [ ] help popwin wrapper to reselect last window so we don't get helm buffers
+  appearing on ;a
