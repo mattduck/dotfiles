@@ -44,6 +44,9 @@
 (defvar md/go-mode-leader-map (make-sparse-keymap))
 (set-keymap-parent md/go-mode-leader-map md/leader-map)
 
+(defvar md/scheme-mode-leader-map (make-sparse-keymap))
+(set-keymap-parent md/scheme-mode-leader-map md/leader-map)
+
 (setq inhibit-splash-screen t)
 
 (setq-default fill-column 80)
@@ -232,6 +235,146 @@
 (setq debug-on-error nil)
 (setq delete-by-moving-to-trash t)
 
+(use-package evil
+ :demand t
+ :config
+ (progn
+   (defun md/normal-state-and-save ()
+     (interactive)
+     (evil-normal-state)
+     (save-buffer))
+
+   (defun md/insert-blank-line-before ()
+     (interactive)
+     (save-excursion
+       (end-of-line)
+       (open-line 1)
+       (save-buffer)))
+
+   (defun md/insert-blank-line-after ()
+     (interactive)
+     (save-excursion
+       (evil-previous-visual-line)
+       (end-of-line)
+       (open-line 1)
+       (save-buffer)))
+
+   (defun md/evil-fill (&optional start end)
+     (interactive
+      (if (use-region-p)
+          (list (region-beginning) (region-end))
+        (list nil nil)))
+     (if (string= evil-state "visual")
+         (fill-region start end)
+       (fill-paragraph)))
+
+   (defun md/evil-unfill (&optional start end)
+     (interactive
+      (if (use-region-p)
+          (list (region-beginning) (region-end))
+        (list nil nil)))
+     (if (string= evil-state "visual")
+         (md/unfill-region start end)
+       (md/unfill-paragraph)))
+
+   ;; Can't work out how to properly define map bindings using ":bind"
+   (bind-key "<SPC>" md/leader-map evil-normal-state-map)
+   (bind-key "<SPC>" md/leader-map evil-visual-state-map)
+
+   (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
+   (bind-key "n" (lookup-key global-map (kbd "C-x n")) md/leader-map)
+
+   (setq evil-echo-state nil)
+
+   (evil-mode 1))
+
+   ;; Enable evil in the minibuffer. Adapted from
+   ;; https://gist.github.com/ccdunder/5816865.
+   ;; Not sure why this isn't provided by default.
+   ;; (mapc (lambda (keymap)
+   ;;           (evil-define-key 'insert (eval keymap) [escape] 'evil-normal-state))
+   ;;         ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/
+   ;;         ;; Text-from-Minibuffer.html#Definition of minibuffer-local-map
+   ;;         '(minibuffer-local-map
+   ;;           minibuffer-local-ns-map
+   ;;           minibuffer-local-completion-map
+   ;;           minibuffer-local-must-match-map
+   ;;           minibuffer-local-isearch-map))
+   ;; (defun md/evil-minibuffer-setup ()
+   ;;   ;; (evil-set-initial-state 'mode 'insert) is the evil-proper
+   ;;   ;; way to do this, but the minibuffer doesn't have a mode.
+   ;;   (evil-insert 1))
+   ;; )
+  ;; (add-hook 'minibuffer-setup-hook 'md/evil-minibuffer-setup))
+
+ :bind (;; Like my vimrc, remap  ; to : and , to ;
+        :map evil-motion-state-map
+        (";" . evil-ex)
+        ("," . evil-repeat-find-char)
+
+        ;; Like in the terminal. Mainly useful in minibuffer
+        :map evil-insert-state-map
+        ("C-a" . move-beginning-of-line)
+        ("C-e" . move-end-of-line)
+
+        ;; Use H/L instead of ^/$
+        :map evil-normal-state-map
+        ("H" . move-beginning-of-line)
+        ("L" . move-end-of-line)
+        :map evil-visual-state-map
+        ("H" . move-beginning-of-line)
+        ("L" . move-end-of-line)
+
+        ;; The equivalent of gj/gk
+        :map evil-normal-state-map
+        ("j" . evil-next-visual-line)
+        ("k" . evil-previous-visual-line)
+
+        ;; Leader bindings
+        :map md/leader-map
+        ("w" . save-buffer)
+        ("W" . md/strip-whitespace-and-save)
+
+        ("q" . md/evil-fill)
+        ("Q" . md/evil-unfill)
+
+        ;; TODO behave like vim - ie. comment the line or the selection
+        ("cc" . comment-or-uncomment-region)
+
+        ;; Buffers
+        ("k" . kill-buffer)
+        ("bk" . kill-buffer)
+        ("bi" . md/file-info)
+        ("bw" . save-buffer)
+        ("bW" . md/strip-whitespace-and-save)
+        ("br" . read-only-mode)
+        ("bs" . md/switch-to-buffer-scratch)
+
+        ;; Eval
+        ("ef" . eval-defun)
+        ("ee" . eval-last-sexp)  ; Bound to e because I'm used to C-x e
+        ("eb" . eval-buffer)
+        ("er" . eval-region)
+        ("ex" . md/fontify-buffer)  ; It's sort-of an eval
+
+        ;; Emacs
+        ("Ek" . kill-emacs)
+
+        ;; Packages
+        ("Pr" . package-refresh-contents)
+        ("Pi" . package-install)
+        ("Pl" . package-list-packages)
+ 
+        ; Toggle misc
+        ("tw" . toggle-truncate-lines)
+
+        ;; This could be useful
+        ("U" . undo-tree-visualize)
+
+        ;; Same as vim - insert and save
+        ("o" . md/insert-blank-line-before)
+        ("O" . md/insert-blank-line-after)))
+
 (use-package evil-surround
  :config
  (progn
@@ -283,7 +426,6 @@
       (bind-key "C-l" 'helm-execute-persistent-action helm-map)
       (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
       (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map)
-
 )
 
     :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
@@ -484,7 +626,7 @@ match the project."
   (popwin:display-buffer
    (or (get-buffer (format "*ansi-term-(%s)*" (projectile-project-name)))
         (save-window-excursion
-          (with-current-buffer 
+          (with-current-buffer
             (call-interactively 'projectile-run-term)
             (rename-buffer
              (format "*ansi-term-(%s)*" (projectile-project-name))))))))
@@ -497,7 +639,7 @@ match the project."
   (popwin:display-buffer
    (or (get-buffer (format "*shell-(%s)*" (projectile-project-name)))
         (save-window-excursion
-          (with-current-buffer 
+          (with-current-buffer
             (call-interactively 'projectile-run-shell)
             (rename-buffer
              (format "*shell-(%s)*" (projectile-project-name))))))))
@@ -510,7 +652,7 @@ match the project."
   (popwin:display-buffer
    (or (get-buffer (format "*eshell-(%s)*" (projectile-project-name)))
         (save-window-excursion
-          (with-current-buffer 
+          (with-current-buffer
             (call-interactively 'projectile-run-eshell)
             (rename-buffer
              (format "*eshell-(%s)*" (projectile-project-name))))))))
@@ -644,8 +786,9 @@ git dir) or linum mode"
   (progn
      (add-hook 'css-mode-hook 'rainbow-mode)
      (add-hook 'help-mode-hook 'rainbow-mode)
-     (add-hook 'html-mode-hook 'rainbow-mode)
-     (add-hook 'prog-mode-hook 'rainbow-mode)))
+     (add-hook 'html-mode-hook 'rainbow-mode))
+  :bind (:map md/leader-map
+              ("tr" . rainbow-mode)))
 
 (use-package elpy
   :defer 1  ;; Defer this just because it's slow to load.
@@ -713,6 +856,43 @@ git dir) or linum mode"
               (lambda ()
                 (set (make-local-variable 'company-backends) '(company-go))))))
 
+(use-package scheme
+  :config
+  (progn
+    ;; For SICP
+    (setq scheme-program-name "/usr/local/bin/mit-scheme")
+
+    ;; Setup leader map for this major mode
+    (evil-define-key 'normal scheme-mode-map
+      (kbd "SPC") md/scheme-mode-leader-map)
+    (evil-define-key 'visual scheme-mode-map
+      (kbd "SPC") md/scheme-mode-leader-map)
+
+    ;; When I run the "send-to" functions I want to see the results
+    ;; in the popwin window
+    (defun md/scheme--eval (fn)
+      (save-window-excursion
+        (call-interactively 'run-scheme))
+        (call-interactively fn)
+      (popwin:display-buffer (get-buffer "*scheme*")))
+
+    (defun md/scheme-send-last-sexp ()
+      (interactive)
+      (md/scheme--eval 'scheme-send-last-sexp))
+
+    (defun md/scheme-send-region ()
+      (interactive)
+      (md/scheme--eval 'scheme-send-region))
+
+    (defun md/scheme-send-defun ()
+      (interactive)
+      (md/scheme--eval 'scheme-send-definition)))
+
+  :bind (:map md/scheme-mode-leader-map
+              ("SPC ee" . md/scheme-send-last-sexp)
+              ("SPC ef" . md/scheme-send-defun)
+              ("SPC er" . md/scheme-send-region)))
+
 (use-package yaml-mode)
 
 (use-package lua-mode)
@@ -750,17 +930,20 @@ git dir) or linum mode"
     (bind-key "ESC" 'which-key-abort which-key-C-h-map)
     (bind-key "C-g" 'which-key-abort which-key-C-h-map)
 
-    ;; TODO - extend these
     (which-key-declare-prefixes
+      "SPC SPC" "major-mode"
+      "SPC SPC e" "major-mode-eval"
       "SPC b" "buffers"
       "SPC c" "comments"
       "SPC C" "compile"
       "SPC e" "eval"
+      "SPC E" "Emacs"
       "SPC g" "git"
       "SPC h" "help"
       "SPC j" "project"
       "SPC j ;" "project-popwin"
       "SPC n" "narrow"
+      "SPC P" "Packages"
       "SPC s" "flycheck"
       "SPC t" "toggle-misc"
       "SPC v" "dotfiles"
@@ -877,6 +1060,8 @@ out of the box."
     (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
     (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
     (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
+    (push '("*Warnings*" :tail t :dedicated t) popwin:special-display-config)
+    (push '("*Backtrace*" :dedicated t) popwin:special-display-config)
     (push '(completion-list-mode :noselect t :dedicated t) popwin:special-display-config)
     (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
     (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
@@ -890,6 +1075,7 @@ out of the box."
     (push '(eshell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
     (push '(term-mode :dedicated t :height 15 :stick t :tail t)
           popwin:special-display-config)  ; only works with md/popwin-ansi-term
+    (push '(inferior-scheme-mode :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
 
     (popwin-mode 1))
   :bind (:map md/leader-map
@@ -1208,7 +1394,7 @@ out of the box."
 
  :bind (:map md/leader-map
         ("ts" . solarized-toggle-theme-mode)
-        ("chl" . solarized-toggle-comment-visibility)))
+        ("cs" . solarized-toggle-comment-visibility)))
 
 (defun md/dotfiles-edit-init ()
   (interactive)

@@ -117,6 +117,9 @@ inherit from the ~md/leader-map~.
 
   (defvar md/go-mode-leader-map (make-sparse-keymap))
   (set-keymap-parent md/go-mode-leader-map md/leader-map)
+
+  (defvar md/scheme-mode-leader-map (make-sparse-keymap))
+  (set-keymap-parent md/scheme-mode-leader-map md/leader-map)
 #+END_SRC
 
 ** Splash screen
@@ -441,7 +444,7 @@ I seem to use =describe-face= a lot:
   (setq delete-by-moving-to-trash t)
 #+END_SRC
 * Evil
-** COMMENT Base evil
+** Base evil
 
 - Note on md/evil-fill and unfill:
 
@@ -499,15 +502,40 @@ I seem to use =describe-face= a lot:
      (bind-key "<SPC>" md/leader-map evil-visual-state-map)
 
      (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
-
      (bind-key "n" (lookup-key global-map (kbd "C-x n")) md/leader-map)
 
+     (setq evil-echo-state nil)
+
      (evil-mode 1))
+
+     ;; Enable evil in the minibuffer. Adapted from
+     ;; https://gist.github.com/ccdunder/5816865.
+     ;; Not sure why this isn't provided by default.
+     ;; (mapc (lambda (keymap)
+     ;;           (evil-define-key 'insert (eval keymap) [escape] 'evil-normal-state))
+     ;;         ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/
+     ;;         ;; Text-from-Minibuffer.html#Definition of minibuffer-local-map
+     ;;         '(minibuffer-local-map
+     ;;           minibuffer-local-ns-map
+     ;;           minibuffer-local-completion-map
+     ;;           minibuffer-local-must-match-map
+     ;;           minibuffer-local-isearch-map))
+     ;; (defun md/evil-minibuffer-setup ()
+     ;;   ;; (evil-set-initial-state 'mode 'insert) is the evil-proper
+     ;;   ;; way to do this, but the minibuffer doesn't have a mode.
+     ;;   (evil-insert 1))
+     ;; )
+    ;; (add-hook 'minibuffer-setup-hook 'md/evil-minibuffer-setup))
 
    :bind (;; Like my vimrc, remap  ; to : and , to ;
           :map evil-motion-state-map
           (";" . evil-ex)
           ("," . evil-repeat-find-char)
+
+          ;; Like in the terminal. Mainly useful in minibuffer
+          :map evil-insert-state-map
+          ("C-a" . move-beginning-of-line)
+          ("C-e" . move-end-of-line)
 
           ;; Use H/L instead of ^/$
           :map evil-normal-state-map
@@ -549,7 +577,15 @@ I seem to use =describe-face= a lot:
           ("er" . eval-region)
           ("ex" . md/fontify-buffer)  ; It's sort-of an eval
 
-          ;; Toggle misc
+          ;; Emacs
+          ("Ek" . kill-emacs)
+
+          ;; Packages
+          ("Pr" . package-refresh-contents)
+          ("Pi" . package-install)
+          ("Pl" . package-list-packages)
+ 
+          ; Toggle misc
           ("tw" . toggle-truncate-lines)
 
           ;; This could be useful
@@ -613,48 +649,47 @@ actually use it to insert anything in insert mode.
   has been configured. Work out how to load helm when they're called.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package helm
-    :defer 5
-    :config
-    (progn
-      ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
-      (helm-mode 1)
-      (helm-autoresize-mode 0)
+    (use-package helm
+      :defer 5
+      :config
+      (progn
+        ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
+        (helm-mode 1)
+        (helm-autoresize-mode 0)
 
-      ;; This lets me quickly ag/grep for "todo" comments using the same
-      ;; ag/grep functions that I usually do.
-      (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
+        ;; This lets me quickly ag/grep for "todo" comments using the same
+        ;; ag/grep functions that I usually do.
+        (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
 
-      ;; Put C-j / C-l the sane way around.
-      (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map)
+        ;; Put C-j / C-l the sane way around.
+        (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
+        (bind-key "C-l" 'helm-execute-persistent-action helm-map)
+        (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
+        (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map)
+  )
 
-)
+      :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
+             ([remap occur] . helm-occur)
+             ([remap dabbrev-expand] . helm-dabbrev)
+             ([remap list-buffers] . helm-buffers-list)
+             ("M-x" . helm-M-x)
+             ("C-x b" . helm-buffers-list)
+             ("C-x p" . helm-mini)
 
-    :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
-           ([remap occur] . helm-occur)
-           ([remap dabbrev-expand] . helm-dabbrev)
-           ([remap list-buffers] . helm-buffers-list)
-           ("M-x" . helm-M-x)
-           ("C-x b" . helm-buffers-list)
-           ("C-x p" . helm-mini)
+             :map lisp-interaction-mode-map
+             ([remap completion-at-point] . helm-lisp-completion)
 
-           :map lisp-interaction-mode-map
-           ([remap completion-at-point] . helm-lisp-completion)
+             :map emacs-lisp-mode-map
+             ([remap completion-at-point] . helm-lisp-completion)
 
-           :map emacs-lisp-mode-map
-           ([remap completion-at-point] . helm-lisp-completion)
+             :map md/leader-map
+             ("bb" . helm-buffers-list)
+             ("f" . helm-find-files)
+             ("x" . helm-M-x)
+             ("p" . helm-mini)
 
-           :map md/leader-map
-           ("bb" . helm-buffers-list)
-           ("f" . helm-find-files)
-           ("x" . helm-M-x)
-           ("p" . helm-mini)
-
-           :map help-map
-           ("X" . helm-colors)))
+             :map help-map
+             ("X" . helm-colors)))
 
 #+END_SRC
 
@@ -705,7 +740,7 @@ evil mode, and just add in the dired bindings that I want.
 *** Dired-single
 
 I don't use Dired much and would prefer it to be contained to fewer buffers.
-Would like this to work with popwin, but currently pressing RET on a directory 
+Would like this to work with popwin, but currently pressing RET on a directory
 causes it to jump out of the popwin window.
 
 #+BEGIN_SRC emacs-lisp
@@ -890,7 +925,7 @@ eg. one terminal popwin per project.
     (popwin:display-buffer
      (or (get-buffer (format "*ansi-term-(%s)*" (projectile-project-name)))
           (save-window-excursion
-            (with-current-buffer 
+            (with-current-buffer
               (call-interactively 'projectile-run-term)
               (rename-buffer
                (format "*ansi-term-(%s)*" (projectile-project-name))))))))
@@ -903,7 +938,7 @@ eg. one terminal popwin per project.
     (popwin:display-buffer
      (or (get-buffer (format "*shell-(%s)*" (projectile-project-name)))
           (save-window-excursion
-            (with-current-buffer 
+            (with-current-buffer
               (call-interactively 'projectile-run-shell)
               (rename-buffer
                (format "*shell-(%s)*" (projectile-project-name))))))))
@@ -916,7 +951,7 @@ eg. one terminal popwin per project.
     (popwin:display-buffer
      (or (get-buffer (format "*eshell-(%s)*" (projectile-project-name)))
           (save-window-excursion
-            (with-current-buffer 
+            (with-current-buffer
               (call-interactively 'projectile-run-eshell)
               (rename-buffer
                (format "*eshell-(%s)*" (projectile-project-name))))))))
@@ -1084,8 +1119,63 @@ although I don't remember exactly what the difference is:
     (progn
        (add-hook 'css-mode-hook 'rainbow-mode)
        (add-hook 'help-mode-hook 'rainbow-mode)
-       (add-hook 'html-mode-hook 'rainbow-mode)
-       (add-hook 'prog-mode-hook 'rainbow-mode)))
+       (add-hook 'html-mode-hook 'rainbow-mode))
+    :bind (:map md/leader-map
+                ("tr" . rainbow-mode)))
+#+END_SRC
+
+** COMMENT Folding
+
+#+BEGIN_SRC emacs-lisp
+  ;; outline-magic provides org-cycle
+  (use-package outline-magic
+    :demand t
+    :config
+    (progn
+      ;; TODO - any way to support narrowing? org-narrow-to-subtree works in
+      ;; outline mode, but move-subtree-up/down don't work properly when narrowed.
+
+      (add-hook 'prog-mode-hook 'outline-minor-mode)
+
+      (defun md/outline-cycle-all ()
+        (interactive)
+        (let ((current-prefix-arg '(4))) ;; emulate C-u
+          (call-interactively 'outline-cycle)))
+
+      (defun md/outline-next-heading ()
+        "Automatically move point to first word beyond any leading whitespace"
+        (interactive)
+        (outline-next-visible-heading 1)
+        (back-to-indentation))
+
+      (defun md/outline-previous-heading ()
+        "Automatically move point to first word beyond any leading whitespace"
+        (interactive)
+        (outline-previous-visible-heading 1)
+        (back-to-indentation))
+
+      (setq outline-blank-line nil)
+      (evil-define-key 'normal outline-minor-mode-map
+        (kbd "<tab>") 'outline-cycle
+        (kbd "S-<tab>") 'md/outline-cycle-all
+        "gk" 'md/outline-previous-heading
+        "gj" 'md/outline-next-heading
+        (kbd "M-k") 'outline-move-subtree-up
+        (kbd "M-j") 'outline-move-subtree-down)
+
+      ;; TODO - add decorator support?
+      (defun md/outline-minor-mode-python ()
+        (interactive)
+        (setq-local outline-regexp
+                    (rx-to-string
+                     '(group (* space)
+                             (* "#")
+                             (* space)
+                             bow
+                             (or "class" "def")
+                             ))))
+      (add-hook 'python-mode-hook 'md/outline-minor-mode-python)
+      ))
 #+END_SRC
 
 * Languages
@@ -1166,6 +1256,49 @@ Elpy combines a few different Python packages / features.
 
 #+END_SRC
 
+** MIT Scheme
+
+- [ ] mit-scheme leader map
+- [ ] ef / ee / er bindings
+#+BEGIN_SRC emacs-lisp
+
+  (use-package scheme
+    :config
+    (progn
+      ;; For SICP
+      (setq scheme-program-name "/usr/local/bin/mit-scheme")
+
+      ;; Setup leader map for this major mode
+      (evil-define-key 'normal scheme-mode-map
+        (kbd "SPC") md/scheme-mode-leader-map)
+      (evil-define-key 'visual scheme-mode-map
+        (kbd "SPC") md/scheme-mode-leader-map)
+
+      ;; When I run the "send-to" functions I want to see the results
+      ;; in the popwin window
+      (defun md/scheme--eval (fn)
+        (save-window-excursion
+          (call-interactively 'run-scheme))
+          (call-interactively fn)
+        (popwin:display-buffer (get-buffer "*scheme*")))
+
+      (defun md/scheme-send-last-sexp ()
+        (interactive)
+        (md/scheme--eval 'scheme-send-last-sexp))
+
+      (defun md/scheme-send-region ()
+        (interactive)
+        (md/scheme--eval 'scheme-send-region))
+
+      (defun md/scheme-send-defun ()
+        (interactive)
+        (md/scheme--eval 'scheme-send-definition)))
+
+    :bind (:map md/scheme-mode-leader-map
+                ("SPC ee" . md/scheme-send-last-sexp)
+                ("SPC ef" . md/scheme-send-defun)
+                ("SPC er" . md/scheme-send-region)))
+#+END_SRC
 ** Yaml
 Not sure if this provides anything beyond syntax highlighting, but that's enough
 for now:
@@ -1253,17 +1386,20 @@ easier to discover features / work out where I am:
       (bind-key "ESC" 'which-key-abort which-key-C-h-map)
       (bind-key "C-g" 'which-key-abort which-key-C-h-map)
 
-      ;; TODO - extend these
       (which-key-declare-prefixes
+        "SPC SPC" "major-mode"
+        "SPC SPC e" "major-mode-eval"
         "SPC b" "buffers"
         "SPC c" "comments"
         "SPC C" "compile"
         "SPC e" "eval"
+        "SPC E" "Emacs"
         "SPC g" "git"
         "SPC h" "help"
         "SPC j" "project"
         "SPC j ;" "project-popwin"
         "SPC n" "narrow"
+        "SPC P" "Packages"
         "SPC s" "flycheck"
         "SPC t" "toggle-misc"
         "SPC v" "dotfiles"
@@ -1412,6 +1548,8 @@ edges.
       (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
       (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
       (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
+      (push '("*Warnings*" :tail t :dedicated t) popwin:special-display-config)
+      (push '("*Backtrace*" :dedicated t) popwin:special-display-config)
       (push '(completion-list-mode :noselect t :dedicated t) popwin:special-display-config)
       (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
       (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
@@ -1425,6 +1563,7 @@ edges.
       (push '(eshell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
       (push '(term-mode :dedicated t :height 15 :stick t :tail t)
             popwin:special-display-config)  ; only works with md/popwin-ansi-term
+      (push '(inferior-scheme-mode :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
 
       (popwin-mode 1))
     :bind (:map md/leader-map
@@ -1765,7 +1904,7 @@ edges.
 
    :bind (:map md/leader-map
           ("ts" . solarized-toggle-theme-mode)
-          ("chl" . solarized-toggle-comment-visibility)))
+          ("cs" . solarized-toggle-comment-visibility)))
 #+END_SRC
 
 * Dotfiles
@@ -1812,12 +1951,9 @@ Close paren for the wrapping ~let~:
 - [ ] tab key not inserting tabs in evil?
   - it aligns but doesn't insert tab, not sure if this is behaviour i want. It
     runs indent-for-tab-command. Try it for a while.
-- [ ] savehist-mode.
-- [ ] indents.
 - [ ] read electric-indent docs.
 - [ ] does electric-indent need different configuration in python? I used to
   have something for this.
-- [ ] undo tree?
 - [ ] info / other help modes - use vi keys to navigate?
 - [ ] how to preserve binding in map?
   - Eg. I want to use normal mode for some magit modes, but I generally want to retain
@@ -1828,6 +1964,8 @@ Close paren for the wrapping ~let~:
 - [ ] checkout avy - improvement to acejump?
 - [ ] debugger
 - [ ] folding
+  - I basically want tab/shift+tab toggle bindings like outline mode. But
+    outline mode doesn't match folding blocks nicely, so need to use another package.
 - [ ] autocomplete
 - [ ] spellcheck?
 - [ ] checkout slime
@@ -1880,7 +2018,7 @@ Close paren for the wrapping ~let~:
     - helm-make
     - compile
     - recompile
-    - projectile-compile is under 
+    - projectile-compile is under
   - [ ] f - file prefix
     - dired jump
     - open in external app
@@ -1901,7 +2039,6 @@ Close paren for the wrapping ~let~:
   - [ ] w - window commands. The popup window looks like it might be good
     - for messages, compiling, generally temp stuff.
   - [ ] z - zoom text
-- [ ] ipython?
 - [ ] Emacs 25 / package upgrades
   - [2016-09-24 Sat] just upgraded everything
   - [ ] not getting native colours in org-mode code blocks, despite
@@ -1912,3 +2049,7 @@ Close paren for the wrapping ~let~:
 - [ ] helm grep within current file - currently don't have binding for this.
 - [ ] help popwin wrapper to reselect last window so we don't get helm buffers
   appearing on ;a
+- [ ] check spacemacs - are there any modes we can evilify? eg. some of the help modes.
+- [ ] python shell / inferior?
+  
+- [ ] helm - reinstate C-n/C-p
