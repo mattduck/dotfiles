@@ -38,8 +38,7 @@ test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shel
 
 
 # MIT-Scheme -------------
-export MITSCHEME_LIBRARY_PATH="/Applications/MIT\:GNU\ Scheme.app/Contents/Resources"
-export MIT_SCHEME_EXE="/usr/local/scheme"
+export MITSCHEME_LIBRARY_PATH="/usr/local/Cellar/mit-scheme/9.2_1/lib/mit-scheme-c/"
 
 
 # Emacs ------------------
