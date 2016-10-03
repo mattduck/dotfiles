@@ -584,7 +584,7 @@ I seem to use =describe-face= a lot:
           ("Pr" . package-refresh-contents)
           ("Pi" . package-install)
           ("Pl" . package-list-packages)
- 
+
           ; Toggle misc
           ("tw" . toggle-truncate-lines)
 
@@ -2051,5 +2051,10 @@ Close paren for the wrapping ~let~:
   appearing on ;a
 - [ ] check spacemacs - are there any modes we can evilify? eg. some of the help modes.
 - [ ] python shell / inferior?
-  
 - [ ] helm - reinstate C-n/C-p
+- [ ] getting slowdowns where python3 uses 99% cpu. Seems to occcur sometimes
+  when killing buffers. Only python processes running are doing ~elpy.__main__~.
+  - This process is started in elpy-rpc--open.
+  - https://github.com/jorgenschaefer/elpy/issues/724
+  - Next time this happens use strace and try to report bug.
+  - https://github.com/jorgenschaefer/elpy/issues/96
