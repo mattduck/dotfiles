@@ -3,10 +3,13 @@
 (let ((file-handler-name-alist nil)
        (gc-cons-threshold 100000000))
 
-(defun md/get-dotfiles-path ()
+(defun md/dotfiles-get-root ()
   (or
     (getenv "DOTFILES")
     (concat (expand-file-name "~") "/dotfiles")))
+
+(defun md/dotfiles-get-path (path)
+  (concat (md/dotfiles-get-root) "/" path))
 
 (package-initialize)
 
@@ -18,7 +21,7 @@
 
 (setq load-prefer-newer t)  ; new in v24.4
 
-(setq custom-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/custom.el"))
+(setq custom-file (md/dotfiles-get-path "emacs.d.symlink/custom.el"))
 (load custom-file 'noerror)
 
 (setq use-package-always-ensure nil
@@ -180,7 +183,7 @@
 ;; Backup everything to the same directory, rather than dropping
 ;; files all over the place
 (setq backup-directory-alist
-      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
+      `(("." . ,(md/dotfiles-get-path "emacs.d.symlink/.backups"))))
 
 (defun md/strip-whitespace-and-save ()
   (interactive)
@@ -359,12 +362,13 @@
 
         ;; Emacs
         ("Ek" . kill-emacs)
+        ("Es" . server-start)
 
         ;; Packages
         ("Pr" . package-refresh-contents)
         ("Pi" . package-install)
         ("Pl" . package-list-packages)
- 
+
         ; Toggle misc
         ("tw" . toggle-truncate-lines)
 
@@ -410,46 +414,54 @@
     (key-chord-mode 1)))
 
 (use-package helm
-    :defer 5
-    :config
-    (progn
-      ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
-      (helm-mode 1)
-      (helm-autoresize-mode 0)
+  :defer 5
+  :config
+  (progn
+    ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
+    (helm-mode 1)
+    (helm-autoresize-mode 0)
 
-      ;; This lets me quickly ag/grep for "todo" comments using the same
-      ;; ag/grep functions that I usually do.
-      (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
+    ;; No need to display the header - it takes up room and doesn't add much.
+    (setq helm-display-header-line nil)
 
-      ;; Put C-j / C-l the sane way around.
-      (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map)
-)
+    ;; I don't need to know about some files
+    ;; TODO get this to workj
+    (setq helm-ff-skip-boring-files t)
+    (push "\\.$" helm-boring-file-regexp-list)
+    (push "\\.\\.$" helm-boring-file-regexp-list)
 
-    :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
-           ([remap occur] . helm-occur)
-           ([remap dabbrev-expand] . helm-dabbrev)
-           ([remap list-buffers] . helm-buffers-list)
-           ("M-x" . helm-M-x)
-           ("C-x b" . helm-buffers-list)
-           ("C-x p" . helm-mini)
+    ;; This lets me quickly ag/grep for "todo" comments using the same
+    ;; ag/grep functions that I usually do.
+    (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
 
-           :map lisp-interaction-mode-map
-           ([remap completion-at-point] . helm-lisp-completion)
+    ;; Put C-j / C-l the sane way around.
+    (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
+    (bind-key "C-l" 'helm-execute-persistent-action helm-map)
+    (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
+    (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map))
 
-           :map emacs-lisp-mode-map
-           ([remap completion-at-point] . helm-lisp-completion)
+  :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
+         ([remap occur] . helm-occur)
+         ([remap dabbrev-expand] . helm-dabbrev)
+         ([remap list-buffers] . helm-buffers-list)
+         ("M-x" . helm-M-x)
+         ("C-x b" . helm-buffers-list)
+         ("C-x p" . helm-mini)
 
-           :map md/leader-map
-           ("bb" . helm-buffers-list)
-           ("f" . helm-find-files)
-           ("x" . helm-M-x)
-           ("p" . helm-mini)
+         :map lisp-interaction-mode-map
+         ([remap completion-at-point] . helm-lisp-completion)
 
-           :map help-map
-           ("X" . helm-colors)))
+         :map emacs-lisp-mode-map
+         ([remap completion-at-point] . helm-lisp-completion)
+
+         :map md/leader-map
+         ("bb" . helm-buffers-list)
+         ("f" . helm-find-files)
+         ("x" . helm-M-x)
+         ("p" . helm-mini)
+
+         :map help-map
+         ("X" . helm-colors)))
 
 (use-package helm-ag
   :defer 5
@@ -465,6 +477,9 @@
   :demand t
   :init
   (progn
+     ;; Use human size
+     (setq dired-listing-switches "-alh")
+
     ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
     ;; makes dired-mode-map an overriding keymap, which means that the default
     ;; dired-mode bindings take precendence over the normal-state bindings.
@@ -556,7 +571,8 @@
               ("sj" . flycheck-next-error)
               ("sp" . flycheck-previous-error)
               ("sk" . flycheck-previous-error)
-              ("ss" . flyspell-mode)))
+              ("S <RET>" . flyspell-mode)
+              ("SS" . flyspell-correct-word-before-point)))
 
 (use-package projectile
  :config
@@ -616,6 +632,7 @@
               ("jj" . helm-projectile-switch-project)
               ("jag" . helm-projectile-ag)
               ("jb" . helm-projectile-switch-to-buffer)
+              ("jp" . helm-projectile-switch-to-buffer)
               ("jf" . helm-projectile-find-file)))
 
 (defun md/projectile-popwin-ansi-term ()
@@ -945,6 +962,7 @@ git dir) or linum mode"
       "SPC n" "narrow"
       "SPC P" "Packages"
       "SPC s" "flycheck"
+      "SPC S" "flyspell"
       "SPC t" "toggle-misc"
       "SPC v" "dotfiles"
       "SPC ;" "popwin")
@@ -971,7 +989,7 @@ git dir) or linum mode"
 
    (md/elscreen-display-tabs)))
 
-(setq md/splitscreen-path (concat (md/get-dotfiles-path) "/splitscreen/"))
+(setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
 
 ;; NOTE - for some reason this doesn't seem to load with "defer"
 (use-package splitscreen
@@ -1038,12 +1056,23 @@ out of the box."
              (call-interactively 'dired-single-magic-buffer)))))
 
     ;; Disable popwin-mode in an active Helm session, to prevent it from conflicting
-    ;; with Helm windows.
+    ;; with Helm windows. Also ensure that popwin-last-config doesn't return
+    ;; helm buffers.
+    (defvar md/popwin-last-config nil)
+    (add-hook 'helm-before-initialize-hook
+              (lambda ()
+                (message "HOOK")
+                (when popwin:focus-window (progn (message "CLOSING" (popwin:close-popup-window))))))
     (add-hook 'helm-after-initialize-hook
               (lambda ()
+                (setq md/popwin-last-config-store popwin:popup-last-config)
                 (popwin:display-buffer helm-buffer t)
-                (popwin-mode -1)))
-    (add-hook 'helm-cleanup-hook (lambda () (popwin-mode 1)))
+                (popwin-mode -1)
+                ))
+    (add-hook 'helm-cleanup-hook (lambda ()
+                                   (popwin-mode 1)
+                                   (setq popwin:popup-last-config md/popwin-last-config-store)))
+    (push '("^\*helm.+\*$" :regexp t :dedicated nil :height 15) popwin:special-display-config)
 
     (setq popwin:popup-window-height 10)
 
@@ -1054,7 +1083,6 @@ out of the box."
     ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
     ;; Generally I only ever want one popwin window open.
     (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
-    (push '("^\*helm.+\*$" :regexp t :dedicated nil :height 15) popwin:special-display-config)
     (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
     (push '(help-mode :dedicated t) popwin:special-display-config)
     (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
@@ -1398,9 +1426,17 @@ out of the box."
 
 (defun md/dotfiles-edit-init ()
   (interactive)
-  (find-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/init.org")))
+  (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org")))
+
+(defun md/dotfiles-compile ()
+  (interactive)
+  (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
+  (setq-local org-confirm-babel-evaluate nil)
+  (org-babel-tangle nil "init.el")
+  (byte-compile-file (md/dotfiles-get-path "emacs.d.symlink/init.el")))
 
 (bind-key "ve" 'md/dotfiles-edit-init md/leader-map)
+(bind-key "vc" 'md/dotfiles-compile md/leader-map)
 
 (use-package esup
   :defer 5)

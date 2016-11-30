@@ -4,15 +4,6 @@
 I'm using org-mode to structure my configuration. Inspired by [[https://github.com/sachac/.emacs.d][Sacha Chua]] and
 [[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
 
-#+BEGIN_SRC emacs-lisp :results silent :tangle no
-;; TODO - function to eval this from anywhere
-  (setq-local org-confirm-babel-evaluate nil)
-  (org-babel-tangle nil "init.el")
-
-  ;; Byte-compiling seems to take ~0.1s off startup time.
-  (byte-compile-file "init.el")
-#+END_SRC
-
 * Initialise
 
 ** Profiling
@@ -42,10 +33,13 @@ This wraps the rest of the file.
 I use this to refer to this directory / file:
 
 #+BEGIN_SRC emacs-lisp
-(defun md/get-dotfiles-path ()
-  (or
-    (getenv "DOTFILES")
-    (concat (expand-file-name "~") "/dotfiles")))
+  (defun md/dotfiles-get-root ()
+    (or
+      (getenv "DOTFILES")
+      (concat (expand-file-name "~") "/dotfiles")))
+
+  (defun md/dotfiles-get-path (path)
+    (concat (md/dotfiles-get-root) "/" path))
 #+END_SRC
 
 ** Emacs Package setup
@@ -64,7 +58,7 @@ I use this to refer to this directory / file:
 ** Custom file
 
 #+BEGIN_SRC emacs-lisp
-(setq custom-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/custom.el"))
+(setq custom-file (md/dotfiles-get-path "emacs.d.symlink/custom.el"))
 (load custom-file 'noerror)
 #+END_SRC
 
@@ -95,12 +89,6 @@ If ~use-package~ isn't installed, I should install it.
 
 These are mostly to get the base appearance / behaviour of Emacs close to
 what I'm used to from vim.
-
-Some of this would not be necessary if I only used GUI Emacs. If I can work out
-how to manage several projects in Emacs whilst keeping good separation between
-them, I might be able to drop terminal support. For now though, I find it
-easiest to use a workflow with one or more Tmux windows per project, each using
-their own Emacs instances.
 
 ** Leader map(s)
 I was using evil-leader, but think I can get the functionality I care about just
@@ -372,7 +360,7 @@ Increase the number of messages:
 ;; Backup everything to the same directory, rather than dropping
 ;; files all over the place
 (setq backup-directory-alist
-      `(("." . ,(concat (md/get-dotfiles-path) "/emacs.d.symlink/.backups"))))
+      `(("." . ,(md/dotfiles-get-path "emacs.d.symlink/.backups"))))
 #+END_SRC
 * Misc utils
 ** Odd functions
@@ -579,6 +567,7 @@ I seem to use =describe-face= a lot:
 
           ;; Emacs
           ("Ek" . kill-emacs)
+          ("Es" . server-start)
 
           ;; Packages
           ("Pr" . package-refresh-contents)
@@ -657,6 +646,15 @@ actually use it to insert anything in insert mode.
         (helm-mode 1)
         (helm-autoresize-mode 0)
 
+        ;; No need to display the header - it takes up room and doesn't add much.
+        (setq helm-display-header-line nil)
+
+        ;; I don't need to know about some files
+        ;; TODO get this to workj
+        (setq helm-ff-skip-boring-files t)
+        (push "\\.$" helm-boring-file-regexp-list)
+        (push "\\.\\.$" helm-boring-file-regexp-list)
+
         ;; This lets me quickly ag/grep for "todo" comments using the same
         ;; ag/grep functions that I usually do.
         (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
@@ -665,8 +663,7 @@ actually use it to insert anything in insert mode.
         (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
         (bind-key "C-l" 'helm-execute-persistent-action helm-map)
         (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
-        (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map)
-  )
+        (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map))
 
       :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
              ([remap occur] . helm-occur)
@@ -716,6 +713,9 @@ evil mode, and just add in the dired bindings that I want.
     :demand t
     :init
     (progn
+       ;; Use human size
+       (setq dired-listing-switches "-alh")
+
       ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
       ;; makes dired-mode-map an overriding keymap, which means that the default
       ;; dired-mode bindings take precendence over the normal-state bindings.
@@ -800,47 +800,48 @@ Company seems to work nicely without much configuration.
 
 ** Flycheck
 #+BEGIN_SRC emacs-lisp
-  (use-package flycheck
-    :init
-    (progn
-      (add-hook 'prog-mode-hook 'flycheck-mode))
-    :config
-    (progn
-      (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
-      (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
+    (use-package flycheck
+      :init
+      (progn
+        (add-hook 'prog-mode-hook 'flycheck-mode))
+      :config
+      (progn
+        (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
+        (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
 
-      (setq flycheck-flake8rc ".config/flake8"
-            flycheck-highlighting-mode 'symbols
+        (setq flycheck-flake8rc ".config/flake8"
+              flycheck-highlighting-mode 'symbols
 
-            ;; defaults to 0.9, which is too slow
-            flycheck-display-errors-delay 0.1
+              ;; defaults to 0.9, which is too slow
+              flycheck-display-errors-delay 0.1
 
-            ;; Disabling this at is annoys me to have errors appearing
-            ;; and disappearing quickly and messing with the size of the
-            ;; window. I will just check the error list and the fringe.
-            flycheck-display-errors-function nil
+              ;; Disabling this at is annoys me to have errors appearing
+              ;; and disappearing quickly and messing with the size of the
+              ;; window. I will just check the error list and the fringe.
+              flycheck-display-errors-function nil
 
-            ;; There's a short delay when flycheck runs, which causes the modeline to change
-            ;; its format (or in my custom powerline stuff, to disappear briefly). It's
-            ;; super annoying if this happens at random points during editing, so change it
-            ;; to only happen on save (and when enabling the mode). This is quite similar to how
-            ;; I had it setup in vim.
-            flycheck-check-syntax-automatically '(save mode-enabled)
+              ;; There's a short delay when flycheck runs, which causes the modeline to change
+              ;; its format (or in my custom powerline stuff, to disappear briefly). It's
+              ;; super annoying if this happens at random points during editing, so change it
+              ;; to only happen on save (and when enabling the mode). This is quite similar to how
+              ;; I had it setup in vim.
+              flycheck-check-syntax-automatically '(save mode-enabled)
 
-            flycheck-mode-line-prefix nil)
+              flycheck-mode-line-prefix nil)
 
-      ;; For some reason in the flycheck mode list map it just uses all vi
-      ;; keys. Mostly this is fine but I need an easy way to quit.
-      (evil-define-key 'normal flycheck-error-list-mode-map "q" 'quit-window))
-    :bind (:map md/leader-map
-                ;; S prefix, ie. "syntax"
-                ("s <RET>" . flycheck-mode)
-                ("sl" . flycheck-list-errors)
-                ("sn" . flycheck-next-error)
-                ("sj" . flycheck-next-error)
-                ("sp" . flycheck-previous-error)
-                ("sk" . flycheck-previous-error)
-                ("ss" . flyspell-mode)))
+        ;; For some reason in the flycheck mode list map it just uses all vi
+        ;; keys. Mostly this is fine but I need an easy way to quit.
+        (evil-define-key 'normal flycheck-error-list-mode-map "q" 'quit-window))
+      :bind (:map md/leader-map
+                  ;; S prefix, ie. "syntax"
+                  ("s <RET>" . flycheck-mode)
+                  ("sl" . flycheck-list-errors)
+                  ("sn" . flycheck-next-error)
+                  ("sj" . flycheck-next-error)
+                  ("sp" . flycheck-previous-error)
+                  ("sk" . flycheck-previous-error)
+                  ("S <RET>" . flyspell-mode)
+                  ("SS" . flyspell-correct-word-before-point)))
 
 #+END_SRC
 
@@ -908,6 +909,7 @@ Company seems to work nicely without much configuration.
                 ("jj" . helm-projectile-switch-project)
                 ("jag" . helm-projectile-ag)
                 ("jb" . helm-projectile-switch-to-buffer)
+                ("jp" . helm-projectile-switch-to-buffer)
                 ("jf" . helm-projectile-find-file)))
 #+END_SRC
 
@@ -1401,6 +1403,7 @@ easier to discover features / work out where I am:
         "SPC n" "narrow"
         "SPC P" "Packages"
         "SPC s" "flycheck"
+        "SPC S" "flyspell"
         "SPC t" "toggle-misc"
         "SPC v" "dotfiles"
         "SPC ;" "popwin")
@@ -1445,7 +1448,7 @@ on the screen, or nowhere.
 
 ** Splitscreen
 #+BEGIN_SRC emacs-lisp
-(setq md/splitscreen-path (concat (md/get-dotfiles-path) "/splitscreen/"))
+(setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
 
 ;; NOTE - for some reason this doesn't seem to load with "defer"
 (use-package splitscreen
@@ -1526,12 +1529,23 @@ edges.
                (call-interactively 'dired-single-magic-buffer)))))
 
       ;; Disable popwin-mode in an active Helm session, to prevent it from conflicting
-      ;; with Helm windows.
+      ;; with Helm windows. Also ensure that popwin-last-config doesn't return
+      ;; helm buffers.
+      (defvar md/popwin-last-config nil)
+      (add-hook 'helm-before-initialize-hook
+                (lambda ()
+                  (message "HOOK")
+                  (when popwin:focus-window (progn (message "CLOSING" (popwin:close-popup-window))))))
       (add-hook 'helm-after-initialize-hook
                 (lambda ()
+                  (setq md/popwin-last-config-store popwin:popup-last-config)
                   (popwin:display-buffer helm-buffer t)
-                  (popwin-mode -1)))
-      (add-hook 'helm-cleanup-hook (lambda () (popwin-mode 1)))
+                  (popwin-mode -1)
+                  ))
+      (add-hook 'helm-cleanup-hook (lambda ()
+                                     (popwin-mode 1)
+                                     (setq popwin:popup-last-config md/popwin-last-config-store)))
+      (push '("^\*helm.+\*$" :regexp t :dedicated nil :height 15) popwin:special-display-config)
 
       (setq popwin:popup-window-height 10)
 
@@ -1542,7 +1556,6 @@ edges.
       ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
       ;; Generally I only ever want one popwin window open.
       (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
-      (push '("^\*helm.+\*$" :regexp t :dedicated nil :height 15) popwin:special-display-config)
       (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
       (push '(help-mode :dedicated t) popwin:special-display-config)
       (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
@@ -1909,14 +1922,20 @@ edges.
 
 * Dotfiles
 
-Equivalent of my "ve" binding that would edit my vimrc:
-
 #+BEGIN_SRC emacs-lisp
   (defun md/dotfiles-edit-init ()
     (interactive)
-    (find-file (concat (md/get-dotfiles-path) "/emacs.d.symlink/init.org")))
+    (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org")))
+
+  (defun md/dotfiles-compile ()
+    (interactive)
+    (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
+    (setq-local org-confirm-babel-evaluate nil)
+    (org-babel-tangle nil "init.el")
+    (byte-compile-file (md/dotfiles-get-path "emacs.d.symlink/init.el")))
 
   (bind-key "ve" 'md/dotfiles-edit-init md/leader-map)
+  (bind-key "vc" 'md/dotfiles-compile md/leader-map)
 #+END_SRC
 
 * Profile Emacs startup
@@ -1959,7 +1978,9 @@ Close paren for the wrapping ~let~:
   - Eg. I want to use normal mode for some magit modes, but I generally want to retain
     the behaviour of RET. This is true for help modes too.
 - [ ] jumping to definitions
+  - Under cursor, and by name
 - [ ] finding uses of functions
+  - Under cursor, and by name
 - [ ] ediff / git diff
 - [ ] checkout avy - improvement to acejump?
 - [ ] debugger
@@ -1967,7 +1988,6 @@ Close paren for the wrapping ~let~:
   - I basically want tab/shift+tab toggle bindings like outline mode. But
     outline mode doesn't match folding blocks nicely, so need to use another package.
 - [ ] autocomplete
-- [ ] spellcheck?
 - [ ] checkout slime
 - [ ] jumping forward/back to markers including between files
 - [ ] stop littering # backup files
@@ -1995,7 +2015,7 @@ Close paren for the wrapping ~let~:
   - no ag ignore
 - [ ] grep / ag results should hang around in popwin window
 - [ ] go mode
-- [ ] org - shorcut to add =- [ ]= syntax to beginning of line
+- [ ] org - shortcut to add =- [ ]= syntax to beginning of line
 - [ ] cask?
 - [2016-09-24 Sat] elscreen not actively developed
 - [ ] popwin is useful
@@ -2007,7 +2027,6 @@ Close paren for the wrapping ~let~:
   - shortcut for jumping to a restclient file?
     - or opening new restclient buffer?
 - [ ] spacemacs - provide anything good?
-  - which-key - I should name prefixes
   - [ ] paradox-list-packages
   - [ ] a prefix - applications
   - [ ] list-processes?
@@ -2047,14 +2066,20 @@ Close paren for the wrapping ~let~:
 - [ ] helm-all-mark-rings?
 - [ ] persist helm grep buffer
 - [ ] helm grep within current file - currently don't have binding for this.
-- [ ] help popwin wrapper to reselect last window so we don't get helm buffers
-  appearing on ;a
 - [ ] check spacemacs - are there any modes we can evilify? eg. some of the help modes.
 - [ ] python shell / inferior?
-- [ ] helm - reinstate C-n/C-p
 - [ ] getting slowdowns where python3 uses 99% cpu. Seems to occcur sometimes
   when killing buffers. Only python processes running are doing ~elpy.__main__~.
   - This process is started in elpy-rpc--open.
   - https://github.com/jorgenschaefer/elpy/issues/724
   - Next time this happens use strace and try to report bug.
   - https://github.com/jorgenschaefer/elpy/issues/96
+- [ ] info page for intro to emacs lisp
+- [ ] use-package - is there a way to reload :binds?
+- [ ] browse documentation?
+  - for eg. ansible
+- [ ] [2016-11-30 Wed] get C-O/C-I jumping forward/back in dired.
+- [ ] helm buffers - how to search including the mode? Eg. "dired" should match
+  the "Dired by name" buffers.
+- [ ] [2016-11-30 Wed] dired popwin should NOT jump out a window when pressing RET.
+- [ ] [2016-11-30 Wed] popwin dired - display on side instead of bottom?
