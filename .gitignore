@@ -16,6 +16,7 @@ emacs.d.symlink/*.elc
 emacs.d.symlink/image-dired
 emacs.d.symlink/network-security.data
 emacs.d.symlink/eshell
+emacs.d.symlink/ede-projects.el
 
 # .config might contain files that have been dumped by programs, so
 # don't include it by default
