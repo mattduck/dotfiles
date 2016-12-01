@@ -515,7 +515,13 @@
   :config
   (progn
     ;; TODO keys are still set to their ag bindings rather than normal.
-    (evil-set-initial-state 'ag-mode 'normal)
+    ;; this is because of compiliation-mode, which takes priority in evil.
+    ;;(evil-set-initial-state 'ag-mode 'normal)
+    ;;(add-hook 'ag-mode-hook 'evil-normal-state)
+
+    (evil-add-hjkl-bindings 'ag-mode-map
+      (kbd "SPC") 'md/leader-map)
+
     (setq ag-context-lines nil
           ag-highlight-search t
           ag-reuse-buffers t  ; Only one buffer for ag searches§
@@ -1070,8 +1076,7 @@ out of the box."
     (defvar md/popwin-last-config nil)
     (add-hook 'helm-before-initialize-hook
               (lambda ()
-                (message "HOOK")
-                (when popwin:focus-window (progn (message "CLOSING" (popwin:close-popup-window))))))
+                (when popwin:focus-window (progn (popwin:close-popup-window)))))
     (add-hook 'helm-after-initialize-hook
               (lambda ()
                 (setq md/popwin-last-config-store popwin:popup-last-config)
@@ -1102,6 +1107,7 @@ out of the box."
     (push '(completion-list-mode :noselect t :dedicated t) popwin:special-display-config)
     (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
     (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
+    (push '(ag-mode :noselect t :dedicated t :stick t :tail nil) popwin:special-display-config)
     (push '(occur-mode :noselect t :dedicated t) popwin:special-display-config)
     (push '("*vc-change-log*" :dedicated t) popwin:special-display-config)
     (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
