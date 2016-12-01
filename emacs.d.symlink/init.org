@@ -4,6 +4,23 @@
 I'm using org-mode to structure my configuration. Inspired by [[https://github.com/sachac/.emacs.d][Sacha Chua]] and
 [[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
 
+#+BEGIN_SRC emacs-lisp
+  (defun md/dotfiles-get-root ()
+    (or
+      (getenv "DOTFILES")
+      (concat (expand-file-name "~") "/dotfiles")))
+
+  (defun md/dotfiles-get-path (path)
+    (concat (md/dotfiles-get-root) "/" path))
+
+  (defun md/dotfiles-compile ()
+    (interactive)
+    (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
+    (setq-local org-confirm-babel-evaluate nil)
+    (org-babel-tangle nil "init.el")
+    (byte-compile-file (md/dotfiles-get-path "emacs.d.symlink/init.el")))
+#+END_SRC
+
 * Initialise
 
 ** Profiling
@@ -26,20 +43,6 @@ This wraps the rest of the file.
 #+BEGIN_SRC emacs-lisp
   (let ((file-handler-name-alist nil)
          (gc-cons-threshold 100000000))
-#+END_SRC
-
-** Dotfiles
-
-I use this to refer to this directory / file:
-
-#+BEGIN_SRC emacs-lisp
-  (defun md/dotfiles-get-root ()
-    (or
-      (getenv "DOTFILES")
-      (concat (expand-file-name "~") "/dotfiles")))
-
-  (defun md/dotfiles-get-path (path)
-    (concat (md/dotfiles-get-root) "/" path))
 #+END_SRC
 
 ** Emacs Package setup
@@ -690,7 +693,7 @@ actually use it to insert anything in insert mode.
 
 #+END_SRC
 
-** Addons
+** COMMENT helm-ag (not using anymore)
 #+BEGIN_SRC emacs-lisp
   (use-package helm-ag
     :defer 5
@@ -775,6 +778,20 @@ POST https://httpbin.org/post
 This is the body
 #+END_EXAMPLE
 * General IDE features
+** Grep/ag
+#+BEGIN_SRC emacs-lisp
+  (use-package ag
+    :config
+    (progn
+      ;; TODO keys are still set to their ag bindings rather than normal.
+      (evil-set-initial-state 'ag-mode 'normal)
+      (setq ag-context-lines nil
+            ag-highlight-search t
+            ag-reuse-buffers t  ; Only one buffer for ag searches§
+            ag-reuse-window nil))  ; Open files in new window, don't hide search window
+    :bind (:map md/leader-map
+                ("a" . ag-project)))
+#+END_SRC
 ** Autocompletion
 
 Company seems to work nicely without much configuration.
@@ -907,7 +924,7 @@ Company seems to work nicely without much configuration.
             (setq helm-projectile-fuzzy-match nil))
     :bind (:map md/leader-map
                 ("jj" . helm-projectile-switch-project)
-                ("jag" . helm-projectile-ag)
+                ("ja" . projectile-ag)
                 ("jb" . helm-projectile-switch-to-buffer)
                 ("jp" . helm-projectile-switch-to-buffer)
                 ("jf" . helm-projectile-find-file)))
@@ -1927,13 +1944,6 @@ edges.
     (interactive)
     (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org")))
 
-  (defun md/dotfiles-compile ()
-    (interactive)
-    (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
-    (setq-local org-confirm-babel-evaluate nil)
-    (org-babel-tangle nil "init.el")
-    (byte-compile-file (md/dotfiles-get-path "emacs.d.symlink/init.el")))
-
   (bind-key "ve" 'md/dotfiles-edit-init md/leader-map)
   (bind-key "vc" 'md/dotfiles-compile md/leader-map)
 #+END_SRC
@@ -2083,3 +2093,6 @@ Close paren for the wrapping ~let~:
   the "Dired by name" buffers.
 - [ ] [2016-11-30 Wed] dired popwin should NOT jump out a window when pressing RET.
 - [ ] [2016-11-30 Wed] popwin dired - display on side instead of bottom?
+- [ ] [2016-12-01 Thu] dired/popwin - still some issues
+- [ ] [2016-12-01 Thu] ag
+  - ag-dired and ag-files both look useful.

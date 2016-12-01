@@ -1,8 +1,3 @@
-(defconst md/emacs-init-start (current-time))
-
-(let ((file-handler-name-alist nil)
-       (gc-cons-threshold 100000000))
-
 (defun md/dotfiles-get-root ()
   (or
     (getenv "DOTFILES")
@@ -10,6 +5,18 @@
 
 (defun md/dotfiles-get-path (path)
   (concat (md/dotfiles-get-root) "/" path))
+
+(defun md/dotfiles-compile ()
+  (interactive)
+  (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
+  (setq-local org-confirm-babel-evaluate nil)
+  (org-babel-tangle nil "init.el")
+  (byte-compile-file (md/dotfiles-get-path "emacs.d.symlink/init.el")))
+
+(defconst md/emacs-init-start (current-time))
+
+(let ((file-handler-name-alist nil)
+       (gc-cons-threshold 100000000))
 
 (package-initialize)
 
@@ -463,16 +470,6 @@
          :map help-map
          ("X" . helm-colors)))
 
-(use-package helm-ag
-  :defer 5
-  :config
-  (defun md/ag ()
-    "Run helm-do-ag on the default-directory"
-    (interactive)
-    (helm-do-ag default-directory))
-  :bind (:map md/leader-map
-              ("ag" . md/ag)))
-
 (use-package dired
   :demand t
   :init
@@ -513,6 +510,18 @@
   :config
   (progn
       (add-to-list 'company-backends 'company-restclient)))
+
+(use-package ag
+  :config
+  (progn
+    ;; TODO keys are still set to their ag bindings rather than normal.
+    (evil-set-initial-state 'ag-mode 'normal)
+    (setq ag-context-lines nil
+          ag-highlight-search t
+          ag-reuse-buffers t  ; Only one buffer for ag searches§
+          ag-reuse-window nil))  ; Open files in new window, don't hide search window
+  :bind (:map md/leader-map
+              ("a" . ag-project)))
 
 (use-package company
   :defer 2
@@ -630,7 +639,7 @@
           (setq helm-projectile-fuzzy-match nil))
   :bind (:map md/leader-map
               ("jj" . helm-projectile-switch-project)
-              ("jag" . helm-projectile-ag)
+              ("ja" . projectile-ag)
               ("jb" . helm-projectile-switch-to-buffer)
               ("jp" . helm-projectile-switch-to-buffer)
               ("jf" . helm-projectile-find-file)))
@@ -1427,13 +1436,6 @@ out of the box."
 (defun md/dotfiles-edit-init ()
   (interactive)
   (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org")))
-
-(defun md/dotfiles-compile ()
-  (interactive)
-  (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
-  (setq-local org-confirm-babel-evaluate nil)
-  (org-babel-tangle nil "init.el")
-  (byte-compile-file (md/dotfiles-get-path "emacs.d.symlink/init.el")))
 
 (bind-key "ve" 'md/dotfiles-edit-init md/leader-map)
 (bind-key "vc" 'md/dotfiles-compile md/leader-map)
