@@ -355,6 +355,8 @@
         ("cc" . comment-or-uncomment-region)
 
         ;; Buffers
+        ("bh" . previous-buffer)
+        ("bl" . next-buffer)
         ("k" . kill-buffer)
         ("bk" . kill-buffer)
         ("bi" . md/file-info)
@@ -517,11 +519,6 @@
 (use-package ag
   :config
   (progn
-    ;; TODO keys are still set to their ag bindings rather than normal.
-    ;; this is because of compiliation-mode, which takes priority in evil.
-    ;;(evil-set-initial-state 'ag-mode 'normal)
-    ;;(add-hook 'ag-mode-hook 'evil-normal-state)
-
     (evil-add-hjkl-bindings 'ag-mode-map
       (kbd "SPC") 'md/leader-map)
 
@@ -529,6 +526,7 @@
           ag-highlight-search t
           ag-reuse-buffers t  ; Only one buffer for ag searches§
           ag-reuse-window nil))  ; Open files in new window, don't hide search window
+
   :bind (:map md/leader-map
               ("ad" . ag-dired)
               ("af" . ag-files)
@@ -1063,6 +1061,7 @@ git dir) or linum mode"
       "SPC h" "help"
       "SPC j" "project"
       "SPC j ;" "project-popwin"
+      "SPC j a" "project-ag"
       "SPC n" "narrow"
       "SPC P" "Packages"
       "SPC s" "flycheck"
@@ -1187,7 +1186,7 @@ out of the box."
     ;; Generally I only ever want one popwin window open.
     (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
     (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
-    (push '(help-mode :dedicated t) popwin:special-display-config)
+    (push '(help-mode :dedicated t :stick t) popwin:special-display-config)
     (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
     (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
     (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
