@@ -1,5 +1,7 @@
-# Many programs consult this when they need to open a text editor
-export EDITOR="vim"
+# Set EDITOR to vim, unless it's previously set to emacs
+if test "${EDITOR#*emacs}" = "$EDITOR"; then
+     export EDITOR="vim"
+fi
 
 # Allow $HISTFILE to grow to 100k lines, and allow the `history` command to
 # access all of them rather than truncating
