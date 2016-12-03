@@ -31,6 +31,9 @@
 (setq custom-file (md/dotfiles-get-path "emacs.d.symlink/custom.el"))
 (load custom-file 'noerror)
 
+;; Kill custom buffers on q
+(setq custom-buffer-done-kill t)
+
 (setq use-package-always-ensure nil
       use-package-verbose t
       use-package-minimum-reported-time 0.01)
@@ -529,7 +532,7 @@
   :bind (:map md/leader-map
               ("ad" . ag-dired)
               ("af" . ag-files)
-              ("ag" . ag-project)))
+              ("ag" . ag)))
 
 (use-package company
   :defer 2
@@ -647,7 +650,9 @@
           (setq helm-projectile-fuzzy-match nil))
   :bind (:map md/leader-map
               ("jj" . helm-projectile-switch-project)
-              ("ja" . projectile-ag)
+              ("jag" . projectile-ag)
+              ("jaf" . ag-project-files)
+              ("jad" . ag-project-dired)
               ("jb" . helm-projectile-switch-to-buffer)
               ("jp" . helm-projectile-switch-to-buffer)
               ("jf" . helm-projectile-find-file)))
@@ -755,15 +760,19 @@ git dir) or linum mode"
      "q" 'magit-mode-bury-buffer))  ;; This quits
 
  :bind (:map md/leader-map
+       ("gg" . magit-status)
        ("gm" . magit-dispatch-popup)
        ("gb" . magit-blame)
+
+       ;; Diff gives the full git diff output. Ediff shows ediff for a single
+       ;; file.
+       ("gd" . magit-diff-popup)
+       ("gD" . magit-ediff-popup)
 
        ;; NOTE - this doesn't play nicely with mode-line:
        ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
        ;; - https://github.com/syl20bnr/spacemacs/issues/2172
-       ("gc" . magit-checkout)
-
-       ("gd" . magit-ediff-popup)))
+       ("gc" . magit-checkout)))
 
 (use-package github-browse-file
   :config
@@ -776,8 +785,85 @@ git dir) or linum mode"
  :defer 1
  :config
  (progn
-   ;; TODO - I want ediff to have evil-like bindings
-   (setq ediff-split-window-function 'split-window-horizontally)))
+
+   (defun md/ediff-scroll-left ()
+     (interactive)
+     (let ((last-command-event ?>))
+       (ediff-scroll-horizontally 1)))
+
+   (defun md/ediff-scroll-right ()
+     (interactive)
+     (let ((last-command-event ?<))
+       (ediff-scroll-horizontally 1)))
+
+   (defun md/ediff-scroll-up ()
+     (interactive)
+     (let ((last-command-event ?V))
+       (ediff-scroll-vertically 1)))
+
+   (defun md/ediff-scroll-down ()
+     (interactive)
+     (let ((last-command-event ?v))
+       (ediff-scroll-vertically 1)))
+
+   (setq
+    ;; Horizontal instead of vertical splits.
+    ediff-split-window-function 'split-window-horizontally
+
+    ;; Make sure the ediff control window is NOT opened in a new frame.
+    ediff-window-setup-function 'ediff-setup-windows-plain)
+
+   (defvar md/ediff-help-changed nil)
+   (defun md/ediff-adjust-help ()
+     "Adjust long help messages to reflect evil-ediff bindings."
+     (unless md/ediff-help-changed
+       (dolist (msg '(ediff-long-help-message-compare2
+                      ediff-long-help-message-compare3
+                      ediff-long-help-message-narrow2
+                      ediff-long-help-message-word-mode
+                      ediff-long-help-message-merge
+                      ediff-long-help-message-head
+                      ediff-long-help-message-tail))
+         (dolist (chng '(("p,DEL -previous diff " . " gk,p -previous diff ")
+                         ("n,SPC -next diff     " . " gj,n -next diff     ")
+                         ("    h -highlighting  " . "    H -highlighting  ")
+                         ("    j -jump to diff  " . "    d -jump to diff  ")
+                         ("  </> -scroll lt/rt  " . "  h/l -scroll lt/rt  ")
+                         ("  v/V -scroll up/dn  " . "  k/j -scroll up/dn  ")
+                         ("  z/q -suspend/quit  " . "  q/z -quit/suspend  ")))
+           (setf (symbol-value msg)
+                 (replace-regexp-in-string (car chng) (cdr chng) (symbol-value msg))))))
+     (setq md/ediff-help-changed t))
+
+   (defvar md/ediff-bindings
+     '(("h" . md/ediff-scroll-left)
+       ("j" . md/ediff-scroll-down)
+       ("k" . md/ediff-scroll-up)
+       ("l" . md/ediff-scroll-right)
+       ("gj" . ediff-next-difference)
+       ("gk" . ediff-previous-difference)
+       ("d" . ediff-jump-to-difference)
+       ("H" . ediff-toggle-hilit)
+       ("q" . ediff-quit)))
+
+   (defun md/ediff-startup-hook ()
+     (evil-make-overriding-map ediff-mode-map 'normal)
+     (dolist (entry md/ediff-bindings)
+       (define-key ediff-mode-map (car entry) (cdr entry)))
+     (evil-normalize-keymaps))
+
+   ;; Override bindings
+  (evil-set-initial-state 'ediff-mode 'normal)
+  (add-hook 'ediff-startup-hook 'md/ediff-startup-hook)
+  (md/ediff-adjust-help)
+
+  ;; Ensure that outline buffers are expanded when in ediff mode, because
+  ;; it doesn't automatically expand them, even if the diffs are inside a
+  ;; hidden headline.
+  (add-hook 'ediff-prepare-buffer-hook 'outline-show-all))
+
+ :bind (:map md/leader-map
+             ("d" . "ediff")))
 
 (use-package fic-mode
  :defer 1
@@ -1110,7 +1196,7 @@ out of the box."
     (push '(completion-list-mode :noselect t :dedicated t) popwin:special-display-config)
     (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
     (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
-    (push '(ag-mode :noselect t :dedicated t :stick t :tail nil) popwin:special-display-config)
+    (push '(ag-mode :noselect t :dedicated t :stick t :tail nil :height 15) popwin:special-display-config)
     (push '(occur-mode :noselect t :dedicated t) popwin:special-display-config)
     (push '("*vc-change-log*" :dedicated t) popwin:special-display-config)
     (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
@@ -1454,7 +1540,7 @@ out of the box."
 
 (require 'server)
 (when (not (server-running-p))
-  (server-start))
+   (server-start))
 
 (defconst md/emacs-init-end (current-time))
 
