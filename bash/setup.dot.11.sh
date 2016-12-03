@@ -2,6 +2,7 @@
 if test "${EDITOR#*emacs}" = "$EDITOR"; then
      export EDITOR="vim"
 fi
+export ALTERNATE_EDITOR="vim"
 
 # Allow $HISTFILE to grow to 100k lines, and allow the `history` command to
 # access all of them rather than truncating
