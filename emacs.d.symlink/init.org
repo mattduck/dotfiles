@@ -796,7 +796,9 @@ This is the body
             ag-reuse-buffers t  ; Only one buffer for ag searches§
             ag-reuse-window nil))  ; Open files in new window, don't hide search window
     :bind (:map md/leader-map
-                ("a" . ag-project)))
+                ("ad" . ag-dired)
+                ("af" . ag-files)
+                ("ag" . ag-project)))
 #+END_SRC
 ** Autocompletion
 
@@ -1414,6 +1416,7 @@ easier to discover features / work out where I am:
       (which-key-declare-prefixes
         "SPC SPC" "major-mode"
         "SPC SPC e" "major-mode-eval"
+        "SPC a" "ag"
         "SPC b" "buffers"
         "SPC c" "comments"
         "SPC C" "compile"
@@ -1964,6 +1967,12 @@ w/terminal, I can disable exec-path-from-shell.
   :defer 5)
 #+END_SRC
 
+* Server
+#+BEGIN_SRC emacs-lisp
+(require 'server)
+(when (not (server-running-p))
+   (server-start))
+#+END_SRC
 * Teardown
 
 Profiling. This number comes out slightly different to ~(emacs-init-time)~

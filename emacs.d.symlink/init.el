@@ -527,7 +527,9 @@
           ag-reuse-buffers t  ; Only one buffer for ag searches§
           ag-reuse-window nil))  ; Open files in new window, don't hide search window
   :bind (:map md/leader-map
-              ("a" . ag-project)))
+              ("ad" . ag-dired)
+              ("af" . ag-files)
+              ("ag" . ag-project)))
 
 (use-package company
   :defer 2
@@ -965,6 +967,7 @@ git dir) or linum mode"
     (which-key-declare-prefixes
       "SPC SPC" "major-mode"
       "SPC SPC e" "major-mode-eval"
+      "SPC a" "ag"
       "SPC b" "buffers"
       "SPC c" "comments"
       "SPC C" "compile"
@@ -1448,6 +1451,10 @@ out of the box."
 
 (use-package esup
   :defer 5)
+
+(require 'server)
+(when (not (server-running-p))
+  (server-start))
 
 (defconst md/emacs-init-end (current-time))
 
