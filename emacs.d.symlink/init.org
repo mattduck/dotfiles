@@ -1005,6 +1005,7 @@ eg. one terminal popwin per project.
          ("gg" . magit-status)
          ("gm" . magit-dispatch-popup)
          ("gb" . magit-blame)
+         ("gl" . magit-log)
 
          ;; Diff gives the full git diff output. Ediff shows ediff for a single
          ;; file.
@@ -1733,152 +1734,152 @@ edges.
 
 ** org-mode
 #+BEGIN_SRC emacs-lisp
-    (use-package org
-     :defer 5
-     :config
-     (progn
+  (use-package org
+    :defer 5
+    :config
+    (progn
 
-       (defun md/org-timestamp-time-inactive-no-confirm ()
-         (interactive)
-         (org-insert-time-stamp (current-time) t t))
+      (defun md/org-timestamp-time-inactive-no-confirm ()
+        (interactive)
+        (org-insert-time-stamp (current-time) t t))
 
-       (defun md/org-timestamp-date-inactive-no-confirm ()
-         (interactive)
-         (org-insert-time-stamp (current-time) nil t))
+      (defun md/org-timestamp-date-inactive-no-confirm ()
+        (interactive)
+        (org-insert-time-stamp (current-time) nil t))
 
-       (defun md/org-insert-link-from-paste ()
-         (interactive)
-         (org-insert-link nil
-                          (with-temp-buffer
-                            (evil-paste-after nil)
-                            (delete-trailing-whitespace)
-                            (buffer-string))))
+      (defun md/org-insert-link-from-paste ()
+        (interactive)
+        (org-insert-link nil
+                         (with-temp-buffer
+                           (evil-paste-after nil)
+                           (delete-trailing-whitespace)
+                           (buffer-string))))
 
-       (defun md/org-hook ()
-         ;; Change tab widths to fit headline indents
-         (setq tab-width 2
-               evil-shift-width 2)
+      (defun md/org-hook ()
+        ;; Change tab widths to fit headline indents
+        (setq tab-width 2
+              evil-shift-width 2)
 
-         ;; Disable in-buffer line numbers and the colour column, as both decrease
-         ;; org-mode / outline performance significantly on large files.
-         (linum-mode 0)
-         (fci-mode 0)
+        ;; Disable in-buffer line numbers and the colour column, as both decrease
+        ;; org-mode / outline performance significantly on large files.
+        (linum-mode 0)
+        (fci-mode 0)
 
-         ;; Also disable the row and column numbers in the modeline. Seems you have to set
-         ;; these manually to make them buffer-local, unlike the above functions - TODO
-         ;; is this a bad thing?
-         (setq-local line-number-mode nil)
-         (setq-local column-number-mode nil)
+        ;; Also disable the row and column numbers in the modeline. Seems you have to set
+        ;; these manually to make them buffer-local, unlike the above functions - TODO
+        ;; is this a bad thing?
+        (setq-local line-number-mode nil)
+        (setq-local column-number-mode nil)
 
-         ;; Also don't highlight the current line. For some reason this rquires making
-         ;; global-hl-line-mode buffer-local.
-         (make-variable-buffer-local 'global-hl-line-mode)
-         (setq-local global-hl-line-mode nil))
+        ;; Also don't highlight the current line. For some reason this rquires making
+        ;; global-hl-line-mode buffer-local.
+        (make-variable-buffer-local 'global-hl-line-mode)
+        (setq-local global-hl-line-mode nil))
 
-       (define-minor-mode md/evil-org-mode
-         "Buffer local minor mode for evil-org"
-         :init-value nil
-         :lighter " EvilOrg"
-         :keymap (make-sparse-keymap) ; defines md/evil-org-mode-map
-         :group 'md/evil-org)
+      (define-minor-mode md/evil-org-mode
+        "Buffer local minor mode for evil-org"
+        :init-value nil
+        :lighter " EvilOrg"
+        :keymap (make-sparse-keymap) ; defines md/evil-org-mode-map
+        :group 'md/evil-org)
 
-       ;; NOTE - I don't think the use-package ":bind" arg allows defining evil keys
-       ;; for a specific evil-mode/map combination.
+      ;; NOTE - I don't think the use-package ":bind" arg allows defining evil keys
+      ;; for a specific evil-mode/map combination.
 
-       ;; Normal state shortcuts
-       (evil-define-key 'normal md/evil-org-mode-map
-         "gk" 'outline-previous-visible-heading
-         "gj" 'outline-next-visible-heading
-         "H" 'org-beginning-of-line
-         "L" 'org-end-of-line
-         "$" 'org-end-of-line
-         "^" 'org-beginning-of-line
-         "-" 'org-cycle-list-bullet
-         (kbd "RET") 'org-cycle
-         (kbd "TAB") 'org-cycle)
+      ;; Normal state shortcuts
+      (evil-define-key 'normal md/evil-org-mode-map
+        "gk" 'outline-previous-visible-heading
+        "gj" 'outline-next-visible-heading
+        "H" 'org-beginning-of-line
+        "L" 'org-end-of-line
+        "$" 'org-end-of-line
+        "^" 'org-beginning-of-line
+        "-" 'org-cycle-list-bullet
+        (kbd "RET") 'org-cycle
+        (kbd "TAB") 'org-cycle)
 
-       ;; Normal & insert state shortcuts.
-       (mapc (lambda (state)
-               (evil-define-key state md/evil-org-mode-map
-                 (kbd "M-l") 'org-metaright
-                 (kbd "M-h") 'org-metaleft
-                 (kbd "M-k") 'org-metaup
-                 (kbd "M-j") 'org-metadown
-                 (kbd "M-L") 'org-shiftmetaright
-                 (kbd "M-H") 'org-shiftmetaleft
-                 (kbd "M-K") 'org-shiftmetaup
-                 (kbd "M-J") 'org-shiftmetadown
-                 ))
-             '(normal insert))
+      ;; Normal & insert state shortcuts.
+      (mapc (lambda (state)
+              (evil-define-key state md/evil-org-mode-map
+                (kbd "M-l") 'org-metaright
+                (kbd "M-h") 'org-metaleft
+                (kbd "M-k") 'org-metaup
+                (kbd "M-j") 'org-metadown
+                (kbd "M-L") 'org-shiftmetaright
+                (kbd "M-H") 'org-shiftmetaleft
+                (kbd "M-K") 'org-shiftmetaup
+                (kbd "M-J") 'org-shiftmetadown
+                ))
+            '(normal insert))
 
-       ;; I don't like the default org-agenda bindings - there are far more
-       ;; bindings/features than I should have to think about, and I usually try to
-       ;; navigate using evil bindings (and eg. accidentally hit "j" and bring up
-       ;; the calendar etc).
-       ;;
-       ;; Instead, open org-agenda in evil-normal-mode, with a couple of the useful
-       ;; bindings copied directly from emacs-mode.
-       (define-minor-mode md/evil-org-agenda-mode
-         "Buffer local minor mode for evil-org-agenda"
-         :init-value nil
-         :lighter " EvilOrgAgenda"
-         :keymap (make-sparse-keymap) ; defines md/evil-org-agenda-mode-map
-         :group 'md/evil-org-agenda)
+      ;; I don't like the default org-agenda bindings - there are far more
+      ;; bindings/features than I should have to think about, and I usually try to
+      ;; navigate using evil bindings (and eg. accidentally hit "j" and bring up
+      ;; the calendar etc).
+      ;;
+      ;; Instead, open org-agenda in evil-normal-mode, with a couple of the useful
+      ;; bindings copied directly from emacs-mode.
+      (define-minor-mode md/evil-org-agenda-mode
+        "Buffer local minor mode for evil-org-agenda"
+        :init-value nil
+        :lighter " EvilOrgAgenda"
+        :keymap (make-sparse-keymap) ; defines md/evil-org-agenda-mode-map
+        :group 'md/evil-org-agenda)
 
-       (evil-set-initial-state 'org-agenda-mode 'normal)
+      (evil-set-initial-state 'org-agenda-mode 'normal)
 
-       (evil-define-key 'normal md/evil-org-agenda-mode-map
-         ;; j / k
-         (kbd "j") 'org-agenda-next-line
-         (kbd "n") 'org-agenda-next-line
-         (kbd "C-n") 'org-agenda-next-line
-         (kbd "k") 'org-agenda-previous-line
-         (kbd "p") 'org-agenda-previous-line
-         (kbd "C-p") 'org-agenda-previous-line
+      (evil-define-key 'normal md/evil-org-agenda-mode-map
+        ;; j / k
+        (kbd "j") 'org-agenda-next-line
+        (kbd "n") 'org-agenda-next-line
+        (kbd "C-n") 'org-agenda-next-line
+        (kbd "k") 'org-agenda-previous-line
+        (kbd "p") 'org-agenda-previous-line
+        (kbd "C-p") 'org-agenda-previous-line
 
-         (kbd "q") 'org-agenda-quit
-         (kbd "r") 'org-agenda-redo  ; Recalculate the agenda
-         (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view
-         (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
-         (kbd "=") 'org-agenda-filter-by-regexp  ; Search
-         (kbd "/") 'org-agenda-filter-by-tag  ; Tag filter
-         (kbd "^") 'org-agenda-filter-by-top-headline  ; Show other items with same
-                                            ; headline as current
-         (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
+        (kbd "q") 'org-agenda-quit
+        (kbd "r") 'org-agenda-redo  ; Recalculate the agenda
+        (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view
+        (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
+        (kbd "=") 'org-agenda-filter-by-regexp  ; Search
+        (kbd "/") 'org-agenda-filter-by-tag  ; Tag filter
+        (kbd "^") 'org-agenda-filter-by-top-headline  ; Show other items with same
+                                          ; headline as current
+        (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
 
-       (add-hook 'org-mode-hook 'md/org-hook)
-       (add-hook 'org-mode-hook 'md/evil-org-mode)
-       (add-hook 'org-agenda-mode-hook 'md/evil-org-agenda-mode)
+      (add-hook 'org-mode-hook 'md/org-hook)
+      (add-hook 'org-mode-hook 'md/evil-org-mode)
+      (add-hook 'org-agenda-mode-hook 'md/evil-org-agenda-mode)
 
-       (setq org-agenda-restore-windows-after-quit t
+      (setq org-agenda-restore-windows-after-quit t
 
-             ;; Add timestamp when set task as closed
-             org-log-done 'time
+            ;; Add timestamp when set task as closed
+            org-log-done 'time
 
-             ;; Fontify inline code
-             org-src-fontify-natively t
+            ;; Fontify inline code
+            org-src-fontify-natively t
 
-             ;; When editing code, I don't want to open another window. This
-             ;; just makes the screen tidier.
-             org-src-window-setup 'current-window
+            ;; When editing code, I don't want to open another window. This
+            ;; just makes the screen tidier.
+            org-src-window-setup 'current-window
 
-             ;; tab / indentation is the main reason I would use C-' so prevent it if possible
-             org-src-tab-acts-natively t
+            ;; tab / indentation is the main reason I would use C-' so prevent it if possible
+            org-src-tab-acts-natively t
 
-             ;; Colour the whole headline
-             org-level-color-stars-only nil
+            ;; Colour the whole headline
+            org-level-color-stars-only nil
 
-             ;; Try to prevent accidentally editing invisible lines
-             org-catch-invisible-edits 'show-and-error
+            ;; Try to prevent accidentally editing invisible lines
+            org-catch-invisible-edits 'show-and-error
 
-             org-adapt-indentation nil
+            org-adapt-indentation nil
 
-             org-clock-out-remove-zero-time-clocks t
+            org-clock-out-remove-zero-time-clocks t
 
-             ;; If press M-RET I want a new line, not to split the line
-             org-M-RET-may-split-line nil
+            ;; If press M-RET I want a new line, not to split the line
+            org-M-RET-may-split-line nil
 
-             ;; Default to using my CSS theme for html exports
+            ;; Default to using my CSS theme for html exports
             ;; org-html-head-extra "
             ;;<link id='generic-css-dark' rel='stylesheet' type='text/css'
             ;;      href='https://mattduck.github.io/generic-css/css/generic-dark.css'>
@@ -1886,17 +1887,17 @@ edges.
             ;;      href='https://mattduck.github.io/generic-css/css/generic-light.css'>
             ;;<script type='text/javascript'src='https://mattduck.github.io/generic-css/js/generic-css.js'></script>"
 
-             org-export-headline-levels 6
-             org-export-with-section-numbers 4)
+            org-export-headline-levels 6
+            org-export-with-section-numbers 4)
 
 
-       ;; Putting these here to avoid byte-compiled issue where org-mode-map isn't defined.
-       (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
-       (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
-       (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map))
-     :bind (:map global-map
-           ("C-c a" . org-agenda)))
-
+      ;; Putting these here to avoid byte-compiled issue where org-mode-map isn't defined.
+      (bind-key "C-c j" 'org-insert-todo-heading org-mode-map)
+      (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
+      (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
+      (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map))
+    :bind (:map global-map
+                ("C-c a" . org-agenda)))
 #+END_SRC
 ** ox-reveal
 
@@ -2141,9 +2142,7 @@ Close paren for the wrapping ~let~:
   using them for full flycheck.
 - [ ] eldoc mode?
 - [ ] check company addons
-  - there's one for restclient.
 - [ ] go mode
-- [ ] org - shortcut to add =- [ ]= syntax to beginning of line
 - [ ] cask?
 - [2016-09-24 Sat] elscreen not actively developed
 - [ ] popwin is useful
@@ -2211,4 +2210,3 @@ Close paren for the wrapping ~let~:
 - [2016-12-01 Thu] does evil-add-hjkl-bindings take precedence over the mode
   map?
 - [2016-12-03 Sat] https://bitbucket.org/lyro/evil/issues/511/let-certain-minor-modes-key-bindings
-- [ ] [2016-12-04 Sun] sort out pasting issue from alfred
