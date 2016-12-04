@@ -368,6 +368,19 @@ Increase the number of messages:
 (setq backup-directory-alist
       `(("." . ,(md/dotfiles-get-path "emacs.d.symlink/.backups"))))
 #+END_SRC
+** Paste
+
+If this isn't set then lasting via Alfred doesnt work:
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/pbpaste ()
+    (interactive)
+    (shell-command "pbpaste" t))
+
+    (if (eq window-system 'ns)
+      (global-set-key (kbd "M-v") 'md/pbpaste))
+#+END_SRC
+
 * Misc utils
 ** Odd functions
 
@@ -710,97 +723,25 @@ actually use it to insert anything in insert mode.
     :bind (:map md/leader-map
                 ("ag" . md/ag)))
 #+END_SRC
-
-* Applications
-** Dired
-Dired mode has a lot of features / keys that I don't care about. Start it in
-evil mode, and just add in the dired bindings that I want.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package dired
-    :demand t
-    :init
-    (progn
-       ;; Use human size
-       (setq dired-listing-switches "-alh")
-
-      ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
-      ;; makes dired-mode-map an overriding keymap, which means that the default
-      ;; dired-mode bindings take precendence over the normal-state bindings.
-      ;;
-      ;; There's no obvious way to undo that code, so I'm just replacing
-      ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
-      (setq dired-mode-map (make-sparse-keymap))
-      (evil-define-key 'normal dired-mode-map
-        "q" 'quit-window
-        "d" 'dired-flag-file-deletion
-        "u" 'dired-unmark
-        "D" 'dired-do-delete
-        (kbd "RET") 'dired-single-buffer
-        "J" 'dired-jump
-        "o" 'dired-find-file-other-window
-        "R" 'dired-do-rename
-        "C" 'dired-do-copy
-        "i" 'dired-maybe-insert-subdir
-        "+" 'dired-create-directory)))
-#+END_SRC
-
-*** Dired-single
-
-I don't use Dired much and would prefer it to be contained to fewer buffers.
-Would like this to work with popwin, but currently pressing RET on a directory
-causes it to jump out of the popwin window.
-
-#+BEGIN_SRC emacs-lisp
-(use-package dired-single
-  :demand t)
-
-#+END_SRC
-
-** Restclient
-For 80% of use-cases, I think [[https://github.com/pashky/restclient.el][restclient]] will be more convenient than Postman.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package restclient
-    :defer 1
-    :mode (("\\.http\\'" . restclient-mode)))
-
-  (use-package restclient-helm :defer 5)
-#+END_SRC
-
-Add company completion for restclient:
-
-#+BEGIN_SRC emacs-lisp
-  (use-package company-restclient
-    :config
-    (progn
-        (add-to-list 'company-backends 'company-restclient)))
-#+END_SRC
-
-#+BEGIN_EXAMPLE
-POST https://httpbin.org/post
-
-This is the body
-#+END_EXAMPLE
 * General IDE features
 ** Grep/ag
 #+BEGIN_SRC emacs-lisp
-    (use-package ag
-      :config
-      (progn
-        (evil-add-hjkl-bindings 'ag-mode-map
-          (kbd "SPC") 'md/leader-map)
+  (use-package ag
+    :config
+    (progn
+      (evil-add-hjkl-bindings 'ag-mode-map
+        (kbd "SPC") 'md/leader-map)
 
-        (setq ag-context-lines nil
-              ag-highlight-search t
-              ag-reuse-buffers t  ; Only one buffer for ag searches§
-              ag-reuse-window nil))  ; Open files in new window, don't hide search window
+      (setq ag-context-lines nil
+            ag-highlight-search t
+            ag-reuse-buffers t  ; Only one buffer for ag searches§
+            ag-reuse-window nil))  ; Open files in new window, don't hide search window
 
-      :bind (:map md/leader-map
-                  ("ad" . ag-dired)
-                  ("af" . ag-files)
-                  ("ag" . ag)
-                  ("/" . occur)))
+    :bind (:map md/leader-map
+                ("ad" . ag-dired)
+                ("af" . ag-files)
+                ("ag" . ag)
+                ("/" . occur)))
 #+END_SRC
 ** Autocompletion
 
@@ -1293,6 +1234,88 @@ although I don't remember exactly what the difference is:
       ))
 #+END_SRC
 
+* Applications
+** Dired
+Dired mode has a lot of features / keys that I don't care about. Start it in
+evil mode, and just add in the dired bindings that I want.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package dired
+    :demand t
+    :init
+    (progn
+       ;; Use human size
+       (setq dired-listing-switches "-alh")
+
+      ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
+      ;; makes dired-mode-map an overriding keymap, which means that the default
+      ;; dired-mode bindings take precendence over the normal-state bindings.
+      ;;
+      ;; There's no obvious way to undo that code, so I'm just replacing
+      ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
+      (setq dired-mode-map (make-sparse-keymap))
+
+      (defun md/dired-single-buffer ()
+        "If in popwin buffer, open dired in popwin. Otherwise as usual."
+        (interactive)
+        (if popwin:focus-window
+            (progn
+              (save-window-excursion (call-interactively 'dired-single-buffer))
+              (popwin:close-popup-window)
+              (popwin:display-buffer (get-buffer dired-single-magic-buffer-name)))
+          (dired-single-buffer)))
+
+      (evil-define-key 'normal dired-mode-map
+        "q" 'quit-window
+        "d" 'dired-flag-file-deletion
+        "u" 'dired-unmark
+        "D" 'dired-do-delete
+        (kbd "RET") 'md/dired-single-buffer
+        "J" 'dired-jump
+        "o" 'dired-find-file-other-window
+        "R" 'dired-do-rename
+        "C" 'dired-do-copy
+        "i" 'dired-maybe-insert-subdir
+        "+" 'dired-create-directory)))
+#+END_SRC
+
+*** Dired-single
+
+I don't use Dired much and would prefer it to be contained to fewer buffers.
+Would like this to work with popwin, but currently pressing RET on a directory
+causes it to jump out of the popwin window.
+
+#+BEGIN_SRC emacs-lisp
+(use-package dired-single
+  :demand t)
+
+#+END_SRC
+
+** Restclient
+For 80% of use-cases, I think [[https://github.com/pashky/restclient.el][restclient]] will be more convenient than Postman.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package restclient
+    :defer 1
+    :mode (("\\.http\\'" . restclient-mode)))
+
+  (use-package restclient-helm :defer 5)
+#+END_SRC
+
+Add company completion for restclient:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package company-restclient
+    :config
+    (progn
+        (add-to-list 'company-backends 'company-restclient)))
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+POST https://httpbin.org/post
+
+This is the body
+#+END_EXAMPLE
 * Languages
 ** Python
 
@@ -1635,7 +1658,7 @@ edges.
              (save-window-excursion
                (call-interactively 'eshell)))))
 
-      (defun md/popwin-dired-single ()
+      (defun md/popwin-dired-single-magic-buffer ()
         (interactive)
         (when popwin:focus-window (popwin:close-popup-window))
         (popwin:display-buffer
@@ -1665,13 +1688,13 @@ edges.
 
       ;; TODO why isn't dired working? Judging by the examples it should, but
       ;; dired buffers just appear in their own windows. Tried on 24.5 and 25.1.
-      (push '(dired-mode :dedicated t :width 40) popwin:special-display-config)
+      (push '(dired-mode :dedicated t :height 20 :stick t) popwin:special-display-config)
 
       ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
       ;; Generally I only ever want one popwin window open.
       (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
       (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
-      (push '(help-mode :dedicated t :stick t) popwin:special-display-config)
+      (push '(help-mode :dedicated t :stick t :height 25) popwin:special-display-config)
       (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
       (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
       (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
@@ -1698,7 +1721,7 @@ edges.
                 ;; I can't get arbitrary buffers/files to play nicely, so
                 ;; just have the dedicated buffers.
                 (";a" . md/popwin-toggle)
-                (";d" . md/popwin-dired-single)
+                (";d" . md/popwin-dired-single-magic-buffer)
                 (";i" . md/popwin-org)
                 (";s" . md/popwin-scratch)
                 (";t" . md/popwin-ansi-term)
@@ -2100,7 +2123,6 @@ Close paren for the wrapping ~let~:
 - [ ] folding
   - I basically want tab/shift+tab toggle bindings like outline mode. But
     outline mode doesn't match folding blocks nicely, so need to use another package.
-- [ ] autocomplete
 - [ ] checkout slime
 - [ ] jumping forward/back to markers including between files
 - [ ] stop littering # backup files
@@ -2110,9 +2132,6 @@ Close paren for the wrapping ~let~:
 - [ ] https://github.com/emacs-tw/awesome-emacs
   - [ ] multi cursor?
 - [ ] gk/gj for next/prev functions
-- [ ] why can't I select something and then paste when in visual mode? This used
-  to work
-  - [2016-07-08 Fri] seem to work now?
 - [ ] [2016-08-20 Sat] getting helm "operator" keymap error in fundamental mode.
 - [ ] python development / elpy
   - [ ] open documentation
@@ -2173,7 +2192,6 @@ Close paren for the wrapping ~let~:
     fontify-natively t.
   - [ ] faces buffer doesn't show right face colors? they're all white-/grey.
 - [ ] helm-all-mark-rings?
-- [ ] helm grep within current file - currently don't have binding for this.
 - [ ] check spacemacs - are there any modes we can evilify? eg. some of the help modes.
 - [ ] python shell / inferior?
 - [ ] getting slowdowns where python3 uses 99% cpu. Seems to occcur sometimes
@@ -2189,11 +2207,8 @@ Close paren for the wrapping ~let~:
 - [ ] [2016-11-30 Wed] get C-O/C-I jumping forward/back in dired.
 - [ ] helm buffers - how to search including the mode? Eg. "dired" should match
   the "Dired by name" buffers.
-- [ ] [2016-11-30 Wed] dired popwin should NOT jump out a window when pressing RET.
-- [ ] [2016-11-30 Wed] popwin dired - display on side instead of bottom?
-- [ ] [2016-12-01 Thu] dired/popwin - still some issues
 - [ ] enable SPC leader in ag-mode.
 - [2016-12-01 Thu] does evil-add-hjkl-bindings take precedence over the mode
   map?
 - [2016-12-03 Sat] https://bitbucket.org/lyro/evil/issues/511/let-certain-minor-modes-key-bindings
-  
+- [ ] [2016-12-04 Sun] sort out pasting issue from alfred

@@ -475,47 +475,6 @@
          :map help-map
          ("X" . helm-colors)))
 
-(use-package dired
-  :demand t
-  :init
-  (progn
-     ;; Use human size
-     (setq dired-listing-switches "-alh")
-
-    ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
-    ;; makes dired-mode-map an overriding keymap, which means that the default
-    ;; dired-mode bindings take precendence over the normal-state bindings.
-    ;;
-    ;; There's no obvious way to undo that code, so I'm just replacing
-    ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
-    (setq dired-mode-map (make-sparse-keymap))
-    (evil-define-key 'normal dired-mode-map
-      "q" 'quit-window
-      "d" 'dired-flag-file-deletion
-      "u" 'dired-unmark
-      "D" 'dired-do-delete
-      (kbd "RET") 'dired-single-buffer
-      "J" 'dired-jump
-      "o" 'dired-find-file-other-window
-      "R" 'dired-do-rename
-      "C" 'dired-do-copy
-      "i" 'dired-maybe-insert-subdir
-      "+" 'dired-create-directory)))
-
-(use-package dired-single
-  :demand t)
-
-(use-package restclient
-  :defer 1
-  :mode (("\\.http\\'" . restclient-mode)))
-
-(use-package restclient-helm :defer 5)
-
-(use-package company-restclient
-  :config
-  (progn
-      (add-to-list 'company-backends 'company-restclient)))
-
 (use-package ag
   :config
   (progn
@@ -909,6 +868,58 @@ git dir) or linum mode"
   :bind (:map md/leader-map
               ("tr" . rainbow-mode)))
 
+(use-package dired
+  :demand t
+  :init
+  (progn
+     ;; Use human size
+     (setq dired-listing-switches "-alh")
+
+    ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
+    ;; makes dired-mode-map an overriding keymap, which means that the default
+    ;; dired-mode bindings take precendence over the normal-state bindings.
+    ;;
+    ;; There's no obvious way to undo that code, so I'm just replacing
+    ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
+    (setq dired-mode-map (make-sparse-keymap))
+
+    (defun md/dired-single-buffer ()
+      "If in popwin buffer, open dired in popwin. Otherwise as usual."
+      (interactive)
+      (if popwin:focus-window
+          (progn
+            (save-window-excursion (call-interactively 'dired-single-buffer))
+            (popwin:close-popup-window)
+            (popwin:display-buffer (get-buffer dired-single-magic-buffer-name)))
+        (dired-single-buffer)))
+
+    (evil-define-key 'normal dired-mode-map
+      "q" 'quit-window
+      "d" 'dired-flag-file-deletion
+      "u" 'dired-unmark
+      "D" 'dired-do-delete
+      (kbd "RET") 'md/dired-single-buffer
+      "J" 'dired-jump
+      "o" 'dired-find-file-other-window
+      "R" 'dired-do-rename
+      "C" 'dired-do-copy
+      "i" 'dired-maybe-insert-subdir
+      "+" 'dired-create-directory)))
+
+(use-package dired-single
+  :demand t)
+
+(use-package restclient
+  :defer 1
+  :mode (("\\.http\\'" . restclient-mode)))
+
+(use-package restclient-helm :defer 5)
+
+(use-package company-restclient
+  :config
+  (progn
+      (add-to-list 'company-backends 'company-restclient)))
+
 (use-package elpy
   :defer 1  ;; Defer this just because it's slow to load.
   :init
@@ -1151,7 +1162,7 @@ out of the box."
            (save-window-excursion
              (call-interactively 'eshell)))))
 
-    (defun md/popwin-dired-single ()
+    (defun md/popwin-dired-single-magic-buffer ()
       (interactive)
       (when popwin:focus-window (popwin:close-popup-window))
       (popwin:display-buffer
@@ -1181,13 +1192,13 @@ out of the box."
 
     ;; TODO why isn't dired working? Judging by the examples it should, but
     ;; dired buffers just appear in their own windows. Tried on 24.5 and 25.1.
-    (push '(dired-mode :dedicated t :width 40) popwin:special-display-config)
+    (push '(dired-mode :dedicated t :height 20 :stick t) popwin:special-display-config)
 
     ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
     ;; Generally I only ever want one popwin window open.
     (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
     (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
-    (push '(help-mode :dedicated t :stick t) popwin:special-display-config)
+    (push '(help-mode :dedicated t :stick t :height 25) popwin:special-display-config)
     (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
     (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
     (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
@@ -1214,7 +1225,7 @@ out of the box."
               ;; I can't get arbitrary buffers/files to play nicely, so
               ;; just have the dedicated buffers.
               (";a" . md/popwin-toggle)
-              (";d" . md/popwin-dired-single)
+              (";d" . md/popwin-dired-single-magic-buffer)
               (";i" . md/popwin-org)
               (";s" . md/popwin-scratch)
               (";t" . md/popwin-ansi-term)
