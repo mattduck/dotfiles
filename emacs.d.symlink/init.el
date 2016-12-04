@@ -530,7 +530,8 @@
   :bind (:map md/leader-map
               ("ad" . ag-dired)
               ("af" . ag-files)
-              ("ag" . ag)))
+              ("ag" . ag)
+              ("/" . occur)))
 
 (use-package company
   :defer 2
@@ -1180,7 +1181,7 @@ out of the box."
 
     ;; TODO why isn't dired working? Judging by the examples it should, but
     ;; dired buffers just appear in their own windows. Tried on 24.5 and 25.1.
-    (push '(dired-mode :dedicated nil :width 40) popwin:special-display-config)
+    (push '(dired-mode :dedicated t :width 40) popwin:special-display-config)
 
     ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
     ;; Generally I only ever want one popwin window open.
@@ -1196,7 +1197,7 @@ out of the box."
     (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
     (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
     (push '(ag-mode :noselect t :dedicated t :stick t :tail nil :height 15) popwin:special-display-config)
-    (push '(occur-mode :noselect t :dedicated t) popwin:special-display-config)
+    (push '(occur-mode :noselect t :dedicated t :stick t) popwin:special-display-config)
     (push '("*vc-change-log*" :dedicated t) popwin:special-display-config)
     (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
     (push '("*HTTP Response*" :height 20 :dedicated t :stick t :noselect t) popwin:special-display-config)
