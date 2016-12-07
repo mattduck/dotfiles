@@ -856,6 +856,16 @@ git dir) or linum mode"
   (interactive)
   (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
 
+(use-package highlight-thing
+  :defer 5
+  :config
+  (progn
+    (setq highlight-thing-delay-seconds 1
+          highlight-thing-case-sensitive-p t)
+    (add-hook 'prog-mode-hook 'highlight-thing-mode))
+  :bind (:map md/leader-map
+              ("tt" . highlight-thing-mode)))
+
 (use-package paren
  :defer 1
  :init (progn

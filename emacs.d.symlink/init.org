@@ -1152,6 +1152,20 @@ I can use this with grep/ag to quickly find the todo comments:
     (interactive)
     (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
 #+END_SRC
+** Highlight thing
+
+#+BEGIN_SRC emacs-lisp
+  (use-package highlight-thing
+    :defer 5
+    :config
+    (progn
+      (setq highlight-thing-delay-seconds 1
+            highlight-thing-case-sensitive-p t)
+      (add-hook 'prog-mode-hook 'highlight-thing-mode))
+    :bind (:map md/leader-map
+                ("tt" . highlight-thing-mode)))
+#+END_SRC
+
 ** Parentheses
 Basic paren matching is built in. I preferred these settings at one point,
 although I don't remember exactly what the difference is:
@@ -2119,14 +2133,12 @@ Close paren for the wrapping ~let~:
   - Under cursor, and by name
 - [ ] finding uses of functions
   - Under cursor, and by name
-- [ ] checkout avy - improvement to acejump?
 - [ ] debugger
 - [ ] folding
   - I basically want tab/shift+tab toggle bindings like outline mode. But
     outline mode doesn't match folding blocks nicely, so need to use another package.
 - [ ] checkout slime
 - [ ] jumping forward/back to markers including between files
-- [ ] stop littering # backup files
 - [ ] startup time?
   - bottleneck is down to ~(package-initialize)~ and evil startup.
   - elpy is slow.
@@ -2210,3 +2222,5 @@ Close paren for the wrapping ~let~:
 - [2016-12-01 Thu] does evil-add-hjkl-bindings take precedence over the mode
   map?
 - [2016-12-03 Sat] https://bitbucket.org/lyro/evil/issues/511/let-certain-minor-modes-key-bindings
+- [ ] [2016-12-07 Wed] profile CPU issues
+  - It's probably a package that slows down org mode
