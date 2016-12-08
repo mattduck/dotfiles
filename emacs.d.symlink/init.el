@@ -938,52 +938,6 @@ git dir) or linum mode"
   (progn
       (add-to-list 'company-backends 'company-restclient)))
 
-(use-package elpy
-  :defer 1  ;; Defer this just because it's slow to load.
-  :init
-  (progn
-    (add-hook 'elpy-mode-hook
-              (lambda ()
-                (set (make-local-variable 'company-backends) '(elpy-company-backend)))))
-  :config
-  (progn
-    (elpy-enable)
-
-    ;; - Remove elpy-module-flymake because I already have flymake configured.
-    ;; - Remove elpy-module-highlight indentation because it's distracting.
-    (setq elpy-modules (list
-                        'elpy-module-sane-defaults
-                        'elpy-module-company
-                        'elpy-module-eldoc
-                        'elpy-module-pyvenv
-                        'elpy-module-yasnippet))
-
-    (setq elpy-rpc-backend "jedi")
-
-    ;; Setup leader map for python
-    (evil-define-key 'normal python-mode-map
-      (kbd "SPC") md/python-mode-leader-map
-      "gk" 'python-nav-backward-defun
-      "gj" 'python-nav-forward-defun)
-
-    (evil-define-key 'insert elpy-mode-map (kbd "C-n") 'elpy-company-backend)
-
-    (if (string= major-mode "python-mode")
-      (progn
-        ;; If I've opened a Python file make sure everything loads properly
-        ;; on this buffer.
-        (python-mode)
-        (elpy-mode 1))))
-
-  :bind (:map md/python-mode-leader-map
-              ("SPC v" . pyvenv-workon)
-              ("SPC V" . pyvenv-activate)
-              ("SPC f" . elpy-format-code)
-              ("SPC t" . elpy-test)
-              ("SPC d" . elpy-doc)
-              ("SPC g" . elpy-goto-definition-other-window)
-              ("SPC r" . elpy-multiedit-python-symbol-at-point)))
-
 (use-package go-mode
   :config
   (progn

@@ -1332,7 +1332,7 @@ POST https://httpbin.org/post
 This is the body
 #+END_EXAMPLE
 * Languages
-** Python
+** COMMENT Python
 
 Elpy combines a few different Python packages / features.
 
@@ -2224,3 +2224,4 @@ Close paren for the wrapping ~let~:
 - [2016-12-03 Sat] https://bitbucket.org/lyro/evil/issues/511/let-certain-minor-modes-key-bindings
 - [ ] [2016-12-07 Wed] profile CPU issues
   - It's probably a package that slows down org mode
+- [ ] focus mode?
