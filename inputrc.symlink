@@ -33,10 +33,10 @@ set bell-style visible
 # Add trailing slash when autocompleting symlinks to directories
 set mark-symlinked-directories on
 
-# Ask to show more than this number of completions
+# Ask to show more than this number of completions
 set completion-query-items 50
 
-# Allow UTF-8 input and output
+# Allow UTF-8 input and output
 set input-meta on
 set output-meta on
 set covert-meta off
