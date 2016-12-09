@@ -1,6 +1,6 @@
 # TODO ----------------------------------
-# - vim
-# - tmuc
+# - change ps1 if vagrant
+# - support for su
 
 # Solarized ANSI variables -------------------------------
 export Anone="\e[00m"
@@ -67,7 +67,7 @@ export HISTCONTROL="ignorespace:ignoredups"
 export EDITOR="vim"
 export VIMINIT="let \$MYVIMRC='$SSHHOME/.sshrc.d/vimrc' | source \$MYVIMRC"
 
-# Tmux
+# Tmux --------------------------------
 tmuxrc() {
     local TMUXDIR=/tmp/mattduck_tmuxserver
     if ! [ -d $TMUXDIR ]; then
