@@ -860,7 +860,7 @@ git dir) or linum mode"
   :defer 5
   :config
   (progn
-    (setq highlight-thing-delay-seconds 1
+    (setq highlight-thing-delay-seconds 0.2
           highlight-thing-case-sensitive-p t)
     (add-hook 'prog-mode-hook 'highlight-thing-mode))
   :bind (:map md/leader-map
