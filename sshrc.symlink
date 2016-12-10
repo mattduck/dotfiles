@@ -31,13 +31,7 @@ _user="\[$Ayellow\]\u"
 _hostname="\[$HOST_COLOUR_ANSI\]\h"
 _pwd="\[$HOST_COLOUR_ANSI\]\w"
 
-# Add git info
-if command -v __git_ps1 >/dev/null; then
-    export GIT_PS1_SHOWDIRTYSTATE=true
-    _git_info="\[$Abase01\]\$(__git_ps1)"
-fi
-
-PS1="\n$_user \[$Ayellow\][$_hostname\[$Ayellow\]]: $_pwd$_git_info\n\[$Abase1\]$ "
+PS1="\n$_user \[$Ayellow\][$_hostname\[$Ayellow\]]: $_pwd\n\[$Abase1\]$ "
 
 reset=$(tput sgr0)
 export PS1="$PS1\[$reset\]"
