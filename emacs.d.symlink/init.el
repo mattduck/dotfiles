@@ -1037,6 +1037,7 @@ git dir) or linum mode"
       "SPC SPC e" "major-mode-eval"
       "SPC a" "ag"
       "SPC b" "buffers"
+      "SPC B" "bookmarks"
       "SPC c" "comments"
       "SPC C" "compile"
       "SPC e" "eval"
@@ -1373,6 +1374,7 @@ out of the box."
 
 (bind-key "Bj" 'bookmark-jump md/leader-map)
 (bind-key "Bs" 'bookmark-set md/leader-map)
+(bind-key "Bd" 'bookmark-delete md/leader-map)
 
 (line-number-mode 1)
 (column-number-mode 1)

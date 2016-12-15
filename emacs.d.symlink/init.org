@@ -1544,6 +1544,7 @@ easier to discover features / work out where I am:
         "SPC SPC e" "major-mode-eval"
         "SPC a" "ag"
         "SPC b" "buffers"
+        "SPC B" "bookmarks"
         "SPC c" "comments"
         "SPC C" "compile"
         "SPC e" "eval"
@@ -1926,6 +1927,7 @@ edges.
 #+BEGIN_SRC emacs-lisp
   (bind-key "Bj" 'bookmark-jump md/leader-map)
   (bind-key "Bs" 'bookmark-set md/leader-map)
+  (bind-key "Bd" 'bookmark-delete md/leader-map)
 #+END_SRC
 * Modeline
 ** General modeline
