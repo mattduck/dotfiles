@@ -1922,6 +1922,11 @@ edges.
   (use-package ox-reveal)
 #+END_SRC
 
+* Bookmarks
+#+BEGIN_SRC emacs-lisp
+  (bind-key "Bj" 'bookmark-jump md/leader-map)
+  (bind-key "Bs" 'bookmark-set md/leader-map)
+#+END_SRC
 * Modeline
 ** General modeline
 #+BEGIN_SRC emacs-lisp

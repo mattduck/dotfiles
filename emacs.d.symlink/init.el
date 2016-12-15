@@ -1371,6 +1371,9 @@ out of the box."
 
 (use-package ox-reveal)
 
+(bind-key "Bj" 'bookmark-jump md/leader-map)
+(bind-key "Bs" 'bookmark-set md/leader-map)
+
 (line-number-mode 1)
 (column-number-mode 1)
 
