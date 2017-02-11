@@ -6,6 +6,7 @@ if [[ "$(uname -a)" != *Darwin* ]]; then return; fi
 
 # Add TeX to path (for org-mode PDF exporting)
 ,path-add --prepend "/usr/local/texlive/2014/bin/universal-darwin"
+,path-add --prepend "/Library/TeX/Distributions/.DefaultTeX/Contents/Programs/texbin/"
 
 # Use GNU coreutils - it's easier if programs have the same flags between
 # machines, same man pages etc.
