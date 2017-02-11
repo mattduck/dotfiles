@@ -1340,6 +1340,9 @@ out of the box."
           ;; Colour the whole headline
           org-level-color-stars-only nil
 
+          ;; Colour done headlines to make them less prominent
+          org-fontify-done-headline t
+
           ;; Try to prevent accidentally editing invisible lines
           org-catch-invisible-edits 'show-and-error
 
