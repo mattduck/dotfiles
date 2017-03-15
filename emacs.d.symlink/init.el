@@ -1008,7 +1008,15 @@ git dir) or linum mode"
   :commands (markdown-mode gfm-mode)
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode)))
+         ("\\.apib\\'" . markdown-mode)  ; Apiary
+         ("\\.markdown\\'" . markdown-mode))
+  :config (progn
+            ;; Markdown-cycle behaves like org-cycle, but by default is only
+            ;; enabled in insert mode. gfm-mode-map inherits from
+            ;; markdown-mode-map, so this will enable it in both.
+            (evil-define-key 'normal markdown-mode-map (kbd "TAB") 'markdown-cycle)))
+
+(use-package coffee-mode)
 
 (use-package help-fns+ :defer 1)
 
