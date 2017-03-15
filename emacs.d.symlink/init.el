@@ -1014,7 +1014,10 @@ git dir) or linum mode"
             ;; Markdown-cycle behaves like org-cycle, but by default is only
             ;; enabled in insert mode. gfm-mode-map inherits from
             ;; markdown-mode-map, so this will enable it in both.
-            (evil-define-key 'normal markdown-mode-map (kbd "TAB") 'markdown-cycle)))
+            (evil-define-key 'normal markdown-mode-map 
+              (kbd "TAB") 'markdown-cycle
+              "gk" 'markdown-previous-visible-heading
+              "gj" 'markdown-next-visible-heading)))
 
 (use-package coffee-mode)
 
