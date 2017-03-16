@@ -39,7 +39,7 @@ set completion-query-items 50
 # Allow UTF-8 input and output
 set input-meta on
 set output-meta on
-set covert-meta off
+set convert-meta off
 
 # Colourise completion
 set colored-stats on
