@@ -103,3 +103,21 @@ source $(which virtualenvwrapper.sh)
 
 # Golang -------------
 ,path-add "/usr/local/opt/go/libexec/bin/"
+
+# iTerm 2 - toggle colour profiles
+function ,ts () {
+    if [ ! "$(type -t it2check)" ]; then echo "it2check not found" && return 1; fi
+    # if [ ! "$(it2check)" ]; then echo "Not in iTerm" && return 1; fi
+    if [ ! "$(type -t it2setcolor)" ]; then echo "it2setcolor not found" && return 1; fi
+
+    tspath=/tmp/.it2solarized
+    touch "$tspath"
+    val=`cat "$tspath"`
+    if [ "$val" -eq 0 ]; then
+        it2setcolor preset 'Solarized Light' || return 1
+        echo 1 > "$tspath"
+    else
+        it2setcolor preset 'Solarized Dark' || return 1
+        echo 0 > "$tspath"
+    fi
+}
