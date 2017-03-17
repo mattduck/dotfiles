@@ -1295,7 +1295,7 @@ evil mode, and just add in the dired bindings that I want.
           (dired-single-buffer)))
 
       (evil-define-key 'normal dired-mode-map
-        "W" 'wdired-change-to-dired-mode  ; This is v useful
+        "W" 'wdired-change-to-wdired-mode  ; This is v useful
         "q" 'quit-window
         "d" 'dired-flag-file-deletion
         "u" 'dired-unmark
@@ -2233,6 +2233,7 @@ Close paren for the wrapping ~let~:
 - [ ] finding uses of functions
   - Under cursor, and by name
 - [ ] debugger
+  - [2017-03-17 Fri] get similar bindings to pudb?
 - [ ] folding
   - I basically want tab/shift+tab toggle bindings like outline mode. But
     outline mode doesn't match folding blocks nicely, so need to use another package.
@@ -2251,7 +2252,6 @@ Close paren for the wrapping ~let~:
   - [ ] refactoring
 - [ ] the elpy flycheck colours aren't bad, and work in terminal - consider
   using them for full flycheck.
-- [ ] eldoc mode?
 - [ ] check company addons
 - [ ] go mode
 - [ ] cask?

@@ -916,7 +916,7 @@ git dir) or linum mode"
         (dired-single-buffer)))
 
     (evil-define-key 'normal dired-mode-map
-      "W" 'wdired-change-to-dired-mode  ; This is v useful
+      "W" 'wdired-change-to-wdired-mode  ; This is v useful
       "q" 'quit-window
       "d" 'dired-flag-file-deletion
       "u" 'dired-unmark
