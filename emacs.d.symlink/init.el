@@ -241,6 +241,18 @@
   (interactive)
   (switch-to-buffer "*scratch*"))
 
+(defun md/switch-to-buffer-scratch-github-markdown ()
+  (interactive)
+  (switch-to-buffer "*scratch.gfm*")
+  (if (string= major-mode "fundamental-mode")
+      (gfm-mode)))
+
+(defun md/switch-to-buffer-scratch-restclient ()
+  (interactive)
+  (switch-to-buffer "*scratch.http*")
+  (if (string= major-mode "fundamental-mode")
+      (restclient-mode)))
+
 (defun md/unfill-paragraph ()
   "Because I can't always wrap to 80 characters :("
   (interactive)
@@ -373,7 +385,9 @@
         ("bw" . save-buffer)
         ("bW" . md/strip-whitespace-and-save)
         ("br" . read-only-mode)
-        ("bs" . md/switch-to-buffer-scratch)
+        ("bss" . md/switch-to-buffer-scratch)
+        ("bsg" . md/switch-to-buffer-scratch-github-markdown)
+        ("bsr" . md/switch-to-buffer-scratch-restclient)
 
         ;; Eval
         ("ef" . eval-defun)
@@ -385,6 +399,7 @@
         ;; Emacs
         ("Ek" . kill-emacs)
         ("Es" . server-start)
+        ("Ep" . list-processes)
 
         ;; Packages
         ("Pr" . package-refresh-contents)
@@ -1015,6 +1030,7 @@ git dir) or linum mode"
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
   :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.gfm\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
          ("\\.apib\\'" . markdown-mode)  ; Apiary
          ("\\.markdown\\'" . markdown-mode))
@@ -1057,6 +1073,7 @@ git dir) or linum mode"
       "SPC SPC e" "major-mode-eval"
       "SPC a" "ag"
       "SPC b" "buffers"
+      "SPC bs" "scratch buffers"
       "SPC B" "bookmarks"
       "SPC c" "comments"
       "SPC C" "compile"

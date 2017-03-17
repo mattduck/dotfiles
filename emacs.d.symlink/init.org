@@ -395,41 +395,53 @@ If this isn't set then pasting via Alfred doesnt work:
 ** Odd functions
 
 #+BEGIN_SRC emacs-lisp
-  (defun md/strip-whitespace-and-save ()
-    (interactive)
-    (delete-trailing-whitespace)
-    (save-buffer))
+    (defun md/strip-whitespace-and-save ()
+      (interactive)
+      (delete-trailing-whitespace)
+      (save-buffer))
 
-  (defun md/fontify-buffer ()
-    "Fontify the buffer and tell me it happened."
-    (interactive)
-    (font-lock-fontify-buffer)
-    (message "Fontified buffer"))
+    (defun md/fontify-buffer ()
+      "Fontify the buffer and tell me it happened."
+      (interactive)
+      (font-lock-fontify-buffer)
+      (message "Fontified buffer"))
 
-  (defun md/file-info ()
-    (interactive)
-    (message
-     "%s | %s lines | %3d%% | %s"
-             (buffer-file-name)
-             (count-lines (point-min) (point-max))
-             (/ (window-end) 0.01 (point-max))
-             major-mode))
+    (defun md/file-info ()
+      (interactive)
+      (message
+       "%s | %s lines | %3d%% | %s"
+               (buffer-file-name)
+               (count-lines (point-min) (point-max))
+               (/ (window-end) 0.01 (point-max))
+               major-mode))
 
-  (defun md/mode-info ()
-    (interactive)
-    (message
-     (format
-      "%s"
-      (with-temp-buffer
-        (let (mm result)
-          (dolist (mm (sort minor-mode-list 'string<) result)
-            (insert (format "%s\n" mm))
-            (setq result (buffer-substring (point-min) (point-max))))
-          result)))))
+    (defun md/mode-info ()
+      (interactive)
+      (message
+       (format
+        "%s"
+        (with-temp-buffer
+          (let (mm result)
+            (dolist (mm (sort minor-mode-list 'string<) result)
+              (insert (format "%s\n" mm))
+              (setq result (buffer-substring (point-min) (point-max))))
+            result)))))
 
-  (defun md/switch-to-buffer-scratch ()
-    (interactive)
-    (switch-to-buffer "*scratch*"))
+    (defun md/switch-to-buffer-scratch ()
+      (interactive)
+      (switch-to-buffer "*scratch*"))
+
+    (defun md/switch-to-buffer-scratch-github-markdown ()
+      (interactive)
+      (switch-to-buffer "*scratch.gfm*")
+      (if (string= major-mode "fundamental-mode")
+          (gfm-mode)))
+
+    (defun md/switch-to-buffer-scratch-restclient ()
+      (interactive)
+      (switch-to-buffer "*scratch.http*")
+      (if (string= major-mode "fundamental-mode")
+          (restclient-mode)))
 #+END_SRC
 
 
@@ -587,7 +599,9 @@ I seem to use =describe-face= a lot:
           ("bw" . save-buffer)
           ("bW" . md/strip-whitespace-and-save)
           ("br" . read-only-mode)
-          ("bs" . md/switch-to-buffer-scratch)
+          ("bss" . md/switch-to-buffer-scratch)
+          ("bsg" . md/switch-to-buffer-scratch-github-markdown)
+          ("bsr" . md/switch-to-buffer-scratch-restclient)
 
           ;; Eval
           ("ef" . eval-defun)
@@ -599,6 +613,7 @@ I seem to use =describe-face= a lot:
           ;; Emacs
           ("Ek" . kill-emacs)
           ("Es" . server-start)
+          ("Ep" . list-processes)
 
           ;; Packages
           ("Pr" . package-refresh-contents)
@@ -1517,6 +1532,7 @@ NOTE - compiling requires ~markdown~ to be installed.
   (use-package markdown-mode
     :commands (markdown-mode gfm-mode)
     :mode (("README\\.md\\'" . gfm-mode)
+           ("\\.gfm\\'" . gfm-mode)
            ("\\.md\\'" . markdown-mode)
            ("\\.apib\\'" . markdown-mode)  ; Apiary
            ("\\.markdown\\'" . markdown-mode))
@@ -1584,6 +1600,7 @@ easier to discover features / work out where I am:
         "SPC SPC e" "major-mode-eval"
         "SPC a" "ag"
         "SPC b" "buffers"
+        "SPC bs" "scratch buffers"
         "SPC B" "bookmarks"
         "SPC c" "comments"
         "SPC C" "compile"
@@ -2257,7 +2274,6 @@ Close paren for the wrapping ~let~:
   - Next time this happens use strace and try to report bug.
   - https://github.com/jorgenschaefer/elpy/issues/96
 - [ ] info page for intro to emacs lisp
-- [ ] use-package - is there a way to reload :binds?
 - [ ] browse documentation?
   - for eg. ansible
 - [ ] [2016-11-30 Wed] get C-O/C-I jumping forward/back in dired.
@@ -2269,6 +2285,8 @@ Close paren for the wrapping ~let~:
 - [2016-12-03 Sat] https://bitbucket.org/lyro/evil/issues/511/let-certain-minor-modes-key-bindings
 - [ ] [2016-12-07 Wed] profile CPU issues
   - It's probably a package that slows down org mode
-- [ ] focus mode?
 - [ ] [2017-02-28 Tue] org links to files, shortcuts.
 - [ ] [2017-02-28 Tue] json format
+- [ ] [2017-03-17 Fri] persist scratch buffers for different modes:
+  - lisp, org, restclient, markdown.
+- [ ] [2017-03-17 Fri] wdired binding
