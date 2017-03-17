@@ -46,7 +46,7 @@ export MITSCHEME_LIBRARY_PATH="/usr/local/Cellar/mit-scheme/9.2_1/lib/mit-scheme
 alias emacs-app="/Applications/Emacs.app/Contents/MacOS/Emacs"
 alias emacs-app-server="/Applications/Emacs.app/Contents/MacOS/Emacs --daemon"
 alias emacs-app-client="/Applications/Emacs.app/Contents/MacOS/bin/emacsclient"
-export EDITOR="/Applications/Emacs.app/Contents/MacOS/bin/emacsclient -c"
+export EDITOR="/Applications/Emacs.app/Contents/MacOS/bin/emacsclient -t"
 
 # New emacs in terminal
 alias en="emacs-app -nw"
