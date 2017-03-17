@@ -1552,7 +1552,8 @@ easier to discover features / work out where I am:
       (setq which-key-idle-delay 0.5
             which-key-max-description-length 30
             which-key-allow-evil-operators nil
-            which-key-show-operator-state-maps nil)
+            which-key-show-operator-state-maps nil
+            which-key-sort-order 'which-key-key-order-alpha)
 
       ;; Use ESC/C-g to quit which-key. Not sure why the default key is 'a'.
       (bind-key "ESC" 'which-key-abort which-key-C-h-map)
@@ -2249,6 +2250,5 @@ Close paren for the wrapping ~let~:
 - [ ] [2016-12-07 Wed] profile CPU issues
   - It's probably a package that slows down org mode
 - [ ] focus mode?
-  
 - [ ] [2017-02-28 Tue] org links to files, shortcuts.
 - [ ] [2017-02-28 Tue] json format

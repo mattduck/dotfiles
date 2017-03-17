@@ -1038,7 +1038,8 @@ git dir) or linum mode"
     (setq which-key-idle-delay 0.5
           which-key-max-description-length 30
           which-key-allow-evil-operators nil
-          which-key-show-operator-state-maps nil)
+          which-key-show-operator-state-maps nil
+          which-key-sort-order 'which-key-key-order-alpha)
 
     ;; Use ESC/C-g to quit which-key. Not sure why the default key is 'a'.
     (bind-key "ESC" 'which-key-abort which-key-C-h-map)
