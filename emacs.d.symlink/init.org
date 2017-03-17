@@ -945,7 +945,8 @@ eg. one terminal popwin per project.
        "Unless file is too big, either use git-gutter mode (when in
   git dir) or linum mode"
        (interactive)
-       (when (< (count-lines (point-min) (point-max)) 2000)
+       (when (and (< (count-lines (point-min) (point-max)) 1500)
+                  (not (eq major-mode 'org-mode)))
          (if (string= "git" (downcase (format "%s" (vc-backend
                                                     (buffer-file-name
                                                      (current-buffer))))))
