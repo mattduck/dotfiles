@@ -1427,7 +1427,7 @@ out of the box."
 (defconst md/scratch-file-markdown "~/.emacs-scratch.md")
 (defun md/scratch-open-file-markdown ()
   (interactive)
-  (find-file md/scratch-file-md))
+  (find-file md/scratch-file-markdown))
 
 (defconst md/scratch-file-gfm "~/.emacs-scratch.gfm")
 (defun md/scratch-open-file-gfm ()
