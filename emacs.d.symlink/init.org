@@ -2291,3 +2291,5 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-03-17 Fri] persist scratch buffers for different modes:
   - lisp, org, restclient, markdown.
 - [ ] [2017-03-17 Fri] binding to list all keys in a map using which-key.
+  - which-key-show-keymap can probably do this, but it hides evil
+    bindings under eg. a normal-state prefix, which not sure how to follow.
