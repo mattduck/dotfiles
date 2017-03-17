@@ -37,3 +37,10 @@ shopt -s cmdhist
 if [ $(command -v keychain) ]; then
     eval `keychain --quiet --eval --agents "ssh" --inherit "local-once"`
 fi
+
+# If sshrc is installed, enable it to use the same completion as ssh.
+if [ $(command -v sshrc) ]; then
+    # Can't find a full man page for this, so not sure what all options do.
+    # It might be there are other `complete` args that are applicable.
+    complete -F _ssh sshrc
+fi
