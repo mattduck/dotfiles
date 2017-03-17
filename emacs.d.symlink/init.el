@@ -237,22 +237,6 @@
           (setq result (buffer-substring (point-min) (point-max))))
         result)))))
 
-(defun md/switch-to-buffer-scratch ()
-  (interactive)
-  (switch-to-buffer "*scratch*"))
-
-(defun md/switch-to-buffer-scratch-github-markdown ()
-  (interactive)
-  (switch-to-buffer "*scratch.gfm*")
-  (if (string= major-mode "fundamental-mode")
-      (gfm-mode)))
-
-(defun md/switch-to-buffer-scratch-restclient ()
-  (interactive)
-  (switch-to-buffer "*scratch.http*")
-  (if (string= major-mode "fundamental-mode")
-      (restclient-mode)))
-
 (defun md/unfill-paragraph ()
   "Because I can't always wrap to 80 characters :("
   (interactive)
@@ -385,9 +369,6 @@
         ("bw" . save-buffer)
         ("bW" . md/strip-whitespace-and-save)
         ("br" . read-only-mode)
-        ("bss" . md/switch-to-buffer-scratch)
-        ("bsg" . md/switch-to-buffer-scratch-github-markdown)
-        ("bsr" . md/switch-to-buffer-scratch-restclient)
 
         ;; Eval
         ("ef" . eval-defun)
@@ -1059,7 +1040,7 @@ git dir) or linum mode"
   :defer 2
   :config
   (progn
-    (setq which-key-idle-delay 0.5
+    (setq which-key-idle-delay 0.3
           which-key-max-description-length 30
           which-key-allow-evil-operators nil
           which-key-show-operator-state-maps nil
@@ -1069,12 +1050,22 @@ git dir) or linum mode"
     (bind-key "ESC" 'which-key-abort which-key-C-h-map)
     (bind-key "C-g" 'which-key-abort which-key-C-h-map)
 
+    ;; This is the default for description-replacement-alist:
+    (setq which-key-description-replacement-alist
+          '(("Prefix Command" . "prefix")
+            ("which-key-show-next-page" . "wk next pg")
+            ("\\`\\?\\?\\'" . "lambda")))
+
+    ;; Add scratch bindings:
+    (dolist (mode '("elisp" "python" "restclient" "markdown" "gfm" "org"))
+            (add-to-list 'which-key-description-replacement-alist
+                         (cons (format "md/scratch-open-file-%s" mode) mode)))
+
     (which-key-declare-prefixes
       "SPC SPC" "major-mode"
       "SPC SPC e" "major-mode-eval"
       "SPC a" "ag"
       "SPC b" "buffers"
-      "SPC bs" "scratch buffers"
       "SPC B" "bookmarks"
       "SPC c" "comments"
       "SPC C" "compile"
@@ -1091,7 +1082,8 @@ git dir) or linum mode"
       "SPC S" "flyspell"
       "SPC t" "toggle-misc"
       "SPC v" "dotfiles"
-      "SPC ;" "popwin")
+      "SPC ;" "popwin"
+      "SPC '" "scratch")
     (which-key-mode)))
 
 (use-package free-keys
@@ -1416,6 +1408,46 @@ out of the box."
 (bind-key "Bj" 'bookmark-jump md/leader-map)
 (bind-key "Bs" 'bookmark-set md/leader-map)
 (bind-key "Bd" 'bookmark-delete md/leader-map)
+
+(defconst md/scratch-file-elisp "~/.emacs-scratch.el")
+(defun md/scratch-open-file-elisp ()
+  (interactive)
+  (find-file md/scratch-file-elisp))
+
+(defconst md/scratch-file-python "~/.emacs-scratch.py")
+(defun md/scratch-open-file-python ()
+  (interactive)
+  (find-file md/scratch-file-python))
+
+(defconst md/scratch-file-restclient "~/.emacs-scratch.http")
+(defun md/scratch-open-file-restclient ()
+  (interactive)
+  (find-file md/scratch-file-restclient))
+
+(defconst md/scratch-file-markdown "~/.emacs-scratch.md")
+(defun md/scratch-open-file-markdown ()
+  (interactive)
+  (find-file md/scratch-file-md))
+
+(defconst md/scratch-file-gfm "~/.emacs-scratch.gfm")
+(defun md/scratch-open-file-gfm ()
+  (interactive)
+  (find-file md/scratch-file-gfm))
+
+(defconst md/scratch-file-org "~/.emacs-scratch.org")
+(defun md/scratch-open-file-org ()
+  (interactive)
+  (find-file md/scratch-file-org))
+
+;; Open this scratch buffer on startup
+(setq initial-buffer-choice md/scratch-file-org)
+
+(bind-key "'e" 'md/scratch-open-file-elisp md/leader-map)
+(bind-key "'p" 'md/scratch-open-file-python md/leader-map)
+(bind-key "'r" 'md/scratch-open-file-restclient md/leader-map)
+(bind-key "'m" 'md/scratch-open-file-markdown md/leader-map)
+(bind-key "'g" 'md/scratch-open-file-gfm md/leader-map)
+(bind-key "'o" 'md/scratch-open-file-org md/leader-map)
 
 (line-number-mode 1)
 (column-number-mode 1)
