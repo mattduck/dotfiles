@@ -148,6 +148,16 @@ appears as any other app toolbar at the top of the screen, which is fine:
     (menu-bar-mode -1))
 #+END_SRC
 
+** Frame size
+
+Automatically resize new frames to be maximized (but not actually "fullscreen"
+on MacOS).
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
+#+END_SRC
+
 ** Fontify
 Some things don't fontify quick enough (eg. fic-mode). This helps to contain
 that issue:
@@ -370,7 +380,7 @@ Increase the number of messages:
 #+END_SRC
 ** Paste
 
-If this isn't set then lasting via Alfred doesnt work:
+If this isn't set then pasting via Alfred doesnt work:
 
 #+BEGIN_SRC emacs-lisp
   (defun md/pbpaste ()
@@ -935,9 +945,19 @@ eg. one terminal popwin per project.
 #+END_SRC
 
 ** Git
+*** git-commit
+
+I sometimes see issues where git opens emacsclient in Fundamental mode. Making
+~global-git-commit-mode~ explicit in an attempt to resolve this:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package git-commit
+    :config
+    (global-git-commit-mode t))
+#+END_SRC
+
 *** git-gutter
 #+BEGIN_SRC emacs-lisp
-
   (use-package git-gutter
    :init
    (progn

@@ -76,6 +76,9 @@
 (when (not (display-graphic-p))
   (menu-bar-mode -1))
 
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
+
 (add-hook 'after-save-hook 'font-lock-fontify-buffer)
 
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
@@ -664,6 +667,10 @@ match the project."
 (bind-key "j;t" 'md/projectile-popwin-ansi-term md/leader-map)
 (bind-key "j;s" 'md/projectile-popwin-shell md/leader-map)
 (bind-key "j;e" 'md/projectile-popwin-eshell md/leader-map)
+
+(use-package git-commit
+  :config
+  (global-git-commit-mode t))
 
 (use-package git-gutter
  :init
