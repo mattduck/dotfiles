@@ -106,7 +106,7 @@
 
 (defun md/set-default-font ()
   (interactive)
-  (if (string= system-name "mattmbp.local")
+  (if (string= (system-name) "mattmbp.local")
       (set-frame-font "Monaco-12:antialias=subpixel")
     (set-frame-font "Monaco-13:antialias=subpixel")))
 
@@ -303,13 +303,21 @@
    (defvar md/evil-jump-trigger-commands
      '(evil-scroll-page-down
        evil-scroll-page-up
+       evil-scroll-down
+       evil-scroll-up
        next-buffer
        previous-buffer
        md/dired-single-buffer
        ))
    (dolist (command md/evil-jump-trigger-commands)
      (evil-add-command-properties command :jump t))
-   (setq evil-jumps-max-length 20)  ; Lower than the default, but I rarely want more
+   (setq evil-jumps-max-length 10)  ; Lower than the default, but I rarely want more
+
+   ;; This uses C-i by default (as in vim), but C-i is interpeted as TAB, which
+   ;; is an important binding in org-mode. Use C-l instead, which is bound to
+   ;; recenter-top-bottom by default.
+   (bind-key "C-l" 'evil-jump-forward evil-normal-state-map)
+   (bind-key "C-l" 'evil-jump-forward evil-visual-state-map)
 
    ;; Can't work out how to properly define map bindings using ":bind"
    (bind-key "<SPC>" md/leader-map evil-normal-state-map)
