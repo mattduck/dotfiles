@@ -508,6 +508,21 @@ I seem to use =describe-face= a lot:
            (md/unfill-region start end)
          (md/unfill-paragraph)))
 
+     ;; By default the evil jump commands don't set markers as often 
+     ;; as I would like. But it installs a pre-command-hook to call
+     ;; evil-set-jump for all commands that have the evil property :jump,
+     ;; so we can configure the jump markers to be saved more often.
+     (defvar md/evil-jump-trigger-commands
+       '(evil-scroll-page-down
+         evil-scroll-page-up
+         next-buffer
+         previous-buffer
+         md/dired-single-buffer
+         ))
+     (dolist (command md/evil-jump-trigger-commands)
+       (evil-add-command-properties command :jump t))
+     (setq evil-jumps-max-length 20)  ; Lower than the default, but I rarely want more
+
      ;; Can't work out how to properly define map bindings using ":bind"
      (bind-key "<SPC>" md/leader-map evil-normal-state-map)
      (bind-key "<SPC>" md/leader-map evil-visual-state-map)
@@ -2308,7 +2323,7 @@ Close paren for the wrapping ~let~:
 - [ ] info page for intro to emacs lisp
 - [ ] browse documentation?
   - for eg. ansible
-- [ ] [2016-11-30 Wed] get C-O/C-I jumping forward/back in dired.
+- [ ] [2017-03-18 Sat] get C-O/C-I jumping forward/back in dired.
 - [ ] helm buffers - how to search including the mode? Eg. "dired" should match
   the "Dired by name" buffers.
 - [ ] enable SPC leader in ag-mode.
@@ -2324,3 +2339,5 @@ Close paren for the wrapping ~let~:
     bindings under eg. a normal-state prefix, which not sure how to follow.
 - [ ] [2017-03-17 Fri] splitscreen - C-w q to close window?
 - [ ] [2017-03-17 Fri] sort-lines binding
+- [ ] [2017-03-18 Sat] ensure backup files are working properly
+- [ ] [2017-03-18 Sat] how to handle C-o and C-i in org? As C-i does tab?

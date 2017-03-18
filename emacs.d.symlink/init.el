@@ -296,6 +296,21 @@
          (md/unfill-region start end)
        (md/unfill-paragraph)))
 
+   ;; By default the evil jump commands don't set markers as often 
+   ;; as I would like. But it installs a pre-command-hook to call
+   ;; evil-set-jump for all commands that have the evil property :jump,
+   ;; so we can configure the jump markers to be saved more often.
+   (defvar md/evil-jump-trigger-commands
+     '(evil-scroll-page-down
+       evil-scroll-page-up
+       next-buffer
+       previous-buffer
+       md/dired-single-buffer
+       ))
+   (dolist (command md/evil-jump-trigger-commands)
+     (evil-add-command-properties command :jump t))
+   (setq evil-jumps-max-length 20)  ; Lower than the default, but I rarely want more
+
    ;; Can't work out how to properly define map bindings using ":bind"
    (bind-key "<SPC>" md/leader-map evil-normal-state-map)
    (bind-key "<SPC>" md/leader-map evil-visual-state-map)
