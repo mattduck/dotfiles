@@ -319,6 +319,14 @@
    (bind-key "C-l" 'evil-jump-forward evil-normal-state-map)
    (bind-key "C-l" 'evil-jump-forward evil-visual-state-map)
 
+   ;; evil-paste-pop is handy, but I don't like the C-n/C-p default bindings,
+   ;; because those are common bindings everywhere else in Emacs. Use C-S
+   ;; instead.
+   (unbind-key "C-n" evil-normal-state-map)
+   (unbind-key "C-p" evil-normal-state-map)
+   (bind-key "C-S-n" 'evil-paste-pop-next)
+   (bind-key "C-S-p" 'evil-paste-pop)
+
    ;; Can't work out how to properly define map bindings using ":bind"
    (bind-key "<SPC>" md/leader-map evil-normal-state-map)
    (bind-key "<SPC>" md/leader-map evil-visual-state-map)
