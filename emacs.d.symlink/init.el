@@ -21,10 +21,10 @@
 (package-initialize)
 
 (setq package-archives
-      '(("gnu" . "http://elpa.gnu.org/packages/")
-        ("marmalade" . "http://marmalade-repo.org/packages/")
-        ("melpa" . "http://melpa.milkbox.net/packages/")
-        ("org" . "http://orgmode.org/elpa/")))
+      '(("gnu" . "https://elpa.gnu.org/packages/")
+        ("marmalade" . "https://marmalade-repo.org/packages/")
+        ("melpa" . "https://melpa.milkbox.net/packages/")
+        ("org" . "http://orgmode.org/elpa/"))) ; no TLS for org?
 
 (setq load-prefer-newer t)  ; new in v24.4
 
