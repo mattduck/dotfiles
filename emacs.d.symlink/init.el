@@ -470,6 +470,7 @@
     ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
     (helm-mode 1)
     (helm-autoresize-mode 0)
+    (helm-descbinds-mode 1)
 
     ;; No need to display the header - it takes up room and doesn't add much.
     (setq helm-display-header-line nil)
@@ -512,6 +513,200 @@
 
          :map help-map
          ("X" . helm-colors)))
+
+(use-package help-fns+ :defer 1)
+
+(evil-set-initial-state 'help-mode 'normal)
+(evil-define-key 'normal help-mode-map
+  "q" 'quit-window
+  (kbd "C-i") 'help-go-forward
+  (kbd "C-o") 'help-go-back
+  (kbd "<RET>") 'help-follow-symbol)
+
+(defun md/which-key-patch ()
+  "Override some which-key functions"
+  (interactive)
+
+(fmakunbound 'which-key--show-keymap)
+(defun which-key--show-keymap (keymap-name keymap &optional prior-args)
+  "This is identical to the version shipped with which-key, but it returns the
+function captured by user input."
+  (setq which-key--current-prefix nil
+        which-key--current-show-keymap-name keymap-name
+        which-key--using-show-keymap t)
+  (when prior-args (push prior-args which-key--prior-show-keymap-args))
+  (when (keymapp keymap)
+    (let ((formatted-keys (which-key--get-formatted-key-bindings
+                           (which-key--get-keymap-bindings keymap))))
+      (cond ((= (length formatted-keys) 0)
+             (message "which-key: Keymap empty"))
+            ((listp which-key-side-window-location)
+             (setq which-key--last-try-2-loc
+                   (apply #'which-key--try-2-side-windows
+                          formatted-keys 0 which-key-side-window-location)))
+            (t (setq which-key--pages-plist
+                     (which-key--create-pages formatted-keys))
+               (which-key--show-page 0)))))
+  (let* ((key (key-description (list (read-key))))
+         (next-def (lookup-key keymap (kbd key))))
+    (cond ((and which-key-use-C-h-commands (string= "C-h" key))
+           (which-key-C-h-dispatch))
+          ((keymapp next-def)
+           (which-key--hide-popup-ignore-command)
+           (setq next-def (which-key--show-keymap (concat keymap-name " " key) next-def
+                                   (cons keymap-name keymap))))
+          (t (which-key--hide-popup)))
+    next-def))
+
+) ; Close md/which-key-patch
+
+;; TODO There are some bindings that do not show up.
+;; Eg. the C-x prefix displayed does not exactly match the real C-x prefix map
+;; (eg. M-: repeat-complex-command is missing).
+(defun md/get-all-active-bindings-as-keymap ()
+  "Return keymap consisting of bindings in all active keymaps. This should
+represent all current available bindings accurately as a single keymap."
+  (let ((full-active-keymap (make-sparse-keymap)))
+    (mapc (lambda (keymap)
+            ;; Ignore empty keymaps
+            (when (not (equal keymap (make-sparse-keymap)))
+              (map-keymap (lambda (event definition)
+                            (when (md/include-event-in-active-map event definition)
+                              (define-key full-active-keymap
+                                (vector event) definition)))
+                          keymap)))
+          ;; Reverse so that the keymaps with highest precendence
+          ;; are written last, thus overriding the more global maps.
+          (reverse (current-active-maps t)))
+    full-active-keymap))
+
+(defun md/include-event-in-active-map (event definition)
+  "Placeholder"
+  (and
+   (not (equal definition 'digit-argument))))
+
+(use-package which-key
+  :defer 2
+  :config (progn
+            ;; Patch with my functions
+            (md/which-key-patch)
+
+            (setq which-key-idle-delay 0.6
+                  which-key-max-description-length 30
+                  which-key-allow-evil-operators nil
+                  which-key-show-operator-state-maps nil
+                  which-key-sort-order 'which-key-key-order-alpha
+                  which-key-highlighted-command-list '("md/"))
+
+            ;; Use ESC/C-g to quit which-key. Not sure why the default key is 'a'.
+            (bind-key "ESC" 'which-key-abort which-key-C-h-map)
+            (bind-key "C-g" 'which-key-abort which-key-C-h-map)
+
+            ;; This is the default for description-replacement-alist:
+            (setq which-key-description-replacement-alist
+                  '(("Prefix Command" . "prefix")
+                    ("which-key-show-next-page" . "wk next pg")
+                    ("\\`\\?\\?\\'" . "lambda")))
+
+            ;; Add scratch bindings:
+            (dolist (mode '("elisp" "python" "restclient" "markdown" "gfm" "org"))
+              (add-to-list 'which-key-description-replacement-alist
+                           (cons (format "md/scratch-open-file-%s" mode) mode)))
+
+            (which-key-declare-prefixes
+              "SPC SPC" "major-mode"
+              "SPC SPC e" "major-mode-eval"
+              "SPC a" "ag"
+              "SPC b" "buffers"
+              "SPC B" "bookmarks"
+              "SPC c" "comments"
+              "SPC C" "compile"
+              "SPC e" "eval"
+              "SPC E" "Emacs"
+              "SPC g" "git"
+              "SPC h" "help"
+              "SPC h k" "keys"
+              "SPC j" "project"
+              "SPC j ;" "project-popwin"
+              "SPC j a" "project-ag"
+              "SPC n" "narrow"
+              "SPC P" "Packages"
+              "SPC s" "flycheck"
+              "SPC S" "flyspell"
+              "SPC t" "toggle-misc"
+              "SPC v" "dotfiles"
+              "SPC ;" "popwin"
+              "SPC '" "scratch")
+            (which-key-mode)
+
+            (defun md/which-key ()
+              "Use the which-key interface to list all active bindings and execute the
+    current one. One prefix arg will pre-select the current evil-state in which-key,
+    and two prefix args will let you choose an evil state to pre-select."
+              (interactive)
+              (catch 'no-evil-state-map
+                (let* ((md-evil-state (cond ((equal current-prefix-arg '(4))
+                                             (md/which-key--evil-state-current))
+                                            ((equal current-prefix-arg '(16))
+                                             (md/which-key--evil-state-select))))
+                       (evil-keymap nil)
+                       (base-keymap (md/get-all-active-bindings-as-keymap))
+                       (final-keymap
+                        (if md-evil-state
+                            (progn
+                              (message "evil state!")
+                              (setq evil-keymap (lookup-key base-keymap md-evil-state))
+                              (if (keymapp evil-keymap)
+                                  evil-keymap
+                                (throw 'no-evil-state-map
+                                       (format "No available bindings for evil state %s" md-evil-state))))
+                          base-keymap))
+                       (chosen-func (which-key--show-keymap "All active bindings" final-keymap)))
+                  (when (commandp chosen-func)
+                    (message (format "calling interactively: %s" chosen-func))
+                    (call-interactively chosen-func)))))
+
+
+            (defconst md/which-key--evil-states '(normal-state
+                                                  insert-state
+                                                  visual-state
+                                                  motion-state
+                                                  replace-state
+                                                  emacs-state))
+
+            (defun md/which-key--evil-state-select ()
+              "Return (kbd-for-state . local-keymap) for chosen Evil state"
+              (kbd (format "<%s>" (completing-read "Evil state: " md/which-key--evil-states nil
+                                                   t))))
+
+            (defun md/which-key--evil-state-current ()
+              "Return (kbd-for-state . local-keymap) for current Evil state"
+              (kbd (format "<%s-state>" evil-state)))
+
+            ))
+
+(use-package free-keys
+  :defer 10
+  :config
+    (progn
+      (bind-key "@" 'free-keys help-map)))
+
+(defvar md/keys-help-map (make-sparse-keymap))
+
+(bind-key "k" md/keys-help-map help-map)
+
+(bind-key "k" 'describe-key md/keys-help-map)
+(bind-key "K" 'describe-keymap md/keys-help-map)
+(bind-key "p" 'describe-personal-keybindings md/keys-help-map)
+(bind-key "@" 'free-keys md/keys-help-map)
+(bind-key "SPC" 'md/which-key md/keys-help-map)
+
+(global-set-key (kbd "C-SPC") 'md/which-key) 
+
+;; Setting this mode on replaces describe-bindings, and
+;; loads helm-descbinds.el, which I might want to use elsewhere.
+(add-hook 'helm-descbinds-mode-hook
+          (lambda () (bind-key "b" 'helm-descbinds md/keys-help-map)))
 
 (use-package ag
   :config
@@ -1059,223 +1254,6 @@ git dir) or linum mode"
 
 (use-package coffee-mode)
 
-(use-package help-fns+ :defer 1)
-
-(evil-set-initial-state 'help-mode 'normal)
-(evil-define-key 'normal help-mode-map
-  "q" 'quit-window
-  (kbd "C-i") 'help-go-forward
-  (kbd "C-o") 'help-go-back
-  (kbd "<RET>") 'help-follow-symbol)
-
-(defun md/which-key-patch ()
-  "Override some which-key functions"
-  (interactive)
-
-(fmakunbound 'which-key--show-keymap)
-(defun which-key--show-keymap (keymap-name keymap &optional prior-args)
-  "This is identical to the version shipped with which-key, but it returns the
-function captured by user input."
-  (setq which-key--current-prefix nil
-        which-key--current-show-keymap-name keymap-name
-        which-key--using-show-keymap t)
-  (when prior-args (push prior-args which-key--prior-show-keymap-args))
-  (when (keymapp keymap)
-    (let ((formatted-keys (which-key--get-formatted-key-bindings
-                           (which-key--get-keymap-bindings keymap))))
-      (cond ((= (length formatted-keys) 0)
-             (message "which-key: Keymap empty"))
-            ((listp which-key-side-window-location)
-             (setq which-key--last-try-2-loc
-                   (apply #'which-key--try-2-side-windows
-                          formatted-keys 0 which-key-side-window-location)))
-            (t (setq which-key--pages-plist
-                     (which-key--create-pages formatted-keys))
-               (which-key--show-page 0)))))
-  (let* ((key (key-description (list (read-key))))
-         (next-def (lookup-key keymap (kbd key))))
-    (cond ((and which-key-use-C-h-commands (string= "C-h" key))
-           (which-key-C-h-dispatch))
-          ((keymapp next-def)
-           (which-key--hide-popup-ignore-command)
-           (setq next-def (which-key--show-keymap (concat keymap-name " " key) next-def
-                                   (cons keymap-name keymap))))
-          (t (which-key--hide-popup)))
-    next-def))
-
-(defun which-key--select-keymap (&optional filter-active-only-p)
-  "This logic was in which-key-select-keymap, but I'm extracting it out
-to use elsewhere."
-  (let ((keymap-sym
-         (intern
-          (completing-read 
-           "Keymap: " obarray
-           (lambda (m)
-             (and (boundp m)
-                  (keymapp (symbol-value m))
-                  (not (equal (symbol-value m) (make-sparse-keymap)))
-                  (if filter-active-only-p
-                      (memq (symbol-value m) (current-active-maps))
-                    t)))
-           t nil 'which-key-keymap-history))))
-    (cons (symbol-name keymap-sym) (symbol-value keymap-sym))))
-
-(fmakunbound 'which-key-show-keymap)
-(defun which-key-show-keymap (&optional call-chosen-key-p filter-active-only-p)
-  (interactive)
-  (let* ((name-and-keymap (which-key--select-keymap filter-active-only-p))
-         (chosen-func
-          (which-key--show-keymap (car name-and-keymap) (cdr name-and-keymap))))
-    (if (and call-chosen-key-p chosen-func)
-        (call-interactively chosen-func))))
-
-(defconst which-key--evil-states '(normal-state
-                                   insert-state
-                                   visual-state
-                                   motion-state
-                                   replace-state
-                                   emacs-state))
-
-(defun which-key--select-evil-state ()
-  "Return (kbd-for-state . local-keymap) for chosen Evil state"
-  (let* ((chosen-state
-           (completing-read "Evil state: " which-key--evil-states nil t))
-        (state-kbd (kbd (format "<%s>" chosen-state)))
-        (state-map (symbol-value (intern (format "evil-%s-local-map"
-                                                 chosen-state)))))
-    (cons state-kbd state-map)))
-
-(defun which-key--current-evil-state ()
-  "Return (kbd-for-state . local-keymap) for current Evil state"
-  (cons
-   (kbd (format "<%s-state>" evil-state))
-   (symbol-value (intern (format "evil-%s-state-local-map" evil-state)))))
-
-(defun which-key--show-keymap-for-evil-state-fn (evil-state-form &optional call-chosen-key-p filter-active-only-p)
-  "Like which-key-show-keymap, but evaluates the given form which
-  should return a cons of (kbd-for-evil-state . locql-keymap), and
-  pre-selects the which-key evil state prefix."
-  (interactive)
-  (catch 'no-state-map
-    (let* ((name-and-keymap (which-key--select-keymap filter-active-only-p))
-           (keymap (cdr name-and-keymap))
-           (evil-state-kbd (car (eval evil-state-form)))
-           (evil-keymap (lookup-key keymap evil-state-kbd))
-           (chosen-func
-            (if (keymapp evil-keymap)
-                (which-key--show-keymap (car name-and-keymap) evil-keymap)
-              (throw 'no-state-map "Keymap doesn't have bindings for chosen evil state"))))
-      (if (and call-chosen-key-p chosen-func)
-          (call-interactively chosen-func)))))
-
-(defun which-key-show-keymap-for-evil-state (&optional call-chosen-key-p filter-active-only-p)
-  "Run which-key, but automatically input the chosen evil state prefix
-  (eg. [normal-state]), which isn't possible to input with the keyboard."
-  (interactive)
-  (which-key--show-keymap-for-evil-state-fn
-   '(which-key--select-evil-state) call-chosen-key-p filter-active-only-p))
-
-(defun which-key-show-keymap-for-current-evil-state (&optional call-chosen-key-p filter-active-only-p)
-  "Run which-key, but automatically input the current evil state prefix
-  (eg. [normal-state]), which isn't possible to input with the keyboard."
-  (interactive)
-  (which-key--show-keymap-for-evil-state-fn
-   '(which-key--current-evil-state) call-chosen-key-p filter-active-only-p))
-
-) ; Close md/which-key-patch
-
-(use-package which-key
-  :defer 2
-  :config
-  (progn
-    ;; Patch with my functions
-    (md/which-key-patch)
-
-    (setq which-key-idle-delay 0.6
-          which-key-max-description-length 30
-          which-key-allow-evil-operators nil
-          which-key-show-operator-state-maps nil
-          which-key-sort-order 'which-key-key-order-alpha)
-
-    ;; Use ESC/C-g to quit which-key. Not sure why the default key is 'a'.
-    (bind-key "ESC" 'which-key-abort which-key-C-h-map)
-    (bind-key "C-g" 'which-key-abort which-key-C-h-map)
-
-    ;; This is the default for description-replacement-alist:
-    (setq which-key-description-replacement-alist
-          '(("Prefix Command" . "prefix")
-            ("which-key-show-next-page" . "wk next pg")
-            ("\\`\\?\\?\\'" . "lambda")))
-
-    ;; Add scratch bindings:
-    (dolist (mode '("elisp" "python" "restclient" "markdown" "gfm" "org"))
-            (add-to-list 'which-key-description-replacement-alist
-                         (cons (format "md/scratch-open-file-%s" mode) mode)))
-
-    (defun md/which-key ()
-      (interactive)
-      (cond ((equal current-prefix-arg '(4))
-             (md/which-key-current-evil-state))
-            ((equal current-prefix-arg '(16))
-             (md/which-key-evil-state))
-            (t (which-key-show-keymap t t))))
-           
-    (defun md/which-key-evil-state ()
-      (interactive)
-      (which-key-show-keymap-for-evil-state t t))
-
-    (defun md/which-key-current-evil-state ()
-      (interactive)
-      (which-key-show-keymap-for-current-evil-state t t))
-
-    (which-key-declare-prefixes
-      "SPC SPC" "major-mode"
-      "SPC SPC e" "major-mode-eval"
-      "SPC a" "ag"
-      "SPC b" "buffers"
-      "SPC B" "bookmarks"
-      "SPC c" "comments"
-      "SPC C" "compile"
-      "SPC e" "eval"
-      "SPC E" "Emacs"
-      "SPC g" "git"
-      "SPC h" "help"
-      "SPC h k" "keys"
-      "SPC j" "project"
-      "SPC j ;" "project-popwin"
-      "SPC j a" "project-ag"
-      "SPC n" "narrow"
-      "SPC P" "Packages"
-      "SPC s" "flycheck"
-      "SPC S" "flyspell"
-      "SPC t" "toggle-misc"
-      "SPC v" "dotfiles"
-      "SPC ;" "popwin"
-      "SPC '" "scratch")
-    (which-key-mode)))
-
-(use-package free-keys
-  :defer 10
-  :config
-    (progn
-      (bind-key "@" 'free-keys help-map)))
-
-(defvar md/keys-help-map (make-sparse-keymap))
-
-(bind-key "k" md/keys-help-map help-map)
-
-(bind-key "k" 'describe-key md/keys-help-map)
-(bind-key "K" 'describe-keymap md/keys-help-map)
-(bind-key "p" 'describe-personal-keybindings md/keys-help-map)
-(bind-key "@" 'free-keys md/keys-help-map)
-(bind-key "b" 'helm-descbinds md/keys-help-map)
-
-(bind-key "SPC" 'md/which-key md/keys-help-map)
-(bind-key "e" 'md/which-key-current-evil-state md/keys-help-map)
-(bind-key "E" 'md/which-key-evil-state md/keys-help-map)
-
-(evil-global-set-key 'normal (kbd "C-SPC") 'md/which-key)
-
 (use-package elscreen
  :defer 1
  :config
@@ -1626,6 +1604,7 @@ out of the box."
 ;; Open this scratch buffer on startup
 (setq initial-buffer-choice md/scratch-file-org)
 
+(bind-key "'s" 'md/scratch-open-file-elisp md/leader-map) 
 (bind-key "'e" 'md/scratch-open-file-elisp md/leader-map)
 (bind-key "'p" 'md/scratch-open-file-python md/leader-map)
 (bind-key "'r" 'md/scratch-open-file-restclient md/leader-map)
