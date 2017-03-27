@@ -1,8 +1,9 @@
 #!/bin/sh
 #
 # Use sshrc in place of `vagrant ssh`.
+# Passes args to vagrant ssh-config.
 
 CONFIG_PATH=/tmp/vsshrc-config
 
-vagrant ssh-config --host vagrant > "$CONFIG_PATH"
+vagrant ssh-config "$@" --host vagrant > "$CONFIG_PATH"
 sshrc vagrant -F "$CONFIG_PATH"
