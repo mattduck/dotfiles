@@ -1,21 +1,22 @@
 # Solarized ANSI
-export Anone="\e[00m"
-export Abase02="\e[00;30m"
-export Abase01="\e[01;30m"
-export Ared="\e[00;31m"
-export Aorange="\e[01;31m"
-export Agreen="\e[00;32m"
-export Abase01="\e[01;32m"
-export Ayellow="\e[00;33m"
-export Abase00="\e[01;33m"
-export Ablue="\e[00;34m"
-export Abase0="\e[01;34m"
-export Amagenta="\e[00;35m"
-export Aviolet="\e[01;35m"
-export Acyan="\e[00;36m"
-export Abase1="\e[01;36m"
-export Abase2="\e[00;37m"
-export Abase3="\e[01;37m"
+export ANSIreset="\[$(tput sgr0)\]"
+export ANSInone="\[\e[00m\]"
+export ANSIbase02="\[\e[00;30m\]"
+export ANSIbase01="\[\e[01;30m\]"
+export ANSIred="\[\e[00;31m\]"
+export ANSIorange="\[\e[01;31m\]"
+export ANSIgreen="\[\e[00;32m\]"
+export ANSIbase01="\[\e[01;32m\]"
+export ANSIyellow="\[\e[00;33m\]"
+export ANSIbase00="\[\e[01;33m\]"
+export ANSIblue="\[\e[00;34m\]"
+export ANSIbase0="\[\e[01;34m\]"
+export ANSImagenta="\[\e[00;35m\]"
+export ANSIviolet="\[\e[01;35m\]"
+export ANSIcyan="\[\e[00;36m\]"
+export ANSIbase1="\[\e[01;36m\]"
+export ANSIbase2="\[\e[00;37m\]"
+export ANSIbase3="\[\e[01;37m\]"
 
 # Solarized numbers
 export Nbase03=8
@@ -41,23 +42,20 @@ if command -v lsb_release >/dev/null; then
     DISTRO_INFO=$(lsb_release -a 2>/dev/null)
     if [[ $DISTRO_INFO == *Ubuntu* ]]; then
         HOST_COLOUR_NUM=$Nviolet
-        HOST_COLOUR_ANSI=$Aviolet
-    elif [[ $DISTRO_INFO == *Mint* ]]; then
-        HOST_COLOUR_NUM=$Ncyan
-        HOST_COLOUR_ANSI=$Acyan
+        HOST_COLOUR_ANSI=$ANSIviolet
     else
-        # Fallback
+        # Fallback
         HOST_COLOUR_NUM=$Nbase0
-        HOST_COLOUR_ANSI=$Abase0
+        HOST_COLOUR_ANSI=$ANSIbase0
     fi
 elif [[ "$(uname -a)" == *Darwin* ]]; then
     # OS X
     HOST_COLOUR_NUM=$Nblue
-    HOST_COLOUR_ANSI=$Ablue
+    HOST_COLOUR_ANSI=$ANSIblue
 else
-    # Fallback
+    # Fallback
     HOST_COLOUR_NUM=$Nbase0
-    HOST_COLOUR_ANSI=$Abase0
+    HOST_COLOUR_ANSI=$ANSIbase0
 fi
 
 export HOST_COLOUR_NUM
