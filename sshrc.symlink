@@ -1,5 +1,4 @@
 # TODO ----------------------------------
-# - change ps1 if vagrant
 # - support for su
 
 # Solarized ANSI variables -------------------------------
@@ -25,14 +24,95 @@ export ANSIbase3="\[\e[01;37m\]"
 export HOST_COLOUR_ANSI=$ANSIorange
 export HOST_COLOUR_NUM=9
 
+# Returns 0 if the specified string contains the specified substring,
+# otherwise returns 1.
+md-contains() {
+    string="$1"
+    substring="$2"
+    if test "${string#*$substring}" != "$string"
+    then
+        return 0    # $substring is in $string
+    else
+        return 1    # $substring is not in $string
+    fi
+}
+
+md-env() {
+    if md-contains "$(whoami)" "vagrant"; then echo "local" && return; fi
+    if md-contains "$(hostname)" "vagrant"; then echo "local" && return; fi
+
+    if md-contains "$(hostname)" "production"; then echo "production" && return; fi
+    if md-contains "$DJANGO_SETTINGS_MODULE" "production"; then echo "production" && return; fi
+
+    if md-contains "$(hostname)" "staging"; then echo "staging" && return; fi
+    if md-contains "$(hostname)" "-dev"; then echo "staging" && return; fi
+    if md-contains "$DJANGO_SETTINGS_MODULE" "staging"; then echo "staging" && return; fi
+    if md-contains "$DJANGO_SETTINGS_MODULE" ".dev"; then echo "staging" && return; fi
+}
+
+case "$(md-env)" in 
+    "local")
+        export HOST_COLOUR_ANSI=$ANSIviolet
+        export HOST_COLOUR_NUM=13 ;;
+
+    "staging")
+        export HOST_COLOUR_ANSI=$ANSIcyan
+        export HOST_COLOUR_NUM=6 ;;
+
+    "production")
+        export HOST_COLOUR_ANSI=$ANSIorange
+        export HOST_COLOUR_NUM=7 ;;
+
+    *)
+        export HOST_COLOUR_ANSI=$ANSIgreen
+        export HOST_COLOUR_NUM=2 ;;
+esac
+
+
 # PS1 -------------------------------------
 
-
 _user="$ANSIyellow\u"
-_hostname="$HOST_COLOUR_ANSI\h"
-_pwd="$HOST_COLOUR_ANSI\w"
+if [ $(whoami) == "root" ]; then
+    _user="$ANSIorange\u"
+fi
 
-PS1="\n$_user $ANSIyellow[$_hostname$ANSIyellow]: $_pwd\n$ANSIbase1$ "
+_hostname="$HOST_COLOUR_ANSI\h"
+_pwd="$ANSIbase1\w"
+_server_ip="$HOST_COLOUR_ANSI$(echo "$SSH_CONNECTION" | cut -d ' ' -f 3)"
+_server_port="$HOST_COLOUR_ANSI$(echo "$SSH_CONNECTION" | cut -d ' ' -f 4)"
+_services=""
+
+md-ps1-add-django () {
+    if [ ! -z "$DJANGO_SETTINGS_MODULE" ]; then
+        echo "$HOST_COLOUR_ANSI* "$ANSIbase00"dj: $DJANGO_SETTINGS_MODULE"
+    fi
+}
+
+md-ps1-add-nginx () {
+    if [ -d /etc/nginx/sites-enabled ]; then
+        _vhosts=$(find /etc/nginx/sites-enabled/* -print0 |
+                    xargs -0 egrep '^(\s|\t)*server_name.+;' --no-filename |
+                    sed 's/^\s *//' |
+                    uniq |
+                    sed 's/server_name\s*/server_name: /' |
+                    tr -d '\n'
+            )
+        if [ ! -z "$_vhosts" ]; then
+            IFS=';' read -ra _vhost_array <<< "$_vhosts"
+            for host in "${_vhost_array[@]}"; do
+                    if [ ! -z "$host" ]; then
+                        echo "$HOST_COLOUR_ANSI*$ANSIbase00 $host$ANSIreset"
+                    fi
+                done
+        fi
+    fi
+}
+
+#_services="$_services\n$(md-ps1-add-django)"
+_services="$_services\n$(md-ps1-add-nginx)"
+
+OLD_PS1="\n$_user $ANSIyellow[$_hostname$ANSIyellow]: $_pwd\n$ANSIbase1$ "
+PS1="$_services\n$_user$ANSIyellow [$_server_ip$ANSIyellow][$_hostname$ANSIyellow]: $_pwd\n$ANSIbase1$ "
 
 export PS1="$PS1$ANSIreset"
 export PROMPT_DIRTRIM=4

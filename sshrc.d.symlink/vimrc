@@ -109,7 +109,7 @@ set smartcase
 
 " Line number / highlight row
 set ruler
-set number
+set nonumber
 
 " NOTE - I'm copying the Solarized scheme straight into this file. It will
 " only work on startup - changing the background after this will result in
