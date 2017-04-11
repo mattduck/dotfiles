@@ -2515,7 +2515,6 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-03-23 Thu] list functions/classes in project?
 - [ ] [2017-03-24 Fri] how to do proper logging?
 - [ ] [2017-03-24 Fri] still C-o not getting enough checkpoints.
-- [ ] [2017-03-20 Mon] Make C-w "o" do the same as C-w z.
 - [ ] [2017-03-23 Thu] function for replacing "\n" with actual newlines.
 - [ ] [2017-03-24 Fri] nlinum???? linum performance is awful.
 - [ ] [2017-03-27 Mon] - C-spc binding should be included in which-key? So it's
