@@ -79,7 +79,13 @@
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
-(add-hook 'after-save-hook 'font-lock-fontify-buffer)
+(defun md/fontify-if-font-lock-mode ()
+  (when font-lock-mode
+    (font-lock-fontify-buffer)))
+
+(add-hook 'after-save-hook 'md/fontify-if-font-lock-mode)
+
+(bind-key "tx" 'font-lock-mode md/leader-map)
 
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'prog-mode-hook 'turn-on-auto-fill)

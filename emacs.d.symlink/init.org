@@ -163,7 +163,13 @@ Some things don't fontify quick enough (eg. fic-mode). This helps to contain
 that issue:
 
 #+BEGIN_SRC emacs-lisp
-(add-hook 'after-save-hook 'font-lock-fontify-buffer)
+  (defun md/fontify-if-font-lock-mode ()
+    (when font-lock-mode
+      (font-lock-fontify-buffer)))
+
+  (add-hook 'after-save-hook 'md/fontify-if-font-lock-mode)
+
+  (bind-key "tx" 'font-lock-mode md/leader-map)
 #+END_SRC
 
 ** Text wrapping
@@ -2512,6 +2518,5 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-03-20 Mon] Make C-w "o" do the same as C-w z.
 - [ ] [2017-03-23 Thu] function for replacing "\n" with actual newlines.
 - [ ] [2017-03-24 Fri] nlinum???? linum performance is awful.
-- [ ] [2017-03-27 Mon] tx - font lock toggle
 - [ ] [2017-03-27 Mon] - C-spc binding should be included in which-key? So it's
   used as prefix but then you can access the original binding.
