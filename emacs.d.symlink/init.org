@@ -2505,7 +2505,13 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-03-18 Sat] how to ensure evil-set-jump is called in dired-mode?
 - [ ] [2017-03-22 Wed] narrow dwim, eg. http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html
   - will it work for org code blocks?
-- [ ] [2017-03-23 Thu] use dump-jump for easy jumping to definitions??
+- [ ] [2017-03-23 Thu] use dumb-jump for easy jumping to definitions??
 - [ ] [2017-03-23 Thu] list functions/classes in project?
 - [ ] [2017-03-24 Fri] how to do proper logging?
 - [ ] [2017-03-24 Fri] still C-o not getting enough checkpoints.
+- [ ] [2017-03-20 Mon] Make C-w "o" do the same as C-w z.
+- [ ] [2017-03-23 Thu] function for replacing "\n" with actual newlines.
+- [ ] [2017-03-24 Fri] nlinum???? linum performance is awful.
+- [ ] [2017-03-27 Mon] tx - font lock toggle
+- [ ] [2017-03-27 Mon] - C-spc binding should be included in which-key? So it's
+  used as prefix but then you can access the original binding.
