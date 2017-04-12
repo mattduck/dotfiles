@@ -2,9 +2,9 @@
 * Compile init.el
 
 I'm using org-mode to structure my configuration. Inspired by [[https://github.com/sachac/.emacs.d][Sacha Chua]] and
-[[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
+  [[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
 
-#+BEGIN_SRC emacs-lisp
+  #+BEGIN_SRC emacs-lisp
   (defun md/dotfiles-get-root ()
     (or
       (getenv "DOTFILES")
@@ -524,13 +524,14 @@ I seem to use =describe-face= a lot:
          evil-scroll-page-up
          evil-scroll-down
          evil-scroll-up
+         switch-to-buffer
          next-buffer
          previous-buffer
          ))
      (dolist (command md/evil-jump-trigger-commands)
        (evil-add-command-properties command :jump t))
 
-     (setq evil-jumps-max-length 10)  ; Lower than the default, but I rarely want more
+     (setq evil-jumps-max-length 20)  ; Lower than the default, but I rarely want more
 
      ;; This uses C-i by default (as in vim), but C-i is interpeted as TAB, which
      ;; is an important binding in org-mode. Use C-l instead, which is bound to
@@ -2513,9 +2514,10 @@ Close paren for the wrapping ~let~:
   - will it work for org code blocks?
 - [ ] [2017-03-23 Thu] use dumb-jump for easy jumping to definitions??
 - [ ] [2017-03-23 Thu] list functions/classes in project?
-- [ ] [2017-03-24 Fri] how to do proper logging?
+- [ ] [2017-03-24 Fri] how to do proper logging? Write library?
 - [ ] [2017-03-24 Fri] still C-o not getting enough checkpoints.
 - [ ] [2017-03-23 Thu] function for replacing "\n" with actual newlines.
 - [ ] [2017-03-24 Fri] nlinum???? linum performance is awful.
 - [ ] [2017-03-27 Mon] - C-spc binding should be included in which-key? So it's
   used as prefix but then you can access the original binding.
+- [ ] [2017-03-25 Sat] https://github.com/redguardtoo/evil-matchit.

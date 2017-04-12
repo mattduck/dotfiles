@@ -312,13 +312,14 @@
        evil-scroll-page-up
        evil-scroll-down
        evil-scroll-up
+       switch-to-buffer
        next-buffer
        previous-buffer
        ))
    (dolist (command md/evil-jump-trigger-commands)
      (evil-add-command-properties command :jump t))
 
-   (setq evil-jumps-max-length 10)  ; Lower than the default, but I rarely want more
+   (setq evil-jumps-max-length 20)  ; Lower than the default, but I rarely want more
 
    ;; This uses C-i by default (as in vim), but C-i is interpeted as TAB, which
    ;; is an important binding in org-mode. Use C-l instead, which is bound to
