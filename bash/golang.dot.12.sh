@@ -7,3 +7,4 @@ export GO15VENDOREXPERIMENT=1
 
 alias golinux="GOOS=linux GOARCH=amd64 go"
 alias godarwin="GOOS=darwin GOARCH=amd64 go"
+alias goraspbian="GOOS=linux GOARCH=arm GOARM=7 go"
