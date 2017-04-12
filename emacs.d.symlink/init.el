@@ -315,6 +315,12 @@
        switch-to-buffer
        next-buffer
        previous-buffer
+       git-gutter:next-hunk
+       git-gutter:previous-hunk
+       quit-window
+       bookmark-jump
+       dired
+       dired-jump
        ))
    (dolist (command md/evil-jump-trigger-commands)
      (evil-add-command-properties command :jump t))
@@ -914,8 +920,7 @@ git dir) or linum mode"
        (if (string= "git" (downcase (format "%s" (vc-backend
                                                   (buffer-file-name
                                                    (current-buffer))))))
-           (git-gutter-mode 1)
-         (linum-mode 1))))
+           (git-gutter-mode 1))))
    (add-hook 'find-file-hook 'md/set-sensible-column))
  :config
  (progn
