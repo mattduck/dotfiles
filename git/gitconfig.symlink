@@ -81,3 +81,8 @@
 
 [core]
     excludesfile = ~/.gitignore
+
+[diff]
+
+    # I find this easier to read
+    algorithm = patience
