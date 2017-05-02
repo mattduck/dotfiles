@@ -2361,6 +2361,31 @@ Use some persistent scratch files for various modes:
           ("cs" . solarized-toggle-comment-visibility)))
 #+END_SRC
 
+* Writeroom
+
+Remove writing distractions:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package writeroom-mode
+   :defer 1
+   :demand t
+   :config
+   (progn
+     (defun md/handle-elscreen (arg)
+       (cond
+        ((= arg 1)
+         (setq elscreen-display-tab nil)
+         (elscreen-notify-screen-modification 'force))
+        ((= arg -1)
+         (setq elscreen-display-tab t)
+         (elscreen-notify-screen-modification 'force))))
+
+     (add-to-list 'writeroom-global-effects 'md/handle-elscreen))
+
+   :bind (:map md/leader-map
+          ("tW" . writeroom-mode)))
+#+END_SRC
+
 * Dotfiles
 
 #+BEGIN_SRC emacs-lisp
@@ -2526,3 +2551,5 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-03-27 Mon] - C-spc binding should be included in which-key? So it's
   used as prefix but then you can access the original binding.
 - [ ] [2017-03-25 Sat] https://github.com/redguardtoo/evil-matchit.
+- [ ] if opened with a file as gui, open it in split rather than new elscreen window.
+- [ ] [2017-04-28 Fri] org - display inline images?

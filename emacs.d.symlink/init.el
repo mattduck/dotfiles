@@ -1765,6 +1765,25 @@ out of the box."
         ("ts" . solarized-toggle-theme-mode)
         ("cs" . solarized-toggle-comment-visibility)))
 
+(use-package writeroom-mode
+ :defer 1
+ :demand t
+ :config
+ (progn
+   (defun md/handle-elscreen (arg)
+     (cond
+      ((= arg 1)
+       (setq elscreen-display-tab nil)
+       (elscreen-notify-screen-modification 'force))
+      ((= arg -1)
+       (setq elscreen-display-tab t)
+       (elscreen-notify-screen-modification 'force))))
+
+   (add-to-list 'writeroom-global-effects 'md/handle-elscreen))
+
+ :bind (:map md/leader-map
+        ("tW" . writeroom-mode)))
+
 (defun md/dotfiles-edit-init ()
   (interactive)
   (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org")))
