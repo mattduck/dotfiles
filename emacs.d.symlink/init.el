@@ -243,6 +243,12 @@
           (setq result (buffer-substring (point-min) (point-max))))
         result)))))
 
+(defun md/ljust (len str)
+  (if (< (length str) len)
+      ;; 32 is ASCII space
+      (concat str (make-string (- len (length str)) 32))
+    str))
+
 (defun md/unfill-paragraph ()
   "Because I can't always wrap to 80 characters :("
   (interactive)
@@ -302,28 +308,29 @@
          (md/unfill-region start end)
        (md/unfill-paragraph)))
 
+   ;; NOTE - temp commenting this, is it cause of performance issues?
    ;; By default the evil jump commands don't set markers as often 
    ;; as I would like. But it installs a pre-command-hook to call
    ;; evil-set-jump for all commands that have the evil property :jump,
    ;; so we can configure the jump markers to be saved more often.
-   (defvar md/evil-jump-trigger-commands)
-   (setq md/evil-jump-trigger-commands
-     '(evil-scroll-page-down
-       evil-scroll-page-up
-       evil-scroll-down
-       evil-scroll-up
-       switch-to-buffer
-       next-buffer
-       previous-buffer
-       git-gutter:next-hunk
-       git-gutter:previous-hunk
-       quit-window
-       bookmark-jump
-       dired
-       dired-jump
-       ))
-   (dolist (command md/evil-jump-trigger-commands)
-     (evil-add-command-properties command :jump t))
+   ;; (defvar md/evil-jump-trigger-commands)
+   ;; (setq md/evil-jump-trigger-commands
+   ;;   '(evil-scroll-page-down
+   ;;     evil-scroll-page-up
+   ;;     evil-scroll-down
+   ;;     evil-scroll-up
+   ;;     switch-to-buffer
+   ;;     next-buffer
+   ;;     previous-buffer
+   ;;     git-gutter:next-hunk
+   ;;     git-gutter:previous-hunk
+   ;;     quit-window
+   ;;     bookmark-jump
+   ;;     dired
+   ;;     dired-jump
+   ;;     ))
+   ;; (dolist (command md/evil-jump-trigger-commands)
+   ;;   (evil-add-command-properties command :jump t))
 
    (setq evil-jumps-max-length 20)  ; Lower than the default, but I rarely want more
 
@@ -1182,6 +1189,10 @@ git dir) or linum mode"
   (progn
       (add-to-list 'company-backends 'company-restclient)))
 
+(when (not (getenv "GOPATH"))
+ (setenv "GOPATH" "/Users/matt/golang") 
+ (setenv "GO15VENDOREXPERIMENT" "1"))
+
 (use-package go-mode
   :config
   (progn
@@ -1414,170 +1425,290 @@ out of the box."
   :config
   (progn
 
-    (defun md/org-timestamp-time-inactive-no-confirm ()
-      (interactive)
-      (org-insert-time-stamp (current-time) t t))
+(defun md/org-hook ()
+  ;; Change tab widths to fit headline indents
+  (setq tab-width 2
+        evil-shift-width 2)
 
-    (defun md/org-timestamp-date-inactive-no-confirm ()
-      (interactive)
-      (org-insert-time-stamp (current-time) nil t))
+  ;; Disable in-buffer line numbers and the colour column, as both decrease
+  ;; org-mode / outline performance significantly on large files.
+  (linum-mode 0)
+  (fci-mode 0)
 
-    (defun md/org-insert-link-from-paste ()
-      (interactive)
-      (org-insert-link nil
-                       (with-temp-buffer
-                         (evil-paste-after nil)
-                         (delete-trailing-whitespace)
-                         (buffer-string))))
+  ;; Also disable the row and column numbers in the modeline. Seems you have to set
+  ;; these manually to make them buffer-local.
+  (setq-local line-number-mode nil)
+  (setq-local column-number-mode nil)
 
-    (defun md/org-hook ()
-      ;; Change tab widths to fit headline indents
-      (setq tab-width 2
-            evil-shift-width 2)
+  ;; Also don't highlight the current line. For some reason this requires making
+  ;; global-hl-line-mode buffer-local.
+  (make-variable-buffer-local 'global-hl-line-mode)
+  (setq-local global-hl-line-mode nil))
+(add-hook 'org-mode-hook 'md/org-hook)
 
-      ;; Disable in-buffer line numbers and the colour column, as both decrease
-      ;; org-mode / outline performance significantly on large files.
-      (linum-mode 0)
-      (fci-mode 0)
+(setq
+      ;; Don't let org-agenda permanently mess with window layout
+      org-agenda-restore-windows-after-quit t
 
-      ;; Also disable the row and column numbers in the modeline. Seems you have to set
-      ;; these manually to make them buffer-local, unlike the above functions - TODO
-      ;; is this a bad thing?
-      (setq-local line-number-mode nil)
-      (setq-local column-number-mode nil)
+      ;; Add timestamp when set task as closed
+      org-log-done 'time
 
-      ;; Also don't highlight the current line. For some reason this rquires making
-      ;; global-hl-line-mode buffer-local.
-      (make-variable-buffer-local 'global-hl-line-mode)
-      (setq-local global-hl-line-mode nil))
+      ;; Colour the whole headline
+      org-level-color-stars-only nil
 
-    (define-minor-mode md/evil-org-mode
-      "Buffer local minor mode for evil-org"
-      :init-value nil
-      :lighter " EvilOrg"
-      :keymap (make-sparse-keymap) ; defines md/evil-org-mode-map
-      :group 'md/evil-org)
+      ;; Colour done headlines to make them less prominent
+      org-fontify-done-headline t
 
-    ;; NOTE - I don't think the use-package ":bind" arg allows defining evil keys
-    ;; for a specific evil-mode/map combination.
+      ;; Try to prevent accidentally editing invisible lines
+      org-catch-invisible-edits 'show-and-error
 
-    ;; Normal state shortcuts
-    (evil-define-key 'normal md/evil-org-mode-map
-      "gk" 'outline-previous-visible-heading
-      "gj" 'outline-next-visible-heading
-      "H" 'org-beginning-of-line
-      "L" 'org-end-of-line
-      "$" 'org-end-of-line
-      "^" 'org-beginning-of-line
-      "-" 'org-cycle-list-bullet
-      (kbd "RET") 'org-cycle
-      (kbd "TAB") 'org-cycle)
+      ;; Don't indent things for nested headings (eg. properties)
+      org-adapt-indentation nil
 
-    ;; Normal & insert state shortcuts.
-    (mapc (lambda (state)
-            (evil-define-key state md/evil-org-mode-map
-              (kbd "M-l") 'org-metaright
-              (kbd "M-h") 'org-metaleft
-              (kbd "M-k") 'org-metaup
-              (kbd "M-j") 'org-metadown
-              (kbd "M-L") 'org-shiftmetaright
-              (kbd "M-H") 'org-shiftmetaleft
-              (kbd "M-K") 'org-shiftmetaup
-              (kbd "M-J") 'org-shiftmetadown
-              ))
-          '(normal insert))
+      org-clock-out-remove-zero-time-clocks t
 
-    ;; I don't like the default org-agenda bindings - there are far more
-    ;; bindings/features than I should have to think about, and I usually try to
-    ;; navigate using evil bindings (and eg. accidentally hit "j" and bring up
-    ;; the calendar etc).
-    ;;
-    ;; Instead, open org-agenda in evil-normal-mode, with a couple of the useful
-    ;; bindings copied directly from emacs-mode.
-    (define-minor-mode md/evil-org-agenda-mode
-      "Buffer local minor mode for evil-org-agenda"
-      :init-value nil
-      :lighter " EvilOrgAgenda"
-      :keymap (make-sparse-keymap) ; defines md/evil-org-agenda-mode-map
-      :group 'md/evil-org-agenda)
+      ;; If press M-RET I want a new line, not to split the line
+      org-M-RET-may-split-line nil)
 
-    (evil-set-initial-state 'org-agenda-mode 'normal)
+;; Only two priorities - default and flagged
+(setq org-highest-priority 65)
+(setq org-lowest-priority 66)
+(setq org-default-priority 66)
 
-    (evil-define-key 'normal md/evil-org-agenda-mode-map
-      ;; j / k
-      (kbd "j") 'org-agenda-next-line
-      (kbd "n") 'org-agenda-next-line
-      (kbd "C-n") 'org-agenda-next-line
-      (kbd "k") 'org-agenda-previous-line
-      (kbd "p") 'org-agenda-previous-line
-      (kbd "C-p") 'org-agenda-previous-line
+(bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
+(bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
+(bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
 
-      (kbd "q") 'org-agenda-quit
-      (kbd "r") 'org-agenda-redo  ; Recalculate the agenda
-      (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view
-      (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
-      (kbd "=") 'org-agenda-filter-by-regexp  ; Search
-      (kbd "/") 'org-agenda-filter-by-tag  ; Tag filter
-      (kbd "^") 'org-agenda-filter-by-top-headline  ; Show other items with same
-                                        ; headline as current
-      (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
+(defvar md/org-inherit-dates-p t
+  "Used by a couple of my util functions, eg. md/org-skip-if-deadline-in-days.")
 
-    (add-hook 'org-mode-hook 'md/org-hook)
-    (add-hook 'org-mode-hook 'md/evil-org-mode)
-    (add-hook 'org-agenda-mode-hook 'md/evil-org-agenda-mode)
+(defun md/org-timestamp-time-inactive-no-confirm ()
+  "Insert inactive time timestamp without prompting the user"
+  (interactive)
+  (org-insert-time-stamp (current-time) t t))
 
-    (setq org-agenda-restore-windows-after-quit t
+(defun md/org-timestamp-date-inactive-no-confirm ()
+  "Insert inactive date timestamp without prompting the user"
+  (interactive)
+  (org-insert-time-stamp (current-time) nil t))
 
-          ;; Add timestamp when set task as closed
-          org-log-done 'time
-
-          ;; Fontify inline code
-          org-src-fontify-natively t
-
-          ;; When editing code, I don't want to open another window. This
-          ;; just makes the screen tidier.
-          org-src-window-setup 'current-window
-
-          ;; tab / indentation is the main reason I would use C-' so prevent it if possible
-          org-src-tab-acts-natively t
-
-          ;; Colour the whole headline
-          org-level-color-stars-only nil
-
-          ;; Colour done headlines to make them less prominent
-          org-fontify-done-headline t
-
-          ;; Try to prevent accidentally editing invisible lines
-          org-catch-invisible-edits 'show-and-error
-
-          org-adapt-indentation nil
-
-          org-clock-out-remove-zero-time-clocks t
-
-          ;; If press M-RET I want a new line, not to split the line
-          org-M-RET-may-split-line nil
-
-          ;; Default to using my CSS theme for html exports
-          ;; org-html-head-extra "
-          ;;<link id='generic-css-dark' rel='stylesheet' type='text/css'
-          ;;      href='https://mattduck.github.io/generic-css/css/generic-dark.css'>
-          ;;<link id='generic-css-light' rel='stylesheet' type='text/css'
-          ;;      href='https://mattduck.github.io/generic-css/css/generic-light.css'>
-          ;;<script type='text/javascript'src='https://mattduck.github.io/generic-css/js/generic-css.js'></script>"
-
-          org-export-headline-levels 6
-          org-export-with-section-numbers 4)
+(defun md/org-insert-link-from-paste ()
+  "Perform org-insert-link with the current contents of the clipboard"
+  (interactive)
+  (org-insert-link nil
+                   (with-temp-buffer
+                     (evil-paste-after nil)
+                     (delete-trailing-whitespace)
+                     (buffer-string))))
 
 
-    ;; Putting these here to avoid byte-compiled issue where org-mode-map isn't defined.
-    (bind-key "C-c j" 'org-insert-todo-heading org-mode-map)
-    (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
-    (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
-    (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map))
-  :bind (:map global-map
-              ("C-c a" . org-agenda)))
+(defun md/org-back-to-top-level-heading ()
+  "Go back to the current top level heading."
+  (interactive)
+  (or (re-search-backward "^\* " nil t)
+      (goto-char (point-min))))
+
+(defun md/org-get-priority (inherit)
+  "Get priority for the current line. If inherit is t, retrieve
+priority from the closest parent headline"
+  (if (not inherit)
+      (org-get-priority (thing-at-point 'line))
+    (save-excursion
+      (let ((keep-searching t))
+        (while keep-searching
+          (if (string-match org-priority-regexp (thing-at-point 'line))
+              (setq keep-searching nil)
+            (setq keep-searching (org-up-heading-safe))))
+        (org-get-priority (thing-at-point 'line))))))
+
+(defun md/org-agenda-skip-rtn-point ()
+  "If you customise org-agenda-skip-function, your skip function has to return
+the point at which you want the agenda to continue processing the file. In my
+  case I always want this to be the end of the subtree."
+  (org-end-of-subtree t)
+  (point))
+
+(defun md/org-skip-if-deadline-in-days (user-fn)
+  "A utility function that can be used for org-agenda-skip-function. It calls
+  `(user-fn number-of-days-until-deadline)`. If `user-fn` returns a `t` value,
+  the agenda item will be skipped. 
+
+  You could use this to eg. skip all items that have a deadline
+  in more than 60 days by running as part of your config:
+
+  '(org-agenda-skip-function
+      '(md/org-skip-if-deadline-in-days (lambda (d) (if (eq d nil) t (> d 60)))))
+  "
+  (save-excursion
+    (let* ((deadline-time (org-get-deadline-time (point)
+                                                    md/org-inherit-dates-p))
+           (days (if deadline-time
+                     (time-to-number-of-days
+                      (time-subtract deadline-time (org-current-effective-time))))))
+        (if (funcall user-fn days)  ; Returns t if we should skip
+            (md/org-agenda-skip-rtn-point))
+        )))
+
+(defun md/org-skip-if-scheduled-in-days (user-fn)
+  "This function is just like org-skip-if-deadline-in-days, but
+uses the scheduled property rather than the deadline."
+  (save-excursion
+    (let* ((scheduled-time (org-get-scheduled-time (point)
+                                                    md/org-inherit-dates-p))
+           (days (if scheduled-time
+                     (time-to-number-of-days
+                      (time-subtract scheduled-time (org-current-effective-time))))))
+        (if (funcall user-fn days)  ; Returns t if we should skip
+            (md/org-agenda-skip-rtn-point))
+        )))
+
+(defun md/org-skip-if-priority-level (user-fn)
+  "Utility function that can be used for org-agenda-skip-function. It calls
+  `(user-fn priority-level`). If `user-fn` returns a `t` value, the agenda item
+  will be skipped. If the item doesn't have a priority assigned, the level used
+  is 0.
+
+  You could use this to eg. skip all items that don't have a priority:
+
+  '(org-agenda-skip-function
+       '(md/org-skip-if-priority-level (lambda (p) (<= p 0))))
+  "
+  (save-excursion
+    (if (funcall user-fn (md/org-get-priority t))
+        (md/org-agenda-skip-rtn-point))))
+
+(defun md/org-skip-if-not-match-parent-kwd (keyword)
+  "Utility function that can be used for org-agenda-skip-function. It searches
+  parents of the current node for a matching keyword. If the match isn't found,
+  it returns the skip point expected by org-agenda-skip-function.
+  "
+  (save-excursion
+    (let (top bottom)
+        (setq bottom (save-excursion (org-end-of-subtree t) (point)))
+        (setq top (save-excursion (md/org-back-to-top-level-heading) (point)))
+        (if 
+            (re-search-backward (format org-heading-keyword-regexp-format keyword) top t) 
+            nil
+        (md/org-agenda-skip-rtn-point))
+        )))
+
+(define-minor-mode md/evil-org-mode
+  "Buffer local minor mode for evil-org"
+  :init-value nil
+  :lighter " EvilOrg"
+  :keymap (make-sparse-keymap) ; defines md/evil-org-mode-map
+  :group 'md/evil-org)
+
+;; Normal state shortcuts
+(evil-define-key 'normal md/evil-org-mode-map
+  "gk" 'outline-previous-visible-heading
+  "gj" 'outline-next-visible-heading
+  "H" 'org-beginning-of-line
+  "L" 'org-end-of-line
+  "$" 'org-end-of-line
+  "^" 'org-beginning-of-line
+  "-" 'org-cycle-list-bullet
+  (kbd "RET") 'org-cycle
+  (kbd "TAB") 'org-cycle)
+
+;; Normal and insert state shortcuts.
+(mapc (lambda (state)
+        (evil-define-key state md/evil-org-mode-map
+          (kbd "M-l") 'org-metaright
+          (kbd "M-h") 'org-metaleft
+          (kbd "M-k") 'org-metaup
+          (kbd "M-j") 'org-metadown
+          (kbd "M-L") 'org-shiftmetaright
+          (kbd "M-H") 'org-shiftmetaleft
+          (kbd "M-K") 'org-shiftmetaup
+          (kbd "M-J") 'org-shiftmetadown
+          ))
+      '(normal insert))
+
+(add-hook 'org-mode-hook 'md/evil-org-mode)
+
+(define-minor-mode md/evil-org-agenda-mode
+  "Buffer local minor mode for evil-org-agenda"
+  :init-value nil
+  :lighter " EvilOrgAgenda"
+  :keymap (make-sparse-keymap) ; defines md/evil-org-agenda-mode-map
+  :group 'md/evil-org-agenda)
+
+(evil-set-initial-state 'org-agenda-mode 'normal)
+
+(evil-define-key 'normal md/evil-org-agenda-mode-map
+  ;; j / k
+  (kbd "j") 'org-agenda-next-line
+  (kbd "n") 'org-agenda-next-line
+  (kbd "C-n") 'org-agenda-next-line
+  (kbd "k") 'org-agenda-previous-line
+  (kbd "p") 'org-agenda-previous-line
+  (kbd "C-p") 'org-agenda-previous-line
+
+  (kbd "q") 'org-agenda-quit
+  (kbd "r") 'org-agenda-redo  ; Recalculate the agenda
+  (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view
+  (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
+  (kbd "=") 'org-agenda-filter-by-regexp  ; Search
+  (kbd "C-/") 'org-agenda-filter-by-tag  ; Tag filter
+  (kbd "^") 'org-agenda-filter-by-top-headline  ; Show other items with same
+                                    ; headline as current
+  (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
+
+(add-hook 'org-agenda-mode-hook 'md/evil-org-agenda-mode)
+
+;; Load some language support
+  (require 'ob-restclient)
+  (require 'ob-python)
+  (require 'ob-C)
+  (require 'ob-go)
+
+(setq
+ ;; Fontify inline code
+ org-src-fontify-natively t
+
+ ;; When editing code, I don't want to open another window. This
+ ;; just makes the screen tidier.
+ org-src-window-setup 'current-window
+
+ ;; tab / indentation is the main reason I would use C-' so prevent it if possible
+ org-src-tab-acts-natively t)
+
+(setq org-export-headline-levels 6
+      org-export-with-section-numbers 4)
 
 (use-package ox-reveal)
+
+(defun md/org-gcal-fetch ()
+  "Always refresh gcal token before fetching, as it expires every hour"
+  (interactive)
+  (org-gcal-refresh-token)
+  (sleep-for 4)
+  (org-gcal-fetch))
+
+(use-package org-gcal
+  :config
+  (progn
+    (setq
+     org-gcal-down-days 120
+     org-gcal-up-days 120)))
+
+(defconst md/org-review-property "LAST_REVIEWED"
+  "I use this in a few places to keep track of when I lasted reviewed particular
+headlines")
+
+(defun org-review ()
+  "Set the LAST_REVIEWED property to the current date/time"
+  (interactive)
+  (org-set-property md/org-review-property ; currently this is LAST_REVIEWED
+                    (with-temp-buffer
+                      (org-insert-time-stamp (current-time) nil t)))) ; Inactive stamp
+
+(define-key org-mode-map (kbd "C-c C-r") 'org-review)
+
+(bind-key "C-c a" 'org-agenda global-map)
+
+))
 
 (bind-key "Bj" 'bookmark-jump md/leader-map)
 (bind-key "Bs" 'bookmark-set md/leader-map)
@@ -1770,6 +1901,8 @@ out of the box."
  :demand t
  :config
  (progn
+   (setq writeroom-width 90)
+
    (defun md/handle-elscreen (arg)
      (cond
       ((= arg 1)
