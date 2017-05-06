@@ -2334,18 +2334,6 @@ Close the use-package wrapper:
 ))
 #+END_SRC
 
-** COMMENT org-mode OLD
-#+BEGIN_SRC emacs-lisp
-  (use-package org
-    :defer 5
-    :config
-    (progn
-
-    :bind (:map global-map
-                ("C-c a" . org-agenda)))
-#+END_SRC
-
-
 * Bookmarks
 #+BEGIN_SRC emacs-lisp
   (bind-key "Bj" 'bookmark-jump md/leader-map)
