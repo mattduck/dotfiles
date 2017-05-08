@@ -1450,6 +1450,9 @@ out of the box."
       ;; Don't let org-agenda permanently mess with window layout
       org-agenda-restore-windows-after-quit t
 
+      ;; I find this more intuitive
+      org-indirect-buffer-display 'current-window
+
       ;; Add timestamp when set task as closed
       org-log-done 'time
 
@@ -1469,6 +1472,24 @@ out of the box."
 
       ;; If press M-RET I want a new line, not to split the line
       org-M-RET-may-split-line nil)
+
+;; Goto and refile
+(setq
+      ;; For org-goto, use helm rather than the weird default interface
+      ;; where you search through the file
+      org-goto-interface 'outline-path-completion
+
+      ;; For org-goto, search all nodes rather than forcing me to start with
+      ;; the top level heading and then search the children etc.
+      org-outline-path-complete-in-steps nil
+
+      ;; For org-goto and org-refile, show the outline path during Helm
+      ;; completion rather than just the headline.
+      org-refile-use-outline-path t
+
+      ;; Include nested items in org-refile.
+      org-refile-targets '((nil :maxlevel . 9)))
+
 
 ;; Only two priorities - default and flagged
 (setq org-highest-priority 65)
@@ -1657,6 +1678,20 @@ uses the scheduled property rather than the deadline."
 
 (add-hook 'org-agenda-mode-hook 'md/evil-org-agenda-mode)
 
+(setq helm-org-format-outline-path nil)
+(setq helm-org-headings-fontify t)
+
+(defun md/helm-org ()
+  "Open org headlines in helm."
+  (interactive)
+  (let* ((src (helm-build-sync-source "Org headings"
+                :candidates (helm-org-get-candidates (file-expand-wildcards buffer-file-name))
+                :action '(("Go to heading" . helm-org-goto-marker)
+                          ("Open in indirect buffer" . helm-org--open-heading-in-indirect-buffer)
+                          ("Refile to this heading" . helm-org-heading-refile)
+                          ("Insert link to this heading" . helm-org-insert-link-to-heading-at-marker))))
+         (cmd (helm :sources '(src))))))
+
 ;; Load some language support
   (require 'ob-restclient)
   (require 'ob-python)
@@ -1707,6 +1742,10 @@ headlines")
 (define-key org-mode-map (kbd "C-c C-r") 'org-review)
 
 (bind-key "C-c a" 'org-agenda global-map)
+
+(let ((path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/md.org/init.el")))
+  (when (file-exists-p path)
+    (load-file path)))
 
 ))
 
@@ -1930,6 +1969,9 @@ headlines")
 (require 'server)
 (when (not (server-running-p))
    (server-start))
+
+(when (file-exists-p "~/.secrets.el")
+      (load-file "~/.secrets.el"))
 
 (defconst md/emacs-init-end (current-time))
 

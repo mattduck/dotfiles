@@ -2032,6 +2032,9 @@ org headings:
         ;; Don't let org-agenda permanently mess with window layout
         org-agenda-restore-windows-after-quit t
 
+        ;; I find this more intuitive
+        org-indirect-buffer-display 'current-window
+
         ;; Add timestamp when set task as closed
         org-log-done 'time
 
@@ -2051,6 +2054,24 @@ org headings:
 
         ;; If press M-RET I want a new line, not to split the line
         org-M-RET-may-split-line nil)
+
+  ;; Goto and refile
+  (setq
+        ;; For org-goto, use helm rather than the weird default interface
+        ;; where you search through the file
+        org-goto-interface 'outline-path-completion
+
+        ;; For org-goto, search all nodes rather than forcing me to start with
+        ;; the top level heading and then search the children etc.
+        org-outline-path-complete-in-steps nil
+
+        ;; For org-goto and org-refile, show the outline path during Helm
+        ;; completion rather than just the headline.
+        org-refile-use-outline-path t
+
+        ;; Include nested items in org-refile.
+        org-refile-targets '((nil :maxlevel . 9)))
+
 
   ;; Only two priorities - default and flagged
   (setq org-highest-priority 65)
@@ -2260,6 +2281,28 @@ bindings copied directly from emacs-mode.
 
 #+END_SRC
 
+** helm-org
+
+General Helm command to work on headlines. This is similar to
+~helm-org-in-buffer-headings~, but I'm having trouble getting that function to
+adhere to ~helm-org-format-outline-path~.
+
+#+BEGIN_SRC emacs-lisp
+  (setq helm-org-format-outline-path nil)
+  (setq helm-org-headings-fontify t)
+
+  (defun md/helm-org ()
+    "Open org headlines in helm."
+    (interactive)
+    (let* ((src (helm-build-sync-source "Org headings"
+                  :candidates (helm-org-get-candidates (file-expand-wildcards buffer-file-name))
+                  :action '(("Go to heading" . helm-org-goto-marker)
+                            ("Open in indirect buffer" . helm-org--open-heading-in-indirect-buffer)
+                            ("Refile to this heading" . helm-org-heading-refile)
+                            ("Insert link to this heading" . helm-org-insert-link-to-heading-at-marker))))
+           (cmd (helm :sources '(src))))))
+#+END_SRC
+
 ** Babel / code
 #+BEGIN_SRC emacs-lisp
     ;; Load some language support
@@ -2326,6 +2369,12 @@ quite nicely:
 ** Global bindings
 #+BEGIN_SRC emacs-lisp
   (bind-key "C-c a" 'org-agenda global-map)
+#+END_SRC
+** Private setup
+#+BEGIN_SRC emacs-lisp
+  (let ((path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/md.org/init.el")))
+    (when (file-exists-p path)
+      (load-file path)))
 #+END_SRC
 ** use-package wrapper *END*
 Close the use-package wrapper:
@@ -2590,6 +2639,11 @@ w/terminal, I can disable exec-path-from-shell.
 (require 'server)
 (when (not (server-running-p))
    (server-start))
+#+END_SRC
+* Secrets
+#+BEGIN_SRC emacs-lisp
+  (when (file-exists-p "~/.secrets.el")
+        (load-file "~/.secrets.el"))
 #+END_SRC
 * Teardown
 
