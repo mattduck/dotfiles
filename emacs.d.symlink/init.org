@@ -1068,7 +1068,7 @@ Company seems to work nicely without much configuration.
       (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
       (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
 
-      (setq flycheck-disabled-checkers
+      (setq-default flycheck-disabled-checkers
 
             ;; Most of these elisp warnings assume that I'm writing a proper package
             ;; with full documentation. This is usually not the case, so just
@@ -2295,6 +2295,8 @@ General Helm command to work on headlines. This is similar to
 adhere to ~helm-org-format-outline-path~.
 
 #+BEGIN_SRC emacs-lisp
+  (require 'helm-org)  ; this is part of the helm source but not loaded by default
+
   (setq helm-org-format-outline-path nil)
   (setq helm-org-headings-fontify t)
 

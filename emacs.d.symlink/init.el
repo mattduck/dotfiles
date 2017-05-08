@@ -771,7 +771,7 @@ represent all current available bindings accurately as a single keymap."
     (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
     (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
 
-    (setq flycheck-disabled-checkers
+    (setq-default flycheck-disabled-checkers
 
           ;; Most of these elisp warnings assume that I'm writing a proper package
           ;; with full documentation. This is usually not the case, so just
@@ -1684,6 +1684,8 @@ uses the scheduled property rather than the deadline."
   (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
 
 (add-hook 'org-agenda-mode-hook 'md/evil-org-agenda-mode)
+
+(require 'helm-org)  ; this is part of the helm source but not loaded by default
 
 (setq helm-org-format-outline-path nil)
 (setq helm-org-headings-fontify t)
