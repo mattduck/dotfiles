@@ -771,6 +771,13 @@ represent all current available bindings accurately as a single keymap."
     (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
     (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
 
+    (setq flycheck-disabled-checkers
+
+          ;; Most of these elisp warnings assume that I'm writing a proper package
+          ;; with full documentation. This is usually not the case, so just
+          ;; disable them.
+          '(emacs-lisp-checkdoc))
+
     (setq flycheck-flake8rc ".config/flake8"
           flycheck-highlighting-mode 'symbols
 
