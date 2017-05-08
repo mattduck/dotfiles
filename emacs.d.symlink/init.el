@@ -1734,6 +1734,10 @@ uses the scheduled property rather than the deadline."
   :config
   (progn
     (setq
+
+     ;; Don't archive entries to a separate file
+     org-gcal-auto-archive nil
+
      org-gcal-down-days 120
      org-gcal-up-days 120)))
 
@@ -1751,10 +1755,6 @@ headlines")
 (define-key org-mode-map (kbd "C-c C-r") 'org-review)
 
 (bind-key "C-c a" 'org-agenda global-map)
-
-(let ((path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/md.org/init.el")))
-  (when (file-exists-p path)
-    (load-file path)))
 
 ))
 
@@ -1979,8 +1979,8 @@ headlines")
 (when (not (server-running-p))
    (server-start))
 
-(when (file-exists-p "~/.secrets.el")
-      (load-file "~/.secrets.el"))
+(when (file-exists-p "~/.local.el")
+      (load-file "~/.local.el"))
 
 (defconst md/emacs-init-end (current-time))
 
