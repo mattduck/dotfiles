@@ -1340,6 +1340,12 @@ I miss :Gbrowse from fugitive:
           ("go" . github-browse-file)))
 #+END_SRC
 
+*** vc-mode
+#+BEGIN_SRC emacs-lisp
+  ;; I don't need to confirm this via prompt.
+  (setq vc-follow-symlinks t)
+#+END_SRC
+
 ** Ediff
 
 - Add evil bindings to ediff. Largely copied from https://github.com/justbur/evil-ediff/blob/master/evil-ediff.el.

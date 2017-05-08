@@ -1004,6 +1004,9 @@ git dir) or linum mode"
   :bind (:map md/leader-map
         ("go" . github-browse-file)))
 
+;; I don't need to confirm this via prompt.
+(setq vc-follow-symlinks t)
+
 (use-package ediff
  :defer 1
  :config
