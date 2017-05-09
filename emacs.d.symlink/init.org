@@ -84,6 +84,9 @@ If ~use-package~ isn't installed, I should install it.
 #+END_SRC
 
 ** exec-path-from-shell
+
+Initialise environment from shell:
+
 #+BEGIN_SRC emacs-lisp
   (use-package exec-path-from-shell
    :if (memq window-system '(mac ns))
@@ -787,7 +790,7 @@ This package provides ~describe-keymap~ to M-k in the help-map, which is
 handy. It does some other things too (TODO - read docs).
 
 #+BEGIN_SRC emacs-lisp
-(use-package help-fns+ :defer 1)
+  (use-package help-fns+ :defer 1)
 #+END_SRC
 
 ** Help mode
@@ -1974,7 +1977,6 @@ edges.
       (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
       (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
       (push '("*Warnings*" :tail t :dedicated t) popwin:special-display-config)
-      (push '("*Backtrace*" :dedicated t) popwin:special-display-config)
       (push '(completion-list-mode :noselect t :dedicated t) popwin:special-display-config)
       (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
       (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
@@ -2044,6 +2046,9 @@ org headings:
   (setq
         ;; Don't let org-agenda permanently mess with window layout
         org-agenda-restore-windows-after-quit t
+
+        ;; I'm trying this to decrease wait times for the agenda windows
+        org-agenda-sticky t
 
         ;; I find this more intuitive
         org-indirect-buffer-display 'current-window

@@ -1401,7 +1401,6 @@ out of the box."
     (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
     (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
     (push '("*Warnings*" :tail t :dedicated t) popwin:special-display-config)
-    (push '("*Backtrace*" :dedicated t) popwin:special-display-config)
     (push '(completion-list-mode :noselect t :dedicated t) popwin:special-display-config)
     (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
     (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
@@ -1459,6 +1458,9 @@ out of the box."
 (setq
       ;; Don't let org-agenda permanently mess with window layout
       org-agenda-restore-windows-after-quit t
+
+      ;; I'm trying this to decrease wait times for the agenda windows
+      org-agenda-sticky t
 
       ;; I find this more intuitive
       org-indirect-buffer-display 'current-window
