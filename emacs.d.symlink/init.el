@@ -263,7 +263,25 @@
 (bind-key "x" 'describe-face help-map)
 (bind-key "C-k" 'describe-personal-keybindings help-map)
 
-(setq debug-on-error nil)
+(defun md/noop () (interactive))
+(defun md/make-keymap-noop (kmap)
+  "Overwrite bindings on a given keymap to perform a noop function."
+  (mapc (lambda (key)
+          (bind-key key 'md/noop kmap)
+          (bind-key (concat "C-" key) 'md/noop kmap)
+          (bind-key (concat "M-" key) 'md/noop kmap)
+          (bind-key (concat "C-M-" key) 'md/noop kmap)
+          (bind-key (capitalize key) 'md/noop kmap)
+          (bind-key (concat "C-" (capitalize key)) 'md/noop kmap)
+          (bind-key (concat "M-" (capitalize key)) 'md/noop kmap)
+          (bind-key (concat "C-M-" (capitalize key)) 'md/noop kmap))
+        '("a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r"
+          "s" "t" "u" "v" "w" "x" "y" "z"
+          "1" "2" "3" "4" "5" "6" "7" "8" "9" "0"))
+  (mapc (lambda (key)
+          (bind-key key 'md/noop kmap))
+        '("SPC" "TAB")))
+
 (setq delete-by-moving-to-trash t)
 
 (use-package evil
@@ -547,6 +565,7 @@
   "Override some which-key functions"
   (interactive)
 
+;; TODO - this is failing to handle kdb values with periods? Eg. "C-a .. C-z"?
 (fmakunbound 'which-key--show-keymap)
 (defun which-key--show-keymap (keymap-name keymap &optional prior-args)
   "This is identical to the version shipped with which-key, but it returns the
@@ -1199,6 +1218,37 @@ git dir) or linum mode"
   (progn
       (add-to-list 'company-backends 'company-restclient)))
 
+(setq debug-on-error nil)
+
+;; This can be useful when debugging.
+(setq edebug-trace t)
+
+;; https://github.com/ScottyB/edebug-x
+;; https://lists.gnu.org/archive/html/emacs-devel/2013-03/msg00304.html
+;;
+;; Provides some enhancements to edebug mode. Doesn't look like it is
+;; maintained, but it's useful even if just for the syntax highlighting.
+(use-package edebug-x)
+
+(add-hook 'edebug-mode-hook 'evil-normal-state)
+(md/make-keymap-noop edebug-mode-map)
+
+(bind-key "q" 'top-level edebug-mode-map)
+(bind-key "S" 'edebug-stop edebug-mode-map)
+(bind-key "n" 'edebug-step-mode edebug-mode-map)
+(bind-key "g" 'edebug-go-mode edebug-mode-map)
+(bind-key "G" 'edebug-Go-nonstop-mode edebug-mode-map)
+(bind-key "E" 'edebug-visit-eval-list edebug-mode-map)
+(bind-key "I" 'edebug-instrument-callee edebug-mode-map)
+(bind-key "i" 'edebug-step-in edebug-mode-map)
+(bind-key "o" 'edebug-step-out edebug-mode-map)
+(bind-key "b" 'edebug-set-breakpoint edebug-mode-map)
+(bind-key "u" 'edebug-unset-breakpoint edebug-mode-map)
+(bind-key "d" 'edebug-backtrace edebug-mode-map)
+(bind-key "r" 'edebug-previous-result edebug-mode-map)
+(bind-key "w" 'edebug-where edebug-mode-map)
+(bind-key "SPC" md/leader-map edebug-mode-map)
+
 (when (not (getenv "GOPATH"))
  (setenv "GOPATH" "/Users/matt/golang") 
  (setenv "GO15VENDOREXPERIMENT" "1"))
@@ -1310,7 +1360,8 @@ git dir) or linum mode"
  :demand t
  :config
  (progn
-   (splitscreen-mode)))
+   (splitscreen-mode)
+   (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
 
 (use-package popwin
   :demand t

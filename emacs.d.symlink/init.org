@@ -465,9 +465,35 @@ I seem to use =describe-face= a lot:
 (bind-key "x" 'describe-face help-map)
 (bind-key "C-k" 'describe-personal-keybindings help-map)
 #+END_SRC
+
+Sometimes I want to strip bindings from a keymap and have the keys do
+nothing. Usually if you remove a binding on eg. a local keymap, then Emacs will
+just resolve that binding to a more global keymap. But I can "disable" bindings
+by using a noop function:
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/noop () (interactive))
+  (defun md/make-keymap-noop (kmap)
+    "Overwrite bindings on a given keymap to perform a noop function."
+    (mapc (lambda (key)
+            (bind-key key 'md/noop kmap)
+            (bind-key (concat "C-" key) 'md/noop kmap)
+            (bind-key (concat "M-" key) 'md/noop kmap)
+            (bind-key (concat "C-M-" key) 'md/noop kmap)
+            (bind-key (capitalize key) 'md/noop kmap)
+            (bind-key (concat "C-" (capitalize key)) 'md/noop kmap)
+            (bind-key (concat "M-" (capitalize key)) 'md/noop kmap)
+            (bind-key (concat "C-M-" (capitalize key)) 'md/noop kmap))
+          '("a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r"
+            "s" "t" "u" "v" "w" "x" "y" "z"
+            "1" "2" "3" "4" "5" "6" "7" "8" "9" "0"))
+    (mapc (lambda (key)
+            (bind-key key 'md/noop kmap))
+          '("SPC" "TAB")))
+#+END_SRC
+
 ** Settings
 #+BEGIN_SRC emacs-lisp
-  (setq debug-on-error nil)
   (setq delete-by-moving-to-trash t)
 #+END_SRC
 * Evil
@@ -819,36 +845,37 @@ easier to discover features / work out where I am:
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-    (fmakunbound 'which-key--show-keymap)
-    (defun which-key--show-keymap (keymap-name keymap &optional prior-args)
-      "This is identical to the version shipped with which-key, but it returns the
-    function captured by user input."
-      (setq which-key--current-prefix nil
-            which-key--current-show-keymap-name keymap-name
-            which-key--using-show-keymap t)
-      (when prior-args (push prior-args which-key--prior-show-keymap-args))
-      (when (keymapp keymap)
-        (let ((formatted-keys (which-key--get-formatted-key-bindings
-                               (which-key--get-keymap-bindings keymap))))
-          (cond ((= (length formatted-keys) 0)
-                 (message "which-key: Keymap empty"))
-                ((listp which-key-side-window-location)
-                 (setq which-key--last-try-2-loc
-                       (apply #'which-key--try-2-side-windows
-                              formatted-keys 0 which-key-side-window-location)))
-                (t (setq which-key--pages-plist
-                         (which-key--create-pages formatted-keys))
-                   (which-key--show-page 0)))))
-      (let* ((key (key-description (list (read-key))))
-             (next-def (lookup-key keymap (kbd key))))
-        (cond ((and which-key-use-C-h-commands (string= "C-h" key))
-               (which-key-C-h-dispatch))
-              ((keymapp next-def)
-               (which-key--hide-popup-ignore-command)
-               (setq next-def (which-key--show-keymap (concat keymap-name " " key) next-def
-                                       (cons keymap-name keymap))))
-              (t (which-key--hide-popup)))
-        next-def))
+  ;; TODO - this is failing to handle kdb values with periods? Eg. "C-a .. C-z"?
+  (fmakunbound 'which-key--show-keymap)
+  (defun which-key--show-keymap (keymap-name keymap &optional prior-args)
+    "This is identical to the version shipped with which-key, but it returns the
+  function captured by user input."
+    (setq which-key--current-prefix nil
+          which-key--current-show-keymap-name keymap-name
+          which-key--using-show-keymap t)
+    (when prior-args (push prior-args which-key--prior-show-keymap-args))
+    (when (keymapp keymap)
+      (let ((formatted-keys (which-key--get-formatted-key-bindings
+                             (which-key--get-keymap-bindings keymap))))
+        (cond ((= (length formatted-keys) 0)
+               (message "which-key: Keymap empty"))
+              ((listp which-key-side-window-location)
+               (setq which-key--last-try-2-loc
+                     (apply #'which-key--try-2-side-windows
+                            formatted-keys 0 which-key-side-window-location)))
+              (t (setq which-key--pages-plist
+                       (which-key--create-pages formatted-keys))
+                 (which-key--show-page 0)))))
+    (let* ((key (key-description (list (read-key))))
+           (next-def (lookup-key keymap (kbd key))))
+      (cond ((and which-key-use-C-h-commands (string= "C-h" key))
+             (which-key-C-h-dispatch))
+            ((keymapp next-def)
+             (which-key--hide-popup-ignore-command)
+             (setq next-def (which-key--show-keymap (concat keymap-name " " key) next-def
+                                     (cons keymap-name keymap))))
+            (t (which-key--hide-popup)))
+      next-def))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1649,6 +1676,44 @@ POST https://httpbin.org/post
 This is the body
 #+END_EXAMPLE
 * Languages
+** Emacs-lisp
+#+BEGIN_SRC emacs-lisp
+  (setq debug-on-error nil)
+
+  ;; This can be useful when debugging.
+  (setq edebug-trace t)
+
+  ;; https://github.com/ScottyB/edebug-x
+  ;; https://lists.gnu.org/archive/html/emacs-devel/2013-03/msg00304.html
+  ;;
+  ;; Provides some enhancements to edebug mode. Doesn't look like it is
+  ;; maintained, but it's useful even if just for the syntax highlighting.
+  (use-package edebug-x)
+#+END_SRC
+
+Override the edebug keymap to only contain features/keys that I care about:
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'edebug-mode-hook 'evil-normal-state)
+  (md/make-keymap-noop edebug-mode-map)
+
+  (bind-key "q" 'top-level edebug-mode-map)
+  (bind-key "S" 'edebug-stop edebug-mode-map)
+  (bind-key "n" 'edebug-step-mode edebug-mode-map)
+  (bind-key "g" 'edebug-go-mode edebug-mode-map)
+  (bind-key "G" 'edebug-Go-nonstop-mode edebug-mode-map)
+  (bind-key "E" 'edebug-visit-eval-list edebug-mode-map)
+  (bind-key "I" 'edebug-instrument-callee edebug-mode-map)
+  (bind-key "i" 'edebug-step-in edebug-mode-map)
+  (bind-key "o" 'edebug-step-out edebug-mode-map)
+  (bind-key "b" 'edebug-set-breakpoint edebug-mode-map)
+  (bind-key "u" 'edebug-unset-breakpoint edebug-mode-map)
+  (bind-key "d" 'edebug-backtrace edebug-mode-map)
+  (bind-key "r" 'edebug-previous-result edebug-mode-map)
+  (bind-key "w" 'edebug-where edebug-mode-map)
+  (bind-key "SPC" md/leader-map edebug-mode-map)
+#+END_SRC
+
 ** COMMENT Python
 
 Elpy combines a few different Python packages / features.
@@ -1872,7 +1937,8 @@ on the screen, or nowhere.
  :demand t
  :config
  (progn
-   (splitscreen-mode)))
+   (splitscreen-mode)
+   (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
 #+END_SRC
 ** Popwin
 
