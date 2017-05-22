@@ -371,7 +371,6 @@
    (bind-key "<SPC>" md/leader-map evil-visual-state-map)
 
    (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
-   (bind-key "n" (lookup-key global-map (kbd "C-x n")) md/leader-map)
 
    (setq evil-echo-state nil)
 
@@ -1108,7 +1107,7 @@ git dir) or linum mode"
   (add-hook 'ediff-prepare-buffer-hook 'outline-show-all))
 
  :bind (:map md/leader-map
-             ("d" . "ediff")))
+             ("d" . ediff)))
 
 (use-package fic-mode
  :defer 1
@@ -1479,6 +1478,42 @@ out of the box."
               (";t" . md/popwin-ansi-term)
               (";e" . md/popwin-eshell)
               (";m" . md/popwin-messages)))
+
+;; Don't ask for confirmation on narrow-to-region
+(put 'narrow-to-region 'disabled nil)
+
+(bind-key "n" narrow-map md/leader-map)
+(bind-key "f" 'md/narrow-dwim narrow-map)
+(bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
+                                        ; better than "n" for narrow-to-region
+
+(defun md/narrow-dwim (p)
+  "Widen if buffer is narrowed, narrow-dwim otherwise.
+  Dwim means: region, org-src-block, org-subtree, or
+  defun, whichever applies first. Narrowing to
+  org-src-block actually calls `org-edit-src-code'.
+
+  With prefix P, don't widen, just narrow even if buffer
+  is already narrowed."
+  (interactive "P")
+  (declare (interactive-only))
+  (cond ((and (buffer-narrowed-p) (not p)) (widen))
+        ((region-active-p)
+         (narrow-to-region (region-beginning)
+                           (region-end)))
+        (org-src-mode
+         (org-edit-src-exit))
+        ((derived-mode-p 'org-mode)
+         ;; `org-edit-src-code' is not a real narrowing
+         ;; command. Remove this first conditional if
+         ;; you don't want it.
+         (cond ((ignore-errors (org-edit-src-code) t)
+                (delete-other-windows))
+               ((ignore-errors (org-narrow-to-block) t))
+               (t (org-narrow-to-subtree))))
+        ((derived-mode-p 'latex-mode)
+         (LaTeX-narrow-to-environment))
+        (t (narrow-to-defun))))
 
 (use-package org
   :defer 5

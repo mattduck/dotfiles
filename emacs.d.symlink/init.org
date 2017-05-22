@@ -595,7 +595,6 @@ by using a noop function:
      (bind-key "<SPC>" md/leader-map evil-visual-state-map)
 
      (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
-     (bind-key "n" (lookup-key global-map (kbd "C-x n")) md/leader-map)
 
      (setq evil-echo-state nil)
 
@@ -1463,7 +1462,7 @@ I miss :Gbrowse from fugitive:
     (add-hook 'ediff-prepare-buffer-hook 'outline-show-all))
 
    :bind (:map md/leader-map
-               ("d" . "ediff")))
+               ("d" . ediff)))
 #+END_SRC
 ** Highlight keywords in comments
 
@@ -2071,6 +2070,49 @@ edges.
                 (";e" . md/popwin-eshell)
                 (";m" . md/popwin-messages)))
 #+END_SRC
+** Narrowing
+
+Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html:
+
+#+BEGIN_SRC emacs-lisp
+  ;; Don't ask for confirmation on narrow-to-region
+  (put 'narrow-to-region 'disabled nil)
+
+  (bind-key "n" narrow-map md/leader-map)
+  (bind-key "f" 'md/narrow-dwim narrow-map)
+  (bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
+                                          ; better than "n" for narrow-to-region
+
+  (defun md/narrow-dwim (p)
+    "Widen if buffer is narrowed, narrow-dwim otherwise.
+    Dwim means: region, org-src-block, org-subtree, or
+    defun, whichever applies first. Narrowing to
+    org-src-block actually calls `org-edit-src-code'.
+
+    With prefix P, don't widen, just narrow even if buffer
+    is already narrowed."
+    (interactive "P")
+    (declare (interactive-only))
+    (cond ((and (buffer-narrowed-p) (not p)) (widen))
+          ((region-active-p)
+           (narrow-to-region (region-beginning)
+                             (region-end)))
+          (org-src-mode
+           (org-edit-src-exit))
+          ((derived-mode-p 'org-mode)
+           ;; `org-edit-src-code' is not a real narrowing
+           ;; command. Remove this first conditional if
+           ;; you don't want it.
+           (cond ((ignore-errors (org-edit-src-code) t)
+                  (delete-other-windows))
+                 ((ignore-errors (org-narrow-to-block) t))
+                 (t (org-narrow-to-subtree))))
+          ((derived-mode-p 'latex-mode)
+           (LaTeX-narrow-to-environment))
+          (t (narrow-to-defun))))
+
+#+END_SRC
+
 * Org mode
 
 ** use-package wrapper *START*
@@ -2859,9 +2901,6 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-03-18 Sat] org-gcal http://cestlaz.github.io/posts/using-emacs-26-gcal.
 - [ ] [2017-03-18 Sat] how to ensure evil-set-jump is called in help-mode?
 - [ ] [2017-03-18 Sat] how to ensure evil-set-jump is called in dired-mode?
-- [ ] [2017-03-22 Wed] narrow dwim, eg. http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html
-  - will it work for org code blocks?
-- [ ] [2017-03-23 Thu] use dumb-jump for easy jumping to definitions??
 - [ ] [2017-03-23 Thu] list functions/classes in project?
 - [ ] [2017-03-24 Fri] how to do proper logging? Write library?
 - [ ] [2017-03-24 Fri] still C-o not getting enough checkpoints.
@@ -2873,3 +2912,9 @@ Close paren for the wrapping ~let~:
 - [ ] if opened with a file as gui, open it in split rather than new elscreen window.
 - [ ] [2017-04-28 Fri] org - display inline images?
 - [ ] [2017-05-06 Sat] org - get babel working for scheme
+- [ ] [2017-05-17 Wed] recenter-top-bottom binding
+- [ ] [2017-05-18 Thu] ansi-term - fix backspace in insert mode
+- [ ] [2017-05-18 Thu] ansi-term - get C-r and my usual C-n/C-p bindings?
+- [ ] [2017-05-22 Mon] checkout https://github.com/wasamasa/shackle - popwin alternative.
+- [ ] [2017-03-23 Thu] use dumb-jump for easy jumping to definitions??
+- [ ] [2017-05-22 Mon] https://github.com/syohex/emacs-quickrun
