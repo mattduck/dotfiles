@@ -76,8 +76,8 @@
 (when (not (display-graphic-p))
   (menu-bar-mode -1))
 
-(add-to-list 'initial-frame-alist '(fullscreen . maximized))
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
+(add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
+(add-to-list 'default-frame-alist '(fullscreen . fullscreen))
 
 (defun md/fontify-if-font-lock-mode ()
   (when font-lock-mode
@@ -112,7 +112,8 @@
 
 (defun md/set-default-font ()
   (interactive)
-  (if (string= (system-name) "mattmbp.local")
+  (if (or (string= (system-name) "mattmbp")
+          (string= (system-name) "mattmbp.local"))
       (set-frame-font "Monaco-12:antialias=subpixel")
     (set-frame-font "Monaco-13:antialias=subpixel")))
 
@@ -513,7 +514,6 @@
     (setq helm-display-header-line nil)
 
     ;; I don't need to know about some files
-    ;; TODO get this to workj
     (setq helm-ff-skip-boring-files t)
     (push "\\.$" helm-boring-file-regexp-list)
     (push "\\.\\.$" helm-boring-file-regexp-list)
@@ -559,6 +559,17 @@
   (kbd "C-i") 'help-go-forward
   (kbd "C-o") 'help-go-back
   (kbd "<RET>") 'help-follow-symbol)
+
+(defun md/quit-and-kill-window ()
+  (interactive)
+  (quit-window t))
+
+(use-package helpful
+  :defer 1
+  :config
+  (progn
+    (evil-define-key 'normal helpful-mode-map
+      "q" 'md/quit-and-kill-window)))
 
 (defun md/which-key-patch ()
   "Override some which-key functions"
@@ -1195,7 +1206,7 @@ git dir) or linum mode"
       "d" 'dired-flag-file-deletion
       "u" 'dired-unmark
       "D" 'dired-do-delete
-      (kbd "RET") 'md/dired-single-buffer
+      (kbd "RET") 'dired-single-buffer
       "J" 'dired-jump
       "o" 'dired-find-file-other-window
       "R" 'dired-do-rename
@@ -1362,122 +1373,141 @@ git dir) or linum mode"
    (splitscreen-mode)
    (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
 
-(use-package popwin
+(use-package shackle
+  :load-path "non-elpa/shackle"  ; fork
   :demand t
   :config
   (progn
-    (defun md/popwin-toggle ()
-      "Either close popwin or open it in its last buffer"
+
+    (defun md/shackle-down ()
       (interactive)
-      (if popwin:focus-window
-          (popwin:close-popup-window)
-        (popwin:display-last-buffer)))
+      (delete-window shackle-last-window))
 
-    (defun md/popwin-org ()
+    (defun md/shackle-up ()
       (interactive)
-      (when popwin:focus-window (popwin:close-popup-window))
-      (if (get-buffer "index.org")
-          (popwin:display-buffer "index.org")
-        (message "No buffer: index.org")))
+      (if shackle-last-buffer
+          (display-buffer shackle-last-buffer)
+        (message "No previous shackle buffer found")))
 
-    (defun md/popwin-scratch ()
+    (defun md/shackle-toggle ()
       (interactive)
-      (when popwin:focus-window (popwin:close-popup-window))
-      (popwin:display-buffer "*scratch*"))
+      (if (window-live-p shackle-last-window)
+          (md/shackle-down)
+        (md/shackle-up)))
 
-    (defun md/popwin-messages ()
-      (interactive)
-      (when popwin:focus-window (popwin:close-popup-window))
-      (popwin:display-buffer "*Messages*"))
+    ;; NOTE: This might solve the Popwin issues I had with not picking up some
+    ;; buffers, eg. Dired.
+    (defun md/use-display-buffer-alist (fn &rest args)
+      "Wrap a function that displays a buffer. Save window excursion, and
+  re-display the new buffer using `display-buffer`, which allows Shackle to
+  detect and process it. "
+      (let ((buffer-to-display nil)
+            (res nil))
+        (save-window-excursion
+          (setq res (apply fn args))
+          (setq buffer-to-display (current-buffer)))
+        (display-buffer buffer-to-display)
+        res))
 
-    (defun md/popwin-ansi-term ()
-      "Copied from
-https://github.com/m2ym/popwin-el/blob/master/misc/popwin-term.el. For some
-reason this is necessary to open term in a popwin window. Shell and eshell work
-out of the box."
-      (interactive)
-      (when popwin:focus-window (popwin:close-popup-window))
-      (popwin:display-buffer
-       (or (get-buffer "*ansi-term*")
-           (save-window-excursion
-             (call-interactively 'ansi-term)))))
+    (defmacro md/shackle-advise (fn)
+      "Add advise to given function to wrap with md/shackle-wrapper."
+      `(advice-add ,fn :around 'md/use-display-buffer-alist
+                   '((name . "md/shackle"))))
 
-    (defun md/popwin-eshell ()
-      (interactive)
-      (when popwin:focus-window (popwin:close-popup-window))
-      (popwin:display-buffer
-       (or (get-buffer "*eshell*")
-           (save-window-excursion
-             (call-interactively 'eshell)))))
+    ;; Add advice for functions that display a new buffer but usually escape
+    ;; Shackle (eg. due to not calling display-buffer).
+    (md/shackle-advise 'helpful-function)
+    (md/shackle-advise 'helpful-command)
+    (md/shackle-advise 'helpful-macro)
+    (md/shackle-advise 'ansi-term)
+    (md/shackle-advise 'term)
+    (md/shackle-advise 'eshell)
+    (md/shackle-advise 'shell)
+    (md/shackle-advise 'dired)
+    (md/shackle-advise 'dired-jump)
 
-    (defun md/popwin-dired-single-magic-buffer ()
-      (interactive)
-      (when popwin:focus-window (popwin:close-popup-window))
-      (popwin:display-buffer
-       (or (get-buffer dired-single-magic-buffer-name)
-           (save-window-excursion
-             (call-interactively 'dired-single-magic-buffer)))))
+    (setq shackle-rules
+          '(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
+            ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.4 :select t)
+            ('helpful-mode :align t :close-on-realign t :size 0.4 :select t)
+            ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+            ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+            ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+            ("\\`\\*undo-tree.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+            ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
+            ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+            ("*edebug-trace*" :align t :close-on-realign t :size 12 :select nil)
+            ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
+            (" *Agenda Commands*" :align t :close-on-realign t :size 20 :select nil)
+            ("\\`\\*Org Agenda.*?\\*\\'" :regexp t :align t :close-on-realign t :size 25 :select nil)
+            ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
+            ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
+            ('grep-mode :align t :close-on-realign t :size 0.4 :select nil)
+            ('ag-mode :align t :close-on-realign t :size 0.4 :select nil)
+            ('term-mode :align t :close-on-realign t :size 0.4 :select t)
+            ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
+            ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
+            ('completion-list-mode :align t :close-on-realign t :size 0.4 :select t)
+            ('compilation-mode :align t :close-on-realign t :size 0.4 :select t)
+            ('inferior-scheme-mode :align t :close-on-realign t :size 0.4 :select t)
+            ("*Warnings*" :align t :close-on-realign t :size 12 :select nil)
+            ("*Messages*" :align t :close-on-realign t :size 12 :select nil)
+            ('dired-mode :align t :close-on-realign t :size 0.4 :select t)))
 
-    ;; Disable popwin-mode in an active Helm session, to prevent it from conflicting
-    ;; with Helm windows. Also ensure that popwin-last-config doesn't return
-    ;; helm buffers.
-    (defvar md/popwin-last-config nil)
-    (add-hook 'helm-before-initialize-hook
-              (lambda ()
-                (when popwin:focus-window (progn (popwin:close-popup-window)))))
-    (add-hook 'helm-after-initialize-hook
-              (lambda ()
-                (setq md/popwin-last-config-store popwin:popup-last-config)
-                (popwin:display-buffer helm-buffer t)
-                (popwin-mode -1)
-                ))
-    (add-hook 'helm-cleanup-hook (lambda ()
-                                   (popwin-mode 1)
-                                   (setq popwin:popup-last-config md/popwin-last-config-store)))
-    (push '("^\*helm.+\*$" :regexp t :dedicated nil :height 15) popwin:special-display-config)
+    ;; Ensure Helm doesn't interfere with Shackle buffers too much.
+    ;; - Use Shackle to control and position Helm buffers.
+    ;; - But ensure that shackle-last-buffer is not set to any Helm buffer.
+    ;;
+    ;; TODO - ideally Helm would cleanup buffers immediately to avoid
+    ;; interfering with other buffer display commands.
+    (setq helm-display-function 'pop-to-buffer) ; make sure helm popups are detected.
+    (defvar md/shackle-buffer-store nil)
+    (defvar md/shackle-window-store nil)
+    (defun md/helm-shackle-setup ()
+      (setq md/shackle-buffer-store shackle-last-buffer
+            md/shackle-window-store shackle-last-window))
+    (defun md/helm-shackle-teardown ()
+      (when md/shackle-buffer-store
+        (setq shackle-last-buffer md/shackle-buffer-store
+              shackle-last-window md/shackle-window-store)))
+    (add-hook 'helm-before-initialize-hook 'md/helm-shackle-setup)
+    (add-hook 'helm-cleanup-hook 'md/helm-shackle-teardown)
 
-    (setq popwin:popup-window-height 10)
+    ;; NOTE: In order to get Shackle working with some org-mode commands, we
+    ;; have to override an internal function. Org is quite opinionated about
+    ;; window display, and usually this function will unset various buffer
+    ;; display variables before calling switch-to-buffer-other-window.
+    ;; I'd rather just control those buffers with Shackle.
+    (fmakunbound 'org-switch-to-buffer-other-window)
+    (defun org-switch-to-buffer-other-window (&rest args)
+      (apply 'switch-to-buffer-other-window args))
+    (setq org-agenda-window-setup 'other-window)
 
-    ;; TODO why isn't dired working? Judging by the examples it should, but
-    ;; dired buffers just appear in their own windows. Tried on 24.5 and 25.1.
-    (push '(dired-mode :dedicated t :height 20 :stick t) popwin:special-display-config)
+    (shackle-mode 1))
 
-    ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
-    ;; Generally I only ever want one popwin window open.
-    (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
-    (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
-    (push '(help-mode :dedicated t :stick t :height 25) popwin:special-display-config)
-    (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
-    (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
-    (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
-    (push '("*Warnings*" :tail t :dedicated t) popwin:special-display-config)
-    (push '(completion-list-mode :noselect t :dedicated t) popwin:special-display-config)
-    (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
-    (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
-    (push '(ag-mode :noselect t :dedicated t :stick t :tail nil :height 15) popwin:special-display-config)
-    (push '(occur-mode :noselect t :dedicated t :stick t) popwin:special-display-config)
-    (push '("*vc-change-log*" :dedicated t) popwin:special-display-config)
-    (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
-    (push '("*HTTP Response*" :height 20 :dedicated t :stick t :noselect t) popwin:special-display-config)
-    (push '("*Shell Command Output*" :dedicated t :tail t) popwin:special-display-config)
-    (push '("*Async Shell Command*" :dedicated t :tail t) popwin:special-display-config)
-    (push '(shell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
-    (push '(eshell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
-    (push '(term-mode :dedicated t :height 15 :stick t :tail t)
-          popwin:special-display-config)  ; only works with md/popwin-ansi-term
-    (push '(inferior-scheme-mode :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
-
-    (popwin-mode 1))
   :bind (:map md/leader-map
-              ;; I can't get arbitrary buffers/files to play nicely, so
-              ;; just have the dedicated buffers.
-              (";a" . md/popwin-toggle)
-              (";d" . md/popwin-dired-single-magic-buffer)
-              (";i" . md/popwin-org)
-              (";s" . md/popwin-scratch)
-              (";t" . md/popwin-ansi-term)
-              (";e" . md/popwin-eshell)
-              (";m" . md/popwin-messages)))
+              ("; ;" . display-buffer)  ;; Uses display-buffer-alist, so Shackle rules will apply.
+              (";a" . md/shackle-toggle)))
+
+;; Copyright (C) 2000 Eric Crampton <eric@atdesk.com>
+;; https://github.com/emacsorphanage/dedicated
+;; GPL v2.
+
+(defvar dedicated-mode nil
+  "Mode variable for dedicated minor mode.")
+(make-variable-buffer-local 'dedicated-mode)
+
+(defun dedicated-mode (&optional arg)
+  "Dedicated minor mode."
+  (interactive "P")
+  (setq dedicated-mode (not dedicated-mode))
+  (set-window-dedicated-p (selected-window) dedicated-mode)
+  (if (not (assq 'dedicated-mode minor-mode-alist))
+      (setq minor-mode-alist
+            (cons '(dedicated-mode " D")
+                  minor-mode-alist))))
+
+(bind-key "tD" 'dedicated-mode md/leader-map)
 
 ;; Don't ask for confirmation on narrow-to-region
 (put 'narrow-to-region 'disabled nil)
@@ -1507,8 +1537,7 @@ out of the box."
          ;; `org-edit-src-code' is not a real narrowing
          ;; command. Remove this first conditional if
          ;; you don't want it.
-         (cond ((ignore-errors (org-edit-src-code) t)
-                (delete-other-windows))
+         (cond ((ignore-errors (org-edit-src-code) t))
                ((ignore-errors (org-narrow-to-block) t))
                (t (org-narrow-to-subtree))))
         ((derived-mode-p 'latex-mode)
@@ -1746,6 +1775,12 @@ uses the scheduled property rather than the deadline."
 
 (add-hook 'org-mode-hook 'md/evil-org-mode)
 
+(defun md/org-gcal-fetch-and-agenda-redo ()
+  (interactive)
+  (ignore-errors
+    (md/org-gcal-fetch))
+  (org-agenda-redo))
+
 (define-minor-mode md/evil-org-agenda-mode
   "Buffer local minor mode for evil-org-agenda"
   :init-value nil
@@ -1765,7 +1800,7 @@ uses the scheduled property rather than the deadline."
   (kbd "C-p") 'org-agenda-previous-line
 
   (kbd "q") 'org-agenda-quit
-  (kbd "r") 'org-agenda-redo  ; Recalculate the agenda
+  (kbd "r") 'md/org-gcal-fetch-and-agenda-redo  ; Recalculate the agenda
   (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view
   (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
   (kbd "=") 'org-agenda-filter-by-regexp  ; Search
@@ -1817,8 +1852,9 @@ uses the scheduled property rather than the deadline."
 (defun md/org-gcal-fetch ()
   "Always refresh gcal token before fetching, as it expires every hour"
   (interactive)
-  (org-gcal-refresh-token)
-  (sleep-for 4)
+  (ignore-errors ;; Error is thrown if token doesn't already exist in the gcal file
+    (org-gcal-refresh-token))
+  (sleep-for 1)
   (org-gcal-fetch))
 
 (use-package org-gcal
@@ -1945,12 +1981,16 @@ headlines")
                                            (column-number-mode
                                             (powerline-raw ":%2c " face3 'l))))
 
+                                   ;; Dedicated mode indicator
+                                   (when dedicated-mode
+                                     (powerline-raw (format "Ded.") face3 'l))
+
                                    ;; Evil status
                                    (powerline-raw evil-mode-line-tag face3 'l)
                                    (funcall separator-left face3 face1)
 
                                    ;; Major mode
-                                   (powerline-raw (format "*%s* " (powerline-major-mode)) face1 'l)
+                                   (powerline-raw (format "%s " (powerline-major-mode)) face1 'l)
                                    (funcall separator-left face1 mode-line)
 
                                    ;; Projectile project
@@ -2063,15 +2103,23 @@ headlines")
 (bind-key "ve" 'md/dotfiles-edit-init md/leader-map)
 (bind-key "vc" 'md/dotfiles-compile md/leader-map)
 
+(defconst md/dotfiles-init-local-path "~/.local.el")
+
+(when (file-exists-p md/dotfiles-init-local-path)
+      (load-file md/dotfiles-init-local-path))
+
+(defun md/dotfiles-edit-init-local ()
+  (interactive)
+  (find-file md/dotfiles-init-local-path))
+
+(bind-key "vl" 'md/dotfiles-edit-init-local md/leader-map)
+
 (use-package esup
   :defer 5)
 
 (require 'server)
 (when (not (server-running-p))
    (server-start))
-
-(when (file-exists-p "~/.local.el")
-      (load-file "~/.local.el"))
 
 (defconst md/emacs-init-end (current-time))
 
