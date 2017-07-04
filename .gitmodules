@@ -19,3 +19,6 @@
 [submodule "solarized/dircolors"]
 	path = solarized/dircolors
 	url = https://github.com/seebi/dircolors-solarized.git
+[submodule "emacs.d.symlink/non-elpa/shackle"]
+	path = emacs.d.symlink/non-elpa/shackle
+	url = git@github.com:mattduck/shackle.git
