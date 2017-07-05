@@ -975,7 +975,7 @@ git dir) or linum mode"
        ("gg" . magit-status)
        ("gm" . magit-dispatch-popup)
        ("gb" . magit-blame)
-       ("gl" . magit-log)
+       ("gl" . magit-log-head)
 
        ;; Diff gives the full git diff output. Ediff shows ediff for a single
        ;; file.
@@ -1390,18 +1390,18 @@ git dir) or linum mode"
 
     (setq shackle-rules
           '(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
-            ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.4 :select t)
-            ('helpful-mode :align t :close-on-realign t :size 0.4 :select t)
+            ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select t)
+            ('helpful-mode :align t :close-on-realign t :size 0.33 :select t)
             ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
             ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
             ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
             ("\\`\\*undo-tree.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
             ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
-            ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-            ("*edebug-trace*" :align t :close-on-realign t :size 12 :select nil)
+            ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
+            ("*edebug-trace*" :align t :close-on-realign t :size 15 :select nil)
             ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
             (" *Agenda Commands*" :align t :close-on-realign t :size 20 :select nil)
-            ("\\`\\*Org Agenda.*?\\*\\'" :regexp t :align t :close-on-realign t :size 25 :select nil)
+            ("\\`\\*Org Agenda.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
             ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
             ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
             ('grep-mode :align t :close-on-realign t :size 0.4 :select nil)
@@ -1409,12 +1409,15 @@ git dir) or linum mode"
             ('term-mode :align t :close-on-realign t :size 0.4 :select t)
             ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
             ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
-            ('completion-list-mode :align t :close-on-realign t :size 0.4 :select t)
-            ('compilation-mode :align t :close-on-realign t :size 0.4 :select t)
-            ('inferior-scheme-mode :align t :close-on-realign t :size 0.4 :select t)
-            ("*Warnings*" :align t :close-on-realign t :size 12 :select nil)
-            ("*Messages*" :align t :close-on-realign t :size 12 :select nil)
-            ('dired-mode :align t :close-on-realign t :size 0.4 :select t)))
+            ('magit-status-mode :align t :close-on-realign t :size 0.33 :select t)
+            ('magit-revision-mode :align t :close-on-realign t :size 0.33 :select t)
+            ('magit-log-mode :align t :close-on-realign t :size 0.33 :select t)
+            ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
+            ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
+            ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
+            ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
+            ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
+            ('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
 
     ;; Ensure Helm doesn't interfere with Shackle buffers too much.
     ;; - Use Shackle to control and position Helm buffers.
@@ -1475,6 +1478,7 @@ git dir) or linum mode"
 (put 'narrow-to-region 'disabled nil)
 
 (bind-key "n" narrow-map md/leader-map)
+(bind-key "i" 'org-tree-to-indirect-buffer narrow-map)
 (bind-key "f" 'md/narrow-dwim narrow-map)
 (bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
                                         ; better than "n" for narrow-to-region
