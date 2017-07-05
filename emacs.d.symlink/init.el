@@ -842,54 +842,58 @@ represent all current available bindings accurately as a single keymap."
               ("SS" . flyspell-correct-word-before-point)))
 
 (use-package projectile
- :config
- (progn
-   (setq projectile-file-exists-local-cache-expire 30
-         projectile-enable-caching t
-         projectile-globally-ignored-file-suffixes
-         '("pyc"
-           "png"
-           "jpg"
-           "gif"
-           "zip"
-           "Trash"
-           "swp"
-           "swo"
-           "DS_Store"
-           "swn"
-           "ico"
-           "o"
-           "elc"
-           "a"
-           "so"
-           "exe"
-           "egg-info"
-           "egg"
-           "dmg")
-         projectile-globally-ignored-directories
-         '(".tmp"
-           ".coverage"
-           ".git"
-           ".hg"
-           ".idea"
-           ".flsckout"
-           ".bzr"
-           "_darcs"
-           ".tox"
-           ".svn"
-           ".egg"
-           ".egg-info"
-           ".sass-cache"
-           "__pycache__"
-           ".webassets-cache"
-           "node_modules"
-           "venv"
-           "elpa"
-           ".stack-work"))
-   (projectile-global-mode))
- :bind (:map md/leader-map
-       ("j!" . projectile-invalidate-cache)
-       ("jk" . projectile-kill-buffers)))
+  :config
+  (progn
+    (setq projectile-file-exists-local-cache-expire 30
+          projectile-enable-caching t
+          projectile-globally-ignored-file-suffixes
+          '("pyc"
+            "png"
+            "jpg"
+            "gif"
+            "zip"
+            "Trash"
+            "swp"
+            "swo"
+            "DS_Store"
+            "swn"
+            "ico"
+            "o"
+            "elc"
+            "a"
+            "so"
+            "exe"
+            "egg-info"
+            "egg"
+            "dmg")
+          projectile-globally-ignored-directories
+          '(".tmp"
+            ".coverage"
+            ".git"
+            ".hg"
+            ".idea"
+            ".flsckout"
+            ".bzr"
+            "_darcs"
+            ".tox"
+            ".svn"
+            ".egg"
+            ".egg-info"
+            ".sass-cache"
+            "__pycache__"
+            ".webassets-cache"
+            "node_modules"
+            "venv"
+            "elpa"
+            ".stack-work"))
+    (projectile-global-mode))
+  :bind (:map md/leader-map
+              ("j!"  . projectile-invalidate-cache)
+              ("jk"  . projectile-kill-buffers)
+              ("j;t" . projectile-run-term)
+              ("j;d" . projectile-dired)
+              ("j;s" . projectile-run-shell)
+              ("j;e" . projectile-run-eshell)))
 
 (use-package helm-projectile
   :init (progn
@@ -903,49 +907,6 @@ represent all current available bindings accurately as a single keymap."
               ("jb" . helm-projectile-switch-to-buffer)
               ("jp" . helm-projectile-switch-to-buffer)
               ("jf" . helm-projectile-find-file)))
-
-(defun md/projectile-popwin-ansi-term ()
-  "Open project-dedicated ansi-term buffer in popwin. Renames the term buffer to
-match the project."
-  (interactive)
-  (when popwin:focus-window (popwin:close-popup-window))
-  (popwin:display-buffer
-   (or (get-buffer (format "*ansi-term-(%s)*" (projectile-project-name)))
-        (save-window-excursion
-          (with-current-buffer
-            (call-interactively 'projectile-run-term)
-            (rename-buffer
-             (format "*ansi-term-(%s)*" (projectile-project-name))))))))
-
-(defun md/projectile-popwin-shell ()
-  "Open project-dedicated shell buffer in popwin. Renames the term buffer to
-match the project."
-  (interactive)
-  (when popwin:focus-window (popwin:close-popup-window))
-  (popwin:display-buffer
-   (or (get-buffer (format "*shell-(%s)*" (projectile-project-name)))
-        (save-window-excursion
-          (with-current-buffer
-            (call-interactively 'projectile-run-shell)
-            (rename-buffer
-             (format "*shell-(%s)*" (projectile-project-name))))))))
-
-(defun md/projectile-popwin-eshell ()
-  "Open project-dedicated eshell buffer in popwin. Renames the term buffer to
-match the project."
-  (interactive)
-  (when popwin:focus-window (popwin:close-popup-window))
-  (popwin:display-buffer
-   (or (get-buffer (format "*eshell-(%s)*" (projectile-project-name)))
-        (save-window-excursion
-          (with-current-buffer
-            (call-interactively 'projectile-run-eshell)
-            (rename-buffer
-             (format "*eshell-(%s)*" (projectile-project-name))))))))
-
-(bind-key "j;t" 'md/projectile-popwin-ansi-term md/leader-map)
-(bind-key "j;s" 'md/projectile-popwin-shell md/leader-map)
-(bind-key "j;e" 'md/projectile-popwin-eshell md/leader-map)
 
 (use-package git-commit
   :config
@@ -1425,6 +1386,7 @@ git dir) or linum mode"
     (md/shackle-advise 'shell)
     (md/shackle-advise 'dired)
     (md/shackle-advise 'dired-jump)
+    (md/shackle-advise 'projectile-run-term)
 
     (setq shackle-rules
           '(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
