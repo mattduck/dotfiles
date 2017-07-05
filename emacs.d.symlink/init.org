@@ -676,9 +676,13 @@ by using a noop function:
           ("Ep" . list-processes)
 
           ;; Packages
-          ("Pr" . package-refresh-contents)
           ("Pi" . package-install)
           ("Pl" . package-list-packages)
+          ("Pr" . package-refresh-contents)
+
+          ;; Format
+          ("Fj" . json-pretty-print)
+          ("Fs" . sort-lines)
 
           ; Toggle misc
           ("tw" . toggle-truncate-lines)
@@ -845,6 +849,10 @@ it's nicer than the default.
     :defer 1
     :config
     (progn
+      (unbind-key "h" help-map)  ;; view-hello-file by default
+      (bind-key "hf" 'helpful-function help-map)
+      (bind-key "hm" 'helpful-macro help-map)
+      (bind-key "hc" 'helpful-macro help-map)
       (evil-define-key 'normal helpful-mode-map
         "q" 'md/quit-and-kill-window)))
 #+END_SRC
@@ -970,9 +978,11 @@ easier to discover features / work out where I am:
                 "SPC C" "compile"
                 "SPC e" "eval"
                 "SPC E" "Emacs"
+                "SPC F" "Format"
                 "SPC g" "git"
                 "SPC h" "help"
                 "SPC h k" "keys"
+                "SPC h h" "helpful"
                 "SPC j" "project"
                 "SPC j ;" "project-popwin"
                 "SPC j a" "project-ag"
@@ -2167,6 +2177,8 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
       (md/shackle-advise 'dired)
       (md/shackle-advise 'dired-jump)
       (md/shackle-advise 'projectile-run-term)
+      (md/shackle-advise 'undo-tree-visualize)
+      (md/shackle-advise 'run-scheme)
 
       (setq shackle-rules
             '(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
@@ -2175,7 +2187,7 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
               ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
               ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
               ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-              ("\\`\\*undo-tree.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+              ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
               ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
               ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
               ("*edebug-trace*" :align t :close-on-realign t :size 15 :select nil)
@@ -3030,9 +3042,6 @@ Close paren for the wrapping ~let~:
     outline mode doesn't match folding blocks nicely, so need to use another package.
 - [ ] checkout slime
 - [ ] jumping forward/back to markers including between files
-- [ ] startup time?
-  - bottleneck is down to ~(package-initialize)~ and evil startup.
-  - elpy is slow.
 - [ ] https://github.com/emacs-tw/awesome-emacs
   - [ ] multi cursor?
 - [ ] gk/gj for next/prev functions
@@ -3047,14 +3056,6 @@ Close paren for the wrapping ~let~:
 - [ ] go mode
 - [ ] cask?
 - [2016-09-24 Sat] elscreen not actively developed
-- [ ] popwin is useful
-  - why can't match dired or some of the term modes?
-    - dired doesn't match even with helm disabled and all other dired config
-      disabled.
-    - HEAD and 25 is same. So is 24.
-    - can forget this if ansi-term works
-  - shortcut for jumping to a restclient file?
-    - or opening new restclient buffer?
 - [ ] spacemacs - provide anything good?
   - [ ] paradox-list-packages
   - [ ] a prefix - applications
@@ -3110,18 +3111,14 @@ Close paren for the wrapping ~let~:
   - It's probably a package that slows down org mode
 - [ ] [2017-02-28 Tue] org links to files, shortcuts.
 - [ ] [2017-03-19 Sun] bindings or bookmarks to jump to elisp source files (eg. elpa)
-- [ ] [2017-02-28 Tue] json format
 - [ ] [2017-03-17 Fri] splitscreen - C-w q to close window?
-- [ ] [2017-03-17 Fri] sort-lines binding
 - [ ] [2017-03-18 Sat] ensure backup files are working properly
-- [ ] [2017-03-18 Sat] org-gcal http://cestlaz.github.io/posts/using-emacs-26-gcal.
 - [ ] [2017-03-18 Sat] how to ensure evil-set-jump is called in help-mode?
 - [ ] [2017-03-18 Sat] how to ensure evil-set-jump is called in dired-mode?
 - [ ] [2017-03-23 Thu] list functions/classes in project?
 - [ ] [2017-03-24 Fri] how to do proper logging? Write library?
 - [ ] [2017-03-24 Fri] still C-o not getting enough checkpoints.
 - [ ] [2017-03-23 Thu] function for replacing "\n" with actual newlines.
-- [ ] [2017-03-24 Fri] nlinum???? linum performance is awful.
 - [ ] [2017-03-27 Mon] - C-spc binding should be included in which-key? So it's
   used as prefix but then you can access the original binding.
 - [ ] [2017-03-25 Sat] https://github.com/redguardtoo/evil-matchit.
@@ -3131,13 +3128,10 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-05-17 Wed] recenter-top-bottom binding
 - [ ] [2017-05-18 Thu] ansi-term - fix backspace in insert mode
 - [ ] [2017-05-18 Thu] ansi-term - get C-r and my usual C-n/C-p bindings?
-- [ ] [2017-05-22 Mon] checkout https://github.com/wasamasa/shackle - popwin alternative.
 - [ ] [2017-03-23 Thu] use dumb-jump for easy jumping to definitions??
 - [ ] [2017-05-22 Mon] https://github.com/syohex/emacs-quickrun
-- [ ] [2017-06-12 Mon] helpful looks v useful https://github.com/Wilfred/helpful
 - [ ] [2017-07-04 Tue] helm - any way to cleanup old helm buffers?
   - otherwise maybe auto-kill them if we do prev/next buffer.
 - [ ] [2017-07-04 Tue] Way to output org-babel results to buffer?
-- [ ] [2017-07-05 Wed] org 
 - [ ] [2017-07-05 Wed] bindings for old popwin standalone apps
-  - dired, terminal, maybe magit.
+  - dired, terminal, magit?

@@ -453,9 +453,13 @@
         ("Ep" . list-processes)
 
         ;; Packages
-        ("Pr" . package-refresh-contents)
         ("Pi" . package-install)
         ("Pl" . package-list-packages)
+        ("Pr" . package-refresh-contents)
+
+        ;; Format
+        ("Fj" . json-pretty-print)
+        ("Fs" . sort-lines)
 
         ; Toggle misc
         ("tw" . toggle-truncate-lines)
@@ -568,6 +572,10 @@
   :defer 1
   :config
   (progn
+    (unbind-key "h" help-map)  ;; view-hello-file by default
+    (bind-key "hf" 'helpful-function help-map)
+    (bind-key "hm" 'helpful-macro help-map)
+    (bind-key "hc" 'helpful-macro help-map)
     (evil-define-key 'normal helpful-mode-map
       "q" 'md/quit-and-kill-window)))
 
@@ -672,9 +680,11 @@ represent all current available bindings accurately as a single keymap."
               "SPC C" "compile"
               "SPC e" "eval"
               "SPC E" "Emacs"
+              "SPC F" "Format"
               "SPC g" "git"
               "SPC h" "help"
               "SPC h k" "keys"
+              "SPC h h" "helpful"
               "SPC j" "project"
               "SPC j ;" "project-popwin"
               "SPC j a" "project-ag"
@@ -1387,6 +1397,8 @@ git dir) or linum mode"
     (md/shackle-advise 'dired)
     (md/shackle-advise 'dired-jump)
     (md/shackle-advise 'projectile-run-term)
+    (md/shackle-advise 'undo-tree-visualize)
+    (md/shackle-advise 'run-scheme)
 
     (setq shackle-rules
           '(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
@@ -1395,7 +1407,7 @@ git dir) or linum mode"
             ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
             ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
             ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-            ("\\`\\*undo-tree.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+            ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
             ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
             ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
             ("*edebug-trace*" :align t :close-on-realign t :size 15 :select nil)
