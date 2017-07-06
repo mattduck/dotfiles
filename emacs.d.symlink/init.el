@@ -419,6 +419,10 @@
         ("j" . evil-next-visual-line)
         ("k" . evil-previous-visual-line)
 
+        ;; zz - This is similar but more flexible
+        :map evil-normal-state-map
+        ("zz" . recenter-top-bottom)
+
         ;; Leader bindings
         :map md/leader-map
         ("w" . save-buffer)
@@ -684,7 +688,9 @@ represent all current available bindings accurately as a single keymap."
               "SPC g" "git"
               "SPC h" "help"
               "SPC h k" "keys"
+              "C-h k" "keys"
               "SPC h h" "helpful"
+              "C-h h" "helpful"
               "SPC j" "project"
               "SPC j ;" "project-popwin"
               "SPC j a" "project-ag"
@@ -1549,8 +1555,8 @@ git dir) or linum mode"
 (add-hook 'org-mode-hook 'md/org-hook)
 
 (setq
-      ;; Don't let org-agenda permanently mess with window layout
-      org-agenda-restore-windows-after-quit t
+      ;; Whether to let org-agenda permanently mess with window layout
+      org-agenda-restore-windows-after-quit nil
 
       ;; I'm trying this to decrease wait times for the agenda windows
       org-agenda-sticky t

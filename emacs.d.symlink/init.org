@@ -642,6 +642,10 @@ by using a noop function:
           ("j" . evil-next-visual-line)
           ("k" . evil-previous-visual-line)
 
+          ;; zz - This is similar but more flexible
+          :map evil-normal-state-map
+          ("zz" . recenter-top-bottom)
+
           ;; Leader bindings
           :map md/leader-map
           ("w" . save-buffer)
@@ -982,7 +986,9 @@ easier to discover features / work out where I am:
                 "SPC g" "git"
                 "SPC h" "help"
                 "SPC h k" "keys"
+                "C-h k" "keys"
                 "SPC h h" "helpful"
+                "C-h h" "helpful"
                 "SPC j" "project"
                 "SPC j ;" "project-popwin"
                 "SPC j a" "project-ag"
@@ -2361,8 +2367,8 @@ org headings:
   (add-hook 'org-mode-hook 'md/org-hook)
 
   (setq
-        ;; Don't let org-agenda permanently mess with window layout
-        org-agenda-restore-windows-after-quit t
+        ;; Whether to let org-agenda permanently mess with window layout
+        org-agenda-restore-windows-after-quit nil
 
         ;; I'm trying this to decrease wait times for the agenda windows
         org-agenda-sticky t
@@ -3122,13 +3128,12 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-03-27 Mon] - C-spc binding should be included in which-key? So it's
   used as prefix but then you can access the original binding.
 - [ ] [2017-03-25 Sat] https://github.com/redguardtoo/evil-matchit.
-- [ ] if opened with a file as gui, open it in split rather than new elscreen window.
 - [ ] [2017-04-28 Fri] org - display inline images?
 - [ ] [2017-05-06 Sat] org - get babel working for scheme
-- [ ] [2017-05-17 Wed] recenter-top-bottom binding
 - [ ] [2017-05-18 Thu] ansi-term - fix backspace in insert mode
 - [ ] [2017-05-18 Thu] ansi-term - get C-r and my usual C-n/C-p bindings?
 - [ ] [2017-03-23 Thu] use dumb-jump for easy jumping to definitions??
+  - by default only works within a project, won't search eg. python libs.
 - [ ] [2017-05-22 Mon] https://github.com/syohex/emacs-quickrun
 - [ ] [2017-07-04 Tue] helm - any way to cleanup old helm buffers?
   - otherwise maybe auto-kill them if we do prev/next buffer.
