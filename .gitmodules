@@ -22,3 +22,6 @@
 [submodule "emacs.d.symlink/non-elpa/shackle"]
 	path = emacs.d.symlink/non-elpa/shackle
 	url = git@github.com:mattduck/shackle.git
+[submodule "emacs.d.symlink/non-elpa/evil-mu4e"]
+	path = emacs.d.symlink/non-elpa/evil-mu4e
+	url = git@github.com:mattduck/evil-mu4e.git

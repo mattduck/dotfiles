@@ -43,6 +43,14 @@
 
 (require 'bind-key)  ; Required for :bind in use-package
 
+(when (file-exists-p "/usr/local/share/emacs/site-lisp")
+  (let ((default-directory "/usr/local/share/emacs/site-lisp/"))
+    (normal-top-level-add-subdirs-to-load-path)))
+
+(when (file-exists-p (md/dotfiles-get-path "emacs.d.symlink/non-elpa"))
+  (let ((default-directory (md/dotfiles-get-path "emacs.d.symlink/non-elpa")) )
+    (normal-top-level-add-subdirs-to-load-path)))
+
 (use-package exec-path-from-shell
  :if (memq window-system '(mac ns))
  :demand t
@@ -924,6 +932,13 @@ represent all current available bindings accurately as a single keymap."
               ("jp" . helm-projectile-switch-to-buffer)
               ("jf" . helm-projectile-find-file)))
 
+(use-package dumb-jump
+  :config
+  (dumb-jump-mode 1)
+  (setq dumb-jump-selector 'helm
+        dumb-jump-force-searcher 'ag)
+  (bind-key "gd" 'dumb-jump-go evil-normal-state-map))
+
 (use-package git-commit
   :config
   (global-git-commit-mode t))
@@ -1152,59 +1167,6 @@ git dir) or linum mode"
   :bind (:map md/leader-map
               ("tr" . rainbow-mode)))
 
-(use-package dired
-  :demand t
-  :init
-  (progn
-     ;; Use human size
-     (setq dired-listing-switches "-alh")
-
-    ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
-    ;; makes dired-mode-map an overriding keymap, which means that the default
-    ;; dired-mode bindings take precendence over the normal-state bindings.
-    ;;
-    ;; There's no obvious way to undo that code, so I'm just replacing
-    ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
-    (setq dired-mode-map (make-sparse-keymap))
-
-    (defun md/dired-single-buffer ()
-      "If in popwin buffer, open dired in popwin. Otherwise as usual."
-      (interactive)
-      (if popwin:focus-window
-          (progn
-            (save-window-excursion (call-interactively 'dired-single-buffer))
-            (popwin:close-popup-window)
-            (popwin:display-buffer (get-buffer dired-single-magic-buffer-name)))
-        (dired-single-buffer)))
-
-    (evil-define-key 'normal dired-mode-map
-      "W" 'wdired-change-to-wdired-mode  ; This is v useful
-      "q" 'quit-window
-      "d" 'dired-flag-file-deletion
-      "u" 'dired-unmark
-      "D" 'dired-do-delete
-      (kbd "RET") 'dired-single-buffer
-      "J" 'dired-jump
-      "o" 'dired-find-file-other-window
-      "R" 'dired-do-rename
-      "C" 'dired-do-copy
-      "i" 'dired-maybe-insert-subdir
-      "+" 'dired-create-directory)))
-
-(use-package dired-single
-  :demand t)
-
-(use-package restclient
-  :defer 1
-  :mode (("\\.http\\'" . restclient-mode)))
-
-(use-package restclient-helm :defer 5)
-
-(use-package company-restclient
-  :config
-  (progn
-      (add-to-list 'company-backends 'company-restclient)))
-
 (setq debug-on-error nil)
 
 ;; This can be useful when debugging.
@@ -1323,210 +1285,6 @@ git dir) or linum mode"
               "gj" 'markdown-next-visible-heading)))
 
 (use-package coffee-mode)
-
-(use-package elscreen
- :defer 1
- :config
- (progn
-   (defun md/elscreen-display-tabs ()
-     (interactive)
-     (setq elscreen-display-tab t
-           elscreen-tab-display-kill-screen nil
-           elscreen-tab-display-control nil)
-
-     ;; This is how elscreen redraws
-     (elscreen-notify-screen-modification 'force))
-
-   (md/elscreen-display-tabs)))
-
-(setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
-
-;; NOTE - for some reason this doesn't seem to load with "defer"
-(use-package splitscreen
- :load-path md/splitscreen-path
- :demand t
- :config
- (progn
-   (splitscreen-mode)
-   (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
-
-(use-package shackle
-  :load-path "non-elpa/shackle"  ; fork
-  :demand t
-  :config
-  (progn
-
-    (defun md/shackle-down ()
-      (interactive)
-      (delete-window shackle-last-window))
-
-    (defun md/shackle-up ()
-      (interactive)
-      (if shackle-last-buffer
-          (display-buffer shackle-last-buffer)
-        (message "No previous shackle buffer found")))
-
-    (defun md/shackle-toggle ()
-      (interactive)
-      (if (window-live-p shackle-last-window)
-          (md/shackle-down)
-        (md/shackle-up)))
-
-    ;; NOTE: This might solve the Popwin issues I had with not picking up some
-    ;; buffers, eg. Dired.
-    (defun md/use-display-buffer-alist (fn &rest args)
-      "Wrap a function that displays a buffer. Save window excursion, and
-  re-display the new buffer using `display-buffer`, which allows Shackle to
-  detect and process it. "
-      (let ((buffer-to-display nil)
-            (res nil))
-        (save-window-excursion
-          (setq res (apply fn args))
-          (setq buffer-to-display (current-buffer)))
-        (display-buffer buffer-to-display)
-        res))
-
-    (defmacro md/shackle-advise (fn)
-      "Add advise to given function to wrap with md/shackle-wrapper."
-      `(advice-add ,fn :around 'md/use-display-buffer-alist
-                   '((name . "md/shackle"))))
-
-    ;; Add advice for functions that display a new buffer but usually escape
-    ;; Shackle (eg. due to not calling display-buffer).
-    (md/shackle-advise 'helpful-function)
-    (md/shackle-advise 'helpful-command)
-    (md/shackle-advise 'helpful-macro)
-    (md/shackle-advise 'ansi-term)
-    (md/shackle-advise 'term)
-    (md/shackle-advise 'eshell)
-    (md/shackle-advise 'shell)
-    (md/shackle-advise 'dired)
-    (md/shackle-advise 'dired-jump)
-    (md/shackle-advise 'projectile-run-term)
-    (md/shackle-advise 'undo-tree-visualize)
-    (md/shackle-advise 'run-scheme)
-
-    (setq shackle-rules
-          '(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
-            ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select t)
-            ('helpful-mode :align t :close-on-realign t :size 0.33 :select t)
-            ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-            ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-            ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-            ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
-            ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
-            ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
-            ("*edebug-trace*" :align t :close-on-realign t :size 15 :select nil)
-            ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
-            (" *Agenda Commands*" :align t :close-on-realign t :size 20 :select nil)
-            ("\\`\\*Org Agenda.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
-            ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
-            ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
-            ('grep-mode :align t :close-on-realign t :size 0.4 :select nil)
-            ('ag-mode :align t :close-on-realign t :size 0.4 :select nil)
-            ('term-mode :align t :close-on-realign t :size 0.4 :select t)
-            ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
-            ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
-            ('magit-status-mode :align t :close-on-realign t :size 0.33 :select t)
-            ('magit-revision-mode :align t :close-on-realign t :size 0.33 :select t)
-            ('magit-log-mode :align t :close-on-realign t :size 0.33 :select t)
-            ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
-            ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
-            ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
-            ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
-            ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
-            ('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
-
-    ;; Ensure Helm doesn't interfere with Shackle buffers too much.
-    ;; - Use Shackle to control and position Helm buffers.
-    ;; - But ensure that shackle-last-buffer is not set to any Helm buffer.
-    ;;
-    ;; TODO - ideally Helm would cleanup buffers immediately to avoid
-    ;; interfering with other buffer display commands.
-    (setq helm-display-function 'pop-to-buffer) ; make sure helm popups are detected.
-    (defvar md/shackle-buffer-store nil)
-    (defvar md/shackle-window-store nil)
-    (defun md/helm-shackle-setup ()
-      (setq md/shackle-buffer-store shackle-last-buffer
-            md/shackle-window-store shackle-last-window))
-    (defun md/helm-shackle-teardown ()
-      (when md/shackle-buffer-store
-        (setq shackle-last-buffer md/shackle-buffer-store
-              shackle-last-window md/shackle-window-store)))
-    (add-hook 'helm-before-initialize-hook 'md/helm-shackle-setup)
-    (add-hook 'helm-cleanup-hook 'md/helm-shackle-teardown)
-
-    ;; NOTE: In order to get Shackle working with some org-mode commands, we
-    ;; have to override an internal function. Org is quite opinionated about
-    ;; window display, and usually this function will unset various buffer
-    ;; display variables before calling switch-to-buffer-other-window.
-    ;; I'd rather just control those buffers with Shackle.
-    (fmakunbound 'org-switch-to-buffer-other-window)
-    (defun org-switch-to-buffer-other-window (&rest args)
-      (apply 'switch-to-buffer-other-window args))
-    (setq org-agenda-window-setup 'other-window)
-
-    (shackle-mode 1))
-
-  :bind (:map md/leader-map
-              ("; ;" . display-buffer)  ;; Uses display-buffer-alist, so Shackle rules will apply.
-              (";a" . md/shackle-toggle)))
-
-;; Copyright (C) 2000 Eric Crampton <eric@atdesk.com>
-;; https://github.com/emacsorphanage/dedicated
-;; GPL v2.
-
-(defvar dedicated-mode nil
-  "Mode variable for dedicated minor mode.")
-(make-variable-buffer-local 'dedicated-mode)
-
-(defun dedicated-mode (&optional arg)
-  "Dedicated minor mode."
-  (interactive "P")
-  (setq dedicated-mode (not dedicated-mode))
-  (set-window-dedicated-p (selected-window) dedicated-mode)
-  (if (not (assq 'dedicated-mode minor-mode-alist))
-      (setq minor-mode-alist
-            (cons '(dedicated-mode " D")
-                  minor-mode-alist))))
-
-(bind-key "tD" 'dedicated-mode md/leader-map)
-
-;; Don't ask for confirmation on narrow-to-region
-(put 'narrow-to-region 'disabled nil)
-
-(bind-key "n" narrow-map md/leader-map)
-(bind-key "i" 'org-tree-to-indirect-buffer narrow-map)
-(bind-key "f" 'md/narrow-dwim narrow-map)
-(bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
-                                        ; better than "n" for narrow-to-region
-
-(defun md/narrow-dwim (p)
-  "Widen if buffer is narrowed, narrow-dwim otherwise.
-  Dwim means: region, org-src-block, org-subtree, or
-  defun, whichever applies first. Narrowing to
-  org-src-block actually calls `org-edit-src-code'.
-
-  With prefix P, don't widen, just narrow even if buffer
-  is already narrowed."
-  (interactive "P")
-  (declare (interactive-only))
-  (cond ((and (buffer-narrowed-p) (not p)) (widen))
-        ((region-active-p)
-         (narrow-to-region (region-beginning)
-                           (region-end)))
-        (org-src-mode
-         (org-edit-src-exit))
-        ((derived-mode-p 'org-mode)
-         ;; `org-edit-src-code' is not a real narrowing
-         ;; command. Remove this first conditional if
-         ;; you don't want it.
-         (cond ((ignore-errors (org-edit-src-code) t))
-               ((ignore-errors (org-narrow-to-block) t))
-               (t (org-narrow-to-subtree))))
-        ((derived-mode-p 'latex-mode)
-         (LaTeX-narrow-to-environment))
-        (t (narrow-to-defun))))
 
 (use-package org
   :defer 5
@@ -1869,6 +1627,375 @@ headlines")
 
 ))
 
+(use-package dired
+  :demand t
+  :init
+  (progn
+     ;; Use human size
+     (setq dired-listing-switches "-alh")
+
+    ;; evil-integrations.el (https://github.com/emacsmirror/evil/blob/cd005aa50ab056492752c319b5105c38c79c2fd0/evil-integration.el#L111)
+    ;; makes dired-mode-map an overriding keymap, which means that the default
+    ;; dired-mode bindings take precendence over the normal-state bindings.
+    ;;
+    ;; There's no obvious way to undo that code, so I'm just replacing
+    ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
+    (setq dired-mode-map (make-sparse-keymap))
+
+    (defun md/dired-single-buffer ()
+      "If in popwin buffer, open dired in popwin. Otherwise as usual."
+      (interactive)
+      (if popwin:focus-window
+          (progn
+            (save-window-excursion (call-interactively 'dired-single-buffer))
+            (popwin:close-popup-window)
+            (popwin:display-buffer (get-buffer dired-single-magic-buffer-name)))
+        (dired-single-buffer)))
+
+    (evil-define-key 'normal dired-mode-map
+      "W" 'wdired-change-to-wdired-mode  ; This is v useful
+      "q" 'quit-window
+      "d" 'dired-flag-file-deletion
+      "u" 'dired-unmark
+      "D" 'dired-do-delete
+      (kbd "RET") 'dired-single-buffer
+      "J" 'dired-jump
+      "o" 'dired-find-file-other-window
+      "R" 'dired-do-rename
+      "C" 'dired-do-copy
+      "i" 'dired-maybe-insert-subdir
+      "+" 'dired-create-directory)))
+
+(use-package dired-single
+  :demand t)
+
+(use-package restclient
+  :defer 1
+  :mode (("\\.http\\'" . restclient-mode)))
+
+(use-package restclient-helm :defer 5)
+
+(use-package company-restclient
+  :config
+  (progn
+      (add-to-list 'company-backends 'company-restclient)))
+
+(use-package mu4e
+  :config
+  (progn
+
+   (bind-key "M" 'mu4e md/leader-map)
+
+    (setq
+     ;; Don't save message to Sent Messages, Gmail/IMAP takes care of this
+     ;; automatically.
+     mu4e-sent-messages-behavior 'delete
+
+     ;; We're using mbsync to fetch mail
+     mu4e-get-mail-command "mbsync -a"
+
+     ;; Use Helm (defaults to ido)
+     mu4e-completing-read-function 'completing-read
+
+     ;; UTF-8 instead of letters
+     mu4e-use-fancy-chars t
+
+     mu4e-confirm-quit nil
+     mu4e-compose-dont-reply-to-self t
+
+     ;; This is supposed to fix issues with duplicate UIDs when using mbsync.
+     mu4e-change-filenames-when-moving t
+
+     mu4e-view-date-format "%Y-%m-%d %H:%M"
+     mu4e-view-show-addresses t
+     mu4e-view-prefer-html nil
+     mu4e-view-auto-mark-as-read nil
+
+     ;; TODO - does this have any bad effects??
+     mu4e-headers-skip-duplicates t
+
+     mu4e-headers-date-format "%Y/%m/%d %H:%M"
+     mu4e-headers-date-format-long "%Y/%m/%d %H:%M"
+     mu4e-headers-time-format "%H:%M"
+     mu4e-headers-include-related nil
+     mu4e-headers-fields 
+     '((:flags . 6) (:from . 22) (:thread-subject . 60)
+       (:human-date . 19) (:to . 22) (:maildir))
+
+     mu4e-headers-visible-flags
+     '(draft flagged replied trashed attach encrypted signed)
+
+     mu4e-headers-new-mark       '("N" . "N")
+     mu4e-headers-unread-mark    '("u" . "u")
+     mu4e-headers-seen-mark      '("S" . "S")
+     mu4e-headers-attach-mark    '("a" . "a")
+     mu4e-headers-draft-mark     '("D" . "⚒")
+     mu4e-headers-flagged-mark   '("F" . "★ ")
+     mu4e-headers-encrypted-mark '("x" . "x")
+     mu4e-headers-trashed-mark   '("T" . "⏚")
+     mu4e-headers-signed-mark    '("s" . "☡")
+     mu4e-headers-passed-mark    '("P" . "❯")  ;; ie. forwarded
+     mu4e-headers-replied-mark   '("R" . "❮"))
+
+     ;; Custom view actions
+     (add-to-list 'mu4e-view-actions
+                  '("ViewInBrowser" . mu4e-action-view-in-browser) t)))
+
+(use-package mu4e-alert
+  :config
+  (mu4e-alert-set-default-style 'notifier)
+  (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
+  (setq
+   mu4e-alert-notify-repeated-mails nil
+   mu4e-alert-email-notification-types '(count)))
+
+(use-package mu4e-maildirs-extension
+  :after mu4e
+  :config
+  (progn
+    (mu4e-maildirs-extension)))
+
+(use-package evil-mu4e
+  :after mu4e
+  :config
+  (evil-mu4e-init))
+
+(defun md/send-mail-validator ()
+    (unless (yes-or-no-p "Are you want to send this mail? ")
+      (signal 'quit nil)))
+
+(use-package message
+  :config
+  (add-hook 'message-send-hook 'md/send-mail-validator))
+
+(use-package smtpmail
+  :config
+  (setq mail-user-agent 'message-mail-user-agent
+        message-send-mail-function 'message-send-mail-with-sendmail
+        message-kill-buffer-on-exit t
+        sendmail-program "/usr/local/bin/msmtp"))
+
+(use-package elscreen
+ :defer 1
+ :config
+ (progn
+   (defun md/elscreen-display-tabs ()
+     (interactive)
+     (setq elscreen-display-tab t
+           elscreen-tab-display-kill-screen nil
+           elscreen-tab-display-control nil)
+
+     ;; This is how elscreen redraws
+     (elscreen-notify-screen-modification 'force))
+
+   (md/elscreen-display-tabs)))
+
+(setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
+
+;; NOTE - for some reason this doesn't seem to load with "defer"
+(use-package splitscreen
+ :load-path md/splitscreen-path
+ :demand t
+ :config
+ (progn
+   (splitscreen-mode)
+   (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
+
+(defun md/use-display-buffer-alist (fn &rest args)
+    "Wrap a function that displays a buffer. Save window excursion, and
+re-display the new buffer using `display-buffer`, which allows Shackle to
+detect and process it. "
+    (let ((buffer-to-display nil)
+        (res nil))
+    (save-window-excursion
+        (setq res (apply fn args))
+        (setq buffer-to-display (current-buffer)))
+    (display-buffer buffer-to-display)
+    res))
+
+(use-package shackle
+  :load-path "non-elpa/shackle"  ; fork
+  :demand t
+  :config
+  (progn
+
+    (defun md/shackle-down ()
+      (interactive)
+      (delete-window shackle-last-window))
+
+    (defun md/shackle-up ()
+      (interactive)
+      (if shackle-last-buffer
+          (display-buffer shackle-last-buffer)
+        (message "No previous shackle buffer found")))
+
+    (defun md/shackle-toggle ()
+      (interactive)
+      (if (window-live-p shackle-last-window)
+          (md/shackle-down)
+        (md/shackle-up)))
+
+    (defmacro md/shackle-advise (fn)
+      "Add advise to given function to wrap with md/shackle-wrapper."
+      `(advice-add ,fn :around 'md/use-display-buffer-alist
+                   '((name . "md/shackle"))))
+
+    (defmacro md/shackle-remove-advice (fn)
+      `(advice-remove ,fn 'md/use-display-buffer-alist))
+
+    ;; Add advice for functions that display a new buffer but usually escape
+    ;; Shackle (eg. due to not calling display-buffer).
+    (md/shackle-advise 'helpful-function)
+    (md/shackle-advise 'helpful-command)
+    (md/shackle-advise 'helpful-macro)
+    (md/shackle-advise 'ansi-term)
+    (md/shackle-advise 'term)
+    (md/shackle-advise 'eshell)
+    (md/shackle-advise 'shell)
+    (md/shackle-advise 'dired)
+    (md/shackle-advise 'dired-jump)
+    (md/shackle-advise 'projectile-run-term)
+    (md/shackle-advise 'undo-tree-visualize)
+    (md/shackle-advise 'run-scheme)
+    (md/shackle-advise 'mu4e~main-view)
+    (md/shackle-advise 'mu4e~headers-jump-to-maildir)
+    (md/shackle-advise 'mu4e-headers-search-bookmark)
+    (md/shackle-advise 'mu4e-compose)
+
+    (setq shackle-rules
+          `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
+            ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select t)
+            ('helpful-mode :align t :close-on-realign t :size 0.33 :select t)
+            ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+            ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+            ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+            ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
+            ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
+            ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
+            ("*edebug-trace*" :align t :close-on-realign t :size 15 :select nil)
+            ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
+            (" *Agenda Commands*" :align t :close-on-realign t :size 20 :select nil)
+            ("\\`\\*Org Agenda.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
+            ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
+            ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
+            ('grep-mode :align t :close-on-realign t :size 0.4 :select nil)
+            ('ag-mode :align t :close-on-realign t :size 0.4 :select nil)
+            ('term-mode :align t :close-on-realign t :size 0.4 :select t)
+            ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
+            ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
+            ('magit-status-mode :align t :close-on-realign t :size 0.33 :select t)
+            ('magit-revision-mode :align t :close-on-realign t :size 0.33 :select t)
+            ('magit-log-mode :align t :close-on-realign t :size 0.33 :select t)
+            ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
+            ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
+            ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
+            ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
+            ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
+
+            ;; TODO mu4e
+            (,mu4e~main-buffer-name :frame t :select t :align left :close-on-realign t)
+            (,mu4e~headers-buffer-name :select t :align right :close-on-realign t :size 0.80)
+            ('mu4e-compose-mode :other t :align right :size 0.80 :close-on-realign t :select t)
+
+            ('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
+
+
+    ;; This is deprecated but works for now - need to figure out how to implement it
+    ;; with display-buffer-alist. It prevents us from opening a new frame every
+    ;; time I use mu4e.
+    (setq-default display-buffer-reuse-frames t)
+
+    ;; Ensure Helm doesn't interfere with Shackle buffers too much.
+    ;; - Use Shackle to control and position Helm buffers.
+    ;; - But ensure that shackle-last-buffer is not set to any Helm buffer.
+    ;;
+    ;; TODO - ideally Helm would cleanup buffers immediately to avoid
+    ;; interfering with other buffer display commands.
+    (setq helm-display-function 'pop-to-buffer) ; make sure helm popups are detected.
+    (defvar md/shackle-buffer-store nil)
+    (defvar md/shackle-window-store nil)
+    (defun md/helm-shackle-setup ()
+      (setq md/shackle-buffer-store shackle-last-buffer
+            md/shackle-window-store shackle-last-window))
+    (defun md/helm-shackle-teardown ()
+      (when md/shackle-buffer-store
+        (setq shackle-last-buffer md/shackle-buffer-store
+              shackle-last-window md/shackle-window-store)))
+    (add-hook 'helm-before-initialize-hook 'md/helm-shackle-setup)
+    (add-hook 'helm-cleanup-hook 'md/helm-shackle-teardown)
+
+    ;; NOTE: In order to get Shackle working with some org-mode commands, we
+    ;; have to override an internal function. Org is quite opinionated about
+    ;; window display, and usually this function will unset various buffer
+    ;; display variables before calling switch-to-buffer-other-window.
+    ;; I'd rather just control those buffers with Shackle.
+    (fmakunbound 'org-switch-to-buffer-other-window)
+    (defun org-switch-to-buffer-other-window (&rest args)
+      (apply 'switch-to-buffer-other-window args))
+    (setq org-agenda-window-setup 'other-window)
+
+    (shackle-mode 1))
+
+  :bind (:map md/leader-map
+              ("; ;" . display-buffer)  ;; Uses display-buffer-alist, so Shackle rules will apply.
+              (";a" . md/shackle-toggle)))
+
+;; Copyright (C) 2000 Eric Crampton <eric@atdesk.com>
+;; https://github.com/emacsorphanage/dedicated
+;; GPL v2.
+
+(defvar dedicated-mode nil
+  "Mode variable for dedicated minor mode.")
+(make-variable-buffer-local 'dedicated-mode)
+
+(defun dedicated-mode (&optional arg)
+  "Dedicated minor mode."
+  (interactive "P")
+  (setq dedicated-mode (not dedicated-mode))
+  (set-window-dedicated-p (selected-window) dedicated-mode)
+  (if (not (assq 'dedicated-mode minor-mode-alist))
+      (setq minor-mode-alist
+            (cons '(dedicated-mode " D")
+                  minor-mode-alist))))
+
+(bind-key "tD" 'dedicated-mode md/leader-map)
+
+;; Don't ask for confirmation on narrow-to-region
+(put 'narrow-to-region 'disabled nil)
+
+(bind-key "n" narrow-map md/leader-map)
+(bind-key "i" 'org-tree-to-indirect-buffer narrow-map)
+(bind-key "f" 'md/narrow-dwim narrow-map)
+(bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
+                                        ; better than "n" for narrow-to-region
+
+(defun md/narrow-dwim (p)
+  "Widen if buffer is narrowed, narrow-dwim otherwise.
+  Dwim means: region, org-src-block, org-subtree, or
+  defun, whichever applies first. Narrowing to
+  org-src-block actually calls `org-edit-src-code'.
+
+  With prefix P, don't widen, just narrow even if buffer
+  is already narrowed."
+  (interactive "P")
+  (declare (interactive-only))
+  (cond ((and (buffer-narrowed-p) (not p)) (widen))
+        ((region-active-p)
+         (narrow-to-region (region-beginning)
+                           (region-end)))
+        (org-src-mode
+         (org-edit-src-exit))
+        ((derived-mode-p 'org-mode)
+         ;; `org-edit-src-code' is not a real narrowing
+         ;; command. Remove this first conditional if
+         ;; you don't want it.
+         (cond ((ignore-errors (org-edit-src-code) t))
+               ((ignore-errors (org-narrow-to-block) t))
+               (t (org-narrow-to-subtree))))
+        ((derived-mode-p 'latex-mode)
+         (LaTeX-narrow-to-environment))
+        (t (narrow-to-defun))))
+
 (bind-key "Bj" 'bookmark-jump md/leader-map)
 (bind-key "Bs" 'bookmark-set md/leader-map)
 (bind-key "Bd" 'bookmark-delete md/leader-map)
@@ -2064,7 +2191,8 @@ headlines")
  :demand t
  :config
  (progn
-   (setq writeroom-width 90)
+   (setq writeroom-width 90
+         writeroom-restore-window-config t)
 
    (defun md/handle-elscreen (arg)
      (cond

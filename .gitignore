@@ -20,6 +20,7 @@ emacs.d.symlink/ede-projects.el
 emacs.d.symlink/bookmarks
 emacs.d.symlink/org-gcal
 emacs.d.symlink/tutorial
+spacemacs
 
 # .config might contain files that have been dumped by programs, so
 # don't include it by default
