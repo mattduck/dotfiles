@@ -122,8 +122,8 @@
   (interactive)
   (if (or (string= (system-name) "mattmbp")
           (string= (system-name) "mattmbp.local"))
-      (set-frame-font "Monaco-12:antialias=subpixel")
-    (set-frame-font "Monaco-13:antialias=subpixel")))
+      (set-frame-font "Monaco-12:antialias=subpixel" t t)
+    (set-frame-font "Monaco-13:antialias=subpixel" t t)))
 
 (md/set-default-font)
 
@@ -1339,6 +1339,9 @@ git dir) or linum mode"
 
       org-clock-out-remove-zero-time-clocks t
 
+      ;; Use UTF-8 ellipsis character
+      org-ellipsis "…"
+
       ;; If press M-RET I want a new line, not to split the line
       org-M-RET-may-split-line nil)
 
@@ -1730,7 +1733,7 @@ headlines")
      mu4e-headers-seen-mark      '("S" . "S")
      mu4e-headers-attach-mark    '("a" . "a")
      mu4e-headers-draft-mark     '("D" . "⚒")
-     mu4e-headers-flagged-mark   '("F" . "★ ")
+     mu4e-headers-flagged-mark   `("F" . "★★ ")
      mu4e-headers-encrypted-mark '("x" . "x")
      mu4e-headers-trashed-mark   '("T" . "⏚")
      mu4e-headers-signed-mark    '("s" . "☡")

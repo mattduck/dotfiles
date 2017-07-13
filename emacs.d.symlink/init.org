@@ -1952,6 +1952,9 @@ org headings:
 
         org-clock-out-remove-zero-time-clocks t
 
+        ;; Use UTF-8 ellipsis character
+        org-ellipsis "…"
+
         ;; If press M-RET I want a new line, not to split the line
         org-M-RET-may-split-line nil)
 
@@ -3294,7 +3297,6 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-03-27 Mon] - C-spc binding should be included in which-key? So it's
   used as prefix but then you can access the original binding.
 - [ ] [2017-03-25 Sat] https://github.com/redguardtoo/evil-matchit.
-- [ ] [2017-04-28 Fri] org - display inline images?
 - [ ] [2017-05-06 Sat] org - get babel working for scheme
 - [ ] [2017-05-18 Thu] ansi-term - fix backspace in insert mode
 - [ ] [2017-05-18 Thu] ansi-term - get C-r and my usual C-n/C-p bindings?
@@ -3309,3 +3311,5 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-07-06 Thu] syntax highlighting for generic config files, ssh config.
 - [ ] [2017-07-10 Mon] use-package - auto install packages if not installed.
 - [ ] [2017-07-11 Tue] split applications into separate frames? perspectives.el?
+  - just different elscreen tabs?
+  - https://github.com/bmag/emacs-purpose
