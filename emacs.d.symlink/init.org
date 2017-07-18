@@ -136,6 +136,9 @@ inherit from the ~md/leader-map~.
 
   (defvar md/scheme-mode-leader-map (make-sparse-keymap))
   (set-keymap-parent md/scheme-mode-leader-map md/leader-map)
+
+  (defvar md/org-mode-leader-map (make-sparse-keymap))
+  (set-keymap-parent md/org-mode-leader-map md/leader-map)
 #+END_SRC
 
 ** Splash screen
@@ -570,7 +573,7 @@ by using a noop function:
          (md/unfill-paragraph)))
 
      ;; NOTE - temp commenting this, is it cause of performance issues?
-     ;; By default the evil jump commands don't set markers as often 
+     ;; By default the evil jump commands don't set markers as often
      ;; as I would like. But it installs a pre-command-hook to call
      ;; evil-set-jump for all commands that have the evil property :jump,
      ;; so we can configure the jump markers to be saved more often.
@@ -612,6 +615,12 @@ by using a noop function:
      ;; Can't work out how to properly define map bindings using ":bind"
      (bind-key "<SPC>" md/leader-map evil-normal-state-map)
      (bind-key "<SPC>" md/leader-map evil-visual-state-map)
+
+     ;; Make leader also accessible with C-c
+     (bind-key "C-c <SPC>" md/leader-map evil-visual-state-map)
+     (bind-key "C-c <SPC>" md/leader-map evil-normal-state-map)
+     (bind-key "C-c <SPC>" md/leader-map evil-insert-state-map)
+     (bind-key "C-c <SPC>" md/leader-map evil-motion-state-map)
 
      (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
 
@@ -1091,7 +1100,7 @@ This is handy sometimes - it provides ~free-keys~, which lists unbound keys.
   (bind-key "@" 'free-keys md/keys-help-map)
   (bind-key "SPC" 'md/which-key md/keys-help-map)
 
-  (global-set-key (kbd "C-SPC") 'md/which-key) 
+  (global-set-key (kbd "C-SPC") 'md/which-key)
 
   ;; Setting this mode on replaces describe-bindings, and
   ;; loads helm-descbinds.el, which I might want to use elsewhere.
@@ -1113,9 +1122,9 @@ This is handy sometimes - it provides ~free-keys~, which lists unbound keys.
             ag-reuse-window nil))  ; Open files in new window, don't hide search window
 
     :bind (:map md/leader-map
-                ("ad" . ag-dired)
-                ("af" . ag-files)
-                ("ag" . ag)
+                ("Ad" . ag-dired)
+                ("Af" . ag-files)
+                ("Ag" . ag)
                 ("/" . occur)))
 #+END_SRC
 ** Autocompletion
@@ -1754,7 +1763,7 @@ Elpy combines a few different Python packages / features.
 ** Golang
 #+BEGIN_SRC emacs-lisp
   (when (not (getenv "GOPATH"))
-   (setenv "GOPATH" "/Users/matt/golang") 
+   (setenv "GOPATH" "/Users/matt/golang")
    (setenv "GO15VENDOREXPERIMENT" "1"))
 
   (use-package go-mode
@@ -1874,13 +1883,13 @@ NOTE - compiling requires ~markdown~ to be installed.
               ;; Markdown-cycle behaves like org-cycle, but by default is only
               ;; enabled in insert mode. gfm-mode-map inherits from
               ;; markdown-mode-map, so this will enable it in both.
-              (evil-define-key 'normal markdown-mode-map 
+              (evil-define-key 'normal markdown-mode-map
                 (kbd "TAB") 'markdown-cycle
                 "gk" 'markdown-previous-visible-heading
                 "gj" 'markdown-next-visible-heading)))
 
 
-          
+
 
 #+END_SRC
 ** Coffeescript
@@ -1901,91 +1910,125 @@ org headings:
     (progn
 #+END_SRC
 
+
+
 ** General setup
 
 #+BEGIN_SRC emacs-lisp
-  (defun md/org-hook ()
-    ;; Change tab widths to fit headline indents
-    (setq tab-width 2
-          evil-shift-width 2)
+    (defun md/org-hook ()
+      ;; Change tab widths to fit headline indents
+      (setq tab-width 2
+            evil-shift-width 2)
 
-    ;; Disable in-buffer line numbers and the colour column, as both decrease
-    ;; org-mode / outline performance significantly on large files.
-    (linum-mode 0)
-    (fci-mode 0)
+      ;; Disable in-buffer line numbers and the colour column, as both decrease
+      ;; org-mode / outline performance significantly on large files.
+      (linum-mode 0)
+      (fci-mode 0)
 
-    ;; Also disable the row and column numbers in the modeline. Seems you have to set
-    ;; these manually to make them buffer-local.
-    (setq-local line-number-mode nil)
-    (setq-local column-number-mode nil)
+      ;; Also disable the row and column numbers in the modeline. Seems you have to set
+      ;; these manually to make them buffer-local.
+      (setq-local line-number-mode nil)
+      (setq-local column-number-mode nil)
 
-    ;; Also don't highlight the current line. For some reason this requires making
-    ;; global-hl-line-mode buffer-local.
-    (make-variable-buffer-local 'global-hl-line-mode)
-    (setq-local global-hl-line-mode nil))
-  (add-hook 'org-mode-hook 'md/org-hook)
+      ;; Also don't highlight the current line. For some reason this requires making
+      ;; global-hl-line-mode buffer-local.
+      (make-variable-buffer-local 'global-hl-line-mode)
+      (setq-local global-hl-line-mode nil))
+    (add-hook 'org-mode-hook 'md/org-hook)
 
-  (setq
-        ;; Whether to let org-agenda permanently mess with window layout
-        org-agenda-restore-windows-after-quit nil
+    (setq
+          ;; Whether to let org-agenda permanently mess with window layout
+          org-agenda-restore-windows-after-quit nil
 
-        ;; I'm trying this to decrease wait times for the agenda windows
-        org-agenda-sticky t
+          ;; I'm trying this to decrease wait times for the agenda windows
+          org-agenda-sticky t
 
-        ;; I find this more intuitive
-        org-indirect-buffer-display 'current-window
+          ;; I find this more intuitive
+          org-indirect-buffer-display 'current-window
 
-        ;; Add timestamp when set task as closed
-        org-log-done 'time
+          ;; Add timestamp when set task as closed
+          org-log-done 'time
 
-        ;; Colour the whole headline
-        org-level-color-stars-only nil
+          ;; Colour the whole headline
+          org-level-color-stars-only nil
 
-        ;; Colour done headlines to make them less prominent
-        org-fontify-done-headline t
+          ;; Colour done headlines to make them less prominent
+          org-fontify-done-headline t
 
-        ;; Try to prevent accidentally editing invisible lines
-        org-catch-invisible-edits 'show-and-error
+          ;; Try to prevent accidentally editing invisible lines
+          org-catch-invisible-edits 'show-and-error
 
-        ;; Don't indent things for nested headings (eg. properties)
-        org-adapt-indentation nil
+          ;; Don't indent things for nested headings (eg. properties)
+          org-adapt-indentation nil
 
-        org-clock-out-remove-zero-time-clocks t
+          org-clock-out-remove-zero-time-clocks t
 
-        ;; Use UTF-8 ellipsis character
-        org-ellipsis "…"
+          ;; Use UTF-8 ellipsis character
+          org-ellipsis "…"
 
-        ;; If press M-RET I want a new line, not to split the line
-        org-M-RET-may-split-line nil)
+          ;; If press M-RET I want a new line, not to split the line
+          org-M-RET-may-split-line nil)
 
-  ;; Goto and refile
-  (setq
-        ;; For org-goto, use helm rather than the weird default interface
-        ;; where you search through the file
-        org-goto-interface 'outline-path-completion
+    ;; Goto and refile
+    (setq
+          ;; For org-goto, use helm rather than the weird default interface
+          ;; where you search through the file
+          org-goto-interface 'outline-path-completion
 
-        ;; For org-goto, search all nodes rather than forcing me to start with
-        ;; the top level heading and then search the children etc.
-        org-outline-path-complete-in-steps nil
+          ;; For org-goto, search all nodes rather than forcing me to start with
+          ;; the top level heading and then search the children etc.
+          org-outline-path-complete-in-steps nil
 
-        ;; For org-goto and org-refile, show the outline path during Helm
-        ;; completion rather than just the headline.
-        org-refile-use-outline-path t
+          ;; For org-goto and org-refile, show the outline path during Helm
+          ;; completion rather than just the headline.
+          org-refile-use-outline-path t
 
-        ;; Include nested items in org-refile.
-        org-refile-targets '((nil :maxlevel . 9)))
+          ;; Include nested items in org-refile.
+          org-refile-targets '((nil :maxlevel . 9)))
 
 
-  ;; Only two priorities - default and flagged
-  (setq org-highest-priority 65)
-  (setq org-lowest-priority 66)
-  (setq org-default-priority 66)
+    ;; Only two priorities - default and flagged
+    (setq org-highest-priority 65)
+    (setq org-lowest-priority 66)
+    (setq org-default-priority 66)
 
-  (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
-  (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
-  (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
+    ;; I find these useful enough to want them in all insert maps.
+    (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
+    (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm evil-insert-state-map)
+    (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
+    (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm evil-insert-state-map)
+
+    (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
+
+
 #+END_SRC
 
+** Leader
+#+BEGIN_SRC emacs-lisp
+  (evil-define-key 'normal org-mode-map (kbd "SPC") md/org-mode-leader-map)
+
+  ;; TODO - make closer to the C-c map / confirm my bindings
+  ;; TODO - for all relevant evil modes
+  ;; TODO - do i need to do this for org-agenda map too??
+  ;; TODO - make macro to run sth with given evil modes??
+  (bind-key "SPC j" 'md/helm-org md/org-mode-leader-map)
+  (bind-key "SPC J" 'org-goto md/org-mode-leader-map)
+  (bind-key "SPC R" 'org-refile md/org-mode-leader-map)
+  (bind-key "SPC r" 'org-review md/org-mode-leader-map)
+  (bind-key "SPC A" 'org-archive-subtree md/org-mode-leader-map)
+  (bind-key "SPC i" 'org-clock-in md/org-mode-leader-map)
+  (bind-key "SPC o" 'org-clock-out md/org-mode-leader-map)
+  (bind-key "SPC E" 'org-export-dispatch md/org-mode-leader-map)
+  (bind-key "SPC I" 'org-tree-to-indirect-buffer md/org-mode-leader-map)
+  (bind-key "SPC t" 'org-todo md/org-mode-leader-map)
+  (bind-key "SPC c" 'org-ctrl-c-ctrl-c md/org-mode-leader-map)
+  (bind-key "SPC l" 'md/org-insert-link-from-paste md/org-mode-leader-map)
+  (bind-key "SPC O" 'org-open-at-point md/org-mode-leader-map)
+
+  ;; Global org leader bindings
+  (bind-key "a a" 'org-agenda md/leader-map)
+  (bind-key "a c" 'org-capture md/leader-map)
+#+END_SRC
 ** Utility functions
 
 #+BEGIN_SRC emacs-lisp
@@ -2041,7 +2084,7 @@ org headings:
   (defun md/org-skip-if-deadline-in-days (user-fn)
     "A utility function that can be used for org-agenda-skip-function. It calls
     `(user-fn number-of-days-until-deadline)`. If `user-fn` returns a `t` value,
-    the agenda item will be skipped. 
+    the agenda item will be skipped.
 
     You could use this to eg. skip all items that have a deadline
     in more than 60 days by running as part of your config:
@@ -2096,8 +2139,8 @@ org headings:
       (let (top bottom)
           (setq bottom (save-excursion (org-end-of-subtree t) (point)))
           (setq top (save-excursion (md/org-back-to-top-level-heading) (point)))
-          (if 
-              (re-search-backward (format org-heading-keyword-regexp-format keyword) top t) 
+          (if
+              (re-search-backward (format org-heading-keyword-regexp-format keyword) top t)
               nil
           (md/org-agenda-skip-rtn-point))
           )))
@@ -2146,7 +2189,7 @@ I don't like the default org-agenda bindings - there are far more
 bindings/features than I should have to think about, and I usually want to
 navigate using evil bindings (and eg. accidentally hit "j" and bring up
 the calendar etc).
-  
+
 Instead, open org-agenda in evil-normal-mode, with a couple of the useful
 bindings copied directly from emacs-mode.
 
@@ -2425,7 +2468,7 @@ This is the body
        mu4e-headers-date-format-long "%Y/%m/%d %H:%M"
        mu4e-headers-time-format "%H:%M"
        mu4e-headers-include-related nil
-       mu4e-headers-fields 
+       mu4e-headers-fields
        '((:flags . 6) (:from . 22) (:thread-subject . 60)
          (:human-date . 19) (:to . 22) (:maildir))
 
@@ -2679,7 +2722,7 @@ I'm trying it as it looks like there are some advantages:
 - Shackle rules apply whenever ~display-buffer-alist~ is used, which makes it
   (1) more generalised and (2) predictable. I had some issues with Popwin not
   displaying certain buffers that looked awkward to debug.
-  
+
 Shackle didn't support "sticky" type windows out of the box, but it was easy to
 add the ~:close-on-realign~ flag to simulate this behaviour.
 
@@ -2712,9 +2755,10 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
             (display-buffer shackle-last-buffer)
           (message "No previous shackle buffer found")))
 
+;; TODO - check len is > 1
       (defun md/shackle-toggle ()
         (interactive)
-        (if (window-live-p shackle-last-window)
+        (if (and (window-live-p shackle-last-window) (> (length (window-list)) 1))
             (md/shackle-down)
           (md/shackle-up)))
 
@@ -2942,7 +2986,7 @@ Use some persistent scratch files for various modes:
   ;; Open this scratch buffer on startup
   (setq initial-buffer-choice md/scratch-file-org)
 
-  (bind-key "'s" 'md/scratch-open-file-elisp md/leader-map) 
+  (bind-key "'s" 'md/scratch-open-file-elisp md/leader-map)
   (bind-key "'e" 'md/scratch-open-file-elisp md/leader-map)
   (bind-key "'p" 'md/scratch-open-file-python md/leader-map)
   (bind-key "'r" 'md/scratch-open-file-restclient md/leader-map)
@@ -3313,3 +3357,12 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-07-11 Tue] split applications into separate frames? perspectives.el?
   - just different elscreen tabs?
   - https://github.com/bmag/emacs-purpose
+- [ ] Also make leader accessible with C-c SPC? this would mean remapping that
+  binding for the existing maps where I override SPC to point to a mode-specific
+  leader.
+- [ ] [2017-07-15 Sat 18:12] fix this "attempt to delete minibuffer" shackle
+  issue.
+  - think it's a bug in the shackle fork - if there is only one window open, we
+    can't delete it before displaying the new one. Can solve by either not
+    deleting it in this circumstance, or moving the deletion to happen after the
+    new one has been displayed.
