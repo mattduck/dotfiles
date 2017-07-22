@@ -7,13 +7,7 @@ unbind-key C-b
 bind-key C-a send-prefix
 
 # Enable mouse
-set -g mode-mouse on
-setw -g mouse-select-window on
-setw -g mouse-select-pane on
-setw -g mouse-resize-pane on
-
-# Be quiet
-set -g quiet on
+set -g mouse on
 
 # I not sure why would need to wait for Esc, and it interferes with vim
 set-option -sg escape-time 0
@@ -88,18 +82,18 @@ bind -r C-h resize-pane -L 5
 bind -r C-j resize-pane -D 5
 bind -r C-k resize-pane -U 5
 bind -r C-l resize-pane -R 5
-bind-key -t vi-copy 'v' begin-selection
+bind-key -T copy-mode-vi 'v' send -X begin-selection
 
 # Use namespace shell wrapper to enable pbcopy and pbpaste commands on OS X.
 set-option -g default-command "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace -l bash; else bash; fi"
 
 # Tmux 1.8 has copy-pipe command, which copies selected text to the tmux paste
 # buffer and pipes it to given command
-bind-key -t vi-copy 'y' copy-pipe "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace pbcopy; else /dev/null; fi"
+bind-key -T copy-mode-vi 'y' send -X copy-pipe "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace pbcopy; else /dev/null; fi"
 
 # Do the same for the default copy binding of Enter
-unbind -t vi-copy Enter
-bind-key -t vi-copy Enter copy-pipe "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace pbcopy; else /dev/null; fi"
+unbind -T copy-mode-vi Enter
+bind-key -T copy-mode-vi Enter send -X copy-pipe "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace pbcopy; else /dev/null; fi"
 
 # Shortcut for running the fzf goto command
 bind-key -r "C-p" new-window -n "goto" 'source "$DOTFILES/tmux/tmux_env.dot.sh" && ,tm-goto'

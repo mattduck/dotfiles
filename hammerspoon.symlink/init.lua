@@ -128,7 +128,7 @@ hs.fnutils.each(movementBindings, function(entry)
 end)
 
 
--- Rotate between all windows in the current space.
+-- Rotate between all fullscreen windows in the current space.
 -- TODO: reset index when moving spaces
 currentSpaceWindowIndex = 0
 function switchFocusWithinCurrentSpace ()
@@ -227,7 +227,7 @@ tmuxirl:bind('shift', ']', function ()
 end)
 
 
--- ; to move current window to another screen.
+-- : to move current window to another screen.
 -- repeat to cycle through screens.
 screenIndex = 1
 tmuxirl:bind('shift', ";", function ()
