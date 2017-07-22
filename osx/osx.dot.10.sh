@@ -88,19 +88,6 @@ function e () {
 alias vi="vim" # Otherwise vi will point to /usr/bin, and vim to the brew dir.
 
 
-# Virtualenvwrapper -------------
-# NOTE - I won't use PROJECT_HOME for now.
-# NOTE - for this to work I might need to run /usr/local/opt/python/bin/pip
-# install virtualenv virtualenvwrapper
-export VIRTUALENVWRAPPER_PYTHON=$(brew --prefix)/bin/python
-export VIRTUALENVWRAPPER_VIRTUALENV=$(brew --prefix)/bin/virtualenv
-export VIRTUALENVWRAPPER_HOOK_DIR="$DOTFILES/virtualenvwrapper_hooks"
-export WORKON_HOME=$HOME/.virtualenvs
-
-mkdir -p "$WORKON_HOME"
-source $(which virtualenvwrapper.sh)
-
-
 # Golang -------------
 ,path-add "/usr/local/opt/go/libexec/bin/"
 

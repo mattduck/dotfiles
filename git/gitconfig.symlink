@@ -86,3 +86,7 @@
 
     # I find this easier to read
     algorithm = patience
+
+# Include local config if it exists
+[include]
+path = "~/.gitconfig-local"

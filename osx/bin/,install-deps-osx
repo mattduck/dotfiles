@@ -24,8 +24,13 @@ brew install \
     markdown \
     golang \
     moreutils \
+    ripgrep \
+    the_silver_searcher \
+    sshrc \
+    pyenv \
+    pyenv-virtualenvwrapper \
 
-# Brew is easiest way to compile with python
+# Brew is easiest way to compile with python
 brew install vim
 
 # Required to allow tmux to merge w/osx clipboard
@@ -41,3 +46,5 @@ brew install ispell --with-lang-en
 npm install -g eslint eslint-plugin-react babel-eslint
 
 pip install virtualenvwrapper
+
+npm install -g git-open

@@ -126,7 +126,7 @@
   (if (or (string= (system-name) "mattmbp")
           (string= (system-name) "mattmbp.local"))
       (set-frame-font "Monaco-12:antialias=subpixel" t t)
-    (set-frame-font "Monaco-13:antialias=subpixel" t t)))
+    (set-frame-font "Monaco-12:antialias=subpixel" t t)))
 
 (md/set-default-font)
 
@@ -1176,8 +1176,6 @@ git dir) or linum mode"
   :bind (:map md/leader-map
               ("tr" . rainbow-mode)))
 
-(setq debug-on-error nil)
-
 ;; This can be useful when debugging.
 (setq edebug-trace t)
 
@@ -1680,7 +1678,10 @@ headlines")
     ;;
     ;; There's no obvious way to undo that code, so I'm just replacing
     ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
-    (setq dired-mode-map (make-sparse-keymap))
+    ;;
+    ;; TODO - I think this is interfering with easy-menu-add-item when called by (require 'dired-x)??
+    ;;      - HOW TO FIX THIS?
+    ;;(setq dired-mode-map (make-sparse-keymap))
 
     (defun md/dired-single-buffer ()
       "If in popwin buffer, open dired in popwin. Otherwise as usual."
@@ -1836,6 +1837,7 @@ headlines")
 (use-package splitscreen
  :load-path md/splitscreen-path
  :demand t
+ :ensure nil
  :config
  (progn
    (splitscreen-mode)
