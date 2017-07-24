@@ -694,7 +694,8 @@ represent all current available bindings accurately as a single keymap."
             (which-key-declare-prefixes
               "SPC SPC" "major-mode"
               "SPC SPC e" "major-mode-eval"
-              "SPC a" "ag"
+              "SPC a" "org"
+              "SPC A" "ag"
               "SPC b" "buffers"
               "SPC B" "bookmarks"
               "SPC c" "comments"
@@ -1904,6 +1905,7 @@ headlines")
       (md/shackle-advise 'mu4e~headers-jump-to-maildir)
       (md/shackle-advise 'mu4e-headers-search-bookmark)
       (md/shackle-advise 'mu4e-compose)
+      (md/shackle-advise 'find-file)
 
       (setq shackle-rules
             `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
@@ -1934,6 +1936,7 @@ headlines")
               ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
               ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
               ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
+              (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 0.33 :select t)
 
               ;; TODO mu4e
               (,mu4e~main-buffer-name :frame t :select t :align left :close-on-realign t)
