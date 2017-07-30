@@ -875,6 +875,11 @@ represent all current available bindings accurately as a single keymap."
               ("S <RET>" . flyspell-mode)
               ("SS" . flyspell-correct-word-before-point)))
 
+(setq compilation-mode-map (make-sparse-keymap))
+(evil-set-initial-state 'compilation-mode 'normal)
+(add-hook 'compliation-mode-hook 'evil-normal-state)
+(evil-define-key 'normal compilation-mode-map "q" 'quit-window)
+
 (use-package projectile
   :config
   (progn
@@ -924,10 +929,10 @@ represent all current available bindings accurately as a single keymap."
   :bind (:map md/leader-map
               ("j!"  . projectile-invalidate-cache)
               ("jk"  . projectile-kill-buffers)
-              ("j;t" . projectile-run-term)
-              ("j;d" . projectile-dired)
-              ("j;s" . projectile-run-shell)
-              ("j;e" . projectile-run-eshell)))
+              ("jt" . projectile-run-term)
+              ("jd" . projectile-dired)
+              ("js" . projectile-run-shell)
+              ("je" . projectile-run-eshell)))
 
 (use-package helm-projectile
   :init (progn
@@ -1125,7 +1130,7 @@ git dir) or linum mode"
   (add-hook 'ediff-prepare-buffer-hook 'outline-show-all))
 
  :bind (:map md/leader-map
-             ("d" . ediff)))
+             ("D" . ediff)))
 
 (use-package fic-mode
  :defer 1
@@ -1705,20 +1710,43 @@ headlines")
 
     (evil-define-key 'normal dired-mode-map
       "W" 'wdired-change-to-wdired-mode  ; This is v useful
-      "q" 'quit-window
+      "q" 'md/quit-and-kill-window
       "d" 'dired-flag-file-deletion
       "u" 'dired-unmark
       "D" 'dired-do-delete
-      (kbd "RET") 'dired-single-buffer
+      (kbd "RET") 'dired-find-file-other-window
       "J" 'dired-jump
       "o" 'dired-find-file-other-window
       "R" 'dired-do-rename
       "C" 'dired-do-copy
       "i" 'dired-maybe-insert-subdir
-      "+" 'dired-create-directory)))
+      "+" 'dired-create-directory))
+  :bind (:map md/leader-map
+                  ("d" . dired-single-magic-buffer)))
 
 (use-package dired-single
   :demand t)
+
+(use-package neotree
+  :config
+  (progn
+    (evil-set-initial-state 'neotree-mode 'normal)
+    (setq neo-theme 'nerd neo-smart-open t neo-show-hidden-files
+          t)
+
+    (bind-key "N" 'neotree-toggle md/leader-map)
+    (evil-define-key 'normal neotree-mode-map (kbd "J") 'neotree-dir)
+    (evil-define-key 'normal neotree-mode-map (kbd "q") 'neotree-hide)
+    (evil-define-key 'normal neotree-mode-map (kbd "r") 'neotree-refresh)
+    (evil-define-key 'normal neotree-mode-map (kbd "RET") 'neotree-enter)
+    (evil-define-key 'normal neotree-mode-map (kbd "TAB") 'neotree-quick-look)
+    (evil-define-key 'normal neotree-mode-map (kbd "'") 'neotree-stretch-toggle)
+    (evil-define-key 'normal neotree-mode-map (kbd "h") 'neotree-select-up-node)
+    (evil-define-key 'normal neotree-mode-map (kbd "l") 'neotree-change-root)
+    (evil-define-key 'normal neotree-mode-map (kbd "C-c C-c")
+      'neotree-change-root))
+  :bind (:map md/leader-map
+              (";d" . neotree-toggle)))
 
 (use-package restclient
   :defer 1
@@ -1893,7 +1921,7 @@ headlines")
         `(advice-add ,fn :around 'md/use-display-buffer-alist
                      '((name . "md/shackle"))))
 
-      (defmacro md/shackle-remove-advice (fn)
+      (defmacro md/shackle-unadvise (fn)
         `(advice-remove ,fn 'md/use-display-buffer-alist))
 
       ;; Add advice for functions that display a new buffer but usually escape
@@ -1907,6 +1935,7 @@ headlines")
       (md/shackle-advise 'shell)
       (md/shackle-advise 'dired)
       (md/shackle-advise 'dired-jump)
+      (md/shackle-advise 'dired-single-buffer)
       (md/shackle-advise 'projectile-run-term)
       (md/shackle-advise 'undo-tree-visualize)
       (md/shackle-advise 'run-scheme)
@@ -1915,6 +1944,7 @@ headlines")
       (md/shackle-advise 'mu4e-headers-search-bookmark)
       (md/shackle-advise 'mu4e-compose)
       (md/shackle-advise 'find-file)
+      (md/shackle-advise 'neo-global--create-window)
 
       (setq shackle-rules
             `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
@@ -1945,7 +1975,9 @@ headlines")
               ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
               ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
               ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
-              (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 0.33 :select t)
+              (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t)
+              (".*init.org" :regexp t :same t :select t)
+              (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
 
               ;; TODO mu4e
               (,mu4e~main-buffer-name :frame t :select t :align left :close-on-realign t)
@@ -1954,6 +1986,10 @@ headlines")
 
               ('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
 
+      (defmacro shackle-with-temp (rules body)
+        "Execute body with temporary shackle rules"
+        `(let ((shackle-rules (append ,rules shackle-rules)))
+           ,body))
 
       ;; This is deprecated but works for now - need to figure out how to implement it
       ;; with display-buffer-alist. It prevents us from opening a new frame every
