@@ -1142,7 +1142,7 @@ git dir) or linum mode"
    ;; when I change theme and then fontify the buffer. All other lines seem fine.
 
    (setq fic-highlighted-words
-         '("TODO" "FIX" "FIXME" "BUG" "WARN" "WARNING" "HACK" "NOTE" "ERROR" "MATT"))
+         '("TODO" "FIX" "FIXME" "BUG" "WARN" "WARNING" "HACK" "NOTE" "ERROR" "MATT" "DEPRECATED"))
 
    ;; By default this includes font-lock-string-face, but I don't want strings to
    ;; have these words formatted.
@@ -1686,10 +1686,13 @@ headlines")
     ;; There's no obvious way to undo that code, so I'm just replacing
     ;; dired-mode-map with a new keymap that has /not/ been made 'overriding'.
     ;;
-    ;; TODO - I think this is interfering with easy-menu-add-item when called by (require 'dired-x)??
-    ;;      - HOW TO FIX THIS?
-    ;;(setq dired-mode-map (make-sparse-keymap))
+    ;; NOTE: this broke (require 'dired-x) because dired-x expects [menu-bar] to
+    ;; be bound in dired-mode-map, so we rebind it.
+    (let ((menu (lookup-key dired-mode-map [menu-bar])))
+      (setq dired-mode-map (make-sparse-keymap))
+      (bind-key [menu-bar] menu dired-mode-map))
 
+    ;; TODO - can remove this now on shackle??
     (defun md/dired-single-buffer ()
       "If in popwin buffer, open dired in popwin. Otherwise as usual."
       (interactive)
