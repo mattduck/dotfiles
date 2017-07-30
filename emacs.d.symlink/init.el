@@ -951,7 +951,12 @@ represent all current available bindings accurately as a single keymap."
 
 (use-package git-commit
   :config
-  (global-git-commit-mode t))
+  (progn
+    (defun md/git-commit-set-fill-column ()
+      (interactive)
+      (setq fill-column 70))
+    (add-hook 'git-commit-setup-hook 'md/git-commit-set-fill-column)
+    (global-git-commit-mode t)))
 
 (use-package git-gutter
  :init
@@ -1295,6 +1300,7 @@ git dir) or linum mode"
 (use-package coffee-mode)
 
 (use-package org
+  :pin org
   :defer 5
   :config
   (progn
@@ -1919,8 +1925,8 @@ headlines")
               ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
               ("*edebug-trace*" :align t :close-on-realign t :size 15 :select nil)
               ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
-              (" *Agenda Commands*" :align t :close-on-realign t :size 20 :select nil)
-              ("\\`\\*Org Agenda.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
+              (".*\*Agenda Commands\*" :regexp t :align t :close-on-realign t :size 20 :select nil)
+              ("\*Org Agenda.*?\*" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
               ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
               ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
               ('grep-mode :align t :close-on-realign t :size 0.4 :select nil)
@@ -1975,6 +1981,7 @@ headlines")
       ;; window display, and usually this function will unset various buffer
       ;; display variables before calling switch-to-buffer-other-window.
       ;; I'd rather just control those buffers with Shackle.
+      (require 'org)
       (fmakunbound 'org-switch-to-buffer-other-window)
       (defun org-switch-to-buffer-other-window (&rest args)
         (apply 'switch-to-buffer-other-window args))
