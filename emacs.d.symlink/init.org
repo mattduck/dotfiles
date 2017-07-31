@@ -2415,6 +2415,7 @@ causes it to jump out of the popwin window.
 
 #+BEGIN_SRC emacs-lisp
   (use-package neotree
+    :demand t
     :config
     (progn
       (evil-set-initial-state 'neotree-mode 'normal)
@@ -2836,7 +2837,7 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
         (md/shackle-advise 'mu4e-headers-search-bookmark)
         (md/shackle-advise 'mu4e-compose)
         (md/shackle-advise 'find-file)
-        (md/shackle-advise 'neo-global--create-window)
+        ;;(md/shackle-advise 'neo-global--create-window)
 
         (setq shackle-rules
               `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)

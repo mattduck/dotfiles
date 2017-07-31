@@ -1728,6 +1728,7 @@ headlines")
   :demand t)
 
 (use-package neotree
+  :demand t
   :config
   (progn
     (evil-set-initial-state 'neotree-mode 'normal)
