@@ -1694,6 +1694,12 @@ although I don't remember exactly what the difference is:
   ;; Provides some enhancements to edebug mode. Doesn't look like it is
   ;; maintained, but it's useful even if just for the syntax highlighting.
   (use-package edebug-x)
+
+  (defun md/toggle-debug-on-error ()
+    (interactive)
+    (setq debug-on-error (not debug-on-error))
+    (message (format "debug-on-error %s" debug-on-error)))
+  (bind-key "tB" 'md/toggle-debug-on-error md/leader-map)
 #+END_SRC
 
 Override the edebug keymap to only contain features/keys that I care about:

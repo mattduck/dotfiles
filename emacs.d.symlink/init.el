@@ -1197,6 +1197,12 @@ git dir) or linum mode"
 ;; maintained, but it's useful even if just for the syntax highlighting.
 (use-package edebug-x)
 
+(defun md/toggle-debug-on-error ()
+  (interactive)
+  (setq debug-on-error (not debug-on-error))
+  (message (format "debug-on-error %s" debug-on-error)))
+(bind-key "tB" 'md/toggle-debug-on-error md/leader-map)
+
 (add-hook 'edebug-mode-hook 'evil-normal-state)
 (md/make-keymap-noop edebug-mode-map)
 
@@ -1301,6 +1307,12 @@ git dir) or linum mode"
               (kbd "TAB") 'markdown-cycle
               "gk" 'markdown-previous-visible-heading
               "gj" 'markdown-next-visible-heading)))
+
+(use-package conf-mode
+  :mode ((".conf'" . conf-mode)
+         (".cfg" . conf-mode)
+         (".*rc" . conf-mode)
+         ("config" . conf-mode)))
 
 (use-package coffee-mode)
 
@@ -1772,7 +1784,8 @@ headlines")
      mu4e-sent-messages-behavior 'delete
 
      ;; We're using mbsync to fetch mail
-     mu4e-get-mail-command "mbsync -a"
+     ;;mu4e-get-mail-command "mbsync -a"
+     mu4e-get-mail-command "true"
 
      ;; Use Helm (defaults to ido)
      mu4e-completing-read-function 'completing-read
@@ -1945,7 +1958,7 @@ headlines")
       (md/shackle-advise 'mu4e-headers-search-bookmark)
       (md/shackle-advise 'mu4e-compose)
       (md/shackle-advise 'find-file)
-      (md/shackle-advise 'neo-global--create-window)
+      ;;(md/shackle-advise 'neo-global--create-window)
 
       (setq shackle-rules
             `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
