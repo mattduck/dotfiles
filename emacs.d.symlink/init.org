@@ -1904,6 +1904,16 @@ NOTE - compiling requires ~markdown~ to be installed.
 
 
 #+END_SRC
+** Conf mode
+#+BEGIN_SRC emacs-lisp
+  (use-package conf-mode
+    :mode ((".conf'" . conf-mode)
+           (".cfg" . conf-mode)
+           (".*rc" . conf-mode)
+           ("config" . conf-mode)))
+
+
+#+END_SRC
 ** Coffeescript
 #+BEGIN_SRC emacs-lisp
 (use-package coffee-mode)
@@ -2488,7 +2498,8 @@ This is the body
        mu4e-sent-messages-behavior 'delete
 
        ;; We're using mbsync to fetch mail
-       mu4e-get-mail-command "mbsync -a"
+       ;;mu4e-get-mail-command "mbsync -a"
+       mu4e-get-mail-command "true"
 
        ;; Use Helm (defaults to ido)
        mu4e-completing-read-function 'completing-read
