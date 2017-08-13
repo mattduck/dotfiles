@@ -1939,7 +1939,6 @@ org headings:
     (progn
 #+END_SRC
 
-
 ** General setup
 
 #+BEGIN_SRC emacs-lisp
@@ -2603,7 +2602,7 @@ This is the body
 
 #+END_SRC
 * Window manager
-** Elscreen
+** COMMENT Elscreen
 
 Elscreen provides "tabs" that let me sort of arrange windows how I did it in
 vim. They're not ideal though, because the tabs either appear in several places
@@ -2624,21 +2623,6 @@ on the screen, or nowhere.
        (elscreen-notify-screen-modification 'force))
 
      (md/elscreen-display-tabs)))
-#+END_SRC
-
-** Splitscreen
-#+BEGIN_SRC emacs-lisp
-(setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
-
-;; NOTE - for some reason this doesn't seem to load with "defer"
-(use-package splitscreen
- :load-path md/splitscreen-path
- :demand t
- :ensure nil
- :config
- (progn
-   (splitscreen-mode)
-   (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
 #+END_SRC
 
 ** COMMENT Popwin
@@ -2773,6 +2757,48 @@ edges.
                 (";m" . md/popwin-messages)))
 #+END_SRC
 
+** Splitscreen
+#+BEGIN_SRC emacs-lisp
+(setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
+
+;; NOTE - for some reason this doesn't seem to load with "defer"
+(use-package splitscreen
+ :load-path md/splitscreen-path
+ :demand t
+ :ensure nil
+ :config
+ (progn
+   (splitscreen-mode)
+   (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
+#+END_SRC
+
+** Winner
+#+BEGIN_SRC emacs-lisp
+  (use-package winner-mode
+    :demand t
+    :config
+    (winner-mode)
+    :bind (:map splitscreen/prefix
+                ("u" . winner-undo)
+                ("U" . winner-redo)))
+#+END_SRC
+** Eyebrowse
+#+BEGIN_SRC emacs-lisp
+  (use-package eyebrowse
+    :demand t
+    :config
+    (progn
+      (setq eyebrowse-wrap-around t
+            eyebrowse-mode-line-separator " "
+            eyebrowse-mode-line-left-delimiter ""
+            eyebrowse-mode-line-right-delimiter ""
+            eyebrowse-mode-line-style t
+            eyebrowse-new-workspace t)
+      (eyebrowse-mode 1))
+    :bind (:map splitscreen/prefix
+                ("!" . eyebrowse-switch-to-window-config)))
+#+END_SRC
+
 ** Shackle (https://github.com/mattduck/shackle)
 
 Shackle has a lot of overlap with Popwin, ie. I can force certain applications
@@ -2850,11 +2876,20 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
         (md/shackle-advise 'undo-tree-visualize)
         (md/shackle-advise 'run-scheme)
         (md/shackle-advise 'mu4e~main-view)
-        (md/shackle-advise 'mu4e~headers-jump-to-maildir)
-        (md/shackle-advise 'mu4e-headers-search-bookmark)
         (md/shackle-advise 'mu4e-compose)
-        (md/shackle-advise 'find-file)
+        (md/shackle-advise 'mu4e-headers-search)
+        ;; (md/shackle-unadvise 'mu4e~headers-jump-to-maildir)
+        ;; (md/shackle-unadvise 'mu4e-headers-search-bookmark)
+        ;; (md/shackle-unadvise 'mu4e~main-view)
+        ;; (md/shackle-unadvise 'mu4e~headers-jump-to-maildir)
+        ;; (md/shackle-unadvise 'mu4e-headers-search-bookmark)
+        ;; (md/shackle-unadvise 'mu4e-compose)
         ;;(md/shackle-advise 'neo-global--create-window)
+
+        (defun md/mu4e-eyebrowse-quit (fn &rest args)
+          (apply fn args)
+          (shackle--eyebrowse-close-slot-by-tag "mail"))
+        (advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
 
         (setq shackle-rules
               `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
@@ -2889,10 +2924,10 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
                 (".*init.org" :regexp t :same t :select t)
                 (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
 
-                ;; TODO mu4e
-                (,mu4e~main-buffer-name :frame t :select t :align left :close-on-realign t)
-                (,mu4e~headers-buffer-name :select t :align right :close-on-realign t :size 0.80)
-                ('mu4e-compose-mode :other t :align right :size 0.80 :close-on-realign t :select t)
+              ;; TODO mu4e
+                (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
+                (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
+                ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
 
                 ('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
 
@@ -2943,7 +2978,6 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
                   (";a" . md/shackle-toggle)))
 #+END_SRC
 
-
 ** Dedicated
 
 I'm inlining this because it's so small. Allows toggling of "dedicated" status
@@ -2973,7 +3007,6 @@ another buffer in the window.
 #+BEGIN_SRC emacs-lisp
   (bind-key "tD" 'dedicated-mode md/leader-map)
 #+END_SRC
-
 
 ** Narrowing
 
@@ -3091,7 +3124,7 @@ Use some persistent scratch files for various modes:
      (defun md/powerline-setup ()
        (interactive)
        (require 'flycheck)
-       (setq-default mode-line-format
+       (setq mode-line-format
                      '("%e"
                        (:eval
                         (let* ((active (powerline-selected-window-active))
@@ -3116,6 +3149,14 @@ Use some persistent scratch files for various modes:
                                                                 (cdr powerline-default-separator-dir))))
 
                                (lhs (list
+                                     (when eyebrowse-mode
+                                       (powerline-raw
+                                        (let* ((window-configs (eyebrowse--get 'window-configs))
+                                               (current-config (assoc (eyebrowse--get 'current-slot) window-configs))
+                                               (current-index (car current-config))
+                                               (current-tag (nth 2 current-config)))
+                                          (format "%s:%s" current-index current-tag)) face3 'l ))
+
                                      ;; Line / column numbers
                                      (when (or line-number-mode column-number-mode)
                                        (cond ((and line-number-mode
@@ -3186,14 +3227,18 @@ Use some persistent scratch files for various modes:
                                      )))
                           (concat (powerline-render lhs)
                                   (powerline-fill mode-line (powerline-width rhs))
-                                  (powerline-render rhs)))))))
+                                  (powerline-render rhs))))))
+                     (setq-default mode-line-format mode-line-format))
 
      (defun md/powerline-reset ()
        (interactive)
-       (setq mode-line-format (md/powerline-setup))
+       (save-window-excursion
+         (mapc (lambda (buffer)
+                 (switch-to-buffer buffer)
+                 (md/powerline-setup))
+               (buffer-list)))
        (solarized-load-theme))
 
-     (md/powerline-setup)
      (md/powerline-reset)))
 #+END_SRC
 * Solarized theme
@@ -3442,3 +3487,9 @@ Close paren for the wrapping ~let~:
     deleting it in this circumstance, or moving the deletion to happen after the
     new one has been displayed.
 - [ ] put evil bindings properly in compilation mode, fix this =g= thing.
+- [ ] eyebrowse instead of elscreen?
+  - jumping to a named config could make it easier to have app separation for
+    eg. mail.
+- [ ] which-key timer update thing throwing error?
+- [ ] helm mini - group buffers better.
+  - and better searching by the whole path/mode rather than the buffer name.
