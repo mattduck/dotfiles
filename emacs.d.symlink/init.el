@@ -1197,6 +1197,12 @@ git dir) or linum mode"
 ;; maintained, but it's useful even if just for the syntax highlighting.
 (use-package edebug-x)
 
+(defun md/toggle-debug-on-error ()
+  (interactive)
+  (setq debug-on-error (not debug-on-error))
+  (message (format "debug-on-error %s" debug-on-error)))
+(bind-key "tB" 'md/toggle-debug-on-error md/leader-map)
+
 (add-hook 'edebug-mode-hook 'evil-normal-state)
 (md/make-keymap-noop edebug-mode-map)
 
@@ -1301,6 +1307,12 @@ git dir) or linum mode"
               (kbd "TAB") 'markdown-cycle
               "gk" 'markdown-previous-visible-heading
               "gj" 'markdown-next-visible-heading)))
+
+(use-package conf-mode
+  :mode ((".conf'" . conf-mode)
+         (".cfg" . conf-mode)
+         (".*rc" . conf-mode)
+         ("config" . conf-mode)))
 
 (use-package coffee-mode)
 
@@ -1772,7 +1784,8 @@ headlines")
      mu4e-sent-messages-behavior 'delete
 
      ;; We're using mbsync to fetch mail
-     mu4e-get-mail-command "mbsync -a"
+     ;;mu4e-get-mail-command "mbsync -a"
+     mu4e-get-mail-command "true"
 
      ;; Use Helm (defaults to ido)
      mu4e-completing-read-function 'completing-read
@@ -1855,21 +1868,6 @@ headlines")
         message-kill-buffer-on-exit t
         sendmail-program "/usr/local/bin/msmtp"))
 
-(use-package elscreen
- :defer 1
- :config
- (progn
-   (defun md/elscreen-display-tabs ()
-     (interactive)
-     (setq elscreen-display-tab t
-           elscreen-tab-display-kill-screen nil
-           elscreen-tab-display-control nil)
-
-     ;; This is how elscreen redraws
-     (elscreen-notify-screen-modification 'force))
-
-   (md/elscreen-display-tabs)))
-
 (setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
 
 ;; NOTE - for some reason this doesn't seem to load with "defer"
@@ -1881,6 +1879,28 @@ headlines")
  (progn
    (splitscreen-mode)
    (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
+
+(use-package winner-mode
+  :demand t
+  :config
+  (winner-mode)
+  :bind (:map splitscreen/prefix
+              ("u" . winner-undo)
+              ("U" . winner-redo)))
+
+(use-package eyebrowse
+  :demand t
+  :config
+  (progn
+    (setq eyebrowse-wrap-around t
+          eyebrowse-mode-line-separator " "
+          eyebrowse-mode-line-left-delimiter ""
+          eyebrowse-mode-line-right-delimiter ""
+          eyebrowse-mode-line-style t
+          eyebrowse-new-workspace t)
+    (eyebrowse-mode 1))
+  :bind (:map splitscreen/prefix
+              ("!" . eyebrowse-switch-to-window-config)))
 
 (defun md/use-display-buffer-alist (fn &rest args)
       "Wrap a function that displays a buffer. Save window excursion, and
@@ -1941,11 +1961,20 @@ headlines")
       (md/shackle-advise 'undo-tree-visualize)
       (md/shackle-advise 'run-scheme)
       (md/shackle-advise 'mu4e~main-view)
-      (md/shackle-advise 'mu4e~headers-jump-to-maildir)
-      (md/shackle-advise 'mu4e-headers-search-bookmark)
       (md/shackle-advise 'mu4e-compose)
-      (md/shackle-advise 'find-file)
-      (md/shackle-advise 'neo-global--create-window)
+      (md/shackle-advise 'mu4e-headers-search)
+      ;; (md/shackle-unadvise 'mu4e~headers-jump-to-maildir)
+      ;; (md/shackle-unadvise 'mu4e-headers-search-bookmark)
+      ;; (md/shackle-unadvise 'mu4e~main-view)
+      ;; (md/shackle-unadvise 'mu4e~headers-jump-to-maildir)
+      ;; (md/shackle-unadvise 'mu4e-headers-search-bookmark)
+      ;; (md/shackle-unadvise 'mu4e-compose)
+      ;;(md/shackle-advise 'neo-global--create-window)
+
+      (defun md/mu4e-eyebrowse-quit (fn &rest args)
+        (apply fn args)
+        (shackle--eyebrowse-close-slot-by-tag "mail"))
+      (advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
 
       (setq shackle-rules
             `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
@@ -1980,10 +2009,10 @@ headlines")
               (".*init.org" :regexp t :same t :select t)
               (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
 
-              ;; TODO mu4e
-              (,mu4e~main-buffer-name :frame t :select t :align left :close-on-realign t)
-              (,mu4e~headers-buffer-name :select t :align right :close-on-realign t :size 0.80)
-              ('mu4e-compose-mode :other t :align right :size 0.80 :close-on-realign t :select t)
+            ;; TODO mu4e
+              (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
+              (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
+              ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
 
               ('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
 
@@ -2150,7 +2179,7 @@ headlines")
    (defun md/powerline-setup ()
      (interactive)
      (require 'flycheck)
-     (setq-default mode-line-format
+     (setq mode-line-format
                    '("%e"
                      (:eval
                       (let* ((active (powerline-selected-window-active))
@@ -2175,6 +2204,14 @@ headlines")
                                                               (cdr powerline-default-separator-dir))))
 
                              (lhs (list
+                                   (when eyebrowse-mode
+                                     (powerline-raw
+                                      (let* ((window-configs (eyebrowse--get 'window-configs))
+                                             (current-config (assoc (eyebrowse--get 'current-slot) window-configs))
+                                             (current-index (car current-config))
+                                             (current-tag (nth 2 current-config)))
+                                        (format "%s:%s" current-index current-tag)) face3 'l ))
+
                                    ;; Line / column numbers
                                    (when (or line-number-mode column-number-mode)
                                      (cond ((and line-number-mode
@@ -2245,14 +2282,18 @@ headlines")
                                    )))
                         (concat (powerline-render lhs)
                                 (powerline-fill mode-line (powerline-width rhs))
-                                (powerline-render rhs)))))))
+                                (powerline-render rhs))))))
+                   (setq-default mode-line-format mode-line-format))
 
    (defun md/powerline-reset ()
      (interactive)
-     (setq mode-line-format (md/powerline-setup))
+     (save-window-excursion
+       (mapc (lambda (buffer)
+               (switch-to-buffer buffer)
+               (md/powerline-setup))
+             (buffer-list)))
      (solarized-load-theme))
 
-   (md/powerline-setup)
    (md/powerline-reset)))
 
 (use-package color-theme-solarized
