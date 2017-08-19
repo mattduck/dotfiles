@@ -4,6 +4,7 @@ set show-changes = false
 set diff-context = 0
 set diff-highlight = false
 set mouse = true
+set refresh-mode = auto
 
 set diff-options = --pretty=medium
 
