@@ -1,91 +1,93 @@
 [user]
-    name = Matthew Duck
-    email = matt@mattduck.com
-    editor = vim
-
-[alias]
-    s = status
-    co = checkout
-    cob = checkout -b
-    ci = commit --verbose
-    b = branch
-
-    d = diff
-    dc = diff --cached
-    wd = diff --color-words
-    wdc = diff --color-words --cached
-
-    sta = stash --all --keep-index
-
-    # %h   short hash
-    # %s   subject
-    # %cn  committer
-    # %ad  date
-    # %d   branch
-    l = log --pretty=format:'%C(yellow)%h %C(green)%ad %C(blue)%an %C(reset)%s%C(auto)%d' --graph --date=short
-    ll = !git l --all
-    ld = !git l --date=relative
-    ldd = !git l --date=rfc
-    lp = log -p
-    lpw = log -p --word-diff
-
-
-    # Some useful bits here are taken from
-    # http://haacked.com/archive/2014/07/28/github-flow-aliases/
-
-    # List aliases
-    md-aliases=!git config -l | grep alias | cut -c 7-
-
-    # An alternative to stash if I just want to save WIP for this branch
-    md-savepoint = !git add -A && git commit -m 'SAVEPOINT'
-    md-undo = reset HEAD~1 --mixed
-
-    # A friendly alternative to --reset HEAD --hard: commit then remove, so my
-    # work stays is still accessible via reflog.
-    md-wipe = !git add -A && git commit -qm 'WIPE SAVEPOINT' && git reset HEAD~1 --hard
-
-    # Get up to date and remove remote branches that have been deleted
-    md-up = !git pull --rebase --prune $@ && git submodule update --init --recursive
-
-    # Delete all branches that have been merged into master or given branch
-    # Could do with passing --no-run-if-empty to xargs here, but that's only a
-    # valid flag for GNU xargs.
-    md-bclean = "!f() { git branch --merged ${1-master} | grep -v " ${1-master}$" | xargs git branch -d; }; f"
-
-    # Checkout branch, bring it up to date with origin and delete all merged branches
-    md-bdone = "!f() { git checkout ${1-master} && git md-up && git md-bclean ${1-master}; }; f"
-
-    # Grep through all commits
-    md-hgrep = "!f() { git rev-list --all | xargs git grep $@; }; f"
-
-    # Open merge conflicts in vim tabs
-    md-fix = "!f() { vim +/'<<<<<<<' -c 'redraw' -p `git diff --name-only --diff-filter=U`; }; f"
-
-    # Temporarily ignore files
-    md-ignore=update-index --assume-unchanged
-    md-unignore=update-index --no-assume-unchanged
-    md-ignored=!git ls-files -v | grep '^[[:lower:]]'
-
-    md-vconfig = config --global -e
-    md-vignore = !vi $DOTFILES/git/gitignore.symlink
-
-    # List recent branches
-    md-recent = "for-each-ref --sort='-authordate:iso8601' --format='%(authordate:relative) %09%09 %(refname:short)' refs/heads"
-
-[color]
-    ui = true
-    branch = auto
-    diff = auto
-    interactive = auto
-    status = auto
+name = Matthew Duck
+email = matt@mattduck.com
+editor = vim
 
 [core]
-    excludesfile = ~/.gitignore
+excludesfile = ~/.gitignore
+
+[alias]
+s = "!tig status"
+co = checkout
+cob = checkout -b
+ci = commit --verbose
+b = branch
+
+d = diff
+dc = diff --cached
+dw = diff --color-words
+dwc = diff --color-words --cached
+
+refs = !tig refs
+t = !tig refs
+
+stashq = stash --all --keep-index
+aliases=!git config -l | grep alias | cut -c 7-
+undo-commit = reset HEAD~1 --mixed
+github-switch-url = "!,github-switch-url"
+
+# Delete all branches that have been merged into master or given branch
+# Could do with passing --no-run-if-empty to xargs here, but that's only a
+# valid flag for GNU xargs.
+#
+# Not to be confused with `git clean`, which I don't really use.
+tidy = "!f() { git branch --merged ${1-master} | grep -v " ${1-master}$" | xargs git branch -d; }; f"
+
+# Grep through all commits
+hgrep = "!f() { git rev-list --all | xargs git grep $@; }; f"
+
+# Temporarily ignore files
+assume-unchanged=update-index --assume-unchanged
+assume-changed=update-index --no-assume-unchanged
+assumed=!git ls-files -v | grep '^[[:lower:]]'
+
+# List recent branches
+recent = "for-each-ref --sort='-authordate:iso8601' --format='%(authordate:relative) %09%09 %(refname:short)' refs/heads"
+
+# %h   short hash
+# %s   subject
+# %cn  committer
+# %ad  date
+# %d   branch
+l = "!f() { tig $@ || git log --pretty=format:'%C(10)%h %C(12)%ad %C(blue)%an %C(3)%s%C(auto)%d' --date=relative $@; }; f"
+ll = "!git l --all"
+lp = log -p
+lpw = log -p --word-diff
 
 [diff]
+# I find this easier to read
+algorithm = patience
 
-    # I find this easier to read
-    algorithm = patience
+[color]
+ui = true
+branch = auto
+diff = auto
+interactive = auto
+status = auto
+
+[color.diff]
+old = 9
+new = 2
+context = 10
+whitespace = 5
+meta = 7
+frag = 6
+commit = 3
+
+[color.decorate]
+branch = 6 ul
+remotebranch = 9 ul
+tag = 5 ul
+stash = 13 ul
+HEAD = 1 ul
+
+[color.status]
+added = 2
+changed = 9
+untracked = 10
+branch = 5 ul
+nobranch = 1
+unmerged = 9
 
 # Include local config if it exists
 [include]

@@ -1,0 +1,179 @@
+# Options ======================================
+set line-graphics = utf-8
+set show-changes = false
+set diff-context = 0
+set diff-highlight = false
+set mouse = true
+
+set diff-options = --pretty=medium
+
+# Allows opening in emacs
+set editor-line-number = false
+
+set main-view = date:display=relative author:display=full commit-title:graph=v2,refs=true
+set stash-view = date:display=relative author:display=full commit-title:graph=v2,refs=true
+set tree-view = mode author:display=full date:display=relative id file-size file-name
+
+
+# Bindings ======================================
+bind generic e none
+bind generic y none
+bind generic o none
+bind refs ! none
+bind status M none
+bind stash ! none
+
+bind generic <Ctrl-f>	move-page-down
+bind generic <Ctrl-b>	move-page-up
+bind generic f	move-page-down
+bind generic b	move-page-up
+bind generic g move-first-line
+bind generic G move-last-line
+bind main G move-last-line
+
+bind main F view-blob
+bind generic F view-blob
+bind generic D view-diff
+bind generic d :toggle date
+bind generic r refresh
+bind generic R view-refs
+bind generic E edit
+bind generic B view-blame
+bind generic S view-stash
+
+bind generic Y <?bash -c "echo -n '%(commit)' | pbcopy"
+
+bind generic C <?git checkout %(commit)
+bind refs C <?git checkout %(commit)
+
+# Colours =======================================
+#
+# The colors in the UI can be customized. In addition to the colors used
+# for the UI you can also define new colors to use in the pager, blob,
+# diff, and stage views by placing the text to match for in quotes.
+#
+# Prefix the name of a view to set a color only for that view, e.g.
+#
+#	color grep.file blue default
+#
+# As an example, this setting will to color Signed-off-by lines with a
+# yellow foreground color and use the default background color.
+#
+#	color "    Signed-off-by"	yellow	default
+#
+# Note the four leading spaces in the string to match. This is because
+# Git automatically indents commit messages by four spaces.
+#
+#
+# base03    #002b36  8/4 brblack  234 #1c1c1c 15 -12 -12   0  43  54 193 100  21
+# base02    #073642  0/4 black    235 #262626 20 -12 -12   7  54  66 192  90  26
+# base01    #586e75 10/7 brgreen  240 #585858 45 -07 -07  88 110 117 194  25  46
+# base00    #657b83 11/7 bryellow 241 #626262 50 -07 -07 101 123 131 195  23  51
+# base0     #839496 12/6 brblue   244 #808080 60 -06 -03 131 148 150 186  13  59
+# base1     #93a1a1 14/4 brcyan   245 #8a8a8a 65 -05 -02 147 161 161 180   9  63
+# base2     #eee8d5  7/7 white    254 #e4e4e4 92 -00  10 238 232 213  44  11  93
+# base3     #fdf6e3 15/7 brwhite  230 #ffffd7 97  00  10 253 246 227  44  10  99
+# yellow    #b58900  3/3 yellow   136 #af8700 60  10  65 181 137   0  45 100  71
+# orange    #cb4b16  9/3 brred    166 #d75f00 50  50  55 203  75  22  18  89  80
+# red       #dc322f  1/1 red      160 #d70000 50  65  45 220  50  47   1  79  86
+# magenta   #d33682  5/5 magenta  125 #af005f 50  65 -05 211  54 130 331  74  83
+# violet    #6c71c4 13/5 brmagenta 61 #5f5faf 50  15 -45 108 113 196 237  45  77
+# blue      #268bd2  4/4 blue      33 #0087ff 55 -10 -45  38 139 210 205  82  82
+# cyan      #2aa198  6/6 cyan      37 #00afaf 60 -35 -05  42 161 152 175  74  63
+# green     #859900  2/2 green     64 #5f8700 60 -20  65 133 153   0  68 100  60
+
+# Override the silly default matching
+color "---"			default	default
+color "diff --"			7	default
+color "--- "			7	default
+color "+++ "			7	default
+color "@@"			default	default
+color "+"			default	default
+color " +"			default	default
+color "-"			default	default
+color " -"			default	default
+color "index "			7	default
+color "old file mode "		7	default
+color "new file mode "		7	default
+color "deleted file mode "	9	default
+color "copy from "		7	default
+color "copy to "		7	default
+color "rename from "		7	default
+color "rename to "		7	default
+color "similarity "		7	default
+color "dissimilarity "		default	default
+color "diff-tree "		default	default
+color "Author: "		default	default
+color "Commit: "		3	default
+color "Tagger: "		default	default
+color "Merge: "			default	default
+color "Date: "			default	default
+color "AuthorDate: "		default	default
+color "CommitDate: "		default	default
+color "TaggerDate: "		default	default
+color "Refs: "			5	default
+color "Reflog: "		default	default
+color "Reflog message: "	default	default
+color "stash@{"			default	default
+color "commit "			3	default
+color "parent "			default	default
+color "tree "			default	default
+color "author "			default	default
+color "committer "		default	default
+color "    Signed-off-by"	default	default
+color "    Acked-by"		default	default
+color "    Tested-by"		default	default
+color "    Reviewed-by"		default	default
+
+color cursor			default 0
+color title-focus 7 0
+color title-blur 12 0
+
+color default			default	default	normal
+color status			green	default
+color delimiter			magenta	default
+color date			10	default
+color mode			cyan	default
+color id			magenta	default
+color overflow			red	default
+color header			6	default
+color section			cyan	default
+color directory			yellow	default
+color file			default	default
+color grep.file			blue	default
+color file-size			default	default
+color line-number		cyan	default
+color title-blur		white	blue
+color title-focus		white	blue
+color main-commit		3	default reverse
+color main-tag			5	default
+color main-local-tag		5	default
+color main-remote		9	default
+color main-replace		1	default
+color main-tracked		9	default
+color main-ref			6	default
+color main-head			1	default
+color stat-none			default	default
+color stat-staged		default	default
+color stat-unstaged		default	default
+color stat-untracked		default	default
+color help-group		3	default
+color help-action		4	default
+color diff-stat			4	default
+color palette-0			0	default
+color palette-1			1	default
+color palette-2			2	default
+color palette-3			3	default
+color palette-4			4	default
+color palette-5			5	default
+color palette-6			6	default
+color palette-7			7	default
+color palette-8			8	default
+color palette-9			9	default
+color palette-10		10	default
+color palette-11		11	default
+color palette-12		12	default
+color palette-13		13	default
+color graph-commit		blue	default
+color search-result		black	yellow
+color author 3 default
