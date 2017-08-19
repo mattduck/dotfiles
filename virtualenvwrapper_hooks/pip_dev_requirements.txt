@@ -5,3 +5,5 @@ jedi
 yapf
 ipython
 pudb
+pytest
+pytest-cov
