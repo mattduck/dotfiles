@@ -23,6 +23,7 @@ bind generic o none
 bind refs ! none
 bind status M none
 bind stash ! none
+bind main C none
 
 bind generic <Ctrl-f>	move-page-down
 bind generic <Ctrl-b>	move-page-up
@@ -45,6 +46,7 @@ bind generic S view-stash
 bind generic Y <?bash -c "echo -n '%(commit)' | pbcopy"
 
 bind generic C <?git checkout %(commit)
+bind main C <?git checkout %(commit)
 bind refs C <?git checkout %(commit)
 
 # Colours =======================================
