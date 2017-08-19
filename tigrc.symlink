@@ -1,6 +1,5 @@
 # Options ======================================
 set line-graphics = utf-8
-set show-changes = false
 set diff-context = 0
 set diff-highlight = false
 set mouse = true
@@ -37,11 +36,13 @@ bind main F view-blob
 bind generic F view-blob
 bind generic D view-diff
 bind generic d :toggle date
-bind generic r refresh
+bind generic r :toggle refs
 bind generic R view-refs
 bind generic E edit
 bind generic B view-blame
 bind generic S view-stash
+
+bind generic u refresh
 
 bind generic Y <?bash -c "echo -n '%(commit)' | pbcopy"
 

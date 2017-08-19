@@ -18,8 +18,8 @@ dc = diff --cached
 dw = diff --color-words
 dwc = diff --color-words --cached
 
+t = !tig
 refs = !tig refs
-t = !tig refs
 
 stashq = stash --all --keep-index
 aliases=!git config -l | grep alias | cut -c 7-
@@ -51,8 +51,7 @@ recent = "for-each-ref --sort='-authordate:iso8601' --format='%(authordate:relat
 # %d   branch
 l = "!f() { tig $@ || git log --pretty=format:'%C(10)%h %C(12)%ad %C(blue)%an %C(3)%s%C(auto)%d' --date=relative $@; }; f"
 ll = "!git l --all"
-lp = log -p
-lpw = log -p --word-diff
+lo = "!tig log"
 
 [diff]
 # I find this easier to read
