@@ -130,7 +130,7 @@ color "    Reviewed-by"		default	default
 
 color cursor			default 0
 color title-focus 7 0
-color title-blur 12 0
+color title-blur 12 14
 
 color default			default	default	normal
 color status			green	default
@@ -146,8 +146,6 @@ color file			default	default
 color grep.file			blue	default
 color file-size			default	default
 color line-number		cyan	default
-color title-blur		white	blue
-color title-focus		white	blue
 color main-commit		3	default reverse
 color main-tag			5	default
 color main-local-tag		5	default
