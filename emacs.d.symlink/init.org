@@ -341,11 +341,11 @@ the right fix, but it works for now:
 ** Terminal clipboard fixes
 
 Terminal Emacs doesn't integrate with the system clipboard by default. ~xclip~
-provides this behaviour in the same way that GUI Emacs has it.
+provides this behaviour in the same way that GUI Emacs has it. Turn it on even
+if on GUI as might connect as client to terminal.
 
 #+BEGIN_SRC emacs-lisp
   (use-package xclip
-    :if (not (display-graphic-p))
     :defer 1
     :config
     (progn
@@ -2940,14 +2940,6 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
         (md/shackle-advise 'mu4e~main-view)
         (md/shackle-advise 'mu4e-compose)
         (md/shackle-advise 'mu4e-headers-search)
-        ;; (md/shackle-unadvise 'mu4e~headers-jump-to-maildir)
-        ;; (md/shackle-unadvise 'mu4e-headers-search-bookmark)
-        ;; (md/shackle-unadvise 'mu4e~main-view)
-        ;; (md/shackle-unadvise 'mu4e~headers-jump-to-maildir)
-        ;; (md/shackle-unadvise 'mu4e-headers-search-bookmark)
-        ;; (md/shackle-unadvise 'mu4e-compose)
-        ;;(md/shackle-advise 'neo-global--create-window)
-        (md/shackle-unadvise 'find-file)
 
         (defun md/mu4e-eyebrowse-quit (fn &rest args)
           (apply fn args)
@@ -2966,8 +2958,8 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
                 ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
                 ("*edebug-trace*" :align t :close-on-realign t :size 15 :select nil)
                 ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
-                (".*\*Agenda Commands\*" :regexp t :align t :close-on-realign t :size 20 :select nil)
-                ("\*Org Agenda.*?\*" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
+                (".*\*Agenda Commands\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select nil)
+                ("\*Org Agenda.*?\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 0.33 :select nil)
                 ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
                 ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
                 ('grep-mode :align t :close-on-realign t :size 0.4 :select nil)
@@ -3538,9 +3530,6 @@ Close paren for the wrapping ~let~:
     deleting it in this circumstance, or moving the deletion to happen after the
     new one has been displayed.
 - [ ] put evil bindings properly in compilation mode, fix this =g= thing.
-- [ ] eyebrowse instead of elscreen?
-  - jumping to a named config could make it easier to have app separation for
-    eg. mail.
 - [ ] which-key timer update thing throwing error?
 - [ ] helm mini - group buffers better.
   - and better searching by the whole path/mode rather than the buffer name.

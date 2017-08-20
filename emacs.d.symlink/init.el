@@ -185,7 +185,6 @@
    (face-list)))
 
 (use-package xclip
-  :if (not (display-graphic-p))
   :defer 1
   :config
   (progn
@@ -2067,14 +2066,6 @@ headlines")
       (md/shackle-advise 'mu4e~main-view)
       (md/shackle-advise 'mu4e-compose)
       (md/shackle-advise 'mu4e-headers-search)
-      ;; (md/shackle-unadvise 'mu4e~headers-jump-to-maildir)
-      ;; (md/shackle-unadvise 'mu4e-headers-search-bookmark)
-      ;; (md/shackle-unadvise 'mu4e~main-view)
-      ;; (md/shackle-unadvise 'mu4e~headers-jump-to-maildir)
-      ;; (md/shackle-unadvise 'mu4e-headers-search-bookmark)
-      ;; (md/shackle-unadvise 'mu4e-compose)
-      ;;(md/shackle-advise 'neo-global--create-window)
-      (md/shackle-unadvise 'find-file)
 
       (defun md/mu4e-eyebrowse-quit (fn &rest args)
         (apply fn args)
@@ -2093,8 +2084,8 @@ headlines")
               ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
               ("*edebug-trace*" :align t :close-on-realign t :size 15 :select nil)
               ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
-              (".*\*Agenda Commands\*" :regexp t :align t :close-on-realign t :size 20 :select nil)
-              ("\*Org Agenda.*?\*" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
+              (".*\*Agenda Commands\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select nil)
+              ("\*Org Agenda.*?\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 0.33 :select nil)
               ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
               ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
               ('grep-mode :align t :close-on-realign t :size 0.4 :select nil)
