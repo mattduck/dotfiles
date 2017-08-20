@@ -7,3 +7,4 @@ ipython
 pudb
 pytest
 pytest-cov
+isort

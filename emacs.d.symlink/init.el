@@ -1288,18 +1288,18 @@ git dir) or linum mode"
   (progn
     (defun md/anaconda-set-company-backend ()
       (interactive)
-      (set (make-local-variable 'company-backends) '(company anaconda)))
+      (set (make-local-variable 'company-backends) '(company-anaconda)))
     (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
-
     (add-hook 'python-mode-hook 'anaconda-mode)
     (add-hook 'python-mode-hook 'anaconda-eldoc-mode))
+
+    ;; TODO make sure this jumps to the current buffer
+    (evil-define-key 'normal python-mode-map
+      "gd" 'anaconda-mode-find-assignments
+      "gD" 'anaconda-mode-find-definitions)
   :bind (:map md/python-mode-leader-map
               ("hr" . anaconda-mode-find-references)
-              ("hd" . anaconda-mode-show-doc)
-              :map python-mode-map
-              ;; TODO make sure this jumps to the current buffer
-              ("gD" . anaconda-mode-find-definitions)
-              ("gd" . anaconda-mode-find-assignments)))
+              ("hd" . anaconda-mode-show-doc)))
 
 ;; TODO pyvenv auto
 ;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
@@ -1315,6 +1315,7 @@ git dir) or linum mode"
 (use-package pip-requirements)
 
 (use-package pytest
+  :commands (pytest-run-all pytest-run-one pytest-run-failed)
   :bind (:map md/python-mode-leader-map
               ("SPC T T" . pytest-run-all)
               ("SPC T t" . pytest-run-one)
@@ -1411,10 +1412,11 @@ git dir) or linum mode"
               "gj" 'markdown-next-visible-heading)))
 
 (use-package conf-mode
-  :mode ((".conf'" . conf-mode)
+  :mode ((".conf" . conf-mode)
          (".cfg" . conf-mode)
          (".*rc" . conf-mode)
-         ("config" . conf-mode)))
+         (".ssh/config" . conf-mode)
+         (".ini" . conf-mode)))
 
 (use-package coffee-mode)
 
