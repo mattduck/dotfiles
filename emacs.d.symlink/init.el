@@ -261,6 +261,23 @@
       (concat str (make-string (- len (length str)) 32))
     str))
 
+(defun md/remove-file-and-buffer ()
+  "Kill the current buffer and deletes the file it is visiting."
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (when filename
+      (if (vc-backend filename)
+          (vc-delete-file filename)
+        (progn
+          (delete-file filename)
+          (message "Deleted file %s" filename)
+          (kill-buffer))))))
+
+(defun md/expand-newlines ()
+  (interactive)
+  (funcall-interactively 'replace-string "\\n" "
+" nil (region-beginning) (region-end)))
+
 (defun md/unfill-paragraph ()
   "Because I can't always wrap to 80 characters :("
   (interactive)
@@ -455,6 +472,7 @@
         ("bh" . previous-buffer)
         ("bl" . next-buffer)
         ("k" . kill-buffer)
+        ("K" . md/remove-file-and-buffer)
         ("bk" . kill-buffer)
         ("bi" . md/file-info)
         ("bw" . save-buffer)
@@ -481,6 +499,8 @@
         ;; Format
         ("Fj" . json-pretty-print)
         ("Fs" . sort-lines)
+        ("Fn" . md/expand-newlines)
+
 
         ; Toggle misc
         ("tw" . toggle-truncate-lines)
@@ -1187,6 +1207,13 @@ git dir) or linum mode"
   :bind (:map md/leader-map
               ("tr" . rainbow-mode)))
 
+(use-package eldoc ;; builtin
+  :config
+  (setq eldoc-echo-area-use-multiline-p 'always
+        eldoc-idle-delay 0.25
+        ;; Makes much more usable imo
+        eldoc-print-after-edit t))
+
 ;; This can be useful when debugging.
 (setq edebug-trace t)
 
@@ -1221,6 +1248,81 @@ git dir) or linum mode"
 (bind-key "r" 'edebug-previous-result edebug-mode-map)
 (bind-key "w" 'edebug-where edebug-mode-map)
 (bind-key "SPC" md/leader-map edebug-mode-map)
+
+(defun md/python-pudb-toggle-breakpoint ()
+  (interactive)
+  (let ((trace "import pudb; pu.db")
+        (line (thing-at-point 'line)))
+    (if (and line (string-match trace line))
+        (kill-whole-line)
+      (progn
+        (back-to-indentation)
+        (insert trace)
+        (python-indent-line)
+        (insert "\n")
+        (python-indent-line)))))
+
+(use-package find-file) ;; builtin, provides ff-basename
+(defun md/refresh-python-path ()
+  (interactive)
+  (-each (directory-files "/server/apps" t)
+    (lambda (f)
+      (when (and (f-directory? f)
+                 (not (-contains? '("." "..") (ff-basename f))))
+        (add-to-list 'python-shell-extra-pythonpaths f)))))
+
+(use-package python ;; builtin
+  :config
+  (evil-define-key 'normal python-mode-map
+    (kbd "SPC") md/python-mode-leader-map
+    "gk" 'python-nav-backward-defun
+    "gj" 'python-nav-forward-defun)
+  (md/refresh-python-path)
+  :bind (:map md/python-mode-leader-map
+              ("SPC B" . md/python-pudb-toggle-breakpoint)))
+
+;; Provide autocomplete, jump to definition and eldoc integration.
+(use-package anaconda-mode
+  :defer 1
+  :init
+  (progn
+    (defun md/anaconda-set-company-backend ()
+      (interactive)
+      (set (make-local-variable 'company-backends) '(company anaconda)))
+    (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
+
+    (add-hook 'python-mode-hook 'anaconda-mode)
+    (add-hook 'python-mode-hook 'anaconda-eldoc-mode))
+  :bind (:map md/python-mode-leader-map
+              ("hr" . anaconda-mode-find-references)
+              ("hd" . anaconda-mode-show-doc)
+              :map python-mode-map
+              ;; TODO make sure this jumps to the current buffer
+              ("gD" . anaconda-mode-find-definitions)
+              ("gd" . anaconda-mode-find-assignments)))
+
+;; TODO pyvenv auto
+;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
+
+(use-package py-isort
+  :bind (:map md/python-mode-leader-map
+              ("SPC I" . py-isort-buffer)))
+
+;; Provide company completion for anaconda
+(use-package company-anaconda)
+
+;; Syntax and completion for pip requirements files.
+(use-package pip-requirements)
+
+(use-package pytest
+  :bind (:map md/python-mode-leader-map
+              ("SPC T T" . pytest-run-all)
+              ("SPC T t" . pytest-run-one)
+              ("SPC T f" . pytest-run-failed)))
+
+(use-package yapfify
+  :bind (:map md/python-mode-leader-map
+              ("SPC F" . yapfify-buffer)))
 
 (when (not (getenv "GOPATH"))
  (setenv "GOPATH" "/Users/matt/golang")
@@ -1970,6 +2072,7 @@ headlines")
       ;; (md/shackle-unadvise 'mu4e-headers-search-bookmark)
       ;; (md/shackle-unadvise 'mu4e-compose)
       ;;(md/shackle-advise 'neo-global--create-window)
+      (md/shackle-unadvise 'find-file)
 
       (defun md/mu4e-eyebrowse-quit (fn &rest args)
         (apply fn args)
@@ -2326,19 +2429,7 @@ headlines")
  :config
  (progn
    (setq writeroom-width 90
-         writeroom-restore-window-config t)
-
-   (defun md/handle-elscreen (arg)
-     (cond
-      ((= arg 1)
-       (setq elscreen-display-tab nil)
-       (elscreen-notify-screen-modification 'force))
-      ((= arg -1)
-       (setq elscreen-display-tab t)
-       (elscreen-notify-screen-modification 'force))))
-
-   (add-to-list 'writeroom-global-effects 'md/handle-elscreen))
-
+         writeroom-restore-window-config t))
  :bind (:map md/leader-map
         ("tW" . writeroom-mode)))
 
