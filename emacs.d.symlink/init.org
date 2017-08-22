@@ -1778,11 +1778,12 @@ Override the edebug keymap to only contain features/keys that I care about:
   (use-package find-file) ;; builtin, provides ff-basename
   (defun md/refresh-python-path ()
     (interactive)
-    (-each (directory-files "/server/apps" t)
-      (lambda (f)
-        (when (and (f-directory? f)
-                   (not (-contains? '("." "..") (ff-basename f))))
-          (add-to-list 'python-shell-extra-pythonpaths f)))))
+    (when (f-directory? "/server/apps")
+      (-each (directory-files "/server/apps" t)
+        (lambda (f)
+          (when (and (f-directory? f)
+                     (not (-contains? '("." "..") (ff-basename f))))
+            (add-to-list 'python-shell-extra-pythonpaths f))))))
 
   (use-package python ;; builtin
     :config
@@ -1810,6 +1811,19 @@ Override the edebug keymap to only contain features/keys that I care about:
       (evil-define-key 'normal python-mode-map
         "gd" 'anaconda-mode-find-assignments
         "gD" 'anaconda-mode-find-definitions)
+
+      ;; TODO ideally this would open in a separate eyebrowse slot, and if you
+      ;; press enter would jump to the buffer in your original window, but keep
+      ;; the slot open.
+      ;; q should return to the original position.
+      ;; This behaviour should be consistent with eg. ag and other grep-type buffers.
+      (evil-define-key 'normal anaconda-mode-view-mode-map
+        "q" 'quit-window
+        (kbd "C-j") 'next-error-no-select
+        (kbd "C-n") 'next-error-no-select
+        (kbd "C-k") 'previous-error-no-select
+        (kbd "C-p") 'previous-error-no-select)
+
     :bind (:map md/python-mode-leader-map
                 ("hr" . anaconda-mode-find-references)
                 ("hd" . anaconda-mode-show-doc)))
@@ -1974,11 +1988,11 @@ NOTE - compiling requires ~markdown~ to be installed.
 ** Conf mode
 #+BEGIN_SRC emacs-lisp
   (use-package conf-mode
-    :mode ((".conf" . conf-mode)
-           (".cfg" . conf-mode)
-           (".*rc" . conf-mode)
-           (".ssh/config" . conf-mode)
-           (".ini" . conf-mode)))
+    :mode (("\\.conf\\'" . conf-mode)
+           ("\\.cfg\\'" . conf-mode)
+           ("\\.*rc" . conf-mode)
+           ("\\.ssh/config'" . conf-mode)
+           ("\\.ini\\'" . conf-mode)))
 
 
 #+END_SRC
@@ -2879,158 +2893,158 @@ Shackle didn't support "sticky" type windows out of the box, but it was easy to
 add the ~:close-on-realign~ flag to simulate this behaviour.
 
 #+BEGIN_SRC emacs-lisp
-    (defun md/use-display-buffer-alist (fn &rest args)
-        "Wrap a function that displays a buffer. Save window excursion, and
+  (defun md/use-display-buffer-alist (fn &rest args)
+    "Wrap a function that displays a buffer. Save window excursion, and
     re-display the new buffer using `display-buffer`, which allows Shackle to
     detect and process it. "
-        (let ((buffer-to-display nil)
-            (res nil))
-        (save-window-excursion
-            (setq res (apply fn args))
-            (setq buffer-to-display (current-buffer)))
-        (display-buffer buffer-to-display)
-        res))
+    (let ((buffer-to-display nil)
+          (res nil))
+      (save-window-excursion
+        (setq res (apply fn args))
+        (setq buffer-to-display (current-buffer)))
+      (display-buffer buffer-to-display)
+      res))
 
-    (use-package shackle
-      :load-path "non-elpa/shackle"  ; fork
-      :demand t
-      :config
-      (progn
+  (use-package shackle
+    :load-path "non-elpa/shackle"  ; fork
+    :demand t
+    :config
+    (progn
 
-        (defun md/shackle-down ()
-          (interactive)
-          (delete-window shackle-last-window))
+      (defun md/shackle-down ()
+        (interactive)
+        (delete-window shackle-last-window))
 
-        (defun md/shackle-up ()
-          (interactive)
-          (if shackle-last-buffer
-              (display-buffer shackle-last-buffer)
-            (message "No previous shackle buffer found")))
+      (defun md/shackle-up ()
+        (interactive)
+        (if shackle-last-buffer
+            (display-buffer shackle-last-buffer)
+          (message "No previous shackle buffer found")))
 
-  ;; TODO - check len is > 1
-        (defun md/shackle-toggle ()
-          (interactive)
-          (if (and (window-live-p shackle-last-window) (> (length (window-list)) 1))
-              (md/shackle-down)
-            (md/shackle-up)))
+      ;; TODO - check len is > 1
+      (defun md/shackle-toggle ()
+        (interactive)
+        (if (and (window-live-p shackle-last-window) (> (length (window-list)) 1))
+            (md/shackle-down)
+          (md/shackle-up)))
 
-        (defmacro md/shackle-advise (fn)
-          "Add advise to given function to wrap with md/shackle-wrapper."
-          `(advice-add ,fn :around 'md/use-display-buffer-alist
-                       '((name . "md/shackle"))))
+      (defmacro md/shackle-advise (fn)
+        "Add advise to given function to wrap with md/shackle-wrapper."
+        `(advice-add ,fn :around 'md/use-display-buffer-alist
+                     '((name . "md/shackle"))))
 
-        (defmacro md/shackle-unadvise (fn)
-          `(advice-remove ,fn 'md/use-display-buffer-alist))
+      (defmacro md/shackle-unadvise (fn)
+        `(advice-remove ,fn 'md/use-display-buffer-alist))
 
-        ;; Add advice for functions that display a new buffer but usually escape
-        ;; Shackle (eg. due to not calling display-buffer).
-        (md/shackle-advise 'helpful-function)
-        (md/shackle-advise 'helpful-command)
-        (md/shackle-advise 'helpful-macro)
-        (md/shackle-advise 'ansi-term)
-        (md/shackle-advise 'term)
-        (md/shackle-advise 'eshell)
-        (md/shackle-advise 'shell)
-        (md/shackle-advise 'dired)
-        (md/shackle-advise 'dired-jump)
-        (md/shackle-advise 'dired-single-buffer)
-        (md/shackle-advise 'projectile-run-term)
-        (md/shackle-advise 'undo-tree-visualize)
-        (md/shackle-advise 'run-scheme)
-        (md/shackle-advise 'mu4e~main-view)
-        (md/shackle-advise 'mu4e-compose)
-        (md/shackle-advise 'mu4e-headers-search)
+      ;; Add advice for functions that display a new buffer but usually escape
+      ;; Shackle (eg. due to not calling display-buffer).
+      (md/shackle-advise 'helpful-function)
+      (md/shackle-advise 'helpful-command)
+      (md/shackle-advise 'helpful-macro)
+      (md/shackle-advise 'ansi-term)
+      (md/shackle-advise 'term)
+      (md/shackle-advise 'eshell)
+      (md/shackle-advise 'shell)
+      (md/shackle-advise 'dired)
+      (md/shackle-advise 'dired-jump)
+      (md/shackle-advise 'dired-single-buffer)
+      (md/shackle-advise 'projectile-run-term)
+      (md/shackle-advise 'undo-tree-visualize)
+      (md/shackle-advise 'run-scheme)
+      (md/shackle-advise 'mu4e~main-view)
+      (md/shackle-advise 'mu4e-compose)
+      (md/shackle-advise 'mu4e-headers-search)
+      (md/shackle-advise 'magit-dispatch-popup)
 
-        (defun md/mu4e-eyebrowse-quit (fn &rest args)
-          (apply fn args)
-          (shackle--eyebrowse-close-slot-by-tag "mail"))
-        (advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
+      (defun md/mu4e-eyebrowse-quit (fn &rest args)
+        (apply fn args)
+        (shackle--eyebrowse-close-slot-by-tag "mail"))
+      (advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
 
-        (setq shackle-rules
-              `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
-                ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select t)
-                ('helpful-mode :align t :close-on-realign t :size 0.33 :select t)
-                ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-                ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-                ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-                ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
-                ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
-                ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
-                ("*edebug-trace*" :align t :close-on-realign t :size 15 :select nil)
-                ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
-                (".*\*Agenda Commands\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select nil)
-                ("\*Org Agenda.*?\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 0.33 :select nil)
-                ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
-                ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
-                ('grep-mode :align t :close-on-realign t :size 0.4 :select nil)
-                ('ag-mode :align t :close-on-realign t :size 0.4 :select nil)
-                ('term-mode :align t :close-on-realign t :size 0.4 :select t)
-                ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
-                ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
-                ('magit-status-mode :align t :close-on-realign t :size 0.33 :select t)
-                ('magit-revision-mode :align t :close-on-realign t :size 0.33 :select t)
-                ('magit-log-mode :align t :close-on-realign t :size 0.33 :select t)
-                ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
-                ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
-                ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
-                ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
-                ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
-                (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t)
-                (".*init.org" :regexp t :same t :select t)
-                (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
+      (setq shackle-rules
+            `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
+              ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select t)
+              ('helpful-mode :align t :close-on-realign t :size 0.33 :select t)
+              ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+              ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+              ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+              ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
+              ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
+              ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
+              ("*edebug-trace*" :align t :close-on-realign t :size 15 :select nil)
+              ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
+              (".*\*Agenda Commands\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select nil)
+              ("\*Org Agenda.*?\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 0.33 :select nil)
+              ("*Anaconda*" :eyebrowse "anaconda" :align t :close-on-realign t :size 0.3 :select t)
+              ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
+              ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
+              ('grep-mode :align t :close-on-realign t :size 0.4 :select nil)
+              ('ag-mode :align t :close-on-realign t :size 0.4 :select nil)
+              ('term-mode :align t :close-on-realign t :size 0.4 :select t)
+              ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
+              ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
+              ('magit-popup-mode :align 'left :eyebrowse "git" :select t)
+              ('magit-status-mode :eyebrowse "git" :select t)
+              ('magit-revision-mode :eyebrowse "git" :select t)
+              ('magit-log-mode :eyebrowse "git"  :select t)
+              ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
+              ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
+              ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
+              ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
+              ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
+              (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t)
+              (".*init.org" :regexp t :same t :select t)
+              (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
+              (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
+              (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
+              ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
+              ('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
 
-              ;; TODO mu4e
-                (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
-                (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
-                ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
+      (defmacro shackle-with-temp (rules body)
+        "Execute body with temporary shackle rules"
+        `(let ((shackle-rules (append ,rules shackle-rules)))
+           ,body))
 
-                ('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
+      ;; This is deprecated but works for now - need to figure out how to implement it
+      ;; with display-buffer-alist. It prevents us from opening a new frame every
+      ;; time I use mu4e.
+      (setq-default display-buffer-reuse-frames t)
 
-        (defmacro shackle-with-temp (rules body)
-          "Execute body with temporary shackle rules"
-          `(let ((shackle-rules (append ,rules shackle-rules)))
-             ,body))
+      ;; Ensure Helm doesn't interfere with Shackle buffers too much.
+      ;; - Use Shackle to control and position Helm buffers.
+      ;; - But ensure that shackle-last-buffer is not set to any Helm buffer.
+      ;;
+      ;; TODO - ideally Helm would cleanup buffers immediately to avoid
+      ;; interfering with other buffer display commands.
+      (setq helm-display-function 'pop-to-buffer) ; make sure helm popups are detected.
+      (defvar md/shackle-buffer-store nil)
+      (defvar md/shackle-window-store nil)
+      (defun md/helm-shackle-setup ()
+        (setq md/shackle-buffer-store shackle-last-buffer
+              md/shackle-window-store shackle-last-window))
+      (defun md/helm-shackle-teardown ()
+        (when md/shackle-buffer-store
+          (setq shackle-last-buffer md/shackle-buffer-store
+                shackle-last-window md/shackle-window-store)))
+      (add-hook 'helm-before-initialize-hook 'md/helm-shackle-setup)
+      (add-hook 'helm-cleanup-hook 'md/helm-shackle-teardown)
 
-        ;; This is deprecated but works for now - need to figure out how to implement it
-        ;; with display-buffer-alist. It prevents us from opening a new frame every
-        ;; time I use mu4e.
-        (setq-default display-buffer-reuse-frames t)
+      ;; NOTE: In order to get Shackle working with some org-mode commands, we
+      ;; have to override an internal function. Org is quite opinionated about
+      ;; window display, and usually this function will unset various buffer
+      ;; display variables before calling switch-to-buffer-other-window.
+      ;; I'd rather just control those buffers with Shackle.
+      (require 'org)
+      (fmakunbound 'org-switch-to-buffer-other-window)
+      (defun org-switch-to-buffer-other-window (&rest args)
+        (apply 'switch-to-buffer-other-window args))
+      (setq org-agenda-window-setup 'other-window)
 
-        ;; Ensure Helm doesn't interfere with Shackle buffers too much.
-        ;; - Use Shackle to control and position Helm buffers.
-        ;; - But ensure that shackle-last-buffer is not set to any Helm buffer.
-        ;;
-        ;; TODO - ideally Helm would cleanup buffers immediately to avoid
-        ;; interfering with other buffer display commands.
-        (setq helm-display-function 'pop-to-buffer) ; make sure helm popups are detected.
-        (defvar md/shackle-buffer-store nil)
-        (defvar md/shackle-window-store nil)
-        (defun md/helm-shackle-setup ()
-          (setq md/shackle-buffer-store shackle-last-buffer
-                md/shackle-window-store shackle-last-window))
-        (defun md/helm-shackle-teardown ()
-          (when md/shackle-buffer-store
-            (setq shackle-last-buffer md/shackle-buffer-store
-                  shackle-last-window md/shackle-window-store)))
-        (add-hook 'helm-before-initialize-hook 'md/helm-shackle-setup)
-        (add-hook 'helm-cleanup-hook 'md/helm-shackle-teardown)
+      (shackle-mode 1))
 
-        ;; NOTE: In order to get Shackle working with some org-mode commands, we
-        ;; have to override an internal function. Org is quite opinionated about
-        ;; window display, and usually this function will unset various buffer
-        ;; display variables before calling switch-to-buffer-other-window.
-        ;; I'd rather just control those buffers with Shackle.
-        (require 'org)
-        (fmakunbound 'org-switch-to-buffer-other-window)
-        (defun org-switch-to-buffer-other-window (&rest args)
-          (apply 'switch-to-buffer-other-window args))
-        (setq org-agenda-window-setup 'other-window)
-
-        (shackle-mode 1))
-
-      :bind (:map md/leader-map
-                  ("; ;" . display-buffer)  ;; Uses display-buffer-alist, so Shackle rules will apply.
-                  (";a" . md/shackle-toggle)))
+    :bind (:map md/leader-map
+                ("; ;" . display-buffer)  ;; Uses display-buffer-alist, so Shackle rules will apply.
+                (";a" . md/shackle-toggle)))
 #+END_SRC
 
 ** Dedicated
@@ -3534,3 +3548,5 @@ Close paren for the wrapping ~let~:
 - [ ] helm mini - group buffers better.
   - and better searching by the whole path/mode rather than the buffer name.
 - [ ] proper python/elpy setup.
+- [ ] [2017-08-20 Sun 23:28] sqlclient feature?
+  - basically just send region or buffer to psql and write to result buffer.
