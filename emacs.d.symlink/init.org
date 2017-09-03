@@ -997,7 +997,7 @@ easier to discover features / work out where I am:
               ;; Patch with my functions
               (md/which-key-patch)
 
-              (setq which-key-idle-delay 0.6
+              (setq which-key-idle-delay 0.1
                     which-key-max-description-length 30
                     which-key-allow-evil-operators nil
                     which-key-show-operator-state-maps nil
@@ -1620,8 +1620,6 @@ I can use this with grep/ag to quickly find the todo comments:
 #+END_SRC
 
 ** Parentheses
-Basic paren matching is built in. I preferred these settings at one point,
-although I don't remember exactly what the difference is:
 
 #+BEGIN_SRC emacs-lisp
   (use-package paren
@@ -1633,6 +1631,17 @@ although I don't remember exactly what the difference is:
      (setq show-paren-style 'parenthesis
            blink-matching-paren nil
            blink-matching-paren-on-screen nil)))
+
+  (use-package rainbow-delimiters-mode
+    :init
+    (add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode)
+    (defun md/toggle-rainbow-delimiters ()
+      (interactive)
+      (if rainbow-delimiters-mode
+          (rainbow-delimiters-mode -1)
+        (rainbow-delimiters-mode 1)))
+    :bind (:map md/leader-map
+                ("t(" . md/toggle-rainbow-delimiters)))
 #+END_SRC
 
 ** Colour hex values
@@ -1716,6 +1725,7 @@ although I don't remember exactly what the difference is:
 
 (use-package dash :demand t)
 (use-package f :demand t)
+(use-package s :demand t)
 
 *** Debug
 #+BEGIN_SRC emacs-lisp
@@ -3120,10 +3130,194 @@ Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs
 
 #+END_SRC
 * Bookmarks
+
+Provide some utility functions and helm commands around managing
+bookmarks:
+
+- A replacement for helm-bookmarks that includes custom actions.
+- Handle bookmarks tagged as "tmp".
+- Handle bookmarks tagged with the current project name.
+
 #+BEGIN_SRC emacs-lisp
-  (bind-key "Bj" 'bookmark-jump md/leader-map)
-  (bind-key "Bs" 'bookmark-set md/leader-map)
-  (bind-key "Bd" 'bookmark-delete md/leader-map)
+  (defun md/bookmark-names-matching-tags (tags)
+    "Return bmkp bookmark names that match the given list of tags."
+    (-map (lambda (bookmark)
+            (bookmark-name-from-record bookmark))
+          (bmkp-some-tags-alist-only tags)))
+
+  (defun md/bookmark-set (name)
+    "Set a bookmark and provide some auto tags"
+    (interactive)
+    (bookmark-set name)
+    (message "Added bookmark: %s" name)
+    (when (projectile-project-p)
+      (bmkp-add-tags (bookmark-get-bookmark name)
+                     (list
+                      (format "project-%s" (projectile-project-name))))))
+
+  (defvar md/bookmark-last-temp nil)
+  (defun md/bookmark-temp-set ()
+    "Set bookmark with automatic name and tag it as temporary"
+    (interactive)
+    (let ((bmk-name (s-truncate 50
+                                (s-trim
+                                 (substring-no-properties (thing-at-point 'line))))))
+      (when (string= "" (s-trim bmk-name))
+        (setq bmk-name "[blank-line]"))
+      (md/bookmark-set bmk-name)
+      (setq md/bookmark-last-temp (bookmark-get-bookmark bmk-name))
+      (bmkp-add-tags (bookmark-get-bookmark bmk-name) '("tmp"))))
+
+  (defun md/bookmark-jump-to-last-temp ()
+    (interactive)
+    (if md/bookmark-last-temp
+        (bookmark-jump md/bookmark-last-temp)
+      (message "No temp bookmark to jump to")))
+
+  (defun md/bookmark-temp-delete-all ()
+    "Delete all temp-tagged bookmarks"
+    (interactive)
+    (-each (bmkp-some-tags-alist-only '("tmp"))
+      (lambda (bookmark)
+        (bookmark-delete bookmark)))
+    (message "Deleted temp bookmarks"))
+
+  (defun md/helm-bookmark-action-delete (candidate)
+    "Delete the helm candidate."
+    (bookmark-delete (bookmark-get-bookmark candidate))
+    (message "Deleted bookmark: %s" candidate))
+
+  (defun md/helm-bookmark-action-tag (candidate)
+    "Prompt to tag the helm candidate."
+    (let ((bookmark (bookmark-get-bookmark candidate)))
+      (bmkp-add-tags bookmark (list (completing-read "Tag: " (bmkp-tags-list t nil))))))
+
+  (defun md/helm-bookmark-action-edit (candidate)
+    "Edit the full file for the helm candidate."
+    (bmkp-edit-bookmark-record (bookmark-get-bookmark candidate)))
+
+  (defface md/helm-bookmarks-bookmark '((t (:inherit default))) "")
+  (defface md/helm-bookmarks-file '((t (:inherit default))) "")
+  (defface md/helm-bookmarks-tags '((t (:inherit org-tag))) "")
+  (defface md/helm-bookmarks-separator '((t (:inherit org-tag))) "")
+  (defun md/helm-bookmark-transform (candidates)
+    "Transform Helm source to provide display values with filename and tags.
+  Adapted from helm-bookmark-transformer."
+    (-map (lambda (real)
+            (let* ((bookmark (bookmark-get-bookmark real))
+                   (loc (bookmark-location bookmark))
+                   (trunc-loc (s-pad-right 35 " "
+                                              (s-truncate 30
+                                                          (if (listp loc)
+                                                              (car loc)
+                                                            loc))))
+
+                   (trunc-name (s-pad-right 45 " "
+                                            (s-truncate 40 real)))
+
+                   ;; (trunc (if (> len bookmark-bmenu-file-column)
+                   ;;            (helm-substring real bookmark-bmenu-file-column)
+                   ;;          real))
+                   ;; (sep (make-string (- (+ bookmark-bmenu-file-column 2)
+                   ;;                      (length trunc))
+                   ;;                   ? ))
+                   (tags (s-join " "
+                                 (-map (lambda (text)
+                                         (propertize text 'face
+                                                     'md/helm-bookmarks-tags))
+                                       (bmkp-get-tags bookmark))))
+                   (display
+                    (concat (propertize trunc-name 'face 'md/helm-bookmarks-bookmark)
+                            (propertize trunc-loc 'face 'md/helm-bookmarks-file)
+                            tags)))
+              (cons display real)))
+          candidates))
+
+  (defmacro md/helm-source-build-bookmarks (title bookmark-fetcher)
+    "Return a helm bookmark source that fetches candidates using the provided body"
+   `(helm-build-sync-source ,title
+     :candidates (md/helm-bookmark-transform ,bookmark-fetcher)
+     :action '(("Jump" . helm-bookmark-jump)
+               ("Tag" . md/helm-bookmark-action-tag)
+               ("Edit" . md/helm-bookmark-action-edit)
+               ("Delete" . md/helm-bookmark-action-delete))))
+
+
+  (defmacro md/helm-source-build-bookmark-set (mark-as-temp-p)
+    "Return a helm bookmarks source that is like helm-source-bookmark set, but
+  uses md/bookmark-set and optionally marks the bookmark as temporary."
+    `(helm-build-dummy-source "Set Bookmark"
+      :filtered-candidate-transformer
+      (lambda (_candidates _source)
+        (list (or (and (not (string= helm-pattern ""))
+                       helm-pattern)
+                  "Enter a bookmark name to record")))
+      :action '(("Set bookmark" . (lambda (candidate)
+                                    (if (string= helm-pattern "")
+                                        (message "No bookmark name given for record")
+                                      (md/bookmark-set candidate)
+                                      ,(when mark-as-temp-p
+                                         '(bmkp-add-tags (bookmark-get-bookmark
+                                                          candidate)
+                                                         '("tmp")))))))))
+
+  (defun md/helm-bookmarks ()
+    "Main Helm bookmarks command."
+    (interactive)
+    (helm :sources
+          (list (md/helm-source-build-bookmarks
+                 "Bookmarks"
+                 (-difference
+                  (bookmark-all-names)
+                  (md/bookmark-names-matching-tags '("tmp"))))
+                (md/helm-source-build-bookmarks
+                 "Temp bookmarks" (md/bookmark-names-matching-tags '("tmp")))
+                (md/helm-source-build-bookmark-set nil))
+          :buffer "*helm md/helm-bookmarks*"))
+
+  (defun md/helm-bookmarks-project ()
+    "Like md/helm-bookmarks, but for the current projectile project."
+    (interactive)
+    (helm :sources
+          (list (md/helm-source-build-bookmarks
+                 (format "Bookmarks for project: %s" (projectile-project-name))
+                 (md/bookmark-names-matching-tags
+                  (list (format "project-%s" (projectile-project-name)))))
+                (md/helm-source-build-bookmark-set nil))
+          :buffer "*helm md/helm-bookmarks-project*"))
+
+  (defun md/helm-bookmarks-temp ()
+    "Like md/helm-bookmarks, but for the temp-tagged bookmarks."
+    (interactive)
+    (helm :sources
+          (list (md/helm-source-build-bookmarks "Temp bookmarks"
+                 (md/bookmark-names-matching-tags '("tmp")))
+                (md/helm-source-build-bookmark-set t))
+          :buffer "*helm md/helm-bookmarks-temp*"))
+#+END_SRC
+
+
+Bookmark package configuration and bindings:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package bookmark
+    :config
+    (setq helm-bookmark-show-location t
+          bookmark-bmenu-file-column 60
+          bookmark-automatically-show-annotations nil
+          bookmark-completion-ignore-case t))
+
+  (use-package bookmark+
+      :demand t
+      :bind (:map md/leader-map
+                  ("ll" . md/helm-bookmarks)
+                  ("jl" . md/helm-bookmarks-project)
+                  ("lf" . md/helm-bookmarks-temp)
+                  ("ls" . md/bookmark-temp-set)
+                  ("lj" . md/bookmark-jump-to-last-temp)
+                  ("ld" . md/bookmark-temp-delete-all)))
+
+
 #+END_SRC
 * Scratch
 
