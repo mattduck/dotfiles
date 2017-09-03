@@ -1133,8 +1133,44 @@ This is handy sometimes - it provides ~free-keys~, which lists unbound keys.
   (use-package ag
     :config
     (progn
-      (evil-add-hjkl-bindings 'ag-mode-map
-        (kbd "SPC") 'md/leader-map)
+      ;; evil-integration basically breaks all sane bindings, so undo it.
+      (-remove-item 'ag-mode evil-motion-state-modes)
+      (add-hook 'ag-mode-hook 'evil-emacs-state)
+
+      (defun md/ag-quit ()
+        (interactive)
+        (quit-window t)
+        (eyebrowse-close-window-config))
+
+      ;; Not sure if there is a builtin way to achieve this.
+      (defun md/compile-preview ()
+        (interactive)
+        (let ((current (get-buffer-window)))
+          (compile-goto-error)
+          (select-window current)))
+
+      ;; Make no-op as we only care about a few bindings
+      (md/make-keymap-noop ag-mode-map)
+      (bind-key "SPC" md/leader-map ag-mode-map)
+      (bind-key "C-w" splitscreen/mode-map ag-mode-map)
+      (bind-key "q" 'md/ag-quit ag-mode-map)
+      (bind-key "RET" 'compile-goto-error ag-mode-map)
+      (bind-key "TAB" 'md/compile-preview ag-mode-map)
+      (bind-key "F" 'next-error-follow-minor-mode ag-mode-map) ;; Follow!
+      (bind-key "n" 'compilation-next-error ag-mode-map)
+      (bind-key "j" 'compilation-next-error ag-mode-map)
+      (bind-key "p" 'compilation-previous-error ag-mode-map)
+      (bind-key "k" 'compilation-previous-error ag-mode-map)
+      (bind-key "C-n" 'compilation-next-file ag-mode-map)
+      (bind-key "C-j" 'compilation-next-file ag-mode-map)
+      (bind-key "C-p" 'compilation-previous-file ag-mode-map)
+      (bind-key "C-k" 'compilation-previous-file ag-mode-map)
+      (bind-key "C-f" 'evil-scroll-page-down ag-mode-map)
+      (bind-key "C-b" 'evil-scroll-page-up ag-mode-map)
+      (bind-key "C-d" 'evil-scroll-down ag-mode-map)
+
+      ;; TODO - fix issue where ag will re-use an existing buffer if the buffer
+      ;; that has a match is already open. Can wrap it in a temp shackle rule.
 
       (setq ag-context-lines nil
             ag-highlight-search t
@@ -2971,6 +3007,7 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
         (shackle--eyebrowse-close-slot-by-tag "mail"))
       (advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
 
+      ;; TODO ediff
       (setq shackle-rules
             `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
               ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select t)
@@ -2981,15 +3018,15 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
               ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
               ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
               ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
-              ("*edebug-trace*" :align t :close-on-realign t :size 15 :select nil)
+              ("*edebug-trace*" :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
               ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
               (".*\*Agenda Commands\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select nil)
               ("\*Org Agenda.*?\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 0.33 :select nil)
               ("*Anaconda*" :eyebrowse "anaconda" :align t :close-on-realign t :size 0.3 :select t)
               ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
               ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
-              ('grep-mode :align t :close-on-realign t :size 0.4 :select nil)
-              ('ag-mode :align t :close-on-realign t :size 0.4 :select nil)
+              ('grep-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
+              ('ag-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
               ('term-mode :align t :close-on-realign t :size 0.4 :select t)
               ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
               ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
