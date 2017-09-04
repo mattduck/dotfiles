@@ -21,10 +21,13 @@ dwc = diff --color-words --cached
 t = !tig
 refs = !tig refs
 
+save =!git stash --all --keep-index && git stash apply
 stashq = stash --all --keep-index
 aliases=!git config -l | grep alias | cut -c 7-
 undo-commit = reset HEAD~1 --mixed
 github-switch-url = "!,github-switch-url"
+
+stashpull ="!f() { git stash --all --keep-index && git pull $@ && git stash pop; }; f "
 
 # Delete all branches that have been merged into master or given branch
 # Could do with passing --no-run-if-empty to xargs here, but that's only a
