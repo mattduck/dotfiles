@@ -123,12 +123,12 @@
 
 (defun md/set-default-font ()
   (interactive)
-  (if (or (string= (system-name) "mattmbp")
-          (string= (system-name) "mattmbp.local"))
-      (set-frame-font "Monaco-12:antialias=subpixel" t t)
-    (set-frame-font "Monaco-12:antialias=subpixel" t t)))
-
-(md/set-default-font)
+  (cond ((s-starts-with-p "mattmbp" (system-name))
+         (set-frame-font "Monaco-12:antialias=subpixel" t t))
+        ((s-starts-with-p "omattria" (system-name))
+         (set-frame-font "Monaco-11:antialias=subpixel" t t))
+        (t
+         (set-frame-font "Monaco-11:antialias=subpixel" t t))))
 
 (add-hook 'focus-in-hook 'md/set-default-font)
 
