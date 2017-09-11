@@ -1702,14 +1702,38 @@ I can use this with grep/ag to quickly find the todo comments:
           ;; Makes much more usable imo
           eldoc-print-after-edit t))
 #+END_SRC
-** COMMENT Folding
+** Folding
 
+*** Origami
+
+#+BEGIN_SRC emacs-lisp
+  (use-package origami
+    :config
+    (progn
+      (add-hook 'prog-mode-hook 'origami-mode)
+      (setq origami-show-fold-header t)
+      (evil-define-key 'normal origami-mode-map
+        (kbd "<tab>") 'origami-recursively-toggle-node
+        (kbd "S-<tab>") 'origami-toggle-all-nodes
+        "gj" 'origami-forward-fold
+        "gk" 'origami-previous-fold
+        "zr" 'origami-open-node
+        "zR" 'origami-open-all-nodes
+        "zm" 'origami-close-nodes
+        "zM" 'origami-close-all-nodes)
+      (origami-mode 1)))
+#+END_SRC
+*** COMMENT old
 #+BEGIN_SRC emacs-lisp
   ;; outline-magic provides org-cycle
   (use-package outline-magic
     :demand t
     :config
     (progn
+     ;; TODO update hideshow-org? Think it accomplishes similar thing.
+
+
+
       ;; TODO - any way to support narrowing? org-narrow-to-subtree works in
       ;; outline mode, but move-subtree-up/down don't work properly when narrowed.
 
@@ -1746,15 +1770,21 @@ I can use this with grep/ag to quickly find the todo comments:
         (interactive)
         (setq-local outline-regexp
                     (rx-to-string
-                     '(group (* space)
-                             (* "#")
-                             (* space)
+                     '(group (zero-or-more space)
+                             (zero-or-more "#")
+                             (zero-or-more space)
                              bow
-                             (or "class" "def")
-                             ))))
-      (add-hook 'python-mode-hook 'md/outline-minor-mode-python)
-      ))
+                             (or "class" "def"))))
+        (setq-local outline-heading-end-regexp
+                    (rx-to-string
+                     (or
+                      ('group
+                       (zero-or-more anything)
+                       ("):")
+
+      (add-hook 'python-mode-hook 'md/outline-minor-mode-python)))
 #+END_SRC
+
 * Language support
 ** Emacs-lisp
 *** Libraries

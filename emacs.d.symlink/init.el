@@ -1260,6 +1260,22 @@ git dir) or linum mode"
         ;; Makes much more usable imo
         eldoc-print-after-edit t))
 
+(use-package origami
+  :config
+  (progn
+    (add-hook 'prog-mode-hook 'origami-mode)
+    (setq origami-show-fold-header t)
+    (evil-define-key 'normal origami-mode-map
+      (kbd "<tab>") 'origami-recursively-toggle-node
+      (kbd "S-<tab>") 'origami-toggle-all-nodes
+      "gj" 'origami-forward-fold
+      "gk" 'origami-previous-fold
+      "zr" 'origami-open-node
+      "zR" 'origami-open-all-nodes
+      "zm" 'origami-close-nodes
+      "zM" 'origami-close-all-nodes)
+    (origami-mode 1)))
+
 ;; This can be useful when debugging.
 (setq edebug-trace t)
 
