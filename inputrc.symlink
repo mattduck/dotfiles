@@ -24,7 +24,7 @@ set keymap vi-insert
 "\C-e": end-of-line
 "\C-u": backward-kill-line
 "jj": vi-movement-mode
-"\C-j": menu-complete
+#"\C-j": menu-complete
 "\C-k": menu-complete-backward
 
 # Be quiet

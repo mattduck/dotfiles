@@ -192,6 +192,12 @@
 
 (setq message-log-max 10000)
 
+(defun md/log (content)
+  (message
+   (with-temp-buffer
+     (cl-prettyprint content)
+     (buffer-string))))
+
 (if (eq system-type 'darwin)
     (setq
 
@@ -691,6 +697,7 @@ represent all current available bindings accurately as a single keymap."
             (setq which-key-idle-delay 0.1
                   which-key-max-description-length 30
                   which-key-allow-evil-operators nil
+                  which-key-inhibit-regexps '("C-w")
                   which-key-show-operator-state-maps nil
                   which-key-sort-order 'which-key-key-order-alpha
                   which-key-highlighted-command-list '("md/"))
@@ -1272,9 +1279,17 @@ git dir) or linum mode"
       "gk" 'origami-previous-fold
       "zr" 'origami-open-node
       "zR" 'origami-open-all-nodes
-      "zm" 'origami-close-nodes
+      "zm" 'origami-close-node
       "zM" 'origami-close-all-nodes)
     (origami-mode 1)))
+
+(defun md/emacs-lisp-hook ()
+    (setq fill-column 100))
+(add-hook 'emacs-lisp-mode-hook 'md/emacs-lisp-hook)
+
+(use-package dash :demand t)
+(use-package f :demand t)
+(use-package s :demand t)
 
 ;; This can be useful when debugging.
 (setq edebug-trace t)
@@ -1952,6 +1967,14 @@ headlines")
   (progn
       (add-to-list 'company-backends 'company-restclient)))
 
+(use-package atomic-chrome
+  :config
+  (atomic-chrome-start-server)
+  (setq atomic-chrome-extension-type-list '(ghost-text)
+        atomic-chrome-buffer-open-style 'frame
+        atomic-chrome-default-major-mode 'markdown-mode
+        atomic-chrome-url-major-mode-alist '(("github\\.com" . gfm-mode))))
+
 (use-package mu4e
   :config
   (progn
@@ -1965,7 +1988,7 @@ headlines")
 
      ;; We're using mbsync to fetch mail
      ;;mu4e-get-mail-command "mbsync -a"
-     mu4e-get-mail-command "true"
+    mu4e-get-mail-command "true"
 
      ;; Use Helm (defaults to ido)
      mu4e-completing-read-function 'completing-read
@@ -2161,7 +2184,8 @@ headlines")
             ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
             ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
             ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
-            ("*edebug-trace*" :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
+            ;; ("*edebug-trace*" :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
+            ('edebug-mode :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
             ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
             (".*\*Agenda Commands\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select nil)
             ("\*Org Agenda.*?\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 0.33 :select nil)

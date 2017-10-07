@@ -357,7 +357,13 @@ if on GUI as might connect as client to terminal.
 Increase the number of messages:
 
 #+BEGIN_SRC emacs-lisp
-(setq message-log-max 10000)
+  (setq message-log-max 10000)
+
+  (defun md/log (content)
+    (message
+     (with-temp-buffer
+       (cl-prettyprint content)
+       (buffer-string))))
 #+END_SRC
 ** Modifier keys
 *** OS X
@@ -1000,6 +1006,7 @@ easier to discover features / work out where I am:
               (setq which-key-idle-delay 0.1
                     which-key-max-description-length 30
                     which-key-allow-evil-operators nil
+                    which-key-inhibit-regexps '("C-w")
                     which-key-show-operator-state-maps nil
                     which-key-sort-order 'which-key-key-order-alpha
                     which-key-highlighted-command-list '("md/"))
@@ -1719,7 +1726,7 @@ I can use this with grep/ag to quickly find the todo comments:
         "gk" 'origami-previous-fold
         "zr" 'origami-open-node
         "zR" 'origami-open-all-nodes
-        "zm" 'origami-close-nodes
+        "zm" 'origami-close-node
         "zM" 'origami-close-all-nodes)
       (origami-mode 1)))
 #+END_SRC
@@ -1787,11 +1794,22 @@ I can use this with grep/ag to quickly find the todo comments:
 
 * Language support
 ** Emacs-lisp
+
+*** Setup
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/emacs-lisp-hook ()
+      (setq fill-column 100))
+  (add-hook 'emacs-lisp-mode-hook 'md/emacs-lisp-hook)
+#+END_SRC
+
 *** Libraries
 
+#+BEGIN_SRC emacs-lisp
 (use-package dash :demand t)
 (use-package f :demand t)
 (use-package s :demand t)
+#+END_SRC
 
 *** Debug
 #+BEGIN_SRC emacs-lisp
@@ -2628,6 +2646,20 @@ POST https://httpbin.org/post
 
 This is the body
 #+END_EXAMPLE
+* Web browser
+** Atomic Chrome / Ghost Text
+- https://github.com/GhostText/GhostText
+  
+#+BEGIN_SRC emacs-lisp
+  (use-package atomic-chrome
+    :config
+    (atomic-chrome-start-server)
+    (setq atomic-chrome-extension-type-list '(ghost-text)
+          atomic-chrome-buffer-open-style 'frame
+          atomic-chrome-default-major-mode 'markdown-mode
+          atomic-chrome-url-major-mode-alist '(("github\\.com" . gfm-mode))))
+#+END_SRC
+
 * Email
 
 - Dependencies:
@@ -2656,7 +2688,7 @@ This is the body
 
        ;; We're using mbsync to fetch mail
        ;;mu4e-get-mail-command "mbsync -a"
-       mu4e-get-mail-command "true"
+      mu4e-get-mail-command "true"
 
        ;; Use Helm (defaults to ido)
        mu4e-completing-read-function 'completing-read
@@ -3048,7 +3080,8 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
               ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
               ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
               ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
-              ("*edebug-trace*" :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
+              ;; ("*edebug-trace*" :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
+              ('edebug-mode :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
               ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
               (".*\*Agenda Commands\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select nil)
               ("\*Org Agenda.*?\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 0.33 :select nil)
@@ -3811,3 +3844,4 @@ Close paren for the wrapping ~let~:
 - [ ] proper python/elpy setup.
 - [ ] [2017-08-20 Sun 23:28] sqlclient feature?
   - basically just send region or buffer to psql and write to result buffer.
+- [ ] own logging/messages buffer? To avoid the noise.
