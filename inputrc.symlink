@@ -24,6 +24,8 @@ set keymap vi-insert
 "\C-e": end-of-line
 "\C-u": backward-kill-line
 "jj": vi-movement-mode
+
+# disable for tramp
 #"\C-j": menu-complete
 "\C-k": menu-complete-backward
 

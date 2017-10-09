@@ -300,16 +300,18 @@ NOTE: The Fringe only displays in GUI Emacs.
 
 ** Indentation
 #+BEGIN_SRC emacs-lisp
-  (setq-default
+	(setq-default
 
-   ;; Use spaces instead of tabs
-   indent-tabs-mode nil
+	 ;; Use spaces instead of tabs
+	 indent-tabs-mode nil
 
-   ;; Display tab as 4 chars wide
-   tab-width 4)
+	 ;; Display tab as 4 chars wide
+	 tab-width 4)
 
-  ;; Emable on-the-fly indenting. TODO - read docs for this
-  (electric-indent-mode 1)
+	(setq tab-always-indent nil)  ;; Don't do magic indenting when I press tab
+
+	;; Emable on-the-fly indenting. TODO - read docs for this
+	(electric-indent-mode 1)
 #+END_SRC
 ** Disable the bell
 #+BEGIN_SRC emacs-lisp
@@ -743,6 +745,7 @@ by using a noop function:
 
           ; Toggle misc
           ("tw" . toggle-truncate-lines)
+          ("t <tab>" . whitespace-mode)
 
           ;; This could be useful
           ("U" . undo-tree-visualize)
@@ -1215,57 +1218,61 @@ Company seems to work nicely without much configuration.
 
 ** Flycheck
 #+BEGIN_SRC emacs-lisp
-  (use-package flycheck
-    :init
-    (progn
-      (add-hook 'prog-mode-hook 'flycheck-mode))
-    :config
-    (progn
-      (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
-      (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
+    (use-package flycheck
+      :init
+      (progn
+        (add-hook 'prog-mode-hook 'flycheck-mode))
+      :config
+      (progn
+        (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
+        (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
 
-      (setq-default flycheck-disabled-checkers
+        (setq-default flycheck-disabled-checkers
 
-            ;; Most of these elisp warnings assume that I'm writing a proper package
-            ;; with full documentation. This is usually not the case, so just
-            ;; disable them.
-            '(emacs-lisp-checkdoc))
+              ;; Most of these elisp warnings assume that I'm writing a proper package
+              ;; with full documentation. This is usually not the case, so just
+              ;; disable them.
+              '(emacs-lisp-checkdoc))
 
-      (setq flycheck-flake8rc ".config/flake8"
-            flycheck-highlighting-mode 'symbols
+        (setq flycheck-flake8rc ".config/flake8"
+              flycheck-highlighting-mode 'symbols
 
-            ;; defaults to 0.9, which is too slow
-            flycheck-display-errors-delay 0.1
+              ;; defaults to 0.9, which is too slow
+              flycheck-display-errors-delay 0.1
 
-            ;; Disabling this at is annoys me to have errors appearing
-            ;; and disappearing quickly and messing with the size of the
-            ;; window. I will just check the error list and the fringe.
-            flycheck-display-errors-function nil
+              ;; Disabling this at is annoys me to have errors appearing
+              ;; and disappearing quickly and messing with the size of the
+              ;; window. I will just check the error list and the fringe.
+              flycheck-display-errors-function nil
 
-            ;; There's a short delay when flycheck runs, which causes the modeline to change
-            ;; its format (or in my custom powerline stuff, to disappear briefly). It's
-            ;; super annoying if this happens at random points during editing, so change it
-            ;; to only happen on save (and when enabling the mode). This is quite similar to how
-            ;; I had it setup in vim.
-            flycheck-check-syntax-automatically '(save mode-enabled)
+              ;; There's a short delay when flycheck runs, which causes the modeline to change
+              ;; its format (or in my custom powerline stuff, to disappear briefly). It's
+              ;; super annoying if this happens at random points during editing, so change it
+              ;; to only happen on save (and when enabling the mode). This is quite similar to how
+              ;; I had it setup in vim.
+              flycheck-check-syntax-automatically '(save mode-enabled)
 
-            flycheck-mode-line-prefix nil)
+              flycheck-mode-line-prefix nil)
 
-      ;; For some reason in the flycheck mode list map it just uses all vi
-      ;; keys. Mostly this is fine but I need an easy way to quit.
-      (evil-define-key 'normal flycheck-error-list-mode-map "q" 'quit-window))
-    :bind (:map md/leader-map
-                ;; S prefix, ie. "syntax"
-                ("s <RET>" . flycheck-mode)
-                ("sl" . flycheck-list-errors)
-                ("sn" . flycheck-next-error)
-                ("sj" . flycheck-next-error)
-                ("sp" . flycheck-previous-error)
-                ("sk" . flycheck-previous-error)
-                ("S <RET>" . flyspell-mode)
-                ("SS" . flyspell-correct-word-before-point)))
+        ;; For some reason in the flycheck mode list map it just uses all vi
+        ;; keys. Mostly this is fine but I need an easy way to quit.
+        (evil-define-key 'normal flycheck-error-list-mode-map "q" 'quit-window))
+      :bind (:map md/leader-map
+                  ;; S prefix, ie. "syntax"
+                  ("s <RET>" . flycheck-mode)
+                  ("sl" . flycheck-list-errors)
+                  ("sn" . flycheck-next-error)
+                  ("sj" . flycheck-next-error)
+                  ("sp" . flycheck-previous-error)
+                  ("sk" . flycheck-previous-error)
+                  ("S <RET>" . flyspell-mode)
+                  ("SS" . flyspell-correct-word-before-point)))
+
+  (use-package flycheck-mypy :demand t)
 
 #+END_SRC
+
+
 
 ** Compilation-mode
 #+BEGIN_SRC emacs-lisp
@@ -1856,97 +1863,115 @@ Override the edebug keymap to only contain features/keys that I care about:
 ** Python
 
 #+BEGIN_SRC emacs-lisp
-  (defun md/python-pudb-toggle-breakpoint ()
-    (interactive)
-    (let ((trace "import pudb; pu.db")
-          (line (thing-at-point 'line)))
-      (if (and line (string-match trace line))
-          (kill-whole-line)
-        (progn
-          (back-to-indentation)
-          (insert trace)
-          (python-indent-line)
-          (insert "\n")
-          (python-indent-line)))))
+    (defun md/python-pudb-toggle-breakpoint ()
+      (interactive)
+      (let ((trace "import pudb; pu.db")
+            (line (thing-at-point 'line)))
+        (if (and line (string-match trace line))
+            (kill-whole-line)
+          (progn
+            (back-to-indentation)
+            (insert trace)
+            (python-indent-line)
+            (insert "\n")
+            (python-indent-line)))))
 
-  (use-package find-file) ;; builtin, provides ff-basename
-  (defun md/refresh-python-path ()
-    (interactive)
-    (when (f-directory? "/server/apps")
-      (-each (directory-files "/server/apps" t)
-        (lambda (f)
-          (when (and (f-directory? f)
-                     (not (-contains? '("." "..") (ff-basename f))))
-            (add-to-list 'python-shell-extra-pythonpaths f))))))
+    (use-package find-file) ;; builtin, provides ff-basename
+    (defun md/refresh-python-path ()
+      (interactive)
+      (when (f-directory? "/server/apps")
+        (-each (directory-files "/server/apps" t)
+          (lambda (f)
+            (when (and (f-directory? f)
+                       (not (-contains? '("." "..") (ff-basename f))))
+              (add-to-list 'python-shell-extra-pythonpaths f))))))
 
-  (use-package python ;; builtin
-    :config
-    (evil-define-key 'normal python-mode-map
-      (kbd "SPC") md/python-mode-leader-map
-      "gk" 'python-nav-backward-defun
-      "gj" 'python-nav-forward-defun)
-    (md/refresh-python-path)
-    :bind (:map md/python-mode-leader-map
-                ("SPC B" . md/python-pudb-toggle-breakpoint)))
+    (use-package python ;; builtin
+      :config
+      (progn
+        (evil-define-key 'normal python-mode-map
+          (kbd "SPC") md/python-mode-leader-map
+          "gk" 'python-nav-backward-defun
+          "gj" 'python-nav-forward-defun)
+      (md/refresh-python-path))
+      :bind (:map md/python-mode-leader-map
+                  ("SPC B" . md/python-pudb-toggle-breakpoint)))
 
-  ;; Provide autocomplete, jump to definition and eldoc integration.
-  (use-package anaconda-mode
-    :defer 1
-    :init
-    (progn
-      (defun md/anaconda-set-company-backend ()
-        (interactive)
-        (set (make-local-variable 'company-backends) '(company-anaconda)))
-      (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
-      (add-hook 'python-mode-hook 'anaconda-mode)
-      (add-hook 'python-mode-hook 'anaconda-eldoc-mode))
+    ;; Provide autocomplete, jump to definition and eldoc integration.
+    (use-package anaconda-mode
+      :defer 1
+      :config
+      (progn
+        (defun md/anaconda-set-company-backend ()
+          (interactive)
+          (set (make-local-variable 'company-backends) '(company-anaconda)))
+        (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
+        (add-hook 'python-mode-hook 'anaconda-mode)
+        (add-hook 'python-mode-hook 'anaconda-eldoc-mode))
 
-      ;; TODO make sure this jumps to the current buffer
-      (evil-define-key 'normal python-mode-map
-        "gd" 'anaconda-mode-find-assignments
-        "gD" 'anaconda-mode-find-definitions)
+        ;; TODO make sure this jumps to the current buffer
+        (evil-define-key 'normal python-mode-map
+          "gd" 'anaconda-mode-find-assignments
+          "gD" 'anaconda-mode-find-definitions)
 
-      ;; TODO ideally this would open in a separate eyebrowse slot, and if you
-      ;; press enter would jump to the buffer in your original window, but keep
-      ;; the slot open.
-      ;; q should return to the original position.
-      ;; This behaviour should be consistent with eg. ag and other grep-type buffers.
-      (evil-define-key 'normal anaconda-mode-view-mode-map
-        "q" 'quit-window
-        (kbd "C-j") 'next-error-no-select
-        (kbd "C-n") 'next-error-no-select
-        (kbd "C-k") 'previous-error-no-select
-        (kbd "C-p") 'previous-error-no-select)
+        ;; TODO ideally this would open in a separate eyebrowse slot, and if you
+        ;; press enter would jump to the buffer in your original window, but keep
+        ;; the slot open.
+        ;; q should return to the original position.
+        ;; This behaviour should be consistent with eg. ag and other grep-type buffers.
+        (evil-define-key 'normal anaconda-mode-view-mode-map
+          "q" 'quit-window
+          (kbd "C-j") 'next-error-no-select
+          (kbd "C-n") 'next-error-no-select
+          (kbd "C-k") 'previous-error-no-select
+          (kbd "C-p") 'previous-error-no-select)
 
-    :bind (:map md/python-mode-leader-map
-                ("hr" . anaconda-mode-find-references)
-                ("hd" . anaconda-mode-show-doc)))
+      :bind (:map md/python-mode-leader-map
+                  ("hr" . anaconda-mode-find-references)
+                  ("hd" . anaconda-mode-show-doc)))
 
-  ;; TODO pyvenv auto
-  ;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
+    ;; TODO pyvenv auto
+    ;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
 
-  (use-package py-isort
-    :bind (:map md/python-mode-leader-map
-                ("SPC I" . py-isort-buffer)))
+    (use-package py-isort
+      :bind (:map md/python-mode-leader-map
+                  ("SPC I" . py-isort-buffer)))
 
-  ;; Provide company completion for anaconda
-  (use-package company-anaconda)
+    ;; Provide company completion for anaconda
+    (use-package company-anaconda)
 
-  ;; Syntax and completion for pip requirements files.
-  (use-package pip-requirements)
+    ;; Syntax and completion for pip requirements files.
+    (use-package pip-requirements)
 
-  (use-package pytest
-    :commands (pytest-run-all pytest-run-one pytest-run-failed)
-    :bind (:map md/python-mode-leader-map
-                ("SPC T T" . pytest-run-all)
-                ("SPC T t" . pytest-run-one)
-                ("SPC T f" . pytest-run-failed)))
+    (use-package pytest
+      :commands (pytest-all pytest-one pytest-failed pytest-pdb-one pytest-pdb-all)
+      :bind (:map md/python-mode-leader-map
+                  ("SPC T T" . pytest-all)
+                  ("SPC T t" . pytest-one)
+                  ("SPC T p" . pytest-pdb-one)
+                  ("SPC T P" . pytest-pdb-all)
+                  ("SPC T f" . pytest-failed)))
 
-  (use-package yapfify
-    :bind (:map md/python-mode-leader-map
-                ("SPC F" . yapfify-buffer)))
+    (use-package yapfify
+      :bind (:map md/python-mode-leader-map
+                  ("SPC F" . yapfify-buffer)))
 #+END_SRC
 
+** PHP
+#+BEGIN_SRC emacs-lisp
+	(use-package php-mode
+		:config (progn
+				(defun md/ometria-php-mode-hook ()
+					(when (s-starts-with-p "omattria" (system-name))
+					(setq-local indent-tabs-mode t)
+					(setq-local tab-width 4))
+					(whitespace-mode)
+					;; Don't auto indent as php indentation doesn't match existing conventions
+					;; on om.console
+					(electric-indent-mode -1))
+				
+				(add-hook 'php-mode-hook 'md/ometria-php-mode-hook)))
+#+END_SRC
 ** Golang
 #+BEGIN_SRC emacs-lisp
   (when (not (getenv "GOPATH"))
@@ -2081,12 +2106,12 @@ NOTE - compiling requires ~markdown~ to be installed.
 #+END_SRC
 ** Conf mode
 #+BEGIN_SRC emacs-lisp
-  (use-package conf-mode
-    :mode (("\\.conf\\'" . conf-mode)
-           ("\\.cfg\\'" . conf-mode)
-           ("\\.*rc" . conf-mode)
-           ("\\.ssh/config'" . conf-mode)
-           ("\\.ini\\'" . conf-mode)))
+	(use-package conf-mode
+		:mode (("\\.conf\\'" . conf-mode)
+					 ("\\.cfg\\'" . conf-mode)
+					 ("\\.*rc\\'" . conf-mode)
+					 ("\\.ssh/config'" . conf-mode)
+					 ("\\.ini\\'" . conf-mode)))
 
 
 #+END_SRC
@@ -3086,6 +3111,10 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
               (".*\*Agenda Commands\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select nil)
               ("\*Org Agenda.*?\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 0.33 :select nil)
               ("*Anaconda*" :eyebrowse "anaconda" :align t :close-on-realign t :size 0.3 :select t)
+
+              ;; TODO
+              ('restclient-mode :eyebrowse "restclient" :align left :close-on-realign t :size 0.4 :select t)
+
               ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
               ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
               ('grep-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
