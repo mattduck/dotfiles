@@ -1969,7 +1969,7 @@ Override the edebug keymap to only contain features/keys that I care about:
 					;; Don't auto indent as php indentation doesn't match existing conventions
 					;; on om.console
 					(electric-indent-mode -1))
-				
+
 				(add-hook 'php-mode-hook 'md/ometria-php-mode-hook)))
 #+END_SRC
 ** Golang
@@ -2106,19 +2106,23 @@ NOTE - compiling requires ~markdown~ to be installed.
 #+END_SRC
 ** Conf mode
 #+BEGIN_SRC emacs-lisp
-	(use-package conf-mode
-		:mode (("\\.conf\\'" . conf-mode)
-					 ("\\.cfg\\'" . conf-mode)
-					 ("\\.*rc\\'" . conf-mode)
-					 ("\\.ssh/config'" . conf-mode)
-					 ("\\.ini\\'" . conf-mode)))
-
-
+  (use-package conf-mode
+    :mode (("\\.conf\\'" . conf-mode)
+           ("\\.cfg\\'" . conf-mode)
+           ("\\.*rc\\'" . conf-mode)
+           ("\\.ssh/config\\'" . conf-mode)
+           ("\\.ini\\'" . conf-mode)))
 #+END_SRC
 ** Coffeescript
 #+BEGIN_SRC emacs-lisp
 (use-package coffee-mode)
 #+END_SRC
+** Docker
+#+BEGIN_SRC emacs-lisp
+  (use-package docker)
+
+#+END_SRC
+
 * Org mode
 
 ** use-package wrapper *START*
@@ -2674,7 +2678,7 @@ This is the body
 * Web browser
 ** Atomic Chrome / Ghost Text
 - https://github.com/GhostText/GhostText
-  
+
 #+BEGIN_SRC emacs-lisp
   (use-package atomic-chrome
     :config
