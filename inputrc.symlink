@@ -43,8 +43,11 @@ set input-meta on
 set output-meta on
 set convert-meta off
 
-# Colourise completion
-set colored-stats on
+# Disable completion colours as a lot of completions are /not/ files,
+# which can make this misleading if they match file names (or are coloured
+# to suggest they are a missing symlink, which is an issue with Solarized dircolors).
+set colored-stats off
+set visible-stats on
 
 # Ignore case, treat _ and - the same
 set completion-ignore-case on
