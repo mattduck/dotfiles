@@ -1524,13 +1524,15 @@ git dir) or linum mode"
               "gj" 'markdown-next-visible-heading)))
 
 (use-package conf-mode
-	:mode (("\\.conf\\'" . conf-mode)
-				 ("\\.cfg\\'" . conf-mode)
-				 ("\\.*rc\\'" . conf-mode)
-				 ("\\.ssh/config'" . conf-mode)
-				 ("\\.ini\\'" . conf-mode)))
+  :mode (("\\.conf\\'" . conf-mode)
+         ("\\.cfg\\'" . conf-mode)
+         ("\\.*rc\\'" . conf-mode)
+         ("\\.ssh/config\\'" . conf-mode)
+         ("\\.ini\\'" . conf-mode)))
 
 (use-package coffee-mode)
+
+(use-package docker)
 
 (use-package org
   :pin org

@@ -241,18 +241,19 @@ linum-format, but adds a space so there is some separation:
   (defun md/set-default-font ()
     (interactive)
     (cond ((s-starts-with-p "mattmbp" (system-name))
-           (set-frame-font "Monaco-12:antialias=subpixel" t t))
+           (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))
           ((s-starts-with-p "omattria" (system-name))
-           (set-frame-font "Monaco-11:antialias=subpixel" t t))
+           (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))
           (t
-           (set-frame-font "Monaco-11:antialias=subpixel" t t))))
+           (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))))
 #+END_SRC
 
 When using a server with both GUI and terminal clients attached, I want them to
 show their terminal/GUI-specific default fonts:
 
 #+BEGIN_SRC emacs-lisp
-(add-hook 'focus-in-hook 'md/set-default-font)
+  (add-hook 'focus-in-hook 'md/set-default-font)
+  (md/set-default-font)
 #+END_SRC
 
 ** Scroll behaviour
