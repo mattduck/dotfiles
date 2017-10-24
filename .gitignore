@@ -22,6 +22,7 @@ emacs.d.symlink/org-gcal
 emacs.d.symlink/tutorial
 emacs.d.symlink/anaconda-mode
 spacemacs
+emacs.d.spacemacs
 
 # .config might contain files that have been dumped by programs, so
 # don't include it by default
