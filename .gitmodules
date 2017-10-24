@@ -25,3 +25,6 @@
 [submodule "emacs.d.symlink/non-elpa/evil-mu4e"]
 	path = emacs.d.symlink/non-elpa/evil-mu4e
 	url = git@github.com:mattduck/evil-mu4e.git
+[submodule "bash/fabric-completion"]
+	path = bash/fabric-completion
+	url = git@github.com:kbakulin/fabric-completion.git
