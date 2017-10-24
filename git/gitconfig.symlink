@@ -23,6 +23,7 @@ refs = !tig refs
 
 save =!git stash --all --keep-index && git stash apply
 stashq = stash --all --keep-index
+qstash = stash --all --keep-index
 aliases=!git config -l | grep alias | cut -c 7-
 undo-commit = reset HEAD~1 --mixed
 github-switch-url = "!,github-switch-url"
