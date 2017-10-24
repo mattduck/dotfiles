@@ -1274,7 +1274,6 @@ Company seems to work nicely without much configuration.
 #+END_SRC
 
 
-
 ** Compilation-mode
 #+BEGIN_SRC emacs-lisp
   (setq compilation-mode-map (make-sparse-keymap))
@@ -1800,6 +1799,17 @@ I can use this with grep/ag to quickly find the todo comments:
       (add-hook 'python-mode-hook 'md/outline-minor-mode-python)))
 #+END_SRC
 
+** Shells
+
+Start terminal processes in Emacs state so that movement commands are passed to
+the underlying terminal (ie. I get the usual readline bindings).
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'ansi-term-mode-hook 'evil-emacs-state)
+  (add-hook 'term-mode-hook 'evil-emacs-state)
+  (evil-set-initial-state 'ansi-term-mode 'emacs)
+  (evil-set-initial-state 'term-mode 'emacs)
+#+END_SRC
 * Language support
 ** Emacs-lisp
 
@@ -2125,6 +2135,7 @@ NOTE - compiling requires ~markdown~ to be installed.
 #+END_SRC
 
 * Org mode
+
 
 ** use-package wrapper *START*
 

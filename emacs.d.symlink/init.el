@@ -124,13 +124,14 @@
 (defun md/set-default-font ()
   (interactive)
   (cond ((s-starts-with-p "mattmbp" (system-name))
-         (set-frame-font "Monaco-12:antialias=subpixel" t t))
+         (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))
         ((s-starts-with-p "omattria" (system-name))
-         (set-frame-font "Monaco-11:antialias=subpixel" t t))
+         (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))
         (t
-         (set-frame-font "Monaco-11:antialias=subpixel" t t))))
+         (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))))
 
 (add-hook 'focus-in-hook 'md/set-default-font)
+(md/set-default-font)
 
 (setq
 
@@ -1287,6 +1288,11 @@ git dir) or linum mode"
       "zm" 'origami-close-node
       "zM" 'origami-close-all-nodes)
     (origami-mode 1)))
+
+(add-hook 'ansi-term-mode-hook 'evil-emacs-state)
+(add-hook 'term-mode-hook 'evil-emacs-state)
+(evil-set-initial-state 'ansi-term-mode 'emacs)
+(evil-set-initial-state 'term-mode 'emacs)
 
 (defun md/emacs-lisp-hook ()
     (setq fill-column 100))
