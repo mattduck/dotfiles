@@ -456,6 +456,14 @@
         ("H" . move-beginning-of-line)
         ("L" . move-end-of-line)
 
+        ;; Paren movement
+        :map evil-normal-state-map
+        ("(" . evil-previous-open-paren)
+        (")" . evil-next-close-paren)
+        :map evil-visual-state-map
+        ("(" . evil-previous-open-paren)
+        (")" . evil-next-close-paren)
+
         ;; The equivalent of gj/gk
         :map evil-normal-state-map
         ("j" . evil-next-visual-line)
@@ -1098,8 +1106,9 @@ git dir) or linum mode"
 
        ;; Diff gives the full git diff output. Ediff shows ediff for a single
        ;; file.
-       ("gd" . magit-diff-popup)
-       ("gD" . magit-ediff-popup)
+       ("gD" . magit-diff-buffer-file)
+       ("gd" . magit-diff-dwim)
+       ("ge" . magit-ediff-popup)
 
        ;; NOTE - this doesn't play nicely with mode-line:
        ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
@@ -1816,6 +1825,11 @@ uses the scheduled property rather than the deadline."
   :keymap (make-sparse-keymap) ; defines md/evil-org-agenda-mode-map
   :group 'md/evil-org-agenda)
 
+(defun md/org-agenda-quit ()
+  (interactive)
+  (org-agenda-quit)
+  (shackle--eyebrowse-close-slot-by-tag "agenda"))
+
 (evil-set-initial-state 'org-agenda-mode 'normal)
 
 (evil-define-key 'normal md/evil-org-agenda-mode-map
@@ -1827,7 +1841,7 @@ uses the scheduled property rather than the deadline."
   (kbd "p") 'org-agenda-previous-line
   (kbd "C-p") 'org-agenda-previous-line
 
-  (kbd "q") 'org-agenda-quit
+  (kbd "q") 'md/org-agenda-quit
   (kbd "r") 'md/org-gcal-fetch-and-agenda-redo  ; Recalculate the agenda
   (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view
   (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
@@ -2216,9 +2230,8 @@ headlines")
             ;; ("*edebug-trace*" :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
             ('edebug-mode :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
             ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
-            (".*\*Agenda Commands\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select nil)
-            ("\*Org Agenda.*?\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 0.33 :select nil)
             ("*Anaconda*" :eyebrowse "anaconda" :align t :close-on-realign t :size 0.3 :select t)
+            ("\\*Agenda Commands\\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select t)
 
             ;; TODO
             ('restclient-mode :eyebrowse "restclient" :align left :close-on-realign t :size 0.4 :select t)
@@ -2239,8 +2252,8 @@ headlines")
             ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
             ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
             ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
-            (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t)
-            (".*init.org" :regexp t :same t :select t)
+            (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t) ;; TODO regex
+            (".*init.org" :regexp t :same t :select t)  ;; TODO regex?
             (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
             (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
             (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
@@ -2285,7 +2298,7 @@ headlines")
     (fmakunbound 'org-switch-to-buffer-other-window)
     (defun org-switch-to-buffer-other-window (&rest args)
       (apply 'switch-to-buffer-other-window args))
-    (setq org-agenda-window-setup 'other-window)
+    (setq org-agenda-window-setup 'only-window)
 
     (shackle-mode 1))
 
