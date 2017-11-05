@@ -1080,6 +1080,26 @@ git dir) or linum mode"
  (progn
    (evil-set-initial-state 'magit-blame-mode 'normal)
    (evil-set-initial-state 'magit-revision-mode 'normal)
+   (evil-set-initial-state 'magit-diff-mode 'normal)
+   (evil-set-initial-state 'magit-status-mode 'normal)
+
+   (add-hook 'magit-diff-mode 'evil-normal-state)
+   (add-hook 'magit-status-mode 'evil-normal-state)
+
+   (evil-define-key 'normal magit-mode-map
+     (kbd "TAB") 'magit-section-toggle
+     (kbd "<RET>") 'magit-visit-thing
+     "q" 'magit-mode-bury-buffer
+     "r" 'magit-refresh
+     "n" 'magit-section-forward
+     "p" 'magit-section-backward
+     "+" 'magit-stage-file
+     "-" 'magit-unstage-file
+     "[" 'magit-diff-less-context
+     "]" 'magit-diff-more-context
+     )
+
+   ;;(evil-define-key 'normal magit-diff-mode-map
 
    ;; I don't know why, but by default I can't get magit-blame to adhere to my
    ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
@@ -2081,6 +2101,7 @@ headlines")
                   '("ViewInBrowser" . mu4e-action-view-in-browser) t)))
 
 (use-package mu4e-alert
+  :disabled
   :config
   (mu4e-alert-set-default-style 'notifier)
   (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
@@ -2210,6 +2231,7 @@ headlines")
     (md/shackle-advise 'mu4e-compose)
     (md/shackle-advise 'mu4e-headers-search)
     (md/shackle-advise 'magit-dispatch-popup)
+    (md/shackle-advise 'magit-status)
 
     (defun md/mu4e-eyebrowse-quit (fn &rest args)
       (apply fn args)
@@ -2243,10 +2265,21 @@ headlines")
             ('term-mode :align t :close-on-realign t :size 0.4 :select t)
             ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
             ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
-            ('magit-popup-mode :align 'left :eyebrowse "git" :select t)
+
+            ;; ('magit-popup-mode :align 'left :eyebrowse "git" :select t)
             ('magit-status-mode :eyebrowse "git" :select t)
-            ('magit-revision-mode :eyebrowse "git" :select t)
-            ('magit-log-mode :eyebrowse "git"  :select t)
+            (magit-status-mode :eyebrowse "git" :select t)
+            ;; ('magit-revision-mode :eyebrowse "git" :select t)
+            ;; ('magit-log-mode :eyebrowse "git"  :select t)
+
+            ;; magit status
+            ;; ((rx string-start
+            ;;      (zero-or-more anything)
+            ;;      (one-or-more "magit:")
+            ;;      (zero-or-more anything)
+            ;;      string-end)
+            ;;  :regexp t :eyebrowse "git" :select t)
+
             ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
             ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
             ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
