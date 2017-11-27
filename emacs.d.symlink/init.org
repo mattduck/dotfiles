@@ -1655,7 +1655,9 @@ I can use this with grep/ag to quickly find the todo comments:
     (interactive)
     (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
 #+END_SRC
-** Highlight thing
+** COMMENT Highlight thing
+
+- Think this is responsible for some slowdown issues, disabling.
 
 #+BEGIN_SRC emacs-lisp
   (use-package highlight-thing
@@ -1874,98 +1876,102 @@ Override the edebug keymap to only contain features/keys that I care about:
 ** Python
 
 #+BEGIN_SRC emacs-lisp
-    (defun md/python-pudb-toggle-breakpoint ()
-      (interactive)
-      (let ((trace "import pudb; pu.db")
-            (line (thing-at-point 'line)))
-        (if (and line (string-match trace line))
-            (kill-whole-line)
-          (progn
-            (back-to-indentation)
-            (insert trace)
-            (python-indent-line)
-            (insert "\n")
-            (python-indent-line)))))
+  (defun md/python-pudb-toggle-breakpoint ()
+    (interactive)
+    (let ((trace "import pudb; pu.db")
+          (line (thing-at-point 'line)))
+      (if (and line (string-match trace line))
+          (kill-whole-line)
+        (progn
+          (back-to-indentation)
+          (insert trace)
+          (python-indent-line)
+          (insert "\n")
+          (python-indent-line)))))
 
-    (use-package find-file) ;; builtin, provides ff-basename
-    (defun md/refresh-python-path ()
-      (interactive)
-      (when (f-directory? "/server/apps")
-        (-each (directory-files "/server/apps" t)
-          (lambda (f)
-            (when (and (f-directory? f)
-                       (not (-contains? '("." "..") (ff-basename f))))
-              (add-to-list 'python-shell-extra-pythonpaths f))))))
+  (defun md/python-mode-hook ()
+    (setq-local fill-column 120))
+  (add-hook 'python-mode-hook 'md/python-mode-hook)
 
-    (use-package python ;; builtin
-      :config
-      (progn
-        (evil-define-key 'normal python-mode-map
-          (kbd "SPC") md/python-mode-leader-map
-          "gk" 'python-nav-backward-defun
-          "gj" 'python-nav-forward-defun)
-      (md/refresh-python-path))
-      :bind (:map md/python-mode-leader-map
-                  ("SPC B" . md/python-pudb-toggle-breakpoint)))
+  (use-package find-file) ;; builtin, provides ff-basename
+  (defun md/refresh-python-path ()
+    (interactive)
+    (when (f-directory? "/server/apps")
+      (-each (directory-files "/server/apps" t)
+        (lambda (f)
+          (when (and (f-directory? f)
+                     (not (-contains? '("." "..") (ff-basename f))))
+            (add-to-list 'python-shell-extra-pythonpaths f))))))
 
-    ;; Provide autocomplete, jump to definition and eldoc integration.
-    (use-package anaconda-mode
-      :defer 1
-      :config
-      (progn
-        (defun md/anaconda-set-company-backend ()
-          (interactive)
-          (set (make-local-variable 'company-backends) '(company-anaconda)))
-        (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
-        (add-hook 'python-mode-hook 'anaconda-mode)
-        (add-hook 'python-mode-hook 'anaconda-eldoc-mode))
+  (use-package python ;; builtin
+    :config
+    (progn
+      (evil-define-key 'normal python-mode-map
+        (kbd "SPC") md/python-mode-leader-map
+        "gk" 'python-nav-backward-defun
+        "gj" 'python-nav-forward-defun)
+    (md/refresh-python-path))
+    :bind (:map md/python-mode-leader-map
+                ("SPC B" . md/python-pudb-toggle-breakpoint)))
 
-        ;; TODO make sure this jumps to the current buffer
-        (evil-define-key 'normal python-mode-map
-          "gd" 'anaconda-mode-find-assignments
-          "gD" 'anaconda-mode-find-definitions)
+  ;; Provide autocomplete, jump to definition and eldoc integration.
+  (use-package anaconda-mode
+    :defer 1
+    :config
+    (progn
+      (defun md/anaconda-set-company-backend ()
+        (interactive)
+        (set (make-local-variable 'company-backends) '(company-anaconda)))
+      (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
+      (add-hook 'python-mode-hook 'anaconda-mode)
+      (add-hook 'python-mode-hook 'anaconda-eldoc-mode))
 
-        ;; TODO ideally this would open in a separate eyebrowse slot, and if you
-        ;; press enter would jump to the buffer in your original window, but keep
-        ;; the slot open.
-        ;; q should return to the original position.
-        ;; This behaviour should be consistent with eg. ag and other grep-type buffers.
-        (evil-define-key 'normal anaconda-mode-view-mode-map
-          "q" 'quit-window
-          (kbd "C-j") 'next-error-no-select
-          (kbd "C-n") 'next-error-no-select
-          (kbd "C-k") 'previous-error-no-select
-          (kbd "C-p") 'previous-error-no-select)
+      ;; TODO make sure this jumps to the current buffer
+      (evil-define-key 'normal python-mode-map
+        "gd" 'anaconda-mode-find-assignments
+        "gD" 'anaconda-mode-find-definitions)
 
-      :bind (:map md/python-mode-leader-map
-                  ("hr" . anaconda-mode-find-references)
-                  ("hd" . anaconda-mode-show-doc)))
+      ;; TODO ideally this would open in a separate eyebrowse slot, and if you
+      ;; press enter would jump to the buffer in your original window, but keep
+      ;; the slot open.
+      ;; q should return to the original position.
+      ;; This behaviour should be consistent with eg. ag and other grep-type buffers.
+      (evil-define-key 'normal anaconda-mode-view-mode-map
+        "q" 'quit-window
+        (kbd "C-j") 'next-error-no-select
+        (kbd "C-n") 'next-error-no-select
+        (kbd "C-k") 'previous-error-no-select
+        (kbd "C-p") 'previous-error-no-select)
 
-    ;; TODO pyvenv auto
-    ;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
+    :bind (:map md/python-mode-leader-map
+                ("hr" . anaconda-mode-find-references)
+                ("hd" . anaconda-mode-show-doc)))
 
-    (use-package py-isort
-      :bind (:map md/python-mode-leader-map
-                  ("SPC I" . py-isort-buffer)))
+  ;; TODO pyvenv auto
+  ;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
 
-    ;; Provide company completion for anaconda
-    (use-package company-anaconda)
+  (use-package py-isort
+    :bind (:map md/python-mode-leader-map
+                ("SPC I" . py-isort-buffer)))
 
-    ;; Syntax and completion for pip requirements files.
-    (use-package pip-requirements)
+  ;; Provide company completion for anaconda
+  (use-package company-anaconda)
 
-    (use-package pytest
-      :commands (pytest-all pytest-one pytest-failed pytest-pdb-one pytest-pdb-all)
-      :bind (:map md/python-mode-leader-map
-                  ("SPC T T" . pytest-all)
-                  ("SPC T t" . pytest-one)
-                  ("SPC T p" . pytest-pdb-one)
-                  ("SPC T P" . pytest-pdb-all)
-                  ("SPC T f" . pytest-failed)))
+  ;; Syntax and completion for pip requirements files.
+  (use-package pip-requirements)
 
-    (use-package yapfify
-      :bind (:map md/python-mode-leader-map
-                  ("SPC F" . yapfify-buffer)))
+  (use-package pytest
+    :commands (pytest-all pytest-one pytest-failed pytest-pdb-one pytest-pdb-all)
+    :bind (:map md/python-mode-leader-map
+                ("SPC T T" . pytest-all)
+                ("SPC T t" . pytest-one)
+                ("SPC T p" . pytest-pdb-one)
+                ("SPC T P" . pytest-pdb-all)
+                ("SPC T f" . pytest-failed)))
+
+  (use-package yapfify
+    :bind (:map md/python-mode-leader-map
+                ("SPC F" . yapfify-buffer)))
 #+END_SRC
 
 ** PHP

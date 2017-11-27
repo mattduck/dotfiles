@@ -1225,16 +1225,6 @@ git dir) or linum mode"
   (interactive)
   (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
 
-(use-package highlight-thing
-  :defer 5
-  :config
-  (progn
-    (setq highlight-thing-delay-seconds 0.2
-          highlight-thing-case-sensitive-p t)
-    (add-hook 'prog-mode-hook 'highlight-thing-mode))
-  :bind (:map md/leader-map
-              ("tt" . highlight-thing-mode)))
-
 (use-package paren
  :defer 1
  :init (progn
@@ -1349,6 +1339,10 @@ git dir) or linum mode"
         (python-indent-line)
         (insert "\n")
         (python-indent-line)))))
+
+(defun md/python-mode-hook ()
+  (setq-local fill-column 120))
+(add-hook 'python-mode-hook 'md/python-mode-hook)
 
 (use-package find-file) ;; builtin, provides ff-basename
 (defun md/refresh-python-path ()

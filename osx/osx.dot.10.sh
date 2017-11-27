@@ -98,7 +98,7 @@ function ,ts () {
     if [ ! "$(type -t it2setcolor)" ]; then echo "it2setcolor not found" && return 1; fi
 
     tspath=/tmp/.it2solarized
-    touch "$tspath"
+    if [ ! -f "$tspath" ]; then echo 1 > "$tspath"; fi
     val=`cat "$tspath"`
     if [ "$val" -eq 0 ]; then
         it2setcolor preset 'Solarized Light' || return 1
