@@ -20,3 +20,16 @@ source $(which virtualenvwrapper.sh)
 # Virtualenv workflow:
 # - Use pyenv to install python versions, but don't use the provided shims.
 # - Use mkvirtualenv to make venvs with a specific pyenv version.
+
+alias ,pyworkon="workon"
+alias ,pydeactivate="deactivate"
+alias ,pywipe="wipeenv"
+alias ,pycdsite="cdsitepackages"
+alias ,pycd="cdvirtualenv"
+alias ,pymk2="mkvirtualenv -p $(pyenv which python2)"
+alias ,pymk3="mkvirtualenv -p $(pyenv which python3)"
+alias ,pymktmp2="mktmpenv -p $(pyenv which python2)"
+alias ,pymktmp3="mktmpenv -p $(pyenv which python3)"
+alias ,pywhich="python --version; which python; which pip"
+alias ,pyrm="rmvirtualen"
+alias ,pylssite="lssitepackages"

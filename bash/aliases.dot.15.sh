@@ -37,3 +37,5 @@ alias f=",cd"
 alias d=",fzf"
 
 alias vssh="vagrant ssh || vagrant up && vagrant ssh"
+
+alias dockerc="docker-compose"

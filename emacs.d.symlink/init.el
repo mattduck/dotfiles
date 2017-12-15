@@ -131,6 +131,7 @@
          (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))))
 
 (add-hook 'focus-in-hook 'md/set-default-font)
+(use-package s :demand t)
 (md/set-default-font)
 
 (setq

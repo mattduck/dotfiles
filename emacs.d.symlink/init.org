@@ -243,7 +243,7 @@ linum-format, but adds a space so there is some separation:
     (cond ((s-starts-with-p "mattmbp" (system-name))
            (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))
           ((s-starts-with-p "omattria" (system-name))
-           (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))
+           (set-frame-font "Roboto Mono Light for Powerline-12:antialias=subpixel" t t))
           (t
            (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))))
 #+END_SRC
@@ -252,6 +252,7 @@ When using a server with both GUI and terminal clients attached, I want them to
 show their terminal/GUI-specific default fonts:
 
 #+BEGIN_SRC emacs-lisp
+  (use-package s :demand t)
   (add-hook 'focus-in-hook 'md/set-default-font)
   (md/set-default-font)
 #+END_SRC
@@ -2694,7 +2695,8 @@ causes it to jump out of the popwin window.
       (evil-define-key 'normal neotree-mode-map (kbd "TAB") 'neotree-quick-look)
       (evil-define-key 'normal neotree-mode-map (kbd "'") 'neotree-stretch-toggle)
       (evil-define-key 'normal neotree-mode-map (kbd "h") 'neotree-select-up-node)
-      (evil-define-key 'normal neotree-mode-map (kbd "l") 'neotree-change-root)
+      (evil-define-key 'normal neotree-mode-map (kbd "l") 'neotree-enter)
+      (evil-define-key 'normal neotree-mode-map (kbd "L") 'neotree-change-root)
       (evil-define-key 'normal neotree-mode-map (kbd "C-c C-c")
         'neotree-change-root))
     :bind (:map md/leader-map
@@ -3292,6 +3294,7 @@ Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs
 
   (bind-key "n" narrow-map md/leader-map)
   (bind-key "i" 'org-tree-to-indirect-buffer narrow-map)
+  (bind-key "v" 'md/narrow-to-region-indirect narrow-map)
   (bind-key "f" 'md/narrow-dwim narrow-map)
   (bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
                                           ; better than "n" for narrow-to-region
@@ -3323,6 +3326,14 @@ Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs
            (LaTeX-narrow-to-environment))
           (t (narrow-to-defun))))
 
+  (defun md/narrow-to-region-indirect (start end)
+    "Restrict editing in this buffer to the current region, indirectly."
+    (interactive "r")
+    (deactivate-mark)
+    (let ((buf (clone-indirect-buffer nil nil)))
+      (with-current-buffer buf
+        (narrow-to-region start end))
+        (switch-to-buffer buf)))
 #+END_SRC
 * Bookmarks
 
