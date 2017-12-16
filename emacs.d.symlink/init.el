@@ -1014,9 +1014,20 @@ represent all current available bindings accurately as a single keymap."
 (use-package helm-projectile
   :init (progn
           ;; This has to be set before loading helm-projectile
-          (setq helm-projectile-fuzzy-match nil))
+          (setq helm-projectile-fuzzy-match nil)
+
+          (defun md/projectile-switch-project ()
+            (interactive)
+            (let ((fn (which-key--show-keymap "switch project" (lookup-key md/leader-map "j")))
+                  (projectile-switch-project-action
+                   (lambda ()
+                     (let ((default-directory (projectile-project-root)))
+                       (call-interactively fn)))))
+              (when fn
+                (helm-projectile-switch-project)))))
+
   :bind (:map md/leader-map
-              ("jj" . helm-projectile-switch-project)
+              ("jj" . md/projectile-switch-project)
               ("jag" . projectile-ag)
               ("jaf" . ag-project-files)
               ("jad" . ag-project-dired)
@@ -1087,10 +1098,15 @@ git dir) or linum mode"
    (add-hook 'magit-diff-mode 'evil-normal-state)
    (add-hook 'magit-status-mode 'evil-normal-state)
 
+   (defun md/magit-quit ()
+     (interactive)
+     (magit-mode-bury-buffer)
+     (shackle--eyebrowse-close-slot-by-tag "git"))
+
    (evil-define-key 'normal magit-mode-map
      (kbd "TAB") 'magit-section-toggle
      (kbd "<RET>") 'magit-visit-thing
-     "q" 'magit-mode-bury-buffer
+     "q" 'md/magit-quit
      "r" 'magit-refresh
      "n" 'magit-section-forward
      "p" 'magit-section-backward
@@ -1100,7 +1116,7 @@ git dir) or linum mode"
      "]" 'magit-diff-more-context
      )
 
-   ;;(evil-define-key 'normal magit-diff-mode-map
+   (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
 
    ;; I don't know why, but by default I can't get magit-blame to adhere to my
    ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
@@ -2144,8 +2160,7 @@ headlines")
 
 (use-package winner-mode
   :demand t
-  :config
-  (winner-mode)
+  :config (winner-mode 1)
   :bind (:map splitscreen/prefix
               ("u" . winner-undo)
               ("U" . winner-redo)))
@@ -2261,9 +2276,9 @@ headlines")
             ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
             ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
 
-            ;; ('magit-popup-mode :align 'left :eyebrowse "git" :select t)
             ('magit-status-mode :eyebrowse "git" :select t)
-            (magit-status-mode :eyebrowse "git" :select t)
+            ;; ('magit-popup-mode :align 'left :eyebrowse "git" :select t)
+            ;;(magit-status-mode :align 'left :eyebrowse "git" :select t)
             ;; ('magit-revision-mode :eyebrowse "git" :select t)
             ;; ('magit-log-mode :eyebrowse "git"  :select t)
 
@@ -2281,7 +2296,7 @@ headlines")
             ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
             ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
             (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t) ;; TODO regex
-            (".*init.org" :regexp t :same t :select t)  ;; TODO regex?
+            (".*init.org" :regexp t :same t :select t)
             (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
             (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
             (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
@@ -2327,6 +2342,10 @@ headlines")
     (defun org-switch-to-buffer-other-window (&rest args)
       (apply 'switch-to-buffer-other-window args))
     (setq org-agenda-window-setup 'only-window)
+
+    (defun md/shackle-match ()
+      (interactive)
+      (message (format "%s" (shackle-match (current-buffer)))))
 
     (shackle-mode 1))
 
