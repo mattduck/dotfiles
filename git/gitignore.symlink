@@ -238,3 +238,5 @@ tags
 
 ### Vagrant ###
 .vagrant/
+
+.idea/
