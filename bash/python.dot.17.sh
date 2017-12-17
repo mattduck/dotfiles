@@ -33,3 +33,46 @@ alias ,pymktmp3="mktmpenv -p $(pyenv which python3)"
 alias ,pywhich="python --version; which python; which pip"
 alias ,pyrm="rmvirtualen"
 alias ,pylssite="lssitepackages"
+
+
+function ,pypathadd() {
+    # usage: ,pypathadd [--prepend] [<directories>]
+    #
+    # Adds current directory or given directories to path. If --prepend not
+    # given, directories are appended.
+    #
+    # Also updates $_OLD_VIRTUAL_PATH set by Python's virtualenv, so that path
+    # changes persist through a venv deactivate command.
+
+    if [[ $1 = "--prepend" ]]; then
+        prepend=true
+        paths=(${@:2})
+    else
+        prepend=false
+        paths=($@)
+    fi
+
+    if [ -z "$paths" ]; then
+        paths[0]=$PWD
+    fi
+
+   for path in "${paths[@]}"; do
+
+       # Ignore paths that don't exist
+       if [ ! -f "$path" ] && [ ! -d "$path" ]; then
+           continue
+        fi
+
+        fullpath="$(cd "$path"; echo $PWD)"
+
+        if [[ ":$PYTHONPATH:" != *":$fullpath:"* ]]; then
+
+            if [[ "$prepend" = true ]]; then
+                export PYTHONPATH="$fullpath:$PYTHONPATH"
+            else
+                export PYTHONPATH="$PYTHONPATH:$fullpath"
+            fi
+        fi
+    done
+   ,pypathecho
+}
