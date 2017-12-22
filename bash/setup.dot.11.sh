@@ -44,3 +44,10 @@ if [ $(command -v sshrc) ]; then
     # It might be there are other `complete` args that are applicable.
     complete -F _ssh sshrc
 fi
+
+# Shows the source of a function
+function ,which-function {
+    shopt -s extdebug
+    declare -F "$@"
+    shopt -u extdebug
+}
