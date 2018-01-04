@@ -126,12 +126,12 @@
   (cond ((s-starts-with-p "mattmbp" (system-name))
          (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))
         ((s-starts-with-p "omattria" (system-name))
-         (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))
+         (set-frame-font "Inconsolata for Powerline-19:antialias=subpixel" t t))
         (t
          (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))))
 
-(add-hook 'focus-in-hook 'md/set-default-font)
 (use-package s :demand t)
+(add-hook 'focus-in-hook 'md/set-default-font)
 (md/set-default-font)
 
 (setq
@@ -932,7 +932,7 @@ represent all current available bindings accurately as a single keymap."
             ;; super annoying if this happens at random points during editing, so change it
             ;; to only happen on save (and when enabling the mode). This is quite similar to how
             ;; I had it setup in vim.
-            flycheck-check-syntax-automatically '(save mode-enabled)
+            flycheck-check-syntax-automatically '(mode-enabled)
 
             flycheck-mode-line-prefix nil)
 
@@ -942,6 +942,7 @@ represent all current available bindings accurately as a single keymap."
     :bind (:map md/leader-map
                 ;; S prefix, ie. "syntax"
                 ("s <RET>" . flycheck-mode)
+                ("ss" . flycheck-buffer)
                 ("sl" . flycheck-list-errors)
                 ("sn" . flycheck-next-error)
                 ("sj" . flycheck-next-error)
@@ -1011,21 +1012,10 @@ represent all current available bindings accurately as a single keymap."
               ("js" . projectile-run-shell)
               ("je" . projectile-run-eshell)))
 
-(use-package helm-projectile
+(use-package helm-projectile :demand t
   :init (progn
           ;; This has to be set before loading helm-projectile
-          (setq helm-projectile-fuzzy-match nil)
-
-          (defun md/projectile-switch-project ()
-            (interactive)
-            (let ((fn (which-key--show-keymap "switch project" (lookup-key md/leader-map "j")))
-                  (projectile-switch-project-action
-                   (lambda ()
-                     (let ((default-directory (projectile-project-root)))
-                       (call-interactively fn)))))
-              (when fn
-                (helm-projectile-switch-project)))))
-
+          (setq helm-projectile-fuzzy-match nil))
   :bind (:map md/leader-map
               ("jj" . md/projectile-switch-project)
               ("jag" . projectile-ag)
@@ -1034,6 +1024,16 @@ represent all current available bindings accurately as a single keymap."
               ("jb" . helm-projectile-switch-to-buffer)
               ("jp" . helm-projectile-switch-to-buffer)
               ("jf" . helm-projectile-find-file)))
+
+(defun md/projectile-switch-project ()
+  (interactive)
+  (let ((fn (which-key--show-keymap "switch project" (lookup-key md/leader-map "j")))
+        (projectile-switch-project-action
+         (lambda ()
+           (let ((default-directory (projectile-project-root)))
+             (call-interactively fn)))))
+    (when fn
+      (helm-projectile-switch-project))))
 
 (use-package dumb-jump
   :config
@@ -1309,22 +1309,6 @@ git dir) or linum mode"
         ;; Makes much more usable imo
         eldoc-print-after-edit t))
 
-(use-package origami
-  :config
-  (progn
-    (add-hook 'prog-mode-hook 'origami-mode)
-    (setq origami-show-fold-header t)
-    (evil-define-key 'normal origami-mode-map
-      (kbd "<tab>") 'origami-recursively-toggle-node
-      (kbd "S-<tab>") 'origami-toggle-all-nodes
-      "gj" 'origami-forward-fold
-      "gk" 'origami-previous-fold
-      "zr" 'origami-open-node
-      "zR" 'origami-open-all-nodes
-      "zm" 'origami-close-node
-      "zM" 'origami-close-all-nodes)
-    (origami-mode 1)))
-
 (add-hook 'ansi-term-mode-hook 'evil-emacs-state)
 (add-hook 'term-mode-hook 'evil-emacs-state)
 (evil-set-initial-state 'ansi-term-mode 'emacs)
@@ -1476,7 +1460,7 @@ git dir) or linum mode"
 				(when (s-starts-with-p "omattria" (system-name))
 				(setq-local indent-tabs-mode t)
 				(setq-local tab-width 4))
-				(whitespace-mode)
+				;;(whitespace-mode)
 				;; Don't auto indent as php indentation doesn't match existing conventions
 				;; on om.console
 				(electric-indent-mode -1))
@@ -2023,8 +2007,10 @@ headlines")
     (evil-define-key 'normal neotree-mode-map (kbd "RET") 'neotree-enter)
     (evil-define-key 'normal neotree-mode-map (kbd "TAB") 'neotree-quick-look)
     (evil-define-key 'normal neotree-mode-map (kbd "'") 'neotree-stretch-toggle)
-    (evil-define-key 'normal neotree-mode-map (kbd "h") 'neotree-select-up-node)
-    (evil-define-key 'normal neotree-mode-map (kbd "l") 'neotree-change-root)
+    (evil-define-key 'normal neotree-mode-map (kbd "H") 'neotree-select-up-node)
+    (evil-define-key 'normal neotree-mode-map (kbd "L") 'neotree-change-root)
+    (evil-define-key 'normal neotree-mode-map (kbd "h") 'neotree-enter)
+    (evil-define-key 'normal neotree-mode-map (kbd "l") 'neotree-enter)
     (evil-define-key 'normal neotree-mode-map (kbd "C-c C-c")
       'neotree-change-root))
   :bind (:map md/leader-map
@@ -2378,6 +2364,7 @@ headlines")
 
 (bind-key "n" narrow-map md/leader-map)
 (bind-key "i" 'org-tree-to-indirect-buffer narrow-map)
+(bind-key "v" 'md/narrow-to-region-indirect narrow-map)
 (bind-key "f" 'md/narrow-dwim narrow-map)
 (bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
                                         ; better than "n" for narrow-to-region
@@ -2407,7 +2394,18 @@ headlines")
                (t (org-narrow-to-subtree))))
         ((derived-mode-p 'latex-mode)
          (LaTeX-narrow-to-environment))
+        ((derived-mode-p 'restclient-mode)
+         (restclient-narrow-to-current))
         (t (narrow-to-defun))))
+
+(defun md/narrow-to-region-indirect (start end)
+  "Restrict editing in this buffer to the current region, indirectly."
+  (interactive "r")
+  (deactivate-mark)
+  (let ((buf (clone-indirect-buffer nil nil)))
+    (with-current-buffer buf
+      (narrow-to-region start end))
+      (switch-to-buffer buf)))
 
 (defun md/bookmark-names-matching-tags (tags)
   "Return bmkp bookmark names that match the given list of tags."
