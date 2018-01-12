@@ -189,7 +189,7 @@ that issue:
 #+BEGIN_SRC emacs-lisp
   (defun md/fontify-if-font-lock-mode ()
     (when font-lock-mode
-      (font-lock-fontify-buffer)))
+      (font-lock-ensure)))
 
   (add-hook 'after-save-hook 'md/fontify-if-font-lock-mode)
 
@@ -241,7 +241,7 @@ linum-format, but adds a space so there is some separation:
   (defun md/set-default-font ()
     (interactive)
     (cond ((s-starts-with-p "mattmbp" (system-name))
-           (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))
+           (set-frame-font "Menlo-15" t t))
           ((s-starts-with-p "omattria" (system-name))
            (set-frame-font "Inconsolata for Powerline-19:antialias=subpixel" t t))
           (t
@@ -1260,7 +1260,8 @@ Company seems to work nicely without much configuration.
               ;; super annoying if this happens at random points during editing, so change it
               ;; to only happen on save (and when enabling the mode). This is quite similar to how
               ;; I had it setup in vim.
-              flycheck-check-syntax-automatically '(mode-enabled)
+              flycheck-check-syntax-automatically '(idle-change)
+              flycheck-idle-change-delay 5
 
               flycheck-mode-line-prefix nil)
 
@@ -2186,6 +2187,10 @@ NOTE - compiling requires ~markdown~ to be installed.
 
 #+END_SRC
 
+** CSV
+#+BEGIN_SRC emacs-lisp
+(use-package csv-mode)
+#+END_SRC
 * Org mode
 
 
@@ -3864,7 +3869,6 @@ Close paren for the wrapping ~let~:
 - [ ] https://github.com/emacs-tw/awesome-emacs
   - [ ] multi cursor?
 - [ ] gk/gj for next/prev functions
-- [ ] [2016-08-20 Sat] getting helm "operator" keymap error in fundamental mode.
 - [ ] python development / elpy
   - [ ] open documentation
   - [ ] run tests
@@ -3942,9 +3946,6 @@ Close paren for the wrapping ~let~:
   used as prefix but then you can access the original binding.
 - [ ] [2017-03-25 Sat] https://github.com/redguardtoo/evil-matchit.
 - [ ] [2017-05-06 Sat] org - get babel working for scheme
-- [ ] [2017-05-18 Thu] ansi-term - fix backspace in insert mode
-- [ ] [2017-05-18 Thu] ansi-term - get C-r and my usual C-n/C-p bindings?
-  - [2017-10-24 Tue 23:17] I think the ansi-term issues were fixed by the C-j inputrc issue.
 - [ ] [2017-03-23 Thu] use dumb-jump for easy jumping to definitions??
   - by default only works within a project, won't search eg. python libs.
 - [ ] [2017-05-22 Mon] https://github.com/syohex/emacs-quickrun

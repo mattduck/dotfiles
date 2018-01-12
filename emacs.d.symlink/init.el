@@ -92,7 +92,7 @@
 
 (defun md/fontify-if-font-lock-mode ()
   (when font-lock-mode
-    (font-lock-fontify-buffer)))
+    (font-lock-ensure)))
 
 (add-hook 'after-save-hook 'md/fontify-if-font-lock-mode)
 
@@ -124,7 +124,7 @@
 (defun md/set-default-font ()
   (interactive)
   (cond ((s-starts-with-p "mattmbp" (system-name))
-         (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))
+         (set-frame-font "Menlo-15" t t))
         ((s-starts-with-p "omattria" (system-name))
          (set-frame-font "Inconsolata for Powerline-19:antialias=subpixel" t t))
         (t
@@ -932,7 +932,8 @@ represent all current available bindings accurately as a single keymap."
             ;; super annoying if this happens at random points during editing, so change it
             ;; to only happen on save (and when enabling the mode). This is quite similar to how
             ;; I had it setup in vim.
-            flycheck-check-syntax-automatically '(mode-enabled)
+            flycheck-check-syntax-automatically '(idle-change)
+            flycheck-idle-change-delay 5
 
             flycheck-mode-line-prefix nil)
 
@@ -1563,6 +1564,8 @@ git dir) or linum mode"
 (use-package coffee-mode)
 
 (use-package docker)
+
+(use-package csv-mode)
 
 (use-package org
   :pin org
