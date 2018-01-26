@@ -41,8 +41,7 @@ This wraps the rest of the file.
   time, although I haven't noticed much.
 
 #+BEGIN_SRC emacs-lisp
-  (let ((file-handler-name-alist nil)
-         (gc-cons-threshold 100000000))
+  (let ((file-handler-name-alist nil))
 #+END_SRC
 
 ** Emacs Package setup
@@ -431,6 +430,13 @@ If this isn't set then pasting via Alfred doesnt work:
     (if (eq window-system 'ns)
       (global-set-key (kbd "M-v") 'md/pbpaste))
 #+END_SRC
+** Garbage Collection
+Increase the threshold:
+
+#+BEGIN_SRC emacs-lisp
+  (setq gc-cons-threshold 100000000
+        garbage-collection-messages t)
+#+END_SRC
 * Misc utils
 ** Odd functions
 
@@ -543,6 +549,7 @@ by using a noop function:
 ** Settings
 #+BEGIN_SRC emacs-lisp
   (setq delete-by-moving-to-trash t)
+  (setq recentf-max-saved-items 50)
 #+END_SRC
 * Evil
 ** Base evil
@@ -1283,7 +1290,6 @@ Company seems to work nicely without much configuration.
   (use-package flycheck-mypy :demand t)
 #+END_SRC
 
-
 ** Compilation-mode
 #+BEGIN_SRC emacs-lisp
   (setq compilation-mode-map (make-sparse-keymap))
@@ -1858,6 +1864,10 @@ the underlying terminal (ie. I get the usual readline bindings).
   (add-hook 'term-mode-hook 'evil-emacs-state)
   (evil-set-initial-state 'ansi-term-mode 'emacs)
   (evil-set-initial-state 'term-mode 'emacs)
+#+END_SRC
+** SQL
+#+BEGIN_SRC emacs-lisp
+(add-hook 'sql-mode-hook 'sql-highlight-postgres-keywords)
 #+END_SRC
 * Language support
 ** Emacs-lisp
@@ -2700,6 +2710,7 @@ causes it to jump out of the popwin window.
 #+END_SRC
 * Neotree
 
+
 #+BEGIN_SRC emacs-lisp
   (use-package neotree
     :demand t
@@ -3046,6 +3057,80 @@ edges.
                 (";m" . md/popwin-messages)))
 #+END_SRC
 
+** Narrowing
+
+Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html:
+*** edit-indirect
+#+BEGIN_SRC emacs-lisp
+  (use-package edit-indirect
+    :demand t
+    :config
+    (progn
+      (defun md/edit-indirect-guess-mode (parent-buffer beg end)
+        (let ((major (with-current-buffer parent-buffer major-mode)))
+          (cond ((eq major 'python-mode)
+                 (sql-mode))
+                ((eq major 'php-mode)
+                 (sql-mode))
+                ((eq major 'web-mode)
+                 (sql-mode))
+                (t (funcall major)))))
+      (setq edit-indirect-guess-mode-function 'md/edit-indirect-guess-mode)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  ;; Don't ask for confirmation on narrow-to-region
+  (put 'narrow-to-region 'disabled nil)
+
+  (bind-key "n" narrow-map md/leader-map)
+  (bind-key "i" 'org-tree-to-indirect-buffer narrow-map)
+  (bind-key "v" 'md/narrow-to-region-indirect narrow-map)
+  (bind-key "f" 'md/narrow-dwim narrow-map)
+  (bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
+                                          ; better than "n" for narrow-to-region
+
+  (defun md/narrow-dwim (p)
+    "Widen if buffer is narrowed, narrow-dwim otherwise.
+    Dwim means: region, org-src-block, org-subtree, or
+    defun, whichever applies first. Narrowing to
+    org-src-block actually calls `org-edit-src-code'.
+
+    With prefix P, don't widen, just narrow even if buffer
+    is already narrowed."
+    (interactive "P")
+    (declare (interactive-only))
+    (cond ((and (buffer-narrowed-p) (not p)) (widen))
+          ((region-active-p)
+           (edit-indirect-region (region-beginning)
+                                 (region-end)
+                                 t))
+          (edit-indirect--overlay
+           (edit-indirect-commit))
+          (org-src-mode
+           (org-edit-src-exit))
+          ((derived-mode-p 'org-mode)
+           ;; `org-edit-src-code' is not a real narrowing
+           ;; command. Remove this first conditional if
+           ;; you don't want it.
+           (cond ((ignore-errors (org-edit-src-code) t))
+                 ((ignore-errors (org-narrow-to-block) t))
+                 (t (org-narrow-to-subtree))))
+          ((derived-mode-p 'latex-mode)
+           (LaTeX-narrow-to-environment))
+          ((derived-mode-p 'restclient-mode)
+           (restclient-narrow-to-current))
+          (t (narrow-to-defun))))
+
+  (defun md/narrow-to-region-indirect (start end)
+    "Restrict editing in this buffer to the current region, indirectly."
+    (interactive "r")
+    (deactivate-mark)
+    (let ((buf (clone-indirect-buffer nil nil)))
+      (with-current-buffer buf
+        (narrow-to-region start end))
+        (switch-to-buffer buf)))
+#+END_SRC
+
 ** Splitscreen
 #+BEGIN_SRC emacs-lisp
 (setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
@@ -3215,6 +3300,7 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
               ;;      (zero-or-more anything)
               ;;      string-end)
               ;;  :regexp t :eyebrowse "git" :select t)
+              ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :other t)
 
               ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
               ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
@@ -3310,59 +3396,6 @@ another buffer in the window.
   (bind-key "tD" 'dedicated-mode md/leader-map)
 #+END_SRC
 
-** Narrowing
-
-Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html:
-
-#+BEGIN_SRC emacs-lisp
-  ;; Don't ask for confirmation on narrow-to-region
-  (put 'narrow-to-region 'disabled nil)
-
-  (bind-key "n" narrow-map md/leader-map)
-  (bind-key "i" 'org-tree-to-indirect-buffer narrow-map)
-  (bind-key "v" 'md/narrow-to-region-indirect narrow-map)
-  (bind-key "f" 'md/narrow-dwim narrow-map)
-  (bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
-                                          ; better than "n" for narrow-to-region
-
-  (defun md/narrow-dwim (p)
-    "Widen if buffer is narrowed, narrow-dwim otherwise.
-    Dwim means: region, org-src-block, org-subtree, or
-    defun, whichever applies first. Narrowing to
-    org-src-block actually calls `org-edit-src-code'.
-
-    With prefix P, don't widen, just narrow even if buffer
-    is already narrowed."
-    (interactive "P")
-    (declare (interactive-only))
-    (cond ((and (buffer-narrowed-p) (not p)) (widen))
-          ((region-active-p)
-           (narrow-to-region (region-beginning)
-                             (region-end)))
-          (org-src-mode
-           (org-edit-src-exit))
-          ((derived-mode-p 'org-mode)
-           ;; `org-edit-src-code' is not a real narrowing
-           ;; command. Remove this first conditional if
-           ;; you don't want it.
-           (cond ((ignore-errors (org-edit-src-code) t))
-                 ((ignore-errors (org-narrow-to-block) t))
-                 (t (org-narrow-to-subtree))))
-          ((derived-mode-p 'latex-mode)
-           (LaTeX-narrow-to-environment))
-          ((derived-mode-p 'restclient-mode)
-           (restclient-narrow-to-current))
-          (t (narrow-to-defun))))
-
-  (defun md/narrow-to-region-indirect (start end)
-    "Restrict editing in this buffer to the current region, indirectly."
-    (interactive "r")
-    (deactivate-mark)
-    (let ((buf (clone-indirect-buffer nil nil)))
-      (with-current-buffer buf
-        (narrow-to-region start end))
-        (switch-to-buffer buf)))
-#+END_SRC
 * Bookmarks
 
 Provide some utility functions and helm commands around managing

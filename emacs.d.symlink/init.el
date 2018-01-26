@@ -15,8 +15,7 @@
 
 (defconst md/emacs-init-start (current-time))
 
-(let ((file-handler-name-alist nil)
-       (gc-cons-threshold 100000000))
+(let ((file-handler-name-alist nil))
 
 (package-initialize)
 
@@ -232,6 +231,9 @@
   (if (eq window-system 'ns)
     (global-set-key (kbd "M-v") 'md/pbpaste))
 
+(setq gc-cons-threshold 100000000
+      garbage-collection-messages t)
+
 (defun md/strip-whitespace-and-save ()
   (interactive)
   (delete-trailing-whitespace)
@@ -321,6 +323,7 @@
         '("SPC" "TAB")))
 
 (setq delete-by-moving-to-trash t)
+(setq recentf-max-saved-items 50)
 
 (use-package evil
  :demand t
@@ -1315,6 +1318,8 @@ git dir) or linum mode"
 (evil-set-initial-state 'ansi-term-mode 'emacs)
 (evil-set-initial-state 'term-mode 'emacs)
 
+(add-hook 'sql-mode-hook 'sql-highlight-postgres-keywords)
+
 (defun md/emacs-lisp-hook ()
     (setq fill-column 100))
 (add-hook 'emacs-lisp-mode-hook 'md/emacs-lisp-hook)
@@ -2135,6 +2140,72 @@ headlines")
         message-kill-buffer-on-exit t
         sendmail-program "/usr/local/bin/msmtp"))
 
+(use-package edit-indirect
+  :demand t
+  :config
+  (progn
+    (defun md/edit-indirect-guess-mode (parent-buffer beg end)
+      (let ((major (with-current-buffer parent-buffer major-mode)))
+        (cond ((eq major 'python-mode)
+               (sql-mode))
+              ((eq major 'php-mode)
+               (sql-mode))
+              ((eq major 'web-mode)
+               (sql-mode))
+              (t (funcall major)))))
+    (setq edit-indirect-guess-mode-function 'md/edit-indirect-guess-mode)))
+
+;; Don't ask for confirmation on narrow-to-region
+(put 'narrow-to-region 'disabled nil)
+
+(bind-key "n" narrow-map md/leader-map)
+(bind-key "i" 'org-tree-to-indirect-buffer narrow-map)
+(bind-key "v" 'md/narrow-to-region-indirect narrow-map)
+(bind-key "f" 'md/narrow-dwim narrow-map)
+(bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
+                                        ; better than "n" for narrow-to-region
+
+(defun md/narrow-dwim (p)
+  "Widen if buffer is narrowed, narrow-dwim otherwise.
+  Dwim means: region, org-src-block, org-subtree, or
+  defun, whichever applies first. Narrowing to
+  org-src-block actually calls `org-edit-src-code'.
+
+  With prefix P, don't widen, just narrow even if buffer
+  is already narrowed."
+  (interactive "P")
+  (declare (interactive-only))
+  (cond ((and (buffer-narrowed-p) (not p)) (widen))
+        ((region-active-p)
+         (edit-indirect-region (region-beginning)
+                               (region-end)
+                               t))
+        (edit-indirect--overlay
+         (edit-indirect-commit))
+        (org-src-mode
+         (org-edit-src-exit))
+        ((derived-mode-p 'org-mode)
+         ;; `org-edit-src-code' is not a real narrowing
+         ;; command. Remove this first conditional if
+         ;; you don't want it.
+         (cond ((ignore-errors (org-edit-src-code) t))
+               ((ignore-errors (org-narrow-to-block) t))
+               (t (org-narrow-to-subtree))))
+        ((derived-mode-p 'latex-mode)
+         (LaTeX-narrow-to-environment))
+        ((derived-mode-p 'restclient-mode)
+         (restclient-narrow-to-current))
+        (t (narrow-to-defun))))
+
+(defun md/narrow-to-region-indirect (start end)
+  "Restrict editing in this buffer to the current region, indirectly."
+  (interactive "r")
+  (deactivate-mark)
+  (let ((buf (clone-indirect-buffer nil nil)))
+    (with-current-buffer buf
+      (narrow-to-region start end))
+      (switch-to-buffer buf)))
+
 (setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
 
 ;; NOTE - for some reason this doesn't seem to load with "defer"
@@ -2278,6 +2349,7 @@ headlines")
             ;;      (zero-or-more anything)
             ;;      string-end)
             ;;  :regexp t :eyebrowse "git" :select t)
+            ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :other t)
 
             ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
             ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
@@ -2361,54 +2433,6 @@ headlines")
                   minor-mode-alist))))
 
 (bind-key "tD" 'dedicated-mode md/leader-map)
-
-;; Don't ask for confirmation on narrow-to-region
-(put 'narrow-to-region 'disabled nil)
-
-(bind-key "n" narrow-map md/leader-map)
-(bind-key "i" 'org-tree-to-indirect-buffer narrow-map)
-(bind-key "v" 'md/narrow-to-region-indirect narrow-map)
-(bind-key "f" 'md/narrow-dwim narrow-map)
-(bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
-                                        ; better than "n" for narrow-to-region
-
-(defun md/narrow-dwim (p)
-  "Widen if buffer is narrowed, narrow-dwim otherwise.
-  Dwim means: region, org-src-block, org-subtree, or
-  defun, whichever applies first. Narrowing to
-  org-src-block actually calls `org-edit-src-code'.
-
-  With prefix P, don't widen, just narrow even if buffer
-  is already narrowed."
-  (interactive "P")
-  (declare (interactive-only))
-  (cond ((and (buffer-narrowed-p) (not p)) (widen))
-        ((region-active-p)
-         (narrow-to-region (region-beginning)
-                           (region-end)))
-        (org-src-mode
-         (org-edit-src-exit))
-        ((derived-mode-p 'org-mode)
-         ;; `org-edit-src-code' is not a real narrowing
-         ;; command. Remove this first conditional if
-         ;; you don't want it.
-         (cond ((ignore-errors (org-edit-src-code) t))
-               ((ignore-errors (org-narrow-to-block) t))
-               (t (org-narrow-to-subtree))))
-        ((derived-mode-p 'latex-mode)
-         (LaTeX-narrow-to-environment))
-        ((derived-mode-p 'restclient-mode)
-         (restclient-narrow-to-current))
-        (t (narrow-to-defun))))
-
-(defun md/narrow-to-region-indirect (start end)
-  "Restrict editing in this buffer to the current region, indirectly."
-  (interactive "r")
-  (deactivate-mark)
-  (let ((buf (clone-indirect-buffer nil nil)))
-    (with-current-buffer buf
-      (narrow-to-region start end))
-      (switch-to-buffer buf)))
 
 (defun md/bookmark-names-matching-tags (tags)
   "Return bmkp bookmark names that match the given list of tags."
