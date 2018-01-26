@@ -7,7 +7,7 @@ smart_completion = True
 
 # Display the completions in several columns. (More completions will be
 # visible.)
-wider_completion_menu = False
+wider_completion_menu = True
 
 # Multi-line mode allows breaking up the sql statements into multiple lines. If
 # this is set to True, then the end of the statements must have a semi-colon.
@@ -20,7 +20,7 @@ multi_line = True
 # If multi_line_mode is set to "safe", in multi-line mode, [Enter] will always
 # insert a newline, and [Esc] [Enter] or [Alt]-[Enter] must be used to execute
 # a command.
-multi_line_mode = psql
+multi_line_mode = safe
 
 # Enables expand mode, which is similar to `\x` in psql.
 expand = False
@@ -48,7 +48,7 @@ casing_file = default
 
 # If generate_casing_file is set to True and there is no file in the above
 # location, one will be generated based on usage in SQL/PLPGSQL functions.
-generate_casing_file = False
+generate_casing_file = True
 
 # Casing of column headers based on the casing_file described above
 case_column_headers = True
@@ -65,7 +65,7 @@ log_level = INFO
 
 # Order of columns when expanding * to column list
 # Possible values: "table_order" and "alphabetic"
-asterisk_column_order = table_order
+asterisk_column_order = alphabetic
 
 # Whether to qualify with table alias/name when suggesting columns
 # Possible values: "always", never" and "if_more_than_one_table"
@@ -85,7 +85,7 @@ timing = True
 # ascii, double, github, orgtbl, rst, mediawiki, html, latex, latex_booktabs,
 # textile, moinmoin, jira, vertical, tsv, csv.
 # Recommended: psql, fancy_grid and grid.
-table_format = psql
+table_format = orgtbl
 
 # Syntax Style. Possible values: manni, igor, xcode, vim, autumn, vs, rrt,
 # native, perldoc, borland, tango, emacs, friendly, monokai, paraiso-dark,
@@ -115,7 +115,7 @@ less_chatty = True
 # \h - Hostname of the server
 # \d - Database name
 # \n - Newline
-prompt = '\u@\h:\d> '
+prompt = '\u@\h:\d\n> '
 
 # Number of lines to reserve for the suggestion menu
 min_num_menu_lines = 4
