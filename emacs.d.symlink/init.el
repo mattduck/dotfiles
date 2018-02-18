@@ -120,14 +120,35 @@
 ;; Disable this for a minute
 ;;(global-hl-line-mode 1)
 
+(defvar md/font-size nil)
+
+(defun md/font-size-incr ()
+  (interactive)
+  (when md/font-size
+    (setq md/font-size (+ md/font-size 1)))
+  (md/set-default-font))
+
+(defun md/font-size-decr ()
+  (interactive)
+  (when md/font-size
+    (setq md/font-size (- md/font-size 1)))
+  (md/set-default-font))
+
 (defun md/set-default-font ()
   (interactive)
   (cond ((s-starts-with-p "mattmbp" (system-name))
          (set-frame-font "Menlo-15" t t))
         ((s-starts-with-p "omattria" (system-name))
-         (set-frame-font "Inconsolata for Powerline-19:antialias=subpixel" t t))
+         (when (not md/font-size)
+           (setq md/font-size 19))
+         (set-frame-font
+          (format "Inconsolata for Powerline-%s:antialias=subpixel" md/font-size) t t))
         (t
          (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))))
+
+;; TODO add bindings for buffer-only, copying C-x C-+
+(bind-key "+" 'md/font-size-incr md/leader-map)
+(bind-key "-" 'md/font-size-decr md/leader-map)
 
 (use-package s :demand t)
 (add-hook 'focus-in-hook 'md/set-default-font)
@@ -2349,7 +2370,7 @@ headlines")
             ;;      (zero-or-more anything)
             ;;      string-end)
             ;;  :regexp t :eyebrowse "git" :select t)
-            ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :other t)
+            ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :same t)
 
             ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
             ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
@@ -2739,7 +2760,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                                                    (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
                                                  org-mode-line-string))
                                        'face nil)
-                                      mode-line 'l))))
+                                      face1 'l))))
 
                              (rhs (list
 
