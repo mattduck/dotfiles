@@ -278,6 +278,8 @@ Token.SearchMatch.Current = '#ansidarkgray bg:#ansired noinherit'
 [named queries]
 top_queries = "SELECT regexp_replace(substring(query, 1, 300), '\n|\r', ' ') AS short_query, round(total_time::numeric, 2) AS total_time, calls, round(mean_time::numeric, 2) AS mean, round((100 * total_time / sum(total_time::numeric) OVER ())::numeric, 2) AS percentage_cpu FROM pg_stat_statements ORDER BY total_time DESC LIMIT 20;"
 
+role_settings = "SELECT coalesce(role.rolname, 'database wide') as role, coalesce(db.datname, 'cluster wide') as database, setconfig as what_changed FROM pg_db_role_setting role_setting LEFT JOIN pg_roles role ON role.oid = role_setting.setrole LEFT JOIN pg_database db ON db.oid = role_setting.setdatabase;"
+
 # DNS to call by -D option
 [alias_dsn]
 # example_dsn = postgresql://[user[:password]@][netloc][:port][/dbname]
