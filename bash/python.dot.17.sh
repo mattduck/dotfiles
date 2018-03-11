@@ -78,3 +78,14 @@ function ,pypathadd() {
     done
    ,pypathecho
 }
+
+function ,pypath() {
+    echo 'PYTHONPATH: '
+    IFS=:
+    eval printf "%s\\\n" \$${1:-PYTHONPATH}
+}
+
+function ,pycrm() {
+    find "$@" -type f -name '*.pyc' -print0 | xargs -0 rm
+    find "$@" -type d -iname '__pycache__' -print0 | xargs -0 rm -r
+}
