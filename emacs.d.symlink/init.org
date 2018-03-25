@@ -254,14 +254,20 @@ linum-format, but adds a space so there is some separation:
   (defun md/set-default-font ()
     (interactive)
     (cond ((s-starts-with-p "mattmbp" (system-name))
-           (set-frame-font "Menlo-15" t t))
+           (when (not md/font-size)
+             (setq md/font-size 15))
+           (set-frame-font (format "Menlo-%s" md/font-size) t t))
+
           ((s-starts-with-p "omattria" (system-name))
            (when (not md/font-size)
              (setq md/font-size 19))
            (set-frame-font
             (format "Inconsolata for Powerline-%s:antialias=subpixel" md/font-size) t t))
+
           (t
-           (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))))
+           (when (not md/font-size)
+             (setq md/font-size 15))
+           (set-frame-font (format "Roboto Mono Light for Powerline-%s:antialias=subpixel" md/font-size) t t))))
 
   ;; TODO add bindings for buffer-only, copying C-x C-+
   (bind-key "+" 'md/font-size-incr md/leader-map)
