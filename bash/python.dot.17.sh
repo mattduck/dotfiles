@@ -6,6 +6,8 @@ export PYTHONDONTWRITEBYTECODE=1
 . "$DOTFILES/bash/fabric-completion/fabric-completion.bash"
 export FAB_COMPLETION_CACHE_TASKS=false
 
+eval "$(pip completion --bash)"
+
 # By default, Python's virtualenv will modify the prompt when a virtualenv is
 # active. Disable this.
 export VIRTUAL_ENV_DISABLE_PROMPT=1
@@ -75,4 +77,15 @@ function ,pypathadd() {
         fi
     done
    ,pypathecho
+}
+
+function ,pypath() {
+    echo 'PYTHONPATH: '
+    IFS=:
+    eval printf "%s\\\n" \$${1:-PYTHONPATH}
+}
+
+function ,pycrm() {
+    find "$@" -type f -name '*.pyc' -print0 | xargs -0 rm
+    find "$@" -type d -iname '__pycache__' -print0 | xargs -0 rm -r
 }

@@ -27,3 +27,5 @@ emacs.d.spacemacs
 # .config might contain files that have been dumped by programs, so
 # don't include it by default
 config.symlink/*
+
+ipython.symlink/*

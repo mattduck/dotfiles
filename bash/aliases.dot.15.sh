@@ -22,6 +22,8 @@ if [[ $(type -t __git_complete) == *function* ]]; then
     __git_complete g __git_main
 fi
 
+alias k="kubectl"
+
 alias ..="cd .."
 alias ...="cd ../.."
 alias ....="cd ../../.."
