@@ -3959,7 +3959,6 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-03-18 Sat] get C-O/C-I jumping forward/back in dired.
 - [ ] helm buffers - how to search including the mode? Eg. "dired" should match
   the "Dired by name" buffers.
-- [ ] enable SPC leader in ag-mode.
 - [2016-12-01 Thu] does evil-add-hjkl-bindings take precedence over the mode
   map?
 - [2016-12-03 Sat] https://bitbucket.org/lyro/evil/issues/511/let-certain-minor-modes-key-bindings
