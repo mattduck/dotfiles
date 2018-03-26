@@ -1923,6 +1923,8 @@ uses the scheduled property rather than the deadline."
   (kbd "p") 'org-agenda-previous-line
   (kbd "C-p") 'org-agenda-previous-line
 
+  (kbd "RET") 'org-agenda-goto
+
   (kbd "]") 'org-agenda-later
   (kbd "[") 'org-agenda-earlier
 
