@@ -137,14 +137,20 @@
 (defun md/set-default-font ()
   (interactive)
   (cond ((s-starts-with-p "mattmbp" (system-name))
-         (set-frame-font "Menlo-15" t t))
+         (when (not md/font-size)
+           (setq md/font-size 15))
+         (set-frame-font (format "Menlo-%s" md/font-size) t t))
+
         ((s-starts-with-p "omattria" (system-name))
          (when (not md/font-size)
            (setq md/font-size 19))
          (set-frame-font
           (format "Inconsolata for Powerline-%s:antialias=subpixel" md/font-size) t t))
+
         (t
-         (set-frame-font "Roboto Mono Light for Powerline-14:antialias=subpixel" t t))))
+         (when (not md/font-size)
+           (setq md/font-size 15))
+         (set-frame-font (format "Roboto Mono Light for Powerline-%s:antialias=subpixel" md/font-size) t t))))
 
 ;; TODO add bindings for buffer-only, copying C-x C-+
 (bind-key "+" 'md/font-size-incr md/leader-map)
@@ -304,6 +310,18 @@
           (delete-file filename)
           (message "Deleted file %s" filename)
           (kill-buffer))))))
+
+(defun md/rename-file-and-buffer ()
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (if (not (and filename (file-exists-p filename)))
+        (message "Buffer is not visiting a file!")
+      (let ((new-name (read-file-name "New name: " filename)))
+        (cond
+         ((vc-backend filename) (vc-rename-file filename new-name))
+         (t
+          (rename-file filename new-name t)
+          (set-visited-file-name new-name t t)))))))
 
 (defun md/expand-newlines ()
   (interactive)
@@ -513,7 +531,8 @@
         ("bh" . previous-buffer)
         ("bl" . next-buffer)
         ("k" . kill-buffer)
-        ("K" . md/remove-file-and-buffer)
+        ("bK" . md/remove-file-and-buffer)
+        ("bR" . md/rename-file-and-buffer)
         ("bk" . kill-buffer)
         ("bi" . md/file-info)
         ("bw" . save-buffer)
