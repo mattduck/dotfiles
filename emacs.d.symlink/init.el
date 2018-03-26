@@ -1713,7 +1713,7 @@ git dir) or linum mode"
 (bind-key "SPC J" 'org-goto md/org-mode-leader-map)
 (bind-key "SPC R" 'org-refile md/org-mode-leader-map)
 (bind-key "SPC r" 'org-review md/org-mode-leader-map)
-(bind-key "SPC A" 'org-archive-subtree md/org-mode-leader-map)
+(bind-key "SPC A" 'org-archive-to-archive-sibling md/org-mode-leader-map)
 (bind-key "SPC i" 'org-clock-in md/org-mode-leader-map)
 (bind-key "SPC o" 'org-clock-out md/org-mode-leader-map)
 (bind-key "SPC E" 'org-export-dispatch md/org-mode-leader-map)
@@ -1904,11 +1904,14 @@ uses the scheduled property rather than the deadline."
   (kbd "p") 'org-agenda-previous-line
   (kbd "C-p") 'org-agenda-previous-line
 
+  (kbd "]") 'org-agenda-later
+  (kbd "[") 'org-agenda-earlier
+
   (kbd "q") 'md/org-agenda-quit
   (kbd "r") 'md/org-gcal-fetch-and-agenda-redo  ; Recalculate the agenda
-  (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view
+  (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view - toggle archived, logs, clocks etc.
   (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
-  (kbd "=") 'org-agenda-filter-by-regexp  ; Search
+  (kbd "/") 'org-agenda-filter-by-regexp  ; Search
   (kbd "C-/") 'org-agenda-filter-by-tag  ; Tag filter
   (kbd "^") 'org-agenda-filter-by-top-headline  ; Show other items with same
                                     ; headline as current
@@ -1987,6 +1990,7 @@ headlines")
 (define-key org-mode-map (kbd "C-c C-r") 'org-review)
 
 (bind-key "C-c a" 'org-agenda global-map)
+(bind-key "C-c c" 'org-capture global-map)
 
 ))
 
