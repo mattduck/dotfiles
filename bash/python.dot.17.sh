@@ -76,7 +76,7 @@ function ,pypathadd() {
             fi
         fi
     done
-   ,pypathecho
+   ,pypath
 }
 
 function ,pypath() {

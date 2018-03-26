@@ -11,7 +11,7 @@ s = "!tig status"
 co = checkout
 cob = checkout -b
 ci = commit --verbose
-b = branch
+b = branch -av
 
 d = diff
 dc = diff --cached
