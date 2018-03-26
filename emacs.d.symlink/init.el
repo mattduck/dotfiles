@@ -406,6 +406,21 @@
          (md/unfill-region start end)
        (md/unfill-paragraph)))
 
+   (defun md/move-line-up ()
+     (interactive)
+     (let ((col (current-column)))
+       (transpose-lines 1)
+       (forward-line -2)
+       (evil-goto-column col)))
+
+   (defun md/move-line-down ()
+     (interactive)
+     (let ((col (current-column)))
+       (forward-line 1)
+       (transpose-lines 1)
+       (forward-line -1)
+       (evil-goto-column col)))
+
    ;; NOTE - temp commenting this, is it cause of performance issues?
    ;; By default the evil jump commands don't set markers as often
    ;; as I would like. But it installs a pre-command-hook to call
@@ -437,6 +452,10 @@
    ;; recenter-top-bottom by default.
    (bind-key "C-l" 'evil-jump-forward evil-normal-state-map)
    (bind-key "C-l" 'evil-jump-forward evil-visual-state-map)
+
+   ;; Org-like binding everywhere
+   (bind-key "M-j" 'md/move-line-down evil-normal-state-map)
+   (bind-key "M-k" 'md/move-line-up evil-normal-state-map)
 
    ;; evil-paste-pop is handy, but I don't like the C-n/C-p default bindings,
    ;; because those are common bindings everywhere else in Emacs. Use C-S
