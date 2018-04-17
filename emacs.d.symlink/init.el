@@ -1086,7 +1086,8 @@ represent all current available bindings accurately as a single keymap."
               ("jad" . ag-project-dired)
               ("jb" . helm-projectile-switch-to-buffer)
               ("jp" . helm-projectile-switch-to-buffer)
-              ("jf" . helm-projectile-find-file)))
+              ("jf" . helm-projectile-find-file)
+              ("jF" . md/projectile-find-file-invalidate-cache)))
 
 (defun md/projectile-switch-project ()
   (interactive)
@@ -1097,6 +1098,10 @@ represent all current available bindings accurately as a single keymap."
              (call-interactively fn)))))
     (when fn
       (helm-projectile-switch-project))))
+
+(defun md/projectile-find-file-invalidate-cache ()
+  (interactive)
+  (helm-projectile-find-file t))
 
 (use-package dumb-jump
   :config
