@@ -1,3 +1,3 @@
 #!/bin/bash
 # This hook is sourced after every virtualenv is activated.
-
+which pip >/dev/null && eval "$(pip completion --bash)"
