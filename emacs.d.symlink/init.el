@@ -1409,7 +1409,7 @@ git dir) or linum mode"
   (interactive)
   (setq debug-on-error (not debug-on-error))
   (message (format "debug-on-error %s" debug-on-error)))
-(bind-key "EB" 'md/toggle-debug-on-error md/leader-map)
+(bind-key "Ed" 'md/toggle-debug-on-error md/leader-map)
 
 (add-hook 'edebug-mode-hook 'evil-normal-state)
 (md/make-keymap-noop edebug-mode-map)
