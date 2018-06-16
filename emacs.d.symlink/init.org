@@ -1110,7 +1110,6 @@ easier to discover features / work out where I am:
                 "SPC a" "org"
                 "SPC A" "ag"
                 "SPC b" "buffers"
-                "SPC B" "bookmarks"
                 "SPC c" "comments"
                 "SPC C" "compile"
                 "SPC e" "eval"
@@ -1125,11 +1124,12 @@ easier to discover features / work out where I am:
                 "SPC j" "project"
                 "SPC j ;" "project-popwin"
                 "SPC j a" "project-ag"
+                "SPC l" "bookmarks"
                 "SPC n" "narrow"
                 "SPC P" "Packages"
                 "SPC s" "flycheck"
                 "SPC S" "flyspell"
-                "SPC t" "toggle-misc"
+                "SPC t" "display-options"
                 "SPC v" "dotfiles"
                 "SPC ;" "popwin"
                 "SPC '" "scratch")
@@ -1785,6 +1785,13 @@ I can use this with grep/ag to quickly find the todo comments:
                 ("tt" . highlight-thing-mode)))
 #+END_SRC
 
+** Highlight things manually
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "th" 'highlight-phrase md/leader-map)
+  (bind-key "tu" 'unhighlight-regexp md/leader-map)
+#+END_SRC
+
 ** Parentheses
 
 #+BEGIN_SRC emacs-lisp
@@ -1967,7 +1974,7 @@ the underlying terminal (ie. I get the usual readline bindings).
     (interactive)
     (setq debug-on-error (not debug-on-error))
     (message (format "debug-on-error %s" debug-on-error)))
-  (bind-key "tB" 'md/toggle-debug-on-error md/leader-map)
+  (bind-key "EB" 'md/toggle-debug-on-error md/leader-map)
 #+END_SRC
 
 Override the edebug keymap to only contain features/keys that I care about:
@@ -3462,6 +3469,7 @@ another buffer in the window.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
+  (bind-key "bd" 'dedicated-mode md/leader-map)
   (bind-key "tD" 'dedicated-mode md/leader-map)
 #+END_SRC
 
@@ -3980,12 +3988,9 @@ Close paren for the wrapping ~let~:
 - [ ] check company addons
 - [ ] go mode
 - [ ] cask?
-- [2016-09-24 Sat] elscreen not actively developed
 - [ ] spacemacs - provide anything good?
   - [ ] paradox-list-packages
-  - [ ] a prefix - applications
   - [ ] list-processes?
-  - [ ] undo tree visualiser?
   - [ ] ! to execute shell command
   - [ ] c - compiling
     - helm-make-projectile
@@ -3996,7 +4001,6 @@ Close paren for the wrapping ~let~:
   - [ ] f - file prefix
     - dired jump
     - open in external app
-    - neotree toggle looks cool
   - [ ] i - insert prefix
   - [ ] p - projectile run shell
     - and async
@@ -4035,7 +4039,6 @@ Close paren for the wrapping ~let~:
   - It's probably a package that slows down org mode
 - [ ] [2017-02-28 Tue] org links to files, shortcuts.
 - [ ] [2017-03-19 Sun] bindings or bookmarks to jump to elisp source files (eg. elpa)
-- [ ] [2017-03-17 Fri] splitscreen - C-w q to close window?
 - [ ] [2017-03-18 Sat] ensure backup files are working properly
 - [ ] [2017-03-18 Sat] how to ensure evil-set-jump is called in help-mode?
 - [ ] [2017-03-18 Sat] how to ensure evil-set-jump is called in dired-mode?
@@ -4057,9 +4060,6 @@ Close paren for the wrapping ~let~:
   - dired, terminal, magit?
 - [ ] [2017-07-06 Thu] syntax highlighting for generic config files, ssh config.
 - [ ] [2017-07-10 Mon] use-package - auto install packages if not installed.
-- [ ] [2017-07-11 Tue] split applications into separate frames? perspectives.el?
-  - just different elscreen tabs?
-  - https://github.com/bmag/emacs-purpose
 - [ ] Also make leader accessible with C-c SPC? this would mean remapping that
   binding for the existing maps where I override SPC to point to a mode-specific
   leader.
@@ -4078,3 +4078,5 @@ Close paren for the wrapping ~let~:
   - basically just send region or buffer to psql and write to result buffer.
 - [ ] own logging/messages buffer? To avoid the noise.
 - [ ] [2017-11-05 Sun] Make magit bindings similar to tig.
+- [ ] [2018-05-11 Fri] inline sql syntax highlighting if possible
+- [ ] [2018-05-11 Fri] evil-collection

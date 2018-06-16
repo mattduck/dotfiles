@@ -798,7 +798,6 @@ represent all current available bindings accurately as a single keymap."
               "SPC a" "org"
               "SPC A" "ag"
               "SPC b" "buffers"
-              "SPC B" "bookmarks"
               "SPC c" "comments"
               "SPC C" "compile"
               "SPC e" "eval"
@@ -813,11 +812,12 @@ represent all current available bindings accurately as a single keymap."
               "SPC j" "project"
               "SPC j ;" "project-popwin"
               "SPC j a" "project-ag"
+              "SPC l" "bookmarks"
               "SPC n" "narrow"
               "SPC P" "Packages"
               "SPC s" "flycheck"
               "SPC S" "flyspell"
-              "SPC t" "toggle-misc"
+              "SPC t" "display-options"
               "SPC v" "dotfiles"
               "SPC ;" "popwin"
               "SPC '" "scratch")
@@ -1339,6 +1339,9 @@ git dir) or linum mode"
   (interactive)
   (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
 
+(bind-key "th" 'highlight-phrase md/leader-map)
+(bind-key "tu" 'unhighlight-regexp md/leader-map)
+
 (use-package paren
  :defer 1
  :init (progn
@@ -1406,7 +1409,7 @@ git dir) or linum mode"
   (interactive)
   (setq debug-on-error (not debug-on-error))
   (message (format "debug-on-error %s" debug-on-error)))
-(bind-key "tB" 'md/toggle-debug-on-error md/leader-map)
+(bind-key "EB" 'md/toggle-debug-on-error md/leader-map)
 
 (add-hook 'edebug-mode-hook 'evil-normal-state)
 (md/make-keymap-noop edebug-mode-map)
@@ -2502,6 +2505,7 @@ headlines")
             (cons '(dedicated-mode " D")
                   minor-mode-alist))))
 
+(bind-key "bd" 'dedicated-mode md/leader-map)
 (bind-key "tD" 'dedicated-mode md/leader-map)
 
 (defun md/bookmark-names-matching-tags (tags)
