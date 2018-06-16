@@ -164,6 +164,11 @@ Token.Toolbar.On = 'bg:#ansiblack #ansiwhite noinherit'
 Token.SearchMatch = '#ansidarkgray bg:#ansibrown noinherit'
 Token.SearchMatch.Current = '#ansidarkgray bg:#ansired noinherit'
 
+Token.Output.Header = "#ansiwhite noinherit"
+Token.Output.OddRow = "#ansiyellow noinherit"
+Token.Output.EvenRow = "#ansiwhite noinherit"
+
+
 # --- copypaste
 # Text = '#ansipurple'
 # Whitespace = '#ansipurple'
