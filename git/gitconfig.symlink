@@ -95,3 +95,5 @@ unmerged = 9
 # Include local config if it exists
 [include]
 path = "~/.gitconfig-local"
+[github]
+	user = mattduck
