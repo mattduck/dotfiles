@@ -1962,6 +1962,7 @@ uses the scheduled property rather than the deadline."
   (kbd "C-n") 'org-agenda-next-line
   (kbd "k") 'org-agenda-previous-line
   (kbd "p") 'org-agenda-previous-line
+  (kbd "c") 'org-agenda-capture
   (kbd "C-p") 'org-agenda-previous-line
 
   (kbd "RET") 'org-agenda-goto

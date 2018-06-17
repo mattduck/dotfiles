@@ -2634,6 +2634,7 @@ bindings copied directly from emacs-mode.
     (kbd "C-n") 'org-agenda-next-line
     (kbd "k") 'org-agenda-previous-line
     (kbd "p") 'org-agenda-previous-line
+    (kbd "c") 'org-agenda-capture
     (kbd "C-p") 'org-agenda-previous-line
 
     (kbd "RET") 'org-agenda-goto
@@ -4121,3 +4122,4 @@ Close paren for the wrapping ~let~:
 - [ ] [2018-05-11 Fri] evil-collection
 - [2018-06-17 Sun]
   - [ ] anaconda: use RET and TAB to display buffers like grep.
+  - [ ] [2018-05-16 Wed] ctags for python?
