@@ -1381,8 +1381,10 @@ git dir) or linum mode"
         eldoc-print-after-edit t))
 
 (use-package hideshow
+  :demand t
   :config (progn
             (add-hook 'hs-minor-mode-hook 'hs-hide-all)
+            (add-hook 'prog-mode-hook 'hs-minor-mode)
 
             ;; Open all folds when searching
             (setq hs-isearch-open t)
@@ -1397,8 +1399,8 @@ git dir) or linum mode"
 
 
 (use-package hideshow-orgmode
+  :demand t
   :config (progn
-            (add-hook 'prog-mode-hook 'hs-minor-mode)
             (evil-define-key 'normal prog-mode-map
               (kbd "<backtab>") 'hs-cycle-all
               (kbd "<tab>") 'hs-cycle)
