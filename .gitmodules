@@ -28,3 +28,6 @@
 [submodule "bash/fabric-completion"]
 	path = bash/fabric-completion
 	url = git@github.com:kbakulin/fabric-completion.git
+[submodule "emacs.d.symlink/non-elpa/hideshow-orgmode"]
+	path = emacs.d.symlink/non-elpa/hideshow-orgmode
+	url = git@github.com:mattduck/hideshow-orgmode.git

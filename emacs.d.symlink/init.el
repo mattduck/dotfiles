@@ -1380,6 +1380,32 @@ git dir) or linum mode"
         ;; Makes much more usable imo
         eldoc-print-after-edit t))
 
+(use-package hideshow
+  :config (progn
+            (add-hook 'hs-minor-mode-hook 'hs-hide-all)
+
+            ;; Open all folds when searching
+            (setq hs-isearch-open t)
+
+            ;; Use same display for folds as org folds.
+            (defun md/hideshow-overlay (ov)
+              (overlay-put ov 'display (propertize (format "…") 'face 'org-ellipsis)))
+            (setq hs-set-up-overlay 'md/hideshow-overlay)
+
+            ;; As recommended in hideshow.el docs.
+            (add-hook 'ediff-prepare-buffer-hook 'turn-off-hideshow)))
+
+
+(use-package hideshow-orgmode
+  :config (progn
+            (add-hook 'prog-mode-hook 'hs-minor-mode)
+            (evil-define-key 'normal prog-mode-map
+              (kbd "<backtab>") 'hs-cycle-all
+              (kbd "<tab>") 'hs-cycle)
+            (evil-define-key 'normal python-mode-map
+              (kbd "<tab>") 'hs-cycle
+              (kbd "<backtab>") 'hs-cycle-all)))
+
 (add-hook 'ansi-term-mode-hook 'evil-emacs-state)
 (add-hook 'term-mode-hook 'evil-emacs-state)
 (evil-set-initial-state 'ansi-term-mode 'emacs)
@@ -1390,6 +1416,9 @@ git dir) or linum mode"
 (defun md/emacs-lisp-hook ()
     (setq fill-column 100))
 (add-hook 'emacs-lisp-mode-hook 'md/emacs-lisp-hook)
+
+;; Jump to definition
+(evil-define-key 'normal emacs-lisp-mode-map "gd" 'xref-find-definitions)
 
 (use-package dash :demand t)
 (use-package f :demand t)
@@ -1478,12 +1507,17 @@ git dir) or linum mode"
       (set (make-local-variable 'company-backends) '(company-anaconda)))
     (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
     (add-hook 'python-mode-hook 'anaconda-mode)
-    (add-hook 'python-mode-hook 'anaconda-eldoc-mode))
+    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
 
     ;; TODO make sure this jumps to the current buffer
     (evil-define-key 'normal python-mode-map
       "gd" 'anaconda-mode-find-assignments
       "gD" 'anaconda-mode-find-definitions)
+
+    (defun md/anaconda-quit ()
+      (interactive)
+      (quit-window)
+      (shackle--eyebrowse-close-slot-by-tag "anaconda"))
 
     ;; TODO ideally this would open in a separate eyebrowse slot, and if you
     ;; press enter would jump to the buffer in your original window, but keep
@@ -1491,17 +1525,16 @@ git dir) or linum mode"
     ;; q should return to the original position.
     ;; This behaviour should be consistent with eg. ag and other grep-type buffers.
     (evil-define-key 'normal anaconda-mode-view-mode-map
-      "q" 'quit-window
+      "q" 'md/anaconda-quit
       (kbd "C-j") 'next-error-no-select
       (kbd "C-n") 'next-error-no-select
       (kbd "C-k") 'previous-error-no-select
-      (kbd "C-p") 'previous-error-no-select)
-
+      (kbd "C-p") 'previous-error-no-select))
   :bind (:map md/python-mode-leader-map
-              ("hr" . anaconda-mode-find-references)
-              ("hd" . anaconda-mode-show-doc)))
+              ("SPC r" . anaconda-mode-find-references)
+              ("SPC d" . anaconda-mode-show-doc)))
 
-;; TODO pyvenv auto
+;; TODO pyvenv auto? Might work better to just have one emacs virtualenv.
 ;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
 
 (use-package py-isort
@@ -2395,7 +2428,7 @@ headlines")
             ;; ("*edebug-trace*" :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
             ('edebug-mode :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
             ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
-            ("*Anaconda*" :eyebrowse "anaconda" :align t :close-on-realign t :size 0.3 :select t)
+            ("*Anaconda*" :eyebrowse "anaconda" :align left :close-on-realign t :size 0.5 :select t)
             ("\\*Agenda Commands\\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select t)
 
             ;; TODO
