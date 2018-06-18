@@ -1401,12 +1401,11 @@ git dir) or linum mode"
 (use-package hideshow-orgmode
   :demand t
   :config (progn
-            (evil-define-key 'normal prog-mode-map
-              (kbd "<backtab>") 'hs-cycle-all
-              (kbd "<tab>") 'hs-cycle)
-            (evil-define-key 'normal python-mode-map
-              (kbd "<tab>") 'hs-cycle
-              (kbd "<backtab>") 'hs-cycle-all)))
+            (defun md/hideshow-add-bindings (keymap)
+              (evil-define-key 'normal keymap
+                (kbd "<backtab>") 'hs-cycle-all
+                (kbd "<tab>") 'hs-cycle))
+            (mapc 'md/hideshow-add-bindings '(prog-mode-map python-mode-map emacs-lisp-mode-map sql-mode-map))))
 
 (add-hook 'ansi-term-mode-hook 'evil-emacs-state)
 (add-hook 'term-mode-hook 'evil-emacs-state)
