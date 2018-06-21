@@ -65,6 +65,8 @@ This wraps the rest of the file.
 
   ;; Kill custom buffers on q
   (setq custom-buffer-done-kill t)
+
+  (defgroup md/custom nil "Placeholder group, mostly just here to silence warnings" :group 'md/custom)
 #+END_SRC
 
 ** use-package setup
@@ -476,7 +478,7 @@ Increase the threshold:
   (defun md/fontify-buffer ()
     "Fontify the buffer and tell me it happened."
     (interactive)
-    (font-lock-fontify-buffer)
+    (call-interactively 'font-lock-fontify-buffer)
     (message "Fontified buffer"))
 
   (defun md/file-info ()
@@ -1094,17 +1096,20 @@ easier to discover features / work out where I am:
               (bind-key "C-g" 'which-key-abort which-key-C-h-map)
 
               ;; This is the default for description-replacement-alist:
-              (setq which-key-description-replacement-alist
-                    '(("Prefix Command" . "prefix")
-                      ("which-key-show-next-page" . "wk next pg")
-                      ("\\`\\?\\?\\'" . "lambda")))
+              (setq which-key-replacement-alist
+                    '(((nil . "Prefix Command") nil . "prefix")
+                      ((nil . "\\`\\?\\?\\'") nil . "lambda")
+                      ((nil . "which-key-show-next-page-no-cycle") nil . "wk next pg")
+                      (("<\\([[:alnum:]-]+\\)>") "\\1")
+                      (("left") "←")
+                      (("right") "→")))
 
               ;; Add scratch bindings:
               (dolist (mode '("elisp" "python" "restclient" "markdown" "gfm" "org"))
-                (add-to-list 'which-key-description-replacement-alist
-                             (cons (format "md/scratch-open-file-%s" mode) mode)))
+                (add-to-list 'which-key-replacement-alist
+                             `((nil . ,(format "md/scratch-open-file-%s" mode)) nil . ,mode)))
 
-              (which-key-declare-prefixes
+              (which-key-add-key-based-replacements
                 "SPC SPC" "major-mode"
                 "SPC SPC e" "major-mode-eval"
                 "SPC a" "org"
@@ -1404,7 +1409,7 @@ Company seems to work nicely without much configuration.
               "venv"
               "elpa"
               ".stack-work"))
-      (projectile-global-mode))
+      (projectile-mode 1))
     :bind (:map md/leader-map
                 ("j!"  . projectile-invalidate-cache)
                 ("jk"  . projectile-kill-buffers)
@@ -1627,6 +1632,7 @@ I sometimes see issues where git opens emacsclient in Fundamental mode. Making
          ;; NOTE - this doesn't play nicely with mode-line:
          ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
          ;; - https://github.com/syl20bnr/spacemacs/issues/2172
+         ("gC" . magit-commit-popup)
          ("gc" . magit-checkout)))
 #+END_SRC
 
@@ -1872,7 +1878,9 @@ I can use this with grep/ag to quickly find the todo comments:
                 (evil-define-key 'normal keymap
                   (kbd "<backtab>") 'hs-cycle-all
                   (kbd "<tab>") 'hs-cycle))
-              (mapc 'md/hideshow-add-bindings '(prog-mode-map python-mode-map emacs-lisp-mode-map sql-mode-map))))
+              (mapc 'md/hideshow-add-bindings
+                    (list prog-mode-map
+                          emacs-lisp-mode-map))))
 #+END_SRC
 
 *** COMMENT Origami
@@ -2052,6 +2060,7 @@ Override the edebug keymap to only contain features/keys that I care about:
           (python-indent-line)))))
 
   (defun md/python-mode-hook ()
+    (md/hideshow-add-bindings python-mode-map)
     (setq-local fill-column 120))
   (add-hook 'python-mode-hook 'md/python-mode-hook)
 
@@ -2302,8 +2311,7 @@ NOTE - compiling requires ~markdown~ to be installed.
 #+END_SRC
 ** Docker
 #+BEGIN_SRC emacs-lisp
-  (use-package docker)
-
+  (use-package dockerfile-mode)
 #+END_SRC
 
 ** CSV
@@ -2329,90 +2337,90 @@ org headings:
 ** General setup
 
 #+BEGIN_SRC emacs-lisp
-    (defun md/org-hook ()
-      ;; Change tab widths to fit headline indents
-      (setq tab-width 2
-            evil-shift-width 2)
+  (defun md/org-hook ()
+    ;; Change tab widths to fit headline indents
+    (setq tab-width 2
+          evil-shift-width 2)
 
-      ;; Disable in-buffer line numbers and the colour column, as both decrease
-      ;; org-mode / outline performance significantly on large files.
-      (linum-mode 0)
-      (fci-mode 0)
+    ;; Disable in-buffer line numbers and the colour column, as both decrease
+    ;; org-mode / outline performance significantly on large files.
+    (linum-mode 0)
+    (fci-mode 0)
 
-      ;; Also disable the row and column numbers in the modeline. Seems you have to set
-      ;; these manually to make them buffer-local.
-      (setq-local line-number-mode nil)
-      (setq-local column-number-mode nil)
+    ;; Also disable the row and column numbers in the modeline. Seems you have to set
+    ;; these manually to make them buffer-local.
+    (setq-local line-number-mode nil)
+    (setq-local column-number-mode nil)
 
-      ;; Also don't highlight the current line. For some reason this requires making
-      ;; global-hl-line-mode buffer-local.
-      (make-variable-buffer-local 'global-hl-line-mode)
-      (setq-local global-hl-line-mode nil))
-    (add-hook 'org-mode-hook 'md/org-hook)
+    ;; Also don't highlight the current line. For some reason this requires making
+    ;; global-hl-line-mode buffer-local.
+    (make-variable-buffer-local 'global-hl-line-mode)
+    (setq-local global-hl-line-mode nil))
+  (add-hook 'org-mode-hook 'md/org-hook)
 
-    (setq
-          ;; Whether to let org-agenda permanently mess with window layout
-          org-agenda-restore-windows-after-quit nil
+  (setq
+        ;; Whether to let org-agenda permanently mess with window layout
+        org-agenda-restore-windows-after-quit nil
 
-          ;; I'm trying this to decrease wait times for the agenda windows
-          org-agenda-sticky t
+        ;; I'm trying this to decrease wait times for the agenda windows
+        org-agenda-sticky t
 
-          ;; I find this more intuitive
-          org-indirect-buffer-display 'current-window
+        ;; I find this more intuitive
+        org-indirect-buffer-display 'current-window
 
-          ;; Add timestamp when set task as closed
-          org-log-done 'time
+        ;; Add timestamp when set task as closed
+        org-log-done 'time
 
-          ;; Colour the whole headline
-          org-level-color-stars-only nil
+        ;; Colour the whole headline
+        org-level-color-stars-only nil
 
-          ;; Colour done headlines to make them less prominent
-          org-fontify-done-headline t
+        ;; Colour done headlines to make them less prominent
+        org-fontify-done-headline t
 
-          ;; Try to prevent accidentally editing invisible lines
-          org-catch-invisible-edits 'show-and-error
+        ;; Try to prevent accidentally editing invisible lines
+        org-catch-invisible-edits 'show-and-error
 
-          ;; Don't indent things for nested headings (eg. properties)
-          org-adapt-indentation nil
+        ;; Don't indent things for nested headings (eg. properties)
+        org-adapt-indentation nil
 
-          org-clock-out-remove-zero-time-clocks t
+        org-clock-out-remove-zero-time-clocks t
 
-          ;; Use UTF-8 ellipsis character
-          org-ellipsis "…"
+        ;; Use UTF-8 ellipsis character
+        org-ellipsis "…"
 
-          ;; If press M-RET I want a new line, not to split the line
-          org-M-RET-may-split-line nil)
+        ;; If press M-RET I want a new line, not to split the line
+        org-M-RET-may-split-line nil)
 
-    ;; Goto and refile
-    (setq
-          ;; For org-goto, use helm rather than the weird default interface
-          ;; where you search through the file
-          org-goto-interface 'outline-path-completion
+  ;; Goto and refile
+  (setq
+        ;; For org-goto, use helm rather than the weird default interface
+        ;; where you search through the file
+        org-goto-interface 'outline-path-completion
 
-          ;; For org-goto, search all nodes rather than forcing me to start with
-          ;; the top level heading and then search the children etc.
-          org-outline-path-complete-in-steps nil
+        ;; For org-goto, search all nodes rather than forcing me to start with
+        ;; the top level heading and then search the children etc.
+        org-outline-path-complete-in-steps nil
 
-          ;; For org-goto and org-refile, show the outline path during Helm
-          ;; completion rather than just the headline.
-          org-refile-use-outline-path t
+        ;; For org-goto and org-refile, show the outline path during Helm
+        ;; completion rather than just the headline.
+        org-refile-use-outline-path t
 
-          ;; Include nested items in org-refile.
-          org-refile-targets '((nil :maxlevel . 9)))
+        ;; Include nested items in org-refile.
+        org-refile-targets '((nil :maxlevel . 9)))
 
 
-    ;; Only two priorities - default and flagged
-    (setq org-highest-priority 65)
-    (setq org-lowest-priority 66)
-    (setq org-default-priority 66)
+  ;; Only two priorities - default and flagged
+  (setq org-highest-priority 65)
+  (setq org-lowest-priority 66)
+  (setq org-default-priority 66)
 
-    ;; I find these useful enough to want them in all insert maps.
-    (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
-    (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm evil-insert-state-map)
-    (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
-    (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm evil-insert-state-map)
+  ;; I find these useful enough to want them in all insert maps.
+  (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
+  (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm evil-insert-state-map)
+  (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
+  (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm evil-insert-state-map)
 
-    (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
+  (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
 
 
 #+END_SRC
@@ -3429,8 +3437,8 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
               (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
               (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
               (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
-              ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
-              ('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
+              ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)))
+              ;;('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
 
       (defmacro shackle-with-temp (rules body)
         "Execute body with temporary shackle rules"
@@ -3829,7 +3837,7 @@ Use some persistent scratch files for various modes:
 
                                      ;; Projectile project
                                      (if (and (boundp 'projectile-mode) projectile-mode)
-                                         (powerline-raw (concat (projectile-project-name) "::%b") 'l)
+                                         (powerline-raw (concat (projectile-project-name) "::%b") nil 'l)
                                        (powerline-raw "%b" mode-line 'l))
 
                                      ;; File state
@@ -3996,114 +4004,33 @@ Close paren for the wrapping ~let~:
 #+END_SRC
 
 * TODO
-- [ ] tab key not inserting tabs in evil?
-  - it aligns but doesn't insert tab, not sure if this is behaviour i want. It
-    runs indent-for-tab-command. Try it for a while.
-- [ ] read electric-indent docs.
-- [ ] does electric-indent need different configuration in python? I used to
-  have something for this.
+# - [ ] getting slowdowns where python3 uses 99% cpu. Seems to occcur sometimes
+#   when killing buffers. Only python processes running are doing ~elpy.__main__~.
+#   - This process is started in elpy-rpc--open.
+#   - https://github.com/jorgenschaefer/elpy/issues/724
+#   - Next time this happens use strace and try to report bug.
+#   - https://github.com/jorgenschaefer/elpy/issues/96
+
 - [ ] info / other help modes - use vi keys to navigate?
 - [ ] how to preserve binding in map?
   - Eg. I want to use normal mode for some magit modes, but I generally want to retain
     the behaviour of RET. This is true for help modes too.
-- [ ] jumping to definitions
-  - Under cursor, and by name
-- [ ] finding uses of functions
-  - Under cursor, and by name
-- [ ] debugger
-  - [2017-03-17 Fri] get similar bindings to pudb?
-- [ ] folding
-  - I basically want tab/shift+tab toggle bindings like outline mode. But
-    outline mode doesn't match folding blocks nicely, so need to use another package.
-- [ ] checkout slime
+- [ ] debugger - get similar bindings to pudb
 - [ ] jumping forward/back to markers including between files
-- [ ] https://github.com/emacs-tw/awesome-emacs
-  - [ ] multi cursor?
-- [ ] gk/gj for next/prev functions
-- [ ] python development / elpy
-  - [ ] open documentation
-  - [ ] run tests
-  - [ ] refactoring
-- [ ] the elpy flycheck colours aren't bad, and work in terminal - consider
-  using them for full flycheck.
-- [ ] check company addons
-- [ ] go mode
-- [ ] cask?
-- [ ] spacemacs - provide anything good?
-  - [ ] paradox-list-packages
-  - [ ] list-processes?
-  - [ ] ! to execute shell command
-  - [ ] c - compiling
-    - helm-make-projectile
-    - helm-make
-    - compile
-    - recompile
-    - projectile-compile is under
-  - [ ] f - file prefix
-    - dired jump
-    - open in external app
-  - [ ] i - insert prefix
-  - [ ] p - projectile run shell
-    - and async
-    - projectile-compile
-    - multi-occur
-    - neotree
-  - [ ] q - some quit functions
-    - kill-emacs
-    - restart-emacs-resume-layouts?
-  - [ ] s - search prefix
-    - "smart" search?
-  - [ ] S - symbol highlight. Is this useful?
-  - [ ] t / T - various toggles, eg. linum, line wrapping. Perhaps solarized bg mode.
-  - [ ] w - window commands. The popup window looks like it might be good
-    - for messages, compiling, generally temp stuff.
-  - [ ] z - zoom text
-- [ ] helm-all-mark-rings?
-- [ ] check spacemacs - are there any modes we can evilify? eg. some of the help modes.
-- [ ] python shell / inferior?
-- [ ] getting slowdowns where python3 uses 99% cpu. Seems to occcur sometimes
-  when killing buffers. Only python processes running are doing ~elpy.__main__~.
-  - This process is started in elpy-rpc--open.
-  - https://github.com/jorgenschaefer/elpy/issues/724
-  - Next time this happens use strace and try to report bug.
-  - https://github.com/jorgenschaefer/elpy/issues/96
-- [ ] info page for intro to emacs lisp
-- [ ] browse documentation?
-  - for eg. ansible
-- [ ] [2017-03-18 Sat] get C-O/C-I jumping forward/back in dired.
-- [ ] helm buffers - how to search including the mode? Eg. "dired" should match
-  the "Dired by name" buffers.
-- [2016-12-01 Thu] does evil-add-hjkl-bindings take precedence over the mode
-  map?
-- [2016-12-03 Sat] https://bitbucket.org/lyro/evil/issues/511/let-certain-minor-modes-key-bindings
-- [ ] [2016-12-07 Wed] profile CPU issues
-  - It's probably a package that slows down org mode
-- [ ] [2017-02-28 Tue] org links to files, shortcuts.
-- [ ] [2017-03-19 Sun] bindings or bookmarks to jump to elisp source files (eg. elpa)
-- [ ] [2017-03-18 Sat] ensure backup files are working properly
-- [ ] [2017-03-18 Sat] how to ensure evil-set-jump is called in help-mode?
-- [ ] [2017-03-18 Sat] how to ensure evil-set-jump is called in dired-mode?
+- [ ] open shell with /server/apps/* on path? Will allow for pytest
+- [ ] compile
+  - bindings
+- [ ] fix init warnings
+- [ ] mark ring - helm-all-mark-rings
+- [ ] dash interface?
+- [ ] more reliable way to jump forward/back between markers.
+- [ ] how to profile cpu issues
+- [ ] org links
 - [ ] [2017-03-23 Thu] list functions/classes in project?
-- [ ] [2017-03-24 Fri] how to do proper logging? Write library?
-- [ ] [2017-03-24 Fri] still C-o not getting enough checkpoints.
-- [ ] [2017-03-23 Thu] function for replacing "\n" with actual newlines.
-- [ ] [2017-03-27 Mon] - C-spc binding should be included in which-key? So it's
-  used as prefix but then you can access the original binding.
 - [ ] [2017-03-25 Sat] https://github.com/redguardtoo/evil-matchit.
 - [ ] [2017-05-06 Sat] org - get babel working for scheme
-- [ ] [2017-03-23 Thu] use dumb-jump for easy jumping to definitions??
-  - by default only works within a project, won't search eg. python libs.
-- [ ] [2017-05-22 Mon] https://github.com/syohex/emacs-quickrun
-- [ ] [2017-07-04 Tue] helm - any way to cleanup old helm buffers?
-  - otherwise maybe auto-kill them if we do prev/next buffer.
 - [ ] [2017-07-04 Tue] Way to output org-babel results to buffer?
-- [ ] [2017-07-05 Wed] bindings for old popwin standalone apps
-  - dired, terminal, magit?
-- [ ] [2017-07-06 Thu] syntax highlighting for generic config files, ssh config.
-- [ ] [2017-07-10 Mon] use-package - auto install packages if not installed.
-- [ ] Also make leader accessible with C-c SPC? this would mean remapping that
-  binding for the existing maps where I override SPC to point to a mode-specific
-  leader.
+- [ ] [2018-06-21 Thu] dired - fix issue where shackle opens it at bottom of screen
 - [ ] [2017-07-15 Sat 18:12] fix this "attempt to delete minibuffer" shackle
   issue.
   - think it's a bug in the shackle fork - if there is only one window open, we
@@ -4111,17 +4038,17 @@ Close paren for the wrapping ~let~:
     deleting it in this circumstance, or moving the deletion to happen after the
     new one has been displayed.
 - [ ] put evil bindings properly in compilation mode, fix this =g= thing.
-- [ ] which-key timer update thing throwing error?
 - [ ] helm mini - group buffers better.
   - and better searching by the whole path/mode rather than the buffer name.
-- [ ] proper python/elpy setup.
+  - add projectile name
 - [ ] [2017-08-20 Sun 23:28] sqlclient feature?
   - basically just send region or buffer to psql and write to result buffer.
 - [ ] own logging/messages buffer? To avoid the noise.
 - [ ] [2017-11-05 Sun] Make magit bindings similar to tig.
+  - generally magit bindings need updating.
 - [ ] [2018-05-11 Fri] inline sql syntax highlighting if possible
 - [ ] [2018-05-11 Fri] evil-collection
 - [2018-06-17 Sun]
   - [ ] anaconda: use RET and TAB to display buffers like grep.
   - [ ] [2018-05-16 Wed] ctags for python?
-  - [ ] hideshow-orgmode: doesn't work for sql sytnax?
+- [ ] bindings to start terminals

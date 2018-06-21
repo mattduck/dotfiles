@@ -33,6 +33,8 @@
 ;; Kill custom buffers on q
 (setq custom-buffer-done-kill t)
 
+(defgroup md/custom nil "Placeholder group, mostly just here to silence warnings" :group 'md/custom)
+
 (setq use-package-always-ensure nil
       use-package-verbose t
       use-package-minimum-reported-time 0.01)
@@ -269,7 +271,7 @@
 (defun md/fontify-buffer ()
   "Fontify the buffer and tell me it happened."
   (interactive)
-  (font-lock-fontify-buffer)
+  (call-interactively 'font-lock-fontify-buffer)
   (message "Fontified buffer"))
 
 (defun md/file-info ()
@@ -782,17 +784,20 @@ represent all current available bindings accurately as a single keymap."
             (bind-key "C-g" 'which-key-abort which-key-C-h-map)
 
             ;; This is the default for description-replacement-alist:
-            (setq which-key-description-replacement-alist
-                  '(("Prefix Command" . "prefix")
-                    ("which-key-show-next-page" . "wk next pg")
-                    ("\\`\\?\\?\\'" . "lambda")))
+            (setq which-key-replacement-alist
+                  '(((nil . "Prefix Command") nil . "prefix")
+                    ((nil . "\\`\\?\\?\\'") nil . "lambda")
+                    ((nil . "which-key-show-next-page-no-cycle") nil . "wk next pg")
+                    (("<\\([[:alnum:]-]+\\)>") "\\1")
+                    (("left") "←")
+                    (("right") "→")))
 
             ;; Add scratch bindings:
             (dolist (mode '("elisp" "python" "restclient" "markdown" "gfm" "org"))
-              (add-to-list 'which-key-description-replacement-alist
-                           (cons (format "md/scratch-open-file-%s" mode) mode)))
+              (add-to-list 'which-key-replacement-alist
+                           `((nil . ,(format "md/scratch-open-file-%s" mode)) nil . ,mode)))
 
-            (which-key-declare-prefixes
+            (which-key-add-key-based-replacements
               "SPC SPC" "major-mode"
               "SPC SPC e" "major-mode-eval"
               "SPC a" "org"
@@ -1066,7 +1071,7 @@ represent all current available bindings accurately as a single keymap."
             "venv"
             "elpa"
             ".stack-work"))
-    (projectile-global-mode))
+    (projectile-mode 1))
   :bind (:map md/leader-map
               ("j!"  . projectile-invalidate-cache)
               ("jk"  . projectile-kill-buffers)
@@ -1218,6 +1223,7 @@ git dir) or linum mode"
        ;; NOTE - this doesn't play nicely with mode-line:
        ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
        ;; - https://github.com/syl20bnr/spacemacs/issues/2172
+       ("gC" . magit-commit-popup)
        ("gc" . magit-checkout)))
 
 (use-package github-browse-file
@@ -1405,7 +1411,9 @@ git dir) or linum mode"
               (evil-define-key 'normal keymap
                 (kbd "<backtab>") 'hs-cycle-all
                 (kbd "<tab>") 'hs-cycle))
-            (mapc 'md/hideshow-add-bindings '(prog-mode-map python-mode-map emacs-lisp-mode-map sql-mode-map))))
+            (mapc 'md/hideshow-add-bindings
+                  (list prog-mode-map
+                        emacs-lisp-mode-map))))
 
 (add-hook 'ansi-term-mode-hook 'evil-emacs-state)
 (add-hook 'term-mode-hook 'evil-emacs-state)
@@ -1474,6 +1482,7 @@ git dir) or linum mode"
         (python-indent-line)))))
 
 (defun md/python-mode-hook ()
+  (md/hideshow-add-bindings python-mode-map)
   (setq-local fill-column 120))
 (add-hook 'python-mode-hook 'md/python-mode-hook)
 
@@ -1669,7 +1678,7 @@ git dir) or linum mode"
 
 (use-package coffee-mode)
 
-(use-package docker)
+(use-package dockerfile-mode)
 
 (use-package csv-mode)
 
@@ -2469,8 +2478,8 @@ headlines")
             (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
             (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
             (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
-            ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
-            ('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
+            ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)))
+            ;;('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
 
     (defmacro shackle-with-temp (rules body)
       "Execute body with temporary shackle rules"
@@ -2830,7 +2839,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
                                    ;; Projectile project
                                    (if (and (boundp 'projectile-mode) projectile-mode)
-                                       (powerline-raw (concat (projectile-project-name) "::%b") 'l)
+                                       (powerline-raw (concat (projectile-project-name) "::%b") nil 'l)
                                      (powerline-raw "%b" mode-line 'l))
 
                                    ;; File state
