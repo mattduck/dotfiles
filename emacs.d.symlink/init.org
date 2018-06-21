@@ -3273,7 +3273,7 @@ Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs
 
 ** Winner
 #+BEGIN_SRC emacs-lisp
-  (use-package winner-mode
+  (use-package winner
     :demand t
     :config (winner-mode 1)
     :bind (:map splitscreen/prefix

@@ -2335,7 +2335,7 @@ headlines")
    (splitscreen-mode)
    (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
 
-(use-package winner-mode
+(use-package winner
   :demand t
   :config (winner-mode 1)
   :bind (:map splitscreen/prefix
