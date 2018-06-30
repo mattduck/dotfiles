@@ -33,6 +33,9 @@ shopt -s cmdhist
 # ~/bin takes precedence over most of the $PATH
 ,path-add --prepend $HOME/bin
 
+# pager
+export LESS='-iMFXSx4R'
+
 # TODO - what was the reason I had to use this in the past?
 if [ $(command -v keychain) ]; then
     eval `keychain --quiet --eval --agents "ssh" --inherit "local-once"`
