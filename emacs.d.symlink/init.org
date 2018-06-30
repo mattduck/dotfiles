@@ -2017,7 +2017,9 @@ the underlying terminal (ie. I get the usual readline bindings).
     (interactive)
     (setq debug-on-error (not debug-on-error))
     (message (format "debug-on-error %s" debug-on-error)))
+
   (bind-key "Ed" 'md/toggle-debug-on-error md/leader-map)
+  (bind-key "Em" 'view-echo-area-messages md/leader-map)
 #+END_SRC
 
 Override the edebug keymap to only contain features/keys that I care about:
@@ -2792,36 +2794,28 @@ evil mode, and just add in the dired bindings that I want.
         (setq dired-mode-map (make-sparse-keymap))
         (bind-key [menu-bar] menu dired-mode-map))
 
-      ;; TODO - can remove this now on shackle??
-      (defun md/dired-single-buffer ()
-        "If in popwin buffer, open dired in popwin. Otherwise as usual."
-        (interactive)
-        (if popwin:focus-window
-            (progn
-              (save-window-excursion (call-interactively 'dired-single-buffer))
-              (popwin:close-popup-window)
-              (popwin:display-buffer (get-buffer dired-single-magic-buffer-name)))
-          (dired-single-buffer)))
-
       (evil-define-key 'normal dired-mode-map
         "W" 'wdired-change-to-wdired-mode  ; This is v useful
         "q" 'md/quit-and-kill-window
         "d" 'dired-flag-file-deletion
         "u" 'dired-unmark
         "D" 'dired-do-delete
-        (kbd "RET") 'dired-find-file-other-window
+        (kbd "RET") 'dired-find-alternate-file
         "J" 'dired-jump
         "o" 'dired-find-file-other-window
+        (kbd "TAB") 'dired-find-file-other-window
         "R" 'dired-do-rename
         "C" 'dired-do-copy
         "i" 'dired-maybe-insert-subdir
         "+" 'dired-create-directory))
     :bind (:map md/leader-map
-                    ("d" . dired-single-magic-buffer)))
+                    ("d" . dired)))
 
 #+END_SRC
 
-** Dired-single
+** COMMENT Dired-single
+
+[2018-06-29 Fri] Removing this as dired-find-alternate-file provides similar behaviour.
 
 I don't use Dired much and would prefer it to be contained to fewer buffers.
 Would like this to work with popwin, but currently pressing RET on a directory
@@ -3412,7 +3406,8 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
               ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
               ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
 
-              ('magit-status-mode :eyebrowse "git" :select t)
+              ('magit-status-mode :align t :select t :size 0.33)
+              ('magit-popup-mode :align t :select t :size 0.33)
               ;; ('magit-popup-mode :align 'left :eyebrowse "git" :select t)
               ;;(magit-status-mode :align 'left :eyebrowse "git" :select t)
               ;; ('magit-revision-mode :eyebrowse "git" :select t)
@@ -3437,8 +3432,8 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
               (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
               (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
               (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
-              ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)))
-              ;;('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
+              ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
+              (dired-mode :align nil :select t)))
 
       (defmacro shackle-with-temp (rules body)
         "Execute body with temporary shackle rules"
@@ -4030,7 +4025,6 @@ Close paren for the wrapping ~let~:
 - [ ] [2017-03-25 Sat] https://github.com/redguardtoo/evil-matchit.
 - [ ] [2017-05-06 Sat] org - get babel working for scheme
 - [ ] [2017-07-04 Tue] Way to output org-babel results to buffer?
-- [ ] [2018-06-21 Thu] dired - fix issue where shackle opens it at bottom of screen
 - [ ] [2017-07-15 Sat 18:12] fix this "attempt to delete minibuffer" shackle
   issue.
   - think it's a bug in the shackle fork - if there is only one window open, we
@@ -4052,3 +4046,11 @@ Close paren for the wrapping ~let~:
   - [ ] anaconda: use RET and TAB to display buffers like grep.
   - [ ] [2018-05-16 Wed] ctags for python?
 - [ ] bindings to start terminals
+- [2018-06-26 Tue]
+  - [ ] Change font size for specific windows
+  - [ ] ansi term - doesn't correctly show the "bright" ansi colours?
+  - [ ] feature so all future inserts are in a particular colour or annotated in
+    some way, for note-taking.
+- [2018-06-29 Fri]
+  - [ ] Folding - should work when at start of line
+  - [ ] highlight/unhighlight region?

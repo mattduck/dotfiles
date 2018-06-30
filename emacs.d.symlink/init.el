@@ -1447,7 +1447,9 @@ git dir) or linum mode"
   (interactive)
   (setq debug-on-error (not debug-on-error))
   (message (format "debug-on-error %s" debug-on-error)))
+
 (bind-key "Ed" 'md/toggle-debug-on-error md/leader-map)
+(bind-key "Em" 'view-echo-area-messages md/leader-map)
 
 (add-hook 'edebug-mode-hook 'evil-normal-state)
 (md/make-keymap-noop edebug-mode-map)
@@ -2087,35 +2089,22 @@ headlines")
       (setq dired-mode-map (make-sparse-keymap))
       (bind-key [menu-bar] menu dired-mode-map))
 
-    ;; TODO - can remove this now on shackle??
-    (defun md/dired-single-buffer ()
-      "If in popwin buffer, open dired in popwin. Otherwise as usual."
-      (interactive)
-      (if popwin:focus-window
-          (progn
-            (save-window-excursion (call-interactively 'dired-single-buffer))
-            (popwin:close-popup-window)
-            (popwin:display-buffer (get-buffer dired-single-magic-buffer-name)))
-        (dired-single-buffer)))
-
     (evil-define-key 'normal dired-mode-map
       "W" 'wdired-change-to-wdired-mode  ; This is v useful
       "q" 'md/quit-and-kill-window
       "d" 'dired-flag-file-deletion
       "u" 'dired-unmark
       "D" 'dired-do-delete
-      (kbd "RET") 'dired-find-file-other-window
+      (kbd "RET") 'dired-find-alternate-file
       "J" 'dired-jump
       "o" 'dired-find-file-other-window
+      (kbd "TAB") 'dired-find-file-other-window
       "R" 'dired-do-rename
       "C" 'dired-do-copy
       "i" 'dired-maybe-insert-subdir
       "+" 'dired-create-directory))
   :bind (:map md/leader-map
-                  ("d" . dired-single-magic-buffer)))
-
-(use-package dired-single
-  :demand t)
+                  ("d" . dired)))
 
 (use-package neotree
   :demand t
@@ -2453,7 +2442,8 @@ headlines")
             ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
             ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
 
-            ('magit-status-mode :eyebrowse "git" :select t)
+            ('magit-status-mode :align t :select t :size 0.33)
+            ('magit-popup-mode :align t :select t :size 0.33)
             ;; ('magit-popup-mode :align 'left :eyebrowse "git" :select t)
             ;;(magit-status-mode :align 'left :eyebrowse "git" :select t)
             ;; ('magit-revision-mode :eyebrowse "git" :select t)
@@ -2478,8 +2468,8 @@ headlines")
             (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
             (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
             (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
-            ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)))
-            ;;('dired-mode :align t :close-on-realign t :size 0.33 :select t)))
+            ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
+            (dired-mode :align nil :select t)))
 
     (defmacro shackle-with-temp (rules body)
       "Execute body with temporary shackle rules"
