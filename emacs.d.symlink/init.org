@@ -484,9 +484,10 @@ Increase the threshold:
   (defun md/file-info ()
     (interactive)
     (message
-     "%s | %s lines | %3d%% | %s"
+     "%s | %s lines | line %d:%3d%% | %s"
              (buffer-file-name)
              (count-lines (point-min) (point-max))
+             (count-lines (point-min) (point))
              (/ (window-end) 0.01 (point-max))
              major-mode))
 
