@@ -31,3 +31,6 @@
 [submodule "emacs.d.symlink/non-elpa/hideshow-orgmode"]
 	path = emacs.d.symlink/non-elpa/hideshow-orgmode
 	url = git@github.com:mattduck/hideshow-orgmode.git
+[submodule "emacs.d.symlink/non-elpa/emacs-theme-gruvbox"]
+	path = emacs.d.symlink/non-elpa/emacs-theme-gruvbox
+	url = git@github.com:mattduck/emacs-theme-gruvbox.git

@@ -277,9 +277,10 @@
 (defun md/file-info ()
   (interactive)
   (message
-   "%s | %s lines | %3d%% | %s"
+   "%s | %s lines | line %d:%3d%% | %s"
            (buffer-file-name)
            (count-lines (point-min) (point-max))
+           (count-lines (point-min) (point))
            (/ (window-end) 0.01 (point-max))
            major-mode))
 
@@ -2889,6 +2890,10 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
    (md/powerline-reset)))
 
+(defun md/disable-all-themes ()
+  (interactive)
+  (mapc #'disable-theme custom-enabled-themes))
+
 (use-package color-theme-solarized
  :demand t
  :ensure nil
@@ -2912,6 +2917,13 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
  :bind (:map md/leader-map
         ("ts" . solarized-toggle-theme-mode)
         ("cs" . solarized-toggle-comment-visibility)))
+
+(use-package gruvbox
+  :demand t
+  :load-path "non-elpa/emacs-theme-gruvbox"
+  :config
+  (progn
+    (add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-gruvbox"))))
 
 (use-package writeroom-mode
  :defer 1

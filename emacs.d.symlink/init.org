@@ -3893,7 +3893,14 @@ Use some persistent scratch files for various modes:
 
      (md/powerline-reset)))
 #+END_SRC
-* Solarized theme
+
+* Themes
+#+BEGIN_SRC emacs-lisp
+(defun md/disable-all-themes ()
+  (interactive)
+  (mapc #'disable-theme custom-enabled-themes))
+#+END_SRC
+** Solarized
 
 #+BEGIN_SRC emacs-lisp
   (use-package color-theme-solarized
@@ -3919,6 +3926,17 @@ Use some persistent scratch files for various modes:
    :bind (:map md/leader-map
           ("ts" . solarized-toggle-theme-mode)
           ("cs" . solarized-toggle-comment-visibility)))
+#+END_SRC
+
+** Gruvbox
+
+#+BEGIN_SRC emacs-lisp
+  (use-package gruvbox
+    :demand t
+    :load-path "non-elpa/emacs-theme-gruvbox"
+    :config
+    (progn
+      (add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-gruvbox"))))
 #+END_SRC
 
 * Writeroom
