@@ -2884,7 +2884,8 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
      (save-window-excursion
        (mapc (lambda (buffer)
                (switch-to-buffer buffer)
-               (md/powerline-setup))
+               (md/powerline-setup)
+               (powerline-reset))
              (buffer-list))))
 
    (md/powerline-reset)))

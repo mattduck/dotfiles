@@ -3887,7 +3887,8 @@ Use some persistent scratch files for various modes:
        (save-window-excursion
          (mapc (lambda (buffer)
                  (switch-to-buffer buffer)
-                 (md/powerline-setup))
+                 (md/powerline-setup)
+                 (powerline-reset))
                (buffer-list))))
 
      (md/powerline-reset)))
