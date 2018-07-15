@@ -988,9 +988,11 @@ it's nicer than the default.
     :config
     (progn
       (unbind-key "h" help-map)  ;; view-hello-file by default
-      (bind-key "hf" 'helpful-function help-map)
-      (bind-key "hm" 'helpful-macro help-map)
-      (bind-key "hc" 'helpful-macro help-map)
+      (bind-key "f" 'helpful-function help-map)
+      (bind-key "c" 'helpful-command help-map)
+      (bind-key "v" 'helpful-variable help-map)
+      (bind-key "kk" 'helpful-key help-map)
+      (bind-key "h" 'helpful-at-point help-map)
       (evil-define-key 'normal helpful-mode-map
         "q" 'md/quit-and-kill-window)))
 #+END_SRC
@@ -1205,7 +1207,6 @@ This is handy sometimes - it provides ~free-keys~, which lists unbound keys.
 
   (bind-key "k" md/keys-help-map help-map)
 
-  (bind-key "k" 'describe-key md/keys-help-map)
   (bind-key "K" 'describe-keymap md/keys-help-map)
   (bind-key "p" 'describe-personal-keybindings md/keys-help-map)
   (bind-key "@" 'free-keys md/keys-help-map)
@@ -3358,6 +3359,10 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
       (md/shackle-advise 'helpful-function)
       (md/shackle-advise 'helpful-command)
       (md/shackle-advise 'helpful-macro)
+      (md/shackle-advise 'helpful-variable)
+      (md/shackle-advise 'helpful-callable)
+      (md/shackle-advise 'helpful-command)
+      (md/shackle-advise 'helpful-at-point)
       (md/shackle-advise 'ansi-term)
       (md/shackle-advise 'term)
       (md/shackle-advise 'eshell)
@@ -4086,3 +4091,6 @@ Close paren for the wrapping ~let~:
 - [2018-06-29 Fri]
   - [ ] Folding - should work when at start of line
   - [ ] highlight/unhighlight region?
+- [2018-07-15 Sun]
+  - [ ] Package list bindings
+  - [ ] list upgradeable packages

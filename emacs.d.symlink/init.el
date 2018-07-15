@@ -697,9 +697,11 @@
   :config
   (progn
     (unbind-key "h" help-map)  ;; view-hello-file by default
-    (bind-key "hf" 'helpful-function help-map)
-    (bind-key "hm" 'helpful-macro help-map)
-    (bind-key "hc" 'helpful-macro help-map)
+    (bind-key "f" 'helpful-function help-map)
+    (bind-key "c" 'helpful-command help-map)
+    (bind-key "v" 'helpful-variable help-map)
+    (bind-key "kk" 'helpful-key help-map)
+    (bind-key "h" 'helpful-at-point help-map)
     (evil-define-key 'normal helpful-mode-map
       "q" 'md/quit-and-kill-window)))
 
@@ -885,7 +887,6 @@ represent all current available bindings accurately as a single keymap."
 
 (bind-key "k" md/keys-help-map help-map)
 
-(bind-key "k" 'describe-key md/keys-help-map)
 (bind-key "K" 'describe-keymap md/keys-help-map)
 (bind-key "p" 'describe-personal-keybindings md/keys-help-map)
 (bind-key "@" 'free-keys md/keys-help-map)
@@ -2394,6 +2395,10 @@ headlines")
     (md/shackle-advise 'helpful-function)
     (md/shackle-advise 'helpful-command)
     (md/shackle-advise 'helpful-macro)
+    (md/shackle-advise 'helpful-variable)
+    (md/shackle-advise 'helpful-callable)
+    (md/shackle-advise 'helpful-command)
+    (md/shackle-advise 'helpful-at-point)
     (md/shackle-advise 'ansi-term)
     (md/shackle-advise 'term)
     (md/shackle-advise 'eshell)
