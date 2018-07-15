@@ -140,12 +140,12 @@
   (interactive)
   (cond ((s-starts-with-p "mattmbp" (system-name))
          (when (not md/font-size)
-           (setq md/font-size 15))
+           (setq md/font-size 13))
          (set-frame-font (format "Menlo-%s" md/font-size) t t))
 
         ((s-starts-with-p "omattria" (system-name))
          (when (not md/font-size)
-           (setq md/font-size 19))
+           (setq md/font-size 15))
          (set-frame-font
           (format "Inconsolata for Powerline-%s:antialias=subpixel" md/font-size) t t))
 
@@ -2885,14 +2885,9 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
        (mapc (lambda (buffer)
                (switch-to-buffer buffer)
                (md/powerline-setup))
-             (buffer-list)))
-     (solarized-load-theme))
+             (buffer-list))))
 
    (md/powerline-reset)))
-
-(defun md/disable-all-themes ()
-  (interactive)
-  (mapc #'disable-theme custom-enabled-themes))
 
 (use-package color-theme-solarized
  :demand t
@@ -2909,10 +2904,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
    ;; See heading on terminal colour fixes near top of file
    (when (not (display-graphic-p))
-     (setq solarized-bold nil))
-
-   (load-theme 'solarized t)  ; Defaults to light
-   (solarized-enable-theme 'dark))
+     (setq solarized-bold nil)))
 
  :bind (:map md/leader-map
         ("ts" . solarized-toggle-theme-mode)
@@ -2924,6 +2916,25 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
   :config
   (progn
     (add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-gruvbox"))))
+
+(defun md/disable-all-themes ()
+  (interactive)
+  (mapc #'disable-theme custom-enabled-themes))
+
+(defun md/load-theme ()
+  (interactive)
+  (md/disable-all-themes)
+  (call-interactively 'load-theme)
+  (md/powerline-reset))
+
+;; Initial setup
+(md/disable-all-themes)
+(if (display-graphic-p)
+    (load-theme 'gruvbox-dark-medium t)
+  (load-theme 'solarized t)
+  (solarized-enable-theme 'dark))
+
+(bind-key "tt" 'md/load-theme md/leader-map)
 
 (use-package writeroom-mode
  :defer 1
