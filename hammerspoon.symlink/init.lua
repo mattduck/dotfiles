@@ -1,10 +1,10 @@
 --[[
 My hammerspoon setup. Provides some tmux-like window manager bindings.
-   
+
 External dependencies:
 - cmd+alt+ctrl left / right: BTT move to next / previous space.
 - cmd+alt+ctrl+shift left/right: BTT fullscreen left/right.
-   
+
 General features:
 - change focus: hjkl o np qQ
 - reposition window: HJKL Zz ; {}
@@ -88,7 +88,7 @@ function tmuxirl:exitUnlessStickyMode ()
    if TmuxIRLStickyMode then
       return
    end
-   tmuxirl:forceExit() 
+   tmuxirl:forceExit()
 end
 
 function tmuxirl:forceExit ()
@@ -163,7 +163,7 @@ function switchFocusRecent ()
   tmuxirl:exitUnlessStickyMode()
 end
 tmuxirl:bind('ctrl', "`", function () switchFocusRecent() end)
-  
+
 
 -- HJKL to reposition the current window.
 -- Repeat to cycle through the size variations.
@@ -325,7 +325,7 @@ end)
 launch_bindings = {
    {key="e", app="Emacs"},
    {key="i", app="iTerm"},
-   {key="f", app="Firefox"},
+   {key="f", app="FirefoxBeta"},
    {key="s", app="Slack"},
    {key="t", app="TogglDesktop"},
 }
