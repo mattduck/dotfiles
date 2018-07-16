@@ -2983,3 +2983,4 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
 
 )
+(put 'dired-find-alternate-file 'disabled nil)

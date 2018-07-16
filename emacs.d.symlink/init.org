@@ -4094,3 +4094,7 @@ Close paren for the wrapping ~let~:
 - [2018-07-15 Sun]
   - [ ] Package list bindings
   - [ ] list upgradeable packages
+  - [ ] org-table-edit-field
+    - org-table-create-or-convert-from-region
+    - org-table-next-row
+    - org-table-next-field
