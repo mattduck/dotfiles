@@ -1,8 +1,6 @@
 # Packages that I want in all my envs or are expected by Emacs.
 flake8
-autopep8
 jedi
-yapf
 ipython
 pudb
 pyperclip
@@ -12,3 +10,5 @@ pytest-pudb
 isort
 argcomplete
 Fabric3
+mypy
+black
