@@ -448,6 +448,9 @@
    ;; (dolist (command md/evil-jump-trigger-commands)
    ;;   (evil-add-command-properties command :jump t))
 
+   ;; I keep accidentally quiting with :q. Just deleting the window is enough
+   (evil-ex-define-cmd "q[uit]" 'evil-window-delete)
+
    (setq evil-jumps-max-length 20)  ; Lower than the default, but I rarely want more
 
    ;; This uses C-i by default (as in vim), but C-i is interpeted as TAB, which
@@ -564,6 +567,7 @@
         ;; Eval
         ("ef" . eval-defun)
         ("ee" . eval-last-sexp)  ; Bound to e because I'm used to C-x e
+        ("eE" . eval-expression)  ; Interactive
         ("eb" . eval-buffer)
         ("er" . eval-region)
         ("ex" . md/fontify-buffer)  ; It's sort-of an eval
@@ -582,7 +586,6 @@
         ("Fj" . json-pretty-print)
         ("Fs" . sort-lines)
         ("Fn" . md/expand-newlines)
-
 
         ; Toggle misc
         ("tw" . toggle-truncate-lines)
@@ -970,58 +973,222 @@ represent all current available bindings accurately as a single keymap."
     (global-company-mode)))
 
 (use-package flycheck
-    :init
-    (progn
-      (add-hook 'prog-mode-hook 'flycheck-mode))
-    :config
-    (progn
-      (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
-      (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
+  :init
+  (progn
+    (add-hook 'prog-mode-hook 'flycheck-mode))
+  :config
+  (progn
+    (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
+    (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
 
-      (setq-default flycheck-disabled-checkers
+    (setq-default flycheck-disabled-checkers
 
-            ;; Most of these elisp warnings assume that I'm writing a proper package
-            ;; with full documentation. This is usually not the case, so just
-            ;; disable them.
-            '(emacs-lisp-checkdoc))
+          ;; Most of these elisp warnings assume that I'm writing a proper package
+          ;; with full documentation. This is usually not the case, so just
+          ;; disable them.
+          '(emacs-lisp-checkdoc))
 
-      (setq flycheck-flake8rc ".config/flake8"
-            flycheck-highlighting-mode 'symbols
+    (setq flycheck-flake8rc ".config/flake8"
+          flycheck-highlighting-mode 'symbols
+          flycheck-display-errors-delay 1
 
-            ;; defaults to 0.9, which is too slow
-            flycheck-display-errors-delay 0.1
+          ;; Disabling this at is annoys me to have errors appearing
+          ;; and disappearing quickly and messing with the size of the
+          ;; window. I will just check the error list and the fringe.
+          flycheck-display-errors-function nil
 
-            ;; Disabling this at is annoys me to have errors appearing
-            ;; and disappearing quickly and messing with the size of the
-            ;; window. I will just check the error list and the fringe.
-            flycheck-display-errors-function nil
+          ;; There's a short delay when flycheck runs, which causes the modeline to change
+          ;; its format (or in my custom powerline stuff, to disappear briefly). It's
+          ;; super annoying if this happens at random points during editing, so change it
+          ;; to only happen on save (and when enabling the mode). This is quite similar to how
+          ;; I had it setup in vim.
+          flycheck-check-syntax-automatically '(idle-change)
+          flycheck-idle-change-delay 5
 
-            ;; There's a short delay when flycheck runs, which causes the modeline to change
-            ;; its format (or in my custom powerline stuff, to disappear briefly). It's
-            ;; super annoying if this happens at random points during editing, so change it
-            ;; to only happen on save (and when enabling the mode). This is quite similar to how
-            ;; I had it setup in vim.
-            flycheck-check-syntax-automatically '(idle-change)
-            flycheck-idle-change-delay 5
+          flycheck-mode-line-prefix nil)
 
-            flycheck-mode-line-prefix nil)
+    ;; For some reason in the flycheck mode list map it just uses all vi
+    ;; keys. Mostly this is fine but I need an easy way to quit.
+    (evil-define-key 'normal flycheck-error-list-mode-map "q" 'quit-window))
+  :bind (:map md/leader-map
+              ;; S prefix, ie. "syntax"
+              ("s <RET>" . flycheck-mode)
+              ("ss" . flycheck-buffer)
+              ("sc" . flycheck-compile)
+              ("sl" . flycheck-list-errors)
+              ("sn" . flycheck-next-error)
+              ("sj" . flycheck-next-error)
+              ("sp" . flycheck-previous-error)
+              ("sk" . flycheck-previous-error)
+              ("S <RET>" . flyspell-mode)
+              ("SS" . flyspell-correct-word-before-point)))
 
-      ;; For some reason in the flycheck mode list map it just uses all vi
-      ;; keys. Mostly this is fine but I need an easy way to quit.
-      (evil-define-key 'normal flycheck-error-list-mode-map "q" 'quit-window))
-    :bind (:map md/leader-map
-                ;; S prefix, ie. "syntax"
-                ("s <RET>" . flycheck-mode)
-                ("ss" . flycheck-buffer)
-                ("sl" . flycheck-list-errors)
-                ("sn" . flycheck-next-error)
-                ("sj" . flycheck-next-error)
-                ("sp" . flycheck-previous-error)
-                ("sk" . flycheck-previous-error)
-                ("S <RET>" . flyspell-mode)
-                ("SS" . flyspell-correct-word-before-point)))
+(defun md/emacs-lisp-hook ()
+    (setq fill-column 100))
+(add-hook 'emacs-lisp-mode-hook 'md/emacs-lisp-hook)
 
-(use-package flycheck-mypy :demand t)
+;; Jump to definition
+(evil-define-key 'normal emacs-lisp-mode-map "gd" 'xref-find-definitions)
+
+(use-package dash :demand t)
+(use-package f :demand t)
+(use-package s :demand t)
+
+;; This can be useful when debugging.
+(setq edebug-trace t)
+
+;; https://github.com/ScottyB/edebug-x
+;; https://lists.gnu.org/archive/html/emacs-devel/2013-03/msg00304.html
+;;
+;; Provides some enhancements to edebug mode. Doesn't look like it is
+;; maintained, but it's useful even if just for the syntax highlighting.
+(use-package edebug-x)
+
+(defun md/toggle-debug-on-error ()
+  (interactive)
+  (setq debug-on-error (not debug-on-error))
+  (message (format "debug-on-error %s" debug-on-error)))
+
+(bind-key "Ed" 'md/toggle-debug-on-error md/leader-map)
+(bind-key "Em" 'view-echo-area-messages md/leader-map)
+
+(add-hook 'edebug-mode-hook 'evil-normal-state)
+(md/make-keymap-noop edebug-mode-map)
+
+(bind-key "q" 'top-level edebug-mode-map)
+(bind-key "S" 'edebug-stop edebug-mode-map)
+(bind-key "n" 'edebug-step-mode edebug-mode-map)
+(bind-key "g" 'edebug-go-mode edebug-mode-map)
+(bind-key "G" 'edebug-Go-nonstop-mode edebug-mode-map)
+(bind-key "E" 'edebug-visit-eval-list edebug-mode-map)
+(bind-key "I" 'edebug-instrument-callee edebug-mode-map)
+(bind-key "i" 'edebug-step-in edebug-mode-map)
+(bind-key "o" 'edebug-step-out edebug-mode-map)
+(bind-key "b" 'edebug-set-breakpoint edebug-mode-map)
+(bind-key "u" 'edebug-unset-breakpoint edebug-mode-map)
+(bind-key "d" 'edebug-backtrace edebug-mode-map)
+(bind-key "r" 'edebug-previous-result edebug-mode-map)
+(bind-key "w" 'edebug-where edebug-mode-map)
+(bind-key "SPC" md/leader-map edebug-mode-map)
+
+(defun md/python-pudb-toggle-breakpoint ()
+  (interactive)
+  (let ((trace "import pudb; pu.db")
+        (line (thing-at-point 'line)))
+    (if (and line (string-match trace line))
+        (kill-whole-line)
+      (progn
+        (back-to-indentation)
+        (insert trace)
+        (python-indent-line)
+        (insert "\n")
+        (python-indent-line)))))
+
+(defun md/python-mode-hook ()
+  (md/hideshow-add-bindings python-mode-map)
+  (setq-local fill-column 90))
+(add-hook 'python-mode-hook 'md/python-mode-hook)
+
+(use-package find-file) ;; builtin, provides ff-basename
+(defun md/refresh-python-path ()
+  (interactive)
+  (when (f-directory? "/server/apps")
+    (-each (directory-files "/server/apps" t)
+      (lambda (f)
+        (when (and (f-directory? f)
+                   (not (-contains? '("." "..") (ff-basename f))))
+          (add-to-list 'python-shell-extra-pythonpaths f))))))
+
+(use-package python ;; builtin
+  :config
+  (progn
+    (evil-define-key 'normal python-mode-map
+      (kbd "SPC") md/python-mode-leader-map
+      "gk" 'python-nav-backward-defun
+      "gj" 'python-nav-forward-defun)
+  (md/refresh-python-path))
+  :bind (:map md/python-mode-leader-map
+              ("SPC B" . md/python-pudb-toggle-breakpoint)))
+
+;; Provide autocomplete, jump to definition and eldoc integration.
+(use-package anaconda-mode
+  :defer 1
+  :config
+  (progn
+    (defun md/anaconda-set-company-backend ()
+      (interactive)
+      (set (make-local-variable 'company-backends) '(company-anaconda)))
+    (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
+    (add-hook 'python-mode-hook 'anaconda-mode)
+    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+
+    ;; TODO make sure this jumps to the current buffer
+    (evil-define-key 'normal python-mode-map
+      "gd" 'anaconda-mode-find-assignments
+      "gD" 'anaconda-mode-find-definitions)
+
+    (defun md/anaconda-quit ()
+      (interactive)
+      (quit-window)
+      (shackle--eyebrowse-close-slot-by-tag "anaconda"))
+
+    ;; TODO ideally this would open in a separate eyebrowse slot, and if you
+    ;; press enter would jump to the buffer in your original window, but keep
+    ;; the slot open.
+    ;; q should return to the original position.
+    ;; This behaviour should be consistent with eg. ag and other grep-type buffers.
+    (evil-define-key 'normal anaconda-mode-view-mode-map
+      "q" 'md/anaconda-quit
+      (kbd "C-j") 'next-error-no-select
+      (kbd "C-n") 'next-error-no-select
+      (kbd "C-k") 'previous-error-no-select
+      (kbd "C-p") 'previous-error-no-select))
+  :bind (:map md/python-mode-leader-map
+              ("SPC r" . anaconda-mode-find-references)
+              ("SPC d" . anaconda-mode-show-doc)))
+
+;; TODO pyvenv auto? Might work better to just have one emacs virtualenv.
+;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
+
+(use-package py-isort
+  :bind (:map md/python-mode-leader-map
+              ("SPC I" . py-isort-buffer)))
+
+;; Provide company completion for anaconda
+(use-package company-anaconda)
+
+;; Syntax and completion for pip requirements files.
+(use-package pip-requirements)
+
+(use-package pytest
+  :commands (pytest-all pytest-one pytest-failed pytest-pdb-one pytest-pdb-all)
+  :bind (:map md/python-mode-leader-map
+              ("SPC T T" . pytest-all)
+              ("SPC T t" . pytest-one)
+              ("SPC T p" . pytest-pdb-one)
+              ("SPC T P" . pytest-pdb-all)
+              ("SPC T f" . pytest-failed)))
+
+(use-package blacken
+  :bind (:map md/python-mode-leader-map
+              ("SPC F" . blacken-buffer)))
+
+;; Fallback to use if pycheckers doesn't find the right virtualenv.
+(use-package pyvenv :demand t :config (pyvenv-workon "emacs"))
+
+;; This is useful:
+;; - Multiple concurrent python checkers
+;; - Auto-guesses the virtualenv to use for the checks
+(use-package flycheck-pycheckers
+  :demand t
+  :config (progn
+            (add-hook 'flycheck-mode-hook 'flycheck-pycheckers-setup)
+            (setq flycheck-pycheckers-checkers '(flake8 mypy3)
+                  flycheck-pycheckers-ignore-codes nil
+
+                  ;; Seems this is required - would prefer to leave it to
+                  ;; pylint/flake8 config though.
+                  flycheck-pycheckers-max-line-length 120)))
 
 (setq compilation-mode-map (make-sparse-keymap))
 (evil-set-initial-state 'compilation-mode 'normal)
@@ -1130,16 +1297,18 @@ represent all current available bindings accurately as a single keymap."
  :init
  (progn
    (defun md/set-sensible-column ()
-     "Unless file is too big, either use git-gutter mode (when in
-git dir) or linum mode"
+     "Unless file is too big, either git-gutter mode (when in git dir)"
      (interactive)
      (when (and (< (count-lines (point-min) (point-max)) 1500)
+                (not writeroom-mode)
                 (not (eq major-mode 'org-mode)))
        (if (string= "git" (downcase (format "%s" (vc-backend
                                                   (buffer-file-name
                                                    (current-buffer))))))
            (git-gutter-mode 1))))
    (add-hook 'find-file-hook 'md/set-sensible-column))
+
+
  :config
  (progn
    (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
@@ -1423,156 +1592,6 @@ git dir) or linum mode"
 (evil-set-initial-state 'term-mode 'emacs)
 
 (add-hook 'sql-mode-hook 'sql-highlight-postgres-keywords)
-
-(defun md/emacs-lisp-hook ()
-    (setq fill-column 100))
-(add-hook 'emacs-lisp-mode-hook 'md/emacs-lisp-hook)
-
-;; Jump to definition
-(evil-define-key 'normal emacs-lisp-mode-map "gd" 'xref-find-definitions)
-
-(use-package dash :demand t)
-(use-package f :demand t)
-(use-package s :demand t)
-
-;; This can be useful when debugging.
-(setq edebug-trace t)
-
-;; https://github.com/ScottyB/edebug-x
-;; https://lists.gnu.org/archive/html/emacs-devel/2013-03/msg00304.html
-;;
-;; Provides some enhancements to edebug mode. Doesn't look like it is
-;; maintained, but it's useful even if just for the syntax highlighting.
-(use-package edebug-x)
-
-(defun md/toggle-debug-on-error ()
-  (interactive)
-  (setq debug-on-error (not debug-on-error))
-  (message (format "debug-on-error %s" debug-on-error)))
-
-(bind-key "Ed" 'md/toggle-debug-on-error md/leader-map)
-(bind-key "Em" 'view-echo-area-messages md/leader-map)
-
-(add-hook 'edebug-mode-hook 'evil-normal-state)
-(md/make-keymap-noop edebug-mode-map)
-
-(bind-key "q" 'top-level edebug-mode-map)
-(bind-key "S" 'edebug-stop edebug-mode-map)
-(bind-key "n" 'edebug-step-mode edebug-mode-map)
-(bind-key "g" 'edebug-go-mode edebug-mode-map)
-(bind-key "G" 'edebug-Go-nonstop-mode edebug-mode-map)
-(bind-key "E" 'edebug-visit-eval-list edebug-mode-map)
-(bind-key "I" 'edebug-instrument-callee edebug-mode-map)
-(bind-key "i" 'edebug-step-in edebug-mode-map)
-(bind-key "o" 'edebug-step-out edebug-mode-map)
-(bind-key "b" 'edebug-set-breakpoint edebug-mode-map)
-(bind-key "u" 'edebug-unset-breakpoint edebug-mode-map)
-(bind-key "d" 'edebug-backtrace edebug-mode-map)
-(bind-key "r" 'edebug-previous-result edebug-mode-map)
-(bind-key "w" 'edebug-where edebug-mode-map)
-(bind-key "SPC" md/leader-map edebug-mode-map)
-
-(defun md/python-pudb-toggle-breakpoint ()
-  (interactive)
-  (let ((trace "import pudb; pu.db")
-        (line (thing-at-point 'line)))
-    (if (and line (string-match trace line))
-        (kill-whole-line)
-      (progn
-        (back-to-indentation)
-        (insert trace)
-        (python-indent-line)
-        (insert "\n")
-        (python-indent-line)))))
-
-(defun md/python-mode-hook ()
-  (md/hideshow-add-bindings python-mode-map)
-  (setq-local fill-column 120))
-(add-hook 'python-mode-hook 'md/python-mode-hook)
-
-(use-package find-file) ;; builtin, provides ff-basename
-(defun md/refresh-python-path ()
-  (interactive)
-  (when (f-directory? "/server/apps")
-    (-each (directory-files "/server/apps" t)
-      (lambda (f)
-        (when (and (f-directory? f)
-                   (not (-contains? '("." "..") (ff-basename f))))
-          (add-to-list 'python-shell-extra-pythonpaths f))))))
-
-(use-package python ;; builtin
-  :config
-  (progn
-    (evil-define-key 'normal python-mode-map
-      (kbd "SPC") md/python-mode-leader-map
-      "gk" 'python-nav-backward-defun
-      "gj" 'python-nav-forward-defun)
-  (md/refresh-python-path))
-  :bind (:map md/python-mode-leader-map
-              ("SPC B" . md/python-pudb-toggle-breakpoint)))
-
-;; Provide autocomplete, jump to definition and eldoc integration.
-(use-package anaconda-mode
-  :defer 1
-  :config
-  (progn
-    (defun md/anaconda-set-company-backend ()
-      (interactive)
-      (set (make-local-variable 'company-backends) '(company-anaconda)))
-    (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
-    (add-hook 'python-mode-hook 'anaconda-mode)
-    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
-
-    ;; TODO make sure this jumps to the current buffer
-    (evil-define-key 'normal python-mode-map
-      "gd" 'anaconda-mode-find-assignments
-      "gD" 'anaconda-mode-find-definitions)
-
-    (defun md/anaconda-quit ()
-      (interactive)
-      (quit-window)
-      (shackle--eyebrowse-close-slot-by-tag "anaconda"))
-
-    ;; TODO ideally this would open in a separate eyebrowse slot, and if you
-    ;; press enter would jump to the buffer in your original window, but keep
-    ;; the slot open.
-    ;; q should return to the original position.
-    ;; This behaviour should be consistent with eg. ag and other grep-type buffers.
-    (evil-define-key 'normal anaconda-mode-view-mode-map
-      "q" 'md/anaconda-quit
-      (kbd "C-j") 'next-error-no-select
-      (kbd "C-n") 'next-error-no-select
-      (kbd "C-k") 'previous-error-no-select
-      (kbd "C-p") 'previous-error-no-select))
-  :bind (:map md/python-mode-leader-map
-              ("SPC r" . anaconda-mode-find-references)
-              ("SPC d" . anaconda-mode-show-doc)))
-
-;; TODO pyvenv auto? Might work better to just have one emacs virtualenv.
-;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
-
-(use-package py-isort
-  :bind (:map md/python-mode-leader-map
-              ("SPC I" . py-isort-buffer)))
-
-;; Provide company completion for anaconda
-(use-package company-anaconda)
-
-;; Syntax and completion for pip requirements files.
-(use-package pip-requirements)
-
-(use-package pytest
-  :commands (pytest-all pytest-one pytest-failed pytest-pdb-one pytest-pdb-all)
-  :bind (:map md/python-mode-leader-map
-              ("SPC T T" . pytest-all)
-              ("SPC T t" . pytest-one)
-              ("SPC T p" . pytest-pdb-one)
-              ("SPC T P" . pytest-pdb-all)
-              ("SPC T f" . pytest-failed)))
-
-(use-package yapfify
-  :bind (:map md/python-mode-leader-map
-              ("SPC F" . yapfify-buffer)))
 
 (use-package php-mode
 	:config (progn
@@ -2947,10 +2966,28 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
  :demand t
  :config
  (progn
+   (defun md/writeroom-mode ()
+     "Handle clash with git-gutter mode as both use fringes"
+     ;; TODO: why doesn't this work using writeroom-mode-hook?
+     (interactive)
+     (message (format "%s" writeroom-mode))
+     (if (not writeroom-mode)
+         (progn
+           (git-gutter-mode 0)
+           (redraw-frame)
+           (writeroom-mode 1)
+           (redraw-frame))
+       (writeroom-mode 0)))
+
    (setq writeroom-width 90
-         writeroom-restore-window-config t))
+         writeroom-mode-line t  ; Keep modeline
+         writeroom-maximize-window nil  ; Don't delete other windows
+         writeroom-fullscreen-effect 'fullboth
+         writeroom-fringes-outside-margins nil
+         writeroom-major-modes nil
+         writeroom-restore-window-config nil))
  :bind (:map md/leader-map
-        ("tW" . writeroom-mode)))
+        ("tW" . md/writeroom-mode)))
 
 (defun md/dotfiles-edit-init ()
   (interactive)
@@ -2983,4 +3020,3 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
 
 )
-(put 'dired-find-alternate-file 'disabled nil)
