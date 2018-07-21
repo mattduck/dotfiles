@@ -1,4 +1,5 @@
 [flake8]
-ignore = E501,E225,E226,E265,F403,E116,F405
+#ignore = E501,E225,E226,E265,F403,E116,F405
 exclude = .svn,CVS,.bzr,.hg,.git,__pycache,migrations,dependencies
 max-complexity = 12
+max-line-length = 120
