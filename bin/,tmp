@@ -1,0 +1,7 @@
+#!/bin/sh
+if [ -t 0 ]; then
+    less /tmp/matt_tmp
+else
+    rm /tmp/matt_tmp
+    tee /tmp/matt_tmp | less <&0
+fi
