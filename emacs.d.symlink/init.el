@@ -365,7 +365,7 @@
         '("SPC" "TAB")))
 
 (setq delete-by-moving-to-trash t)
-(setq recentf-max-saved-items 50)
+(setq recentf-max-saved-items 100)
 
 (use-package evil
  :demand t
@@ -642,7 +642,7 @@
     (helm-descbinds-mode 1)
 
     ;; No need to display the header - it takes up room and doesn't add much.
-    (setq helm-display-header-line nil)
+    (setq helm-display-header-line t)
 
     ;; I don't need to know about some files
     (setq helm-ff-skip-boring-files t)
@@ -990,7 +990,7 @@ represent all current available bindings accurately as a single keymap."
 
     (setq flycheck-flake8rc ".config/flake8"
           flycheck-highlighting-mode 'symbols
-          flycheck-display-errors-delay 1
+          flycheck-display-errors-delay 0.1
 
           ;; Disabling this at is annoys me to have errors appearing
           ;; and disappearing quickly and messing with the size of the
@@ -2850,12 +2850,11 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
                                    ;; Major mode
                                    (powerline-raw (format "%s " (powerline-major-mode)) face1 'l)
-                                   (funcall separator-left face1 mode-line)
 
-                                   ;; Projectile project
-                                   (if (and (boundp 'projectile-mode) projectile-mode)
-                                       (powerline-raw (concat (projectile-project-name) "::%b") nil 'l)
-                                     (powerline-raw "%b" mode-line 'l))
+                                   (funcall separator-left face1 mode-line)
+                                   (powerline-raw "%b" mode-line 'l)
+                                   (when (and (boundp 'projectile-mode) projectile-mode)
+                                     (powerline-raw (format "%s" (projectile-project-name)) face2 'l))
 
                                    ;; File state
                                    (when (buffer-modified-p)
