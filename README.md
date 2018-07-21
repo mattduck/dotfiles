@@ -34,26 +34,18 @@ To always run your shell using the dotfiles environment, add the above line to
 
 - Vim plugins are installed with `:BundleInstall`.
 
-- Emacs plugins are automatically installed on startup.
+- Emacs plugins should be installed.
 
-- Submodules are used when we're just pulling in other content with git
-  eg. the initial Vundle install, some config bits relating to Solarized
-  schemes.
-
-
-## Quick install for dev work
-
-Quick way for me to get started on ubuntu-like dev VMs. **Check the script that
-gets downloaded before piping into shell**.
-
-`sh <(curl https://raw.githubusercontent.com/mattduck/dotfiles/master/dev-quickstart/dev-quickstart.sh)`
+- Submodules are used when we're just pulling in other content with git,
+  eg. some non-elpa Emacs packages, the initial Vundle install, some Solarized
+  assets.
 
 
 # Issues
 
 ### OS X - $PATH issues
 
-Tmuxs always runs as a login shell, which means /etc/profile gets read. On some
+Tmux always runs as a login shell, which means /etc/profile gets read. On some
 OS X releases, this will run a utility called `path_helper`, which will always
 prepend a set of directories to your $PATH /after/ `.bashrc` has run.
 
@@ -74,7 +66,7 @@ See https://superuser.com/questions/544989/does-tmux-sort-the-path-variable/5835
 
 # Thanks
 
-- Some cool vim / shell / tmux ideas taken from [Nic West](https://github.com/nicwest/.dotfiles).
+- Some vim / shell / tmux ideas taken from [Nic West](https://github.com/nicwest/.dotfiles).
 
 - The \*.symlink and \*.sh features were taken from [Zach Holman's
   dotfiles](https://github.com/holman/dotfiles).
@@ -82,4 +74,5 @@ See https://superuser.com/questions/544989/does-tmux-sort-the-path-variable/5835
 - I liked [Brandon Rhodes'](https://github.com/brandon-rhodes/homedir) idea of
   prefixing your custom commands with a comma. Also stole some functions.
 
-- My old Emacs organisation was inspired by [Hans Engel](https://github.com/hans/dotfiles).
+- Emacs ideas taken from [Sacha Chua](https://github.com/sachac/.emacs.d/) and
+  many others.
