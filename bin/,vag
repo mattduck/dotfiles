@@ -1,3 +1,0 @@
-#!/bin/bash
-# Use vim as nice interface to ag
-vim -c ":Ack $@"

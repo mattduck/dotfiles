@@ -1,6 +1,0 @@
-#!/bin/bash
-#
-# Pretty print $PATH
-echo 'PATH: '
-IFS=:
-eval printf "%s\\\n" \$${1:-PATH}

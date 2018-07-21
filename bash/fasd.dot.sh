@@ -3,8 +3,6 @@
 eval "$(fasd --init posix-alias bash-hook bash-ccomp bash-ccomp-install)"
 
 alias f=",cd"  # TODO fix so I can define this in aliases and fasd doesn't override
-alias d=",fzf"  # TODO fix so I can define this in aliases and fasd doesn't override
-
 
 # Jump to best match. Use fzf interface if no arg given.
 function j () {

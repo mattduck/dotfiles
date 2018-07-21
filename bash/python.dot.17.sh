@@ -37,14 +37,20 @@ alias ,pyrm="rmvirtualen"
 alias ,pylssite="lssitepackages"
 
 
-function ,pypathadd() {
-    # usage: ,pypathadd [--prepend] [<directories>]
+function ,pypath {
+    # usage: ,pypath [--prepend] [<directories>]
     #
     # Adds current directory or given directories to path. If --prepend not
     # given, directories are appended.
     #
     # Also updates $_OLD_VIRTUAL_PATH set by Python's virtualenv, so that path
     # changes persist through a venv deactivate command.
+    if [[ -z "$1" ]]; then
+        echo 'PYTHONPATH: '
+        IFS=:
+        eval printf "%s\\\n" \$${1:-PYTHONPATH}
+        return 0
+    fi
 
     if [[ $1 = "--prepend" ]]; then
         prepend=true
@@ -77,12 +83,6 @@ function ,pypathadd() {
         fi
     done
    ,pypath
-}
-
-function ,pypath() {
-    echo 'PYTHONPATH: '
-    IFS=:
-    eval printf "%s\\\n" \$${1:-PYTHONPATH}
 }
 
 function ,pycrm() {

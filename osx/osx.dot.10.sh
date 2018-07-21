@@ -2,15 +2,15 @@
 if [[ "$(uname -a)" != *Darwin* ]]; then return; fi
 
 # Use Brew instead of system Ruby
-,path-add --prepend "/usr/local/opt/ruby/bin"
+,path --prepend "/usr/local/opt/ruby/bin"
 
 # Add TeX to path (for org-mode PDF exporting)
-,path-add --prepend "/usr/local/texlive/2014/bin/universal-darwin"
-,path-add --prepend "/Library/TeX/Distributions/.DefaultTeX/Contents/Programs/texbin/"
+,path --prepend "/usr/local/texlive/2014/bin/universal-darwin"
+,path --prepend "/Library/TeX/Distributions/.DefaultTeX/Contents/Programs/texbin/"
 
 # Use GNU coreutils - it's easier if programs have the same flags between
 # machines, same man pages etc.
-,path-add --prepend "/usr/local/opt/coreutils/libexec/gnubin"
+,path --prepend "/usr/local/opt/coreutils/libexec/gnubin"
 export MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
 
 # git __ps1 and completion aren't available by default on my Yosemite machine -
@@ -89,7 +89,7 @@ alias vi="vim" # Otherwise vi will point to /usr/bin, and vim to the brew dir.
 
 
 # Golang -------------
-,path-add "/usr/local/opt/go/libexec/bin/"
+,path "/usr/local/opt/go/libexec/bin/"
 
 # iTerm 2 - toggle colour profiles
 function ,ts () {

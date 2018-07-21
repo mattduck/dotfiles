@@ -5,7 +5,7 @@ function fzf-prefix() {
 }
 
 # This is basically what happens in ~/.fzf.bash, which is provided by fzf.
-,path-add $(fzf-prefix)/bin
+,path $(fzf-prefix)/bin
 if [[ ! "$MANPATH" == *"$(fzf-prefix)/man"* && -d "$(fzf-prefix)/man" ]]; then
     export MANPATH="$MANPATH:$(fzf-prefix)/man"
 fi

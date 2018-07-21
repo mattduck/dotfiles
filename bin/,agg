@@ -1,4 +1,0 @@
-#!/bin/bash
-# Display ag results in the current git project
-cd "$(git rev-parse --show-toplevel)"
-,ag "$@"

@@ -31,7 +31,7 @@ shopt -s histappend
 shopt -s cmdhist
 
 # ~/bin takes precedence over most of the $PATH
-,path-add --prepend $HOME/bin
+,path --prepend $HOME/bin
 
 # pager
 export LESS='-iMFXSx4R'

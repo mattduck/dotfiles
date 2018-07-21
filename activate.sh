@@ -15,14 +15,21 @@ function ,realpath() {
 }
 
 
-function ,path-add() {
-    # usage: ,path-add [--prepend] [<directories>]
+function ,path() {
+    # usage: ,path [--prepend] [<directories>]
     #
     # Adds current directory or given directories to path. If --prepend not
     # given, directories are appended.
     #
     # Also updates $_OLD_VIRTUAL_PATH set by Python's virtualenv, so that path
     # changes persist through a venv deactivate command.
+
+    if [[ -z "$1" ]]; then
+        echo 'PATH: '
+        IFS=:
+        eval printf "%s\\\n" \$${1:-PATH}
+        return
+    fi
 
     if [[ $1 = "--prepend" ]]; then
         prepend=true
@@ -84,7 +91,7 @@ THIS_FILE=${BASH_SOURCE[0]}
 export DOTFILES=$(dirname "$(,realpath "$THIS_FILE")")
 
 # Append all "bin" directories in $DOTFILES to $PATH
-,path-add $(find $DOTFILES -type d -name bin)
+,path $(find $DOTFILES -type d -name bin)
 
 # Source all ".dot.sh" files in $DOTFILES
 for f in $(,dotfiles-ls); do

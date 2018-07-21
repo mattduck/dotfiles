@@ -2,4 +2,4 @@
 import getpass
 
 from passlib.hash import sha512_crypt
-print sha512_crypt.encrypt(getpass.getpass())
+print(sha512_crypt.encrypt(getpass.getpass()))
