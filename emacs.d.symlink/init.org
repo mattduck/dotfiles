@@ -934,6 +934,7 @@ actually use it to insert anything in insert mode.
            ("bb" . helm-buffers-list)
            ("f" . helm-find-files)
            ("x" . helm-M-x)
+           ("X" . helm-resume)
            ("p" . helm-mini)
 
            :map help-map
@@ -1355,196 +1356,6 @@ Company seems to work nicely without much configuration.
                 ("SS" . flyspell-correct-word-before-point)))
 #+END_SRC
 
-* Language support
-** Emacs-lisp
-
-*** Setup
-
-#+BEGIN_SRC emacs-lisp
-  (defun md/emacs-lisp-hook ()
-      (setq fill-column 100))
-  (add-hook 'emacs-lisp-mode-hook 'md/emacs-lisp-hook)
-
-  ;; Jump to definition
-  (evil-define-key 'normal emacs-lisp-mode-map "gd" 'xref-find-definitions)
-#+END_SRC
-
-*** Libraries
-
-#+BEGIN_SRC emacs-lisp
-(use-package dash :demand t)
-(use-package f :demand t)
-(use-package s :demand t)
-#+END_SRC
-
-*** Debug
-#+BEGIN_SRC emacs-lisp
-  ;; This can be useful when debugging.
-  (setq edebug-trace t)
-
-  ;; https://github.com/ScottyB/edebug-x
-  ;; https://lists.gnu.org/archive/html/emacs-devel/2013-03/msg00304.html
-  ;;
-  ;; Provides some enhancements to edebug mode. Doesn't look like it is
-  ;; maintained, but it's useful even if just for the syntax highlighting.
-  (use-package edebug-x)
-
-  (defun md/toggle-debug-on-error ()
-    (interactive)
-    (setq debug-on-error (not debug-on-error))
-    (message (format "debug-on-error %s" debug-on-error)))
-
-  (bind-key "Ed" 'md/toggle-debug-on-error md/leader-map)
-  (bind-key "Em" 'view-echo-area-messages md/leader-map)
-#+END_SRC
-
-Override the edebug keymap to only contain features/keys that I care about:
-
-#+BEGIN_SRC emacs-lisp
-  (add-hook 'edebug-mode-hook 'evil-normal-state)
-  (md/make-keymap-noop edebug-mode-map)
-
-  (bind-key "q" 'top-level edebug-mode-map)
-  (bind-key "S" 'edebug-stop edebug-mode-map)
-  (bind-key "n" 'edebug-step-mode edebug-mode-map)
-  (bind-key "g" 'edebug-go-mode edebug-mode-map)
-  (bind-key "G" 'edebug-Go-nonstop-mode edebug-mode-map)
-  (bind-key "E" 'edebug-visit-eval-list edebug-mode-map)
-  (bind-key "I" 'edebug-instrument-callee edebug-mode-map)
-  (bind-key "i" 'edebug-step-in edebug-mode-map)
-  (bind-key "o" 'edebug-step-out edebug-mode-map)
-  (bind-key "b" 'edebug-set-breakpoint edebug-mode-map)
-  (bind-key "u" 'edebug-unset-breakpoint edebug-mode-map)
-  (bind-key "d" 'edebug-backtrace edebug-mode-map)
-  (bind-key "r" 'edebug-previous-result edebug-mode-map)
-  (bind-key "w" 'edebug-where edebug-mode-map)
-  (bind-key "SPC" md/leader-map edebug-mode-map)
-#+END_SRC
-
-** Python
-
-#+BEGIN_SRC emacs-lisp
-  (defun md/python-pudb-toggle-breakpoint ()
-    (interactive)
-    (let ((trace "import pudb; pu.db")
-          (line (thing-at-point 'line)))
-      (if (and line (string-match trace line))
-          (kill-whole-line)
-        (progn
-          (back-to-indentation)
-          (insert trace)
-          (python-indent-line)
-          (insert "\n")
-          (python-indent-line)))))
-
-  (defun md/python-mode-hook ()
-    (md/hideshow-add-bindings python-mode-map)
-    (setq-local fill-column 90))
-  (add-hook 'python-mode-hook 'md/python-mode-hook)
-
-  (use-package find-file) ;; builtin, provides ff-basename
-  (defun md/refresh-python-path ()
-    (interactive)
-    (when (f-directory? "/server/apps")
-      (-each (directory-files "/server/apps" t)
-        (lambda (f)
-          (when (and (f-directory? f)
-                     (not (-contains? '("." "..") (ff-basename f))))
-            (add-to-list 'python-shell-extra-pythonpaths f))))))
-
-  (use-package python ;; builtin
-    :config
-    (progn
-      (evil-define-key 'normal python-mode-map
-        (kbd "SPC") md/python-mode-leader-map
-        "gk" 'python-nav-backward-defun
-        "gj" 'python-nav-forward-defun)
-    (md/refresh-python-path))
-    :bind (:map md/python-mode-leader-map
-                ("SPC B" . md/python-pudb-toggle-breakpoint)))
-
-  ;; Provide autocomplete, jump to definition and eldoc integration.
-  (use-package anaconda-mode
-    :defer 1
-    :config
-    (progn
-      (defun md/anaconda-set-company-backend ()
-        (interactive)
-        (set (make-local-variable 'company-backends) '(company-anaconda)))
-      (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
-      (add-hook 'python-mode-hook 'anaconda-mode)
-      (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
-
-      ;; TODO make sure this jumps to the current buffer
-      (evil-define-key 'normal python-mode-map
-        "gd" 'anaconda-mode-find-assignments
-        "gD" 'anaconda-mode-find-definitions)
-
-      (defun md/anaconda-quit ()
-        (interactive)
-        (quit-window)
-        (shackle--eyebrowse-close-slot-by-tag "anaconda"))
-
-      ;; TODO ideally this would open in a separate eyebrowse slot, and if you
-      ;; press enter would jump to the buffer in your original window, but keep
-      ;; the slot open.
-      ;; q should return to the original position.
-      ;; This behaviour should be consistent with eg. ag and other grep-type buffers.
-      (evil-define-key 'normal anaconda-mode-view-mode-map
-        "q" 'md/anaconda-quit
-        (kbd "C-j") 'next-error-no-select
-        (kbd "C-n") 'next-error-no-select
-        (kbd "C-k") 'previous-error-no-select
-        (kbd "C-p") 'previous-error-no-select))
-    :bind (:map md/python-mode-leader-map
-                ("SPC r" . anaconda-mode-find-references)
-                ("SPC d" . anaconda-mode-show-doc)))
-
-  ;; TODO pyvenv auto? Might work better to just have one emacs virtualenv.
-  ;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
-
-  (use-package py-isort
-    :bind (:map md/python-mode-leader-map
-                ("SPC I" . py-isort-buffer)))
-
-  ;; Provide company completion for anaconda
-  (use-package company-anaconda)
-
-  ;; Syntax and completion for pip requirements files.
-  (use-package pip-requirements)
-
-  (use-package pytest
-    :commands (pytest-all pytest-one pytest-failed pytest-pdb-one pytest-pdb-all)
-    :bind (:map md/python-mode-leader-map
-                ("SPC T T" . pytest-all)
-                ("SPC T t" . pytest-one)
-                ("SPC T p" . pytest-pdb-one)
-                ("SPC T P" . pytest-pdb-all)
-                ("SPC T f" . pytest-failed)))
-
-  (use-package blacken
-    :bind (:map md/python-mode-leader-map
-                ("SPC F" . blacken-buffer)))
-
-  ;; Fallback to use if pycheckers doesn't find the right virtualenv.
-  (use-package pyvenv :demand t :config (pyvenv-workon "emacs"))
-
-  ;; This is useful:
-  ;; - Multiple concurrent python checkers
-  ;; - Auto-guesses the virtualenv to use for the checks
-  (use-package flycheck-pycheckers
-    :demand t
-    :config (progn
-              (add-hook 'flycheck-mode-hook 'flycheck-pycheckers-setup)
-              (setq flycheck-pycheckers-checkers '(flake8 mypy3)
-                    flycheck-pycheckers-ignore-codes nil
-
-                    ;; Seems this is required - would prefer to leave it to
-                    ;; pylint/flake8 config though.
-                    flycheck-pycheckers-max-line-length 120)))
-#+END_SRC
-
-
 ** Compilation-mode
 #+BEGIN_SRC emacs-lisp
   (setq compilation-mode-map (make-sparse-keymap))
@@ -1702,152 +1513,6 @@ eg. one terminal popwin per project.
           dumb-jump-force-searcher 'ag)
     (bind-key "gd" 'dumb-jump-go evil-normal-state-map))
 #+END_SRC
-** Git
-*** git-commit
-
-I sometimes see issues where git opens emacsclient in Fundamental mode. Making
-~global-git-commit-mode~ explicit in an attempt to resolve this:
-
-#+BEGIN_SRC emacs-lisp
-  (use-package git-commit
-    :config
-    (progn
-      (defun md/git-commit-set-fill-column ()
-        (interactive)
-        (setq fill-column 70))
-      (add-hook 'git-commit-setup-hook 'md/git-commit-set-fill-column)
-      (global-git-commit-mode t)))
-#+END_SRC
-
-*** git-gutter
-#+BEGIN_SRC emacs-lisp
-  (use-package git-gutter
-   :init
-   (progn
-     (defun md/set-sensible-column ()
-       "Unless file is too big, either git-gutter mode (when in git dir)"
-       (interactive)
-       (when (and (< (count-lines (point-min) (point-max)) 1500)
-                  (not writeroom-mode)
-                  (not (eq major-mode 'org-mode)))
-         (if (string= "git" (downcase (format "%s" (vc-backend
-                                                    (buffer-file-name
-                                                     (current-buffer))))))
-             (git-gutter-mode 1))))
-     (add-hook 'find-file-hook 'md/set-sensible-column))
-
-
-   :config
-   (progn
-     (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
-           git-gutter:modified-sign "~"
-           git-gutter:added-sign "+"
-           git-gutter:deleted-sign "-"
-
-           ;; This ensures the separator is always displayed
-           git-gutter:unchanged-sign " "
-           git-gutter:always-show-separator t
-
-           ;; Without this, there's no space between the git-gutter column and the code.
-           git-gutter:separator-sign " "))
-   :bind (:map md/leader-map
-         ("g <RET>" . git-gutter-mode)
-         ("gk" . git-gutter:previous-hunk)
-         ("gp" . git-gutter:previous-hunk)
-         ("gj" . git-gutter:next-hunk)
-         ("gn" . git-gutter:next-hunk)
-         ("g+" . git-gutter:stage-hunk)
-         ("g-" . git-gutter:revert-hunk)))
-#+END_SRC
-
-*** magit
-#+BEGIN_SRC emacs-lisp
-  (use-package magit
-   :config
-   (progn
-     (evil-set-initial-state 'magit-blame-mode 'normal)
-     (evil-set-initial-state 'magit-revision-mode 'normal)
-     (evil-set-initial-state 'magit-diff-mode 'normal)
-     (evil-set-initial-state 'magit-status-mode 'normal)
-
-     (add-hook 'magit-diff-mode 'evil-normal-state)
-     (add-hook 'magit-status-mode 'evil-normal-state)
-
-     (defun md/magit-quit ()
-       (interactive)
-       (magit-mode-bury-buffer)
-       (shackle--eyebrowse-close-slot-by-tag "git"))
-
-     (evil-define-key 'normal magit-mode-map
-       (kbd "TAB") 'magit-section-toggle
-       (kbd "<RET>") 'magit-visit-thing
-       "q" 'md/magit-quit
-       "r" 'magit-refresh
-       "n" 'magit-section-forward
-       "p" 'magit-section-backward
-       "+" 'magit-stage-file
-       "-" 'magit-unstage-file
-       "[" 'magit-diff-less-context
-       "]" 'magit-diff-more-context
-       )
-
-     (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
-
-     ;; I don't know why, but by default I can't get magit-blame to adhere to my
-     ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
-     ;; calling evil-normal-state fixes it.
-     (add-hook 'magit-blame-mode-hook 'evil-normal-state)
-     (evil-define-key 'normal magit-blame-mode-map
-       (kbd "<RET>") 'magit-show-commit
-       "q" 'magit-blame-quit
-       "gj" 'magit-blame-next-chunk
-       "gn" 'magit-blame-next-chunk
-       "gk" 'magit-blame-previous-chunk
-       "gp" 'magit-blame-previous-chunk)
-
-     (add-hook 'magit-revision-mode-hook 'evil-normal-state)
-     (evil-define-key 'normal magit-revision-mode-map
-       (kbd "<RET>") 'magit-diff-visit-file
-       "q" 'magit-mode-bury-buffer))  ;; This quits
-
-   :bind (:map md/leader-map
-         ("gg" . magit-status)
-         ("gm" . magit-dispatch-popup)
-         ("gb" . magit-blame)
-         ("gl" . magit-log-head)
-
-         ;; Diff gives the full git diff output. Ediff shows ediff for a single
-         ;; file.
-         ("gD" . magit-diff-buffer-file)
-         ("gd" . magit-diff-dwim)
-         ("ge" . magit-ediff-popup)
-
-         ;; NOTE - this doesn't play nicely with mode-line:
-         ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
-         ;; - https://github.com/syl20bnr/spacemacs/issues/2172
-         ("gC" . magit-commit-popup)
-         ("gc" . magit-checkout)))
-#+END_SRC
-
-*** github-browse-file
-
-I miss :Gbrowse from fugitive:
-
-#+BEGIN_SRC emacs-lisp
-  (use-package github-browse-file
-    :config
-    (progn
-      (setq github-browse-file-show-line-at-point t))
-    :bind (:map md/leader-map
-          ("go" . github-browse-file)))
-#+END_SRC
-
-*** vc-mode
-#+BEGIN_SRC emacs-lisp
-  ;; I don't need to confirm this via prompt.
-  (setq vc-follow-symlinks t)
-#+END_SRC
-
 ** Ediff
 
 - Add evil bindings to ediff. Largely copied from https://github.com/justbur/evil-ediff/blob/master/evil-ediff.el.
@@ -2168,11 +1833,351 @@ the underlying terminal (ie. I get the usual readline bindings).
   (evil-set-initial-state 'ansi-term-mode 'emacs)
   (evil-set-initial-state 'term-mode 'emacs)
 #+END_SRC
+* Language support
+** Emacs-lisp
+
+*** Setup
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/emacs-lisp-hook ()
+      (setq fill-column 100))
+  (add-hook 'emacs-lisp-mode-hook 'md/emacs-lisp-hook)
+
+  ;; Jump to definition
+  (evil-define-key 'normal emacs-lisp-mode-map "gd" 'xref-find-definitions)
+#+END_SRC
+
+*** Libraries
+
+#+BEGIN_SRC emacs-lisp
+(use-package dash :demand t)
+(use-package f :demand t)
+(use-package s :demand t)
+#+END_SRC
+
+*** Debug
+#+BEGIN_SRC emacs-lisp
+  ;; This can be useful when debugging.
+  (setq edebug-trace t)
+
+  ;; https://github.com/ScottyB/edebug-x
+  ;; https://lists.gnu.org/archive/html/emacs-devel/2013-03/msg00304.html
+  ;;
+  ;; Provides some enhancements to edebug mode. Doesn't look like it is
+  ;; maintained, but it's useful even if just for the syntax highlighting.
+  (use-package edebug-x)
+
+  (defun md/toggle-debug-on-error ()
+    (interactive)
+    (setq debug-on-error (not debug-on-error))
+    (message (format "debug-on-error %s" debug-on-error)))
+
+  (bind-key "Ed" 'md/toggle-debug-on-error md/leader-map)
+  (bind-key "Em" 'view-echo-area-messages md/leader-map)
+#+END_SRC
+
+Override the edebug keymap to only contain features/keys that I care about:
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'edebug-mode-hook 'evil-normal-state)
+  (md/make-keymap-noop edebug-mode-map)
+
+  (bind-key "q" 'top-level edebug-mode-map)
+  (bind-key "S" 'edebug-stop edebug-mode-map)
+  (bind-key "n" 'edebug-step-mode edebug-mode-map)
+  (bind-key "g" 'edebug-go-mode edebug-mode-map)
+  (bind-key "G" 'edebug-Go-nonstop-mode edebug-mode-map)
+  (bind-key "E" 'edebug-visit-eval-list edebug-mode-map)
+  (bind-key "I" 'edebug-instrument-callee edebug-mode-map)
+  (bind-key "i" 'edebug-step-in edebug-mode-map)
+  (bind-key "o" 'edebug-step-out edebug-mode-map)
+  (bind-key "b" 'edebug-set-breakpoint edebug-mode-map)
+  (bind-key "u" 'edebug-unset-breakpoint edebug-mode-map)
+  (bind-key "d" 'edebug-backtrace edebug-mode-map)
+  (bind-key "r" 'edebug-previous-result edebug-mode-map)
+  (bind-key "w" 'edebug-where edebug-mode-map)
+  (bind-key "SPC" md/leader-map edebug-mode-map)
+#+END_SRC
+
+** Python
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/python-pudb-toggle-breakpoint ()
+    (interactive)
+    (let ((trace "import pudb; pu.db")
+          (line (thing-at-point 'line)))
+      (if (and line (string-match trace line))
+          (kill-whole-line)
+        (progn
+          (back-to-indentation)
+          (insert trace)
+          (python-indent-line)
+          (insert "\n")
+          (python-indent-line)))))
+
+  (defun md/python-mode-hook ()
+    (md/hideshow-add-bindings python-mode-map)
+    (setq-local fill-column 90))
+  (add-hook 'python-mode-hook 'md/python-mode-hook)
+
+  (use-package find-file) ;; builtin, provides ff-basename
+  (defun md/refresh-python-path ()
+    (interactive)
+    (when (f-directory? "/server/apps")
+      (-each (directory-files "/server/apps" t)
+        (lambda (f)
+          (when (and (f-directory? f)
+                     (not (-contains? '("." "..") (ff-basename f))))
+            (add-to-list 'python-shell-extra-pythonpaths f))))))
+
+  (use-package python ;; builtin
+    :config
+    (progn
+      (evil-define-key 'normal python-mode-map
+        (kbd "SPC") md/python-mode-leader-map
+        "gk" 'python-nav-backward-defun
+        "gj" 'python-nav-forward-defun)
+    (md/refresh-python-path))
+    :bind (:map md/python-mode-leader-map
+                ("SPC B" . md/python-pudb-toggle-breakpoint)))
+
+  ;; Provide autocomplete, jump to definition and eldoc integration.
+  (use-package anaconda-mode
+    :defer 1
+    :config
+    (progn
+      (defun md/anaconda-set-company-backend ()
+        (interactive)
+        (set (make-local-variable 'company-backends) '(company-anaconda)))
+      (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
+      (add-hook 'python-mode-hook 'anaconda-mode)
+      (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+
+      ;; TODO make sure this jumps to the current buffer
+      (evil-define-key 'normal python-mode-map
+        "gd" 'anaconda-mode-find-assignments
+        "gD" 'anaconda-mode-find-definitions)
+
+      (defun md/anaconda-quit ()
+        (interactive)
+        (quit-window)
+        (shackle--eyebrowse-close-slot-by-tag "anaconda"))
+
+      ;; TODO ideally this would open in a separate eyebrowse slot, and if you
+      ;; press enter would jump to the buffer in your original window, but keep
+      ;; the slot open.
+      ;; q should return to the original position.
+      ;; This behaviour should be consistent with eg. ag and other grep-type buffers.
+      (evil-define-key 'normal anaconda-mode-view-mode-map
+        "q" 'md/anaconda-quit
+        (kbd "C-j") 'next-error-no-select
+        (kbd "C-n") 'next-error-no-select
+        (kbd "C-k") 'previous-error-no-select
+        (kbd "C-p") 'previous-error-no-select))
+    :bind (:map md/python-mode-leader-map
+                ("SPC r" . anaconda-mode-find-references)
+                ("SPC d" . anaconda-mode-show-doc)))
+
+  ;; TODO pyvenv auto? Might work better to just have one emacs virtualenv.
+  ;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
+
+  (use-package py-isort
+    :bind (:map md/python-mode-leader-map
+                ("SPC I" . py-isort-buffer)))
+
+  ;; Provide company completion for anaconda
+  (use-package company-anaconda)
+
+  ;; Syntax and completion for pip requirements files.
+  (use-package pip-requirements)
+
+  (use-package pytest
+    :commands (pytest-all pytest-one pytest-failed pytest-pdb-one pytest-pdb-all)
+    :bind (:map md/python-mode-leader-map
+                ("SPC T T" . pytest-all)
+                ("SPC T t" . pytest-one)
+                ("SPC T p" . pytest-pdb-one)
+                ("SPC T P" . pytest-pdb-all)
+                ("SPC T f" . pytest-failed)))
+
+  (defun md/blacken-buffer ()
+    (interactive)
+    (font-lock-mode -1)
+    (blacken-buffer)
+    (font-lock-mode 1))
+
+  (use-package blacken
+    :bind (:map md/python-mode-leader-map
+                ("SPC F" . md/blacken-buffer)))
+
+  ;; Fallback to use if pycheckers doesn't find the right virtualenv.
+  (use-package pyvenv :demand t :config (pyvenv-workon "emacs"))
+
+  ;; This is useful:
+  ;; - Multiple concurrent python checkers
+  ;; - Auto-guesses the virtualenv to use for the checks
+  (use-package flycheck-pycheckers
+    :demand t
+    :config (progn
+              (add-hook 'flycheck-mode-hook 'flycheck-pycheckers-setup)
+              (setq flycheck-pycheckers-checkers '(flake8 mypy3)
+                    flycheck-pycheckers-ignore-codes nil
+
+                    ;; Seems this is required - would prefer to leave it to
+                    ;; pylint/flake8 config though.
+                    flycheck-pycheckers-max-line-length 120)))
+#+END_SRC
+
+** Git
+*** git-commit
+
+I sometimes see issues where git opens emacsclient in Fundamental mode. Making
+~global-git-commit-mode~ explicit in an attempt to resolve this:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package git-commit
+    :config
+    (progn
+      (defun md/git-commit-set-fill-column ()
+        (interactive)
+        (setq fill-column 70))
+      (add-hook 'git-commit-setup-hook 'md/git-commit-set-fill-column)
+      (global-git-commit-mode t)))
+#+END_SRC
+
+*** git-gutter
+#+BEGIN_SRC emacs-lisp
+  (use-package git-gutter
+   :init
+   (progn
+     (defun md/set-sensible-column ()
+       "Unless file is too big, either git-gutter mode (when in git dir)"
+       (interactive)
+       (when (and (< (count-lines (point-min) (point-max)) 1500)
+                  (not writeroom-mode)
+                  (not (eq major-mode 'org-mode)))
+         (if (string= "git" (downcase (format "%s" (vc-backend
+                                                    (buffer-file-name
+                                                     (current-buffer))))))
+             (git-gutter-mode 1))))
+     (add-hook 'find-file-hook 'md/set-sensible-column))
+
+
+   :config
+   (progn
+     (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
+           git-gutter:modified-sign "~"
+           git-gutter:added-sign "+"
+           git-gutter:deleted-sign "-"
+
+           ;; This ensures the separator is always displayed
+           git-gutter:unchanged-sign " "
+           git-gutter:always-show-separator t
+
+           ;; Without this, there's no space between the git-gutter column and the code.
+           git-gutter:separator-sign " "))
+   :bind (:map md/leader-map
+         ("g <RET>" . git-gutter-mode)
+         ("gk" . git-gutter:previous-hunk)
+         ("gp" . git-gutter:previous-hunk)
+         ("gj" . git-gutter:next-hunk)
+         ("gn" . git-gutter:next-hunk)
+         ("g+" . git-gutter:stage-hunk)
+         ("g-" . git-gutter:revert-hunk)))
+#+END_SRC
+
+*** magit
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+   :config
+   (progn
+     (evil-set-initial-state 'magit-blame-mode 'normal)
+     (evil-set-initial-state 'magit-revision-mode 'normal)
+     (evil-set-initial-state 'magit-diff-mode 'normal)
+     (evil-set-initial-state 'magit-status-mode 'normal)
+
+     (add-hook 'magit-diff-mode 'evil-normal-state)
+     (add-hook 'magit-status-mode 'evil-normal-state)
+
+     (defun md/magit-quit ()
+       (interactive)
+       (magit-mode-bury-buffer)
+       (shackle--eyebrowse-close-slot-by-tag "git"))
+
+     (evil-define-key 'normal magit-mode-map
+       (kbd "TAB") 'magit-section-toggle
+       (kbd "<RET>") 'magit-visit-thing
+       "q" 'md/magit-quit
+       "r" 'magit-refresh
+       "n" 'magit-section-forward
+       "p" 'magit-section-backward
+       "+" 'magit-stage-file
+       "-" 'magit-unstage-file
+       "[" 'magit-diff-less-context
+       "]" 'magit-diff-more-context
+       )
+
+     (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
+
+     ;; I don't know why, but by default I can't get magit-blame to adhere to my
+     ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
+     ;; calling evil-normal-state fixes it.
+     (add-hook 'magit-blame-mode-hook 'evil-normal-state)
+     (evil-define-key 'normal magit-blame-mode-map
+       (kbd "<RET>") 'magit-show-commit
+       "q" 'magit-blame-quit
+       "gj" 'magit-blame-next-chunk
+       "gn" 'magit-blame-next-chunk
+       "gk" 'magit-blame-previous-chunk
+       "gp" 'magit-blame-previous-chunk)
+
+     (add-hook 'magit-revision-mode-hook 'evil-normal-state)
+     (evil-define-key 'normal magit-revision-mode-map
+       (kbd "<RET>") 'magit-diff-visit-file
+       "q" 'magit-mode-bury-buffer))  ;; This quits
+
+   :bind (:map md/leader-map
+         ("gg" . magit-status)
+         ("gm" . magit-dispatch-popup)
+         ("gb" . magit-blame)
+         ("gl" . magit-log-head)
+
+         ;; Diff gives the full git diff output. Ediff shows ediff for a single
+         ;; file.
+         ("gD" . magit-diff-buffer-file)
+         ("gd" . magit-diff-dwim)
+         ("ge" . magit-ediff-popup)
+
+         ;; NOTE - this doesn't play nicely with mode-line:
+         ;; - https://github.com/magit/magit/blob/master/Documentation/magit.org#the-mode-line-information-isnt-always-up-to-date
+         ;; - https://github.com/syl20bnr/spacemacs/issues/2172
+         ("gC" . magit-commit-popup)
+         ("gc" . magit-checkout)))
+#+END_SRC
+
+*** github-browse-file
+
+I miss :Gbrowse from fugitive:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package github-browse-file
+    :config
+    (progn
+      (setq github-browse-file-show-line-at-point t))
+    :bind (:map md/leader-map
+          ("go" . github-browse-file)))
+#+END_SRC
+
+*** vc-mode
+#+BEGIN_SRC emacs-lisp
+  ;; I don't need to confirm this via prompt.
+  (setq vc-follow-symlinks t)
+#+END_SRC
+
 ** SQL
 #+BEGIN_SRC emacs-lisp
 (add-hook 'sql-mode-hook 'sql-highlight-postgres-keywords)
 #+END_SRC
-
 
 ** PHP
 #+BEGIN_SRC emacs-lisp
@@ -3709,6 +3714,8 @@ bookmarks:
                  (md/bookmark-names-matching-tags '("tmp")))
                 (md/helm-source-build-bookmark-set t))
           :buffer "*helm md/helm-bookmarks-temp*"))
+
+
 #+END_SRC
 
 
@@ -3856,6 +3863,7 @@ Use some persistent scratch files for various modes:
                                      ;; Major mode
                                      (powerline-raw (format "%s " (powerline-major-mode)) face1 'l)
 
+                                     ;; Projectile
                                      (funcall separator-left face1 mode-line)
                                      (powerline-raw "%b" mode-line 'l)
                                      (when (and (boundp 'projectile-mode) projectile-mode)
@@ -3919,6 +3927,122 @@ Use some persistent scratch files for various modes:
      (md/powerline-reset)))
 #+END_SRC
 
+
+* Diagrams
+
+todo:
+- bindings to insert rectangles
+- don't inherit artist keymap.
+- finish font lock keywords
+- ditaa integration
+- align to grid? Eg. table corners.
+- Drag section of text with mouse to move?
+
+#+BEGIN_SRC emacs-lisp
+  (require 'artist)
+  (require 'org)
+  (require 'ob)
+
+  (defun diagram/draw-rectangle-small ()
+    (interactive)
+    (artist-draw-rect (current-column) (- (line-number-at-pos) 1)
+                      (+ 20 (current-column)) (- (+ 5 (line-number-at-pos)) 1)))
+
+  (defun diagram/mouse-draw-rectangle-small ()
+    (interactive)
+    ;; TODO: move cursor to the clicked location.
+    (diagram/draw-rectangle-small))
+
+  (defun diagram/draw-space-grid ()
+    (interactive)
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (= (point) (point-max)))
+        (move-end-of-line nil)
+        (while (< (current-column) 120)
+          (insert " "))
+        (forward-line 1))))
+
+  (defvar diagram-mode-font-lock-keywords
+    `((,(regexp-opt '("TODO")) . 'org-warning)
+      (,(regexp-opt '("BUT")) . 'font-lock-builtin-face)
+      (,(regexp-opt '(" [ ] " " [X] ")) . 'org-checkbox)
+      (,(regexp-opt '(" * ")) . 'outline-1)
+      (,(regexp-opt '(" ** ")) . 'outline-2)
+      (,(regexp-opt '(" *** ")) . 'outline-3)
+      (,(regexp-opt '(" **** ")) . 'outline-4)
+      (,(regexp-opt '(" ***** ")) . 'outline-5)
+      (,(regexp-opt '(" ***** ")) . 'outline-6)
+      (org-do-emphasis-faces)
+      ))
+  (font-lock-add-keywords 'diagram-mode diagram-mode-font-lock-keywords t)
+
+  (defvar diagram-mode-map (make-sparse-keymap))
+  (set-keymap-parent diagram-mode-map artist-mode-map)
+
+  (evil-define-key 'emacs diagram-mode-map (kbd "<down-mouse-1>") 'artist-down-mouse-1)
+  (evil-define-key 'emacs diagram-mode-map (kbd "<S-down-mouse-1>") 'diagram/mouse-draw-rectangle-small)
+  (evil-define-key 'emacs diagram-mode-map (kbd "<down-mouse-3>") 'artist-mouse-choose-operation)
+  (evil-define-key 'emacs diagram-mode-map (kbd "<S-down-mouse-3>") 'artist-mouse-choose-operation)
+  (evil-define-key 'emacs diagram-mode-map "u" 'undo-tree-undo)
+  (evil-define-key 'emacs diagram-mode-map "l" 'artist-select-op-line)
+  (evil-define-key 'emacs diagram-mode-map "o" 'artist-select-op-circle)
+  (evil-define-key 'emacs diagram-mode-map "r" 'artist-select-op-rectangle)
+  (evil-define-key 'emacs diagram-mode-map "R" 'diagram/draw-rectangle-small)
+  (evil-define-key 'emacs diagram-mode-map "S" 'diagram/draw-space-grid)
+  (evil-define-key 'emacs diagram-mode-map "e" 'artist-select-op-erase-rectangle)
+  (evil-define-key 'emacs diagram-mode-map "p" 'artist-select-op-pen-line)
+
+  (define-derived-mode diagram-mode artist-mode "Diagram" diagram-mode-map
+    (evil-normal-state)
+    (toggle-truncate-lines 1)
+    (artist-select-op-line)
+    (font-lock-fontify-buffer))
+
+  (add-to-list 'auto-mode-alist '("\\.diagram\\'" . diagram-mode))
+
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((diagram . t)))
+
+  (bind-key (kbd "\\") 'diagram-mode md/leader-map)
+#+END_SRC
+
+
+* COMMENT Artist mode
+
+TODO:
+
+- no-op the keymap
+- no weird highlighting
+- centre text? (similar to org-table C-c C-c)
+- drag to move?
+- resize?
+
+#+BEGIN_SRC emacs-lisp
+  (require 'artist)
+  (defun md/artist-mode ()
+    (interactive)
+    (artist-mode 1)
+    (artist-select-op-line))
+  (defun md/artist-mode-quit ()
+    (interactive)
+    (artist-mode -1)
+    (evil-normal-state))
+  (bind-key (kbd "<down-mouse-3>") 'artist-mouse-choose-operation artist-mode-map)
+  (bind-key (kbd "<S-down-mouse-3>") 'artist-mouse-choose-operation artist-mode-map)
+  (bind-key "q" 'md/artist-mode-quit artist-mode-map)
+  (bind-key "i" 'md/artist-mode-quit artist-mode-map)
+  (bind-key "u" 'undo-tree-undo artist-mode-map)
+  (bind-key "l" 'artist-select-op-line artist-mode-map)
+  (bind-key "o" 'artist-select-op-circle artist-mode-map)
+  (bind-key "r" 'artist-select-op-rectangle artist-mode-map)
+  (bind-key "e" 'artist-select-op-erase-rectangle artist-mode-map)
+  (bind-key "j" 'artist-select-op-pen-line artist-mode-map)
+  (bind-key "'" 'org-edit-special artist-mode-map)
+  (add-hook 'artist-mode-hook 'evil-emacs-state)
+  (bind-key (kbd "\\") 'md/artist-mode md/leader-map)
+#+END_SRC
 * Themes
 
 ** Solarized
@@ -4073,7 +4197,7 @@ Close paren for the wrapping ~let~:
 )
 #+END_SRC
 
-* TODO
+* COMMENT TODO
 # - [ ] getting slowdowns where python3 uses 99% cpu. Seems to occcur sometimes
 #   when killing buffers. Only python processes running are doing ~elpy.__main__~.
 #   - This process is started in elpy-rpc--open.
@@ -4138,3 +4262,24 @@ Close paren for the wrapping ~let~:
     - org-table-next-field
   - [ ] git-gutter: use another package for fringe? Margin update is
     unreliable, clashes w/writeroom.
+- [2018-08-02 Thu]
+  - Better ascii diagram mode:
+    - Can move rectanges
+    - Can edit rectangle contents as indirect buffer
+    - Automatic resizing
+
+#+BEGIN_SRC emacs-lisp
+  ;; issue: projectile-project-buffer-p returns true for buffers that
+  ;; aren't visiting a file
+  (helm :sources
+        (map 'list
+             (lambda (project-dir)
+               (let ((default-directory project-dir))
+                 (message (projectile-project-p))
+                 (when (projectile-project-p)
+                   (message (format "%s" (projectile-project-buffers)))
+                   (helm-build-sync-source default-directory
+                     :action  '(("Switch to buffer" . switch-to-buffer))
+                     :candidates (projectile-project-buffer-names)))))
+             (projectile-open-projects)))
+#+END_SRC
