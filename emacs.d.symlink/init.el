@@ -630,6 +630,8 @@
 
     (key-chord-define evil-insert-state-map "jj" 'md/normal-state-and-save)
     (key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
+    (key-chord-define evil-replace-state-map "jj" 'md/normal-state-and-save)
+    (key-chord-define evil-replace-state-map "jk" 'evil-normal-state)
     (key-chord-mode 1)))
 
 (use-package helm
@@ -2928,7 +2930,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (defun diagram/draw-rectangle-small ()
   (interactive)
   (artist-draw-rect (current-column) (- (line-number-at-pos) 1)
-                    (+ 20 (current-column)) (- (+ 5 (line-number-at-pos)) 1)))
+                    (+ 45 (current-column)) (- (+ 7 (line-number-at-pos)) 1)))
 
 (defun diagram/mouse-draw-rectangle-small ()
   (interactive)
@@ -2941,14 +2943,15 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
     (goto-char (point-min))
     (while (not (= (point) (point-max)))
       (move-end-of-line nil)
-      (while (< (current-column) 120)
+      (while (< (current-column) 200)
         (insert " "))
       (forward-line 1))))
 
 (defvar diagram-mode-font-lock-keywords
-  `((,(regexp-opt '("TODO")) . 'org-warning)
-    (,(regexp-opt '("BUT")) . 'font-lock-builtin-face)
-    (,(regexp-opt '(" [ ] " " [X] ")) . 'org-checkbox)
+  `((,(regexp-opt '("TODO" "FIX" "??")) . 'org-warning)
+    (,(regexp-opt '("NOT" "BUT" "EXCEPT") 'words) . 'font-lock-builtin-face)
+    (,(regexp-opt '(" [ ] ")) . 'org-checkbox)
+    (,(regexp-opt '(" [X] ")) . 'font-lock-comment-face)
     (,(regexp-opt '(" * ")) . 'outline-1)
     (,(regexp-opt '(" ** ")) . 'outline-2)
     (,(regexp-opt '(" *** ")) . 'outline-3)
@@ -2961,6 +2964,15 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 (defvar diagram-mode-map (make-sparse-keymap))
 (set-keymap-parent diagram-mode-map artist-mode-map)
+
+;; This does something else in artist-mode.
+(evil-define-key 'emacs diagram-mode-map (kbd "<RET>") 'evil-ret)
+(evil-define-key 'normal diagram-mode-map (kbd "<RET>") 'evil-ret)
+(evil-define-key 'insert diagram-mode-map (kbd "<RET>") 'evil-ret)
+(evil-define-key 'visual diagram-mode-map (kbd "<RET>") 'evil-ret)
+
+(evil-define-key 'insert diagram-mode-map ">" 'self-insert-command)
+(evil-define-key 'insert diagram-mode-map "<" 'self-insert-command)
 
 (evil-define-key 'emacs diagram-mode-map (kbd "<down-mouse-1>") 'artist-down-mouse-1)
 (evil-define-key 'emacs diagram-mode-map (kbd "<S-down-mouse-1>") 'diagram/mouse-draw-rectangle-small)
