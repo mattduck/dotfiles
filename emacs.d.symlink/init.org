@@ -381,7 +381,7 @@ if on GUI as might connect as client to terminal.
     :defer 1
     :config
     (progn
-      (turn-on-xclip)))
+      (xclip-mode 1)))
 #+END_SRC
 
 ** Message buffer
@@ -2056,7 +2056,7 @@ I sometimes see issues where git opens emacsclient in Fundamental mode. Making
        "Unless file is too big, either git-gutter mode (when in git dir)"
        (interactive)
        (when (and (< (count-lines (point-min) (point-max)) 1500)
-                  (not writeroom-mode)
+                  (not (and (boundp 'writeroom-mode) writeroom-mode))
                   (not (eq major-mode 'org-mode)))
          (if (string= "git" (downcase (format "%s" (vc-backend
                                                     (buffer-file-name
@@ -2350,6 +2350,7 @@ NOTE - compiling requires ~markdown~ to be installed.
 #+BEGIN_SRC emacs-lisp
 (use-package csv-mode)
 #+END_SRC
+
 * Org mode
 
 
@@ -3929,7 +3930,6 @@ Use some persistent scratch files for various modes:
      (md/powerline-reset)))
 #+END_SRC
 
-
 * Diagrams
 
 todo:
@@ -4025,7 +4025,6 @@ todo:
 
   (bind-key (kbd "\\") 'diagram-mode md/leader-map)
 #+END_SRC
-
 
 * COMMENT Artist mode
 
@@ -4178,6 +4177,24 @@ Sometimes I want machine-specific setup:
     (find-file md/dotfiles-init-local-path))
 
   (bind-key "vl" 'md/dotfiles-edit-init-local md/leader-map)
+#+END_SRC
+
+* SSH / Tramp
+#+BEGIN_SRC emacs-lisp
+  (defun md/set-ssh-agent-from-mac-keychain ()
+    "[2018-08-18] For El Capitan setup: use keychain to setup the SSH agent,
+  This is the same as the keychain setup used for new shell logins."
+    (interactive)
+    (let* ((keychain-eval-output
+            (s-trim
+             (shell-command-to-string
+              "if [ $(command -v keychain) ]; then keychain --quiet --eval --agents 'ssh' --inherit 'local-once'; fi")))
+           (sock-val (nth 1 (s-match "SSH_AUTH_SOCK=\\(?1:.*\\); " keychain-eval-output)))
+           (pid-val (nth 1 (s-match "SSH_AGENT_PID=\\(?1:.*\\); " keychain-eval-output))))
+      (setenv "SSH_AUTH_SOCK" sock-val)
+      (setenv "SSH_AGENT_PID" pid-val)))
+
+  (md/set-ssh-agent-from-mac-keychain)
 #+END_SRC
 
 * Profile Emacs startup

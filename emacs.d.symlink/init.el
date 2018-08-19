@@ -220,7 +220,7 @@
   :defer 1
   :config
   (progn
-    (turn-on-xclip)))
+    (xclip-mode 1)))
 
 (setq message-log-max 10000)
 
@@ -1493,7 +1493,7 @@ represent all current available bindings accurately as a single keymap."
      "Unless file is too big, either git-gutter mode (when in git dir)"
      (interactive)
      (when (and (< (count-lines (point-min) (point-max)) 1500)
-                (not writeroom-mode)
+                (not (and (boundp 'writeroom-mode) writeroom-mode))
                 (not (eq major-mode 'org-mode)))
        (if (string= "git" (downcase (format "%s" (vc-backend
                                                   (buffer-file-name
@@ -3093,6 +3093,21 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
   (find-file md/dotfiles-init-local-path))
 
 (bind-key "vl" 'md/dotfiles-edit-init-local md/leader-map)
+
+(defun md/set-ssh-agent-from-mac-keychain ()
+  "[2018-08-18] For El Capitan setup: use keychain to setup the SSH agent,
+This is the same as the keychain setup used for new shell logins."
+  (interactive)
+  (let* ((keychain-eval-output
+          (s-trim
+           (shell-command-to-string
+            "if [ $(command -v keychain) ]; then keychain --quiet --eval --agents 'ssh' --inherit 'local-once'; fi")))
+         (sock-val (nth 1 (s-match "SSH_AUTH_SOCK=\\(?1:.*\\); " keychain-eval-output)))
+         (pid-val (nth 1 (s-match "SSH_AGENT_PID=\\(?1:.*\\); " keychain-eval-output))))
+    (setenv "SSH_AUTH_SOCK" sock-val)
+    (setenv "SSH_AGENT_PID" pid-val)))
+
+(md/set-ssh-agent-from-mac-keychain)
 
 (use-package esup
   :defer 5)
