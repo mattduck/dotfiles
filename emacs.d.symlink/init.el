@@ -914,7 +914,7 @@ represent all current available bindings accurately as a single keymap."
 
     (defun md/ag-quit ()
       (interactive)
-      (quit-window t)
+      (quit-window nil)
       (eyebrowse-close-window-config))
 
     ;; Not sure if there is a builtin way to achieve this.
@@ -923,6 +923,10 @@ represent all current available bindings accurately as a single keymap."
       (let ((current (get-buffer-window)))
         (compile-goto-error)
         (select-window current)))
+
+    (defun md/ag-resume ()
+      (interactive)
+      (display-buffer "*ag search*"))
 
     ;; Make no-op as we only care about a few bindings
     (md/make-keymap-noop ag-mode-map)
@@ -943,19 +947,22 @@ represent all current available bindings accurately as a single keymap."
     (bind-key "C-f" 'evil-scroll-page-down ag-mode-map)
     (bind-key "C-b" 'evil-scroll-page-up ag-mode-map)
     (bind-key "C-d" 'evil-scroll-down ag-mode-map)
+    (bind-key "G" 'evil-goto-line ag-mode-map)
+    (bind-key "g" 'evil-goto-first-line ag-mode-map)
 
     ;; TODO - fix issue where ag will re-use an existing buffer if the buffer
     ;; that has a match is already open. Can wrap it in a temp shackle rule.
 
     (setq ag-context-lines nil
           ag-highlight-search t
-          ag-reuse-buffers t  ; Only one buffer for ag searches§
+          ag-reuse-buffers t  ; Only one buffer for ag searches
           ag-reuse-window nil))  ; Open files in new window, don't hide search window
 
   :bind (:map md/leader-map
               ("Ad" . ag-dired)
               ("Af" . ag-files)
               ("Ag" . ag)
+              ("Aa" . md/ag-resume)
               ("/" . occur)))
 
 (use-package company
@@ -1094,8 +1101,8 @@ represent all current available bindings accurately as a single keymap."
               ("jag" . projectile-ag)
               ("jaf" . ag-project-files)
               ("jad" . ag-project-dired)
-              ("jb" . helm-projectile-switch-to-buffer)
-              ("jp" . helm-projectile-switch-to-buffer)
+              ("jb" . helm-projectile)
+              ("jp" . helm-projectile)
               ("jf" . helm-projectile-find-file)
               ("jF" . md/projectile-find-file-invalidate-cache)))
 
@@ -1315,6 +1322,20 @@ represent all current available bindings accurately as a single keymap."
 (use-package f :demand t)
 (use-package s :demand t)
 
+(add-hook 'debugger-mode-hook 'evil-emacs-state)
+(md/make-keymap-noop debugger-mode-map)
+(bind-key "j" 'evil-next-visual-line debugger-mode-map)
+(bind-key "k" 'evil-previous-visual-line debugger-mode-map)
+(bind-key "q" 'top-level debugger-mode-map)
+(bind-key "n" 'debugger-step-through debugger-mode-map)
+(bind-key "c" 'debugger-continue debugger-mode-map)
+(bind-key "b" 'debugger-frame debugger-mode-map)  ;; breakpoint
+(bind-key "u" 'debugger-frame-clear debugger-mode-map)
+(bind-key "!" 'debugger-eval-expression debugger-mode-map)
+(bind-key "v" 'debugger-toggle-locals debugger-mode-map)
+(bind-key "C-w" splitscreen/mode-map debugger-mode-map)
+(bind-key "SPC" md/leader-map debugger-mode-map)
+
 ;; This can be useful when debugging.
 (setq edebug-trace t)
 
@@ -1330,13 +1351,19 @@ represent all current available bindings accurately as a single keymap."
   (setq debug-on-error (not debug-on-error))
   (message (format "debug-on-error %s" debug-on-error)))
 
+(defun md/edebug-quit ()
+  (interactive)
+  (top-level)
+  (shackle--eyebrowse-close-slot-by-tag "debug"))
+
+(bind-key "Ef" 'edebug-defun md/leader-map)
 (bind-key "Ed" 'md/toggle-debug-on-error md/leader-map)
 (bind-key "Em" 'view-echo-area-messages md/leader-map)
 
 (add-hook 'edebug-mode-hook 'evil-normal-state)
 (md/make-keymap-noop edebug-mode-map)
 
-(bind-key "q" 'top-level edebug-mode-map)
+(bind-key "q" 'md/edebug-quit edebug-mode-map)
 (bind-key "S" 'edebug-stop edebug-mode-map)
 (bind-key "n" 'edebug-step-mode edebug-mode-map)
 (bind-key "g" 'edebug-go-mode edebug-mode-map)
@@ -2458,11 +2485,19 @@ headlines")
     (md/shackle-advise 'mu4e-headers-search)
     (md/shackle-advise 'magit-dispatch-popup)
     (md/shackle-advise 'magit-display-buffer)
+    ;;(md/shackle-advise 'edebug-pop-to-buffer)
+    ;; (md/shackle-unadvise 'edebug-debugger)
+    ;; (md/shackle-unadvise 'edebug)
+    ;; (md/shackle-unadvise 'edebug-enter)
 
     (defun md/mu4e-eyebrowse-quit (fn &rest args)
       (apply fn args)
       (shackle--eyebrowse-close-slot-by-tag "mail"))
     (advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
+
+    (defun md/is-edebug? (buffer)
+      (interactive)
+      (message (format "%s" edebug-mode)))
 
     ;; TODO ediff
     (setq shackle-rules
@@ -2475,14 +2510,14 @@ headlines")
             ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
             ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
             ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
-            ;; ("*edebug-trace*" :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
-            ('edebug-mode :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
+
+            ;; TODO
+            ;;('(:custom md/is-edebug?) :eyebrowse "debug" :align t :close-on-realign nil :only t :select t)
+            ;;("\\`\\*edebug-trace.*?\\*\\'" :eyebrowse "debug" :regexp t :align right :size 0.5 :select nil)
+
             ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
             ("*Anaconda*" :eyebrowse "anaconda" :align left :close-on-realign t :size 0.5 :select t)
             ("\\*Agenda Commands\\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select t)
-
-            ;; TODO
-            ('restclient-mode :eyebrowse "restclient" :align left :close-on-realign t :size 0.4 :select t)
 
             ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
             ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
