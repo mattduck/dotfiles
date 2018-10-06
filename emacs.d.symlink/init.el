@@ -1470,7 +1470,7 @@ represent all current available bindings accurately as a single keymap."
   :demand t
   :config (progn
             (add-hook 'flycheck-mode-hook 'flycheck-pycheckers-setup)
-            (setq flycheck-pycheckers-checkers '(flake8 mypy3)
+            (setq flycheck-pycheckers-checkers '(flake8)
                   flycheck-pycheckers-ignore-codes nil
 
                   ;; Seems this is required - would prefer to leave it to
@@ -1486,43 +1486,50 @@ represent all current available bindings accurately as a single keymap."
     (add-hook 'git-commit-setup-hook 'md/git-commit-set-fill-column)
     (global-git-commit-mode t)))
 
-(use-package git-gutter
- :init
- (progn
-   (defun md/set-sensible-column ()
-     "Unless file is too big, either git-gutter mode (when in git dir)"
-     (interactive)
-     (when (and (< (count-lines (point-min) (point-max)) 1500)
-                (not writeroom-mode)
-                (not (eq major-mode 'org-mode)))
-       (if (string= "git" (downcase (format "%s" (vc-backend
-                                                  (buffer-file-name
-                                                   (current-buffer))))))
-           (git-gutter-mode 1))))
-   (add-hook 'find-file-hook 'md/set-sensible-column))
+;; (use-package git-gutter
+;;    :demand t
+;;    :bind (:map md/leader-map
+;;          ("g+" . git-gutter:stage-hunk)
+;;          ("g-" . git-gutter:revert-hunk)))
 
 
- :config
- (progn
-   (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
-         git-gutter:modified-sign "~"
-         git-gutter:added-sign "+"
-         git-gutter:deleted-sign "-"
+  (use-package git-gutter
+   :init
+   (progn
+     (defun md/set-sensible-column ()
+       "Unless file is too big, either git-gutter mode (when in git dir)"
+       (interactive)
+       (when (and (< (count-lines (point-min) (point-max)) 1500)
+                  (not writeroom-mode)
+                  (not (eq major-mode 'org-mode)))
+         (if (string= "git" (downcase (format "%s" (vc-backend
+                                                    (buffer-file-name
+                                                     (current-buffer))))))
+             (git-gutter-mode 1))))
+     (add-hook 'find-file-hook 'md/set-sensible-column))
 
-         ;; This ensures the separator is always displayed
-         git-gutter:unchanged-sign " "
-         git-gutter:always-show-separator t
 
-         ;; Without this, there's no space between the git-gutter column and the code.
-         git-gutter:separator-sign " "))
- :bind (:map md/leader-map
-       ("g <RET>" . git-gutter-mode)
-       ("gk" . git-gutter:previous-hunk)
-       ("gp" . git-gutter:previous-hunk)
-       ("gj" . git-gutter:next-hunk)
-       ("gn" . git-gutter:next-hunk)
-       ("g+" . git-gutter:stage-hunk)
-       ("g-" . git-gutter:revert-hunk)))
+   :config
+   (progn
+     (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
+           git-gutter:modified-sign "~"
+           git-gutter:added-sign "+"
+           git-gutter:deleted-sign "-"
+
+           ;; This ensures the separator is always displayed
+           git-gutter:unchanged-sign " "
+           git-gutter:always-show-separator t
+
+           ;; Without this, there's no space between the git-gutter column and the code.
+           git-gutter:separator-sign " "))
+   :bind (:map md/leader-map
+         ("g <RET>" . git-gutter-mode)
+         ("gk" . git-gutter:previous-hunk)
+         ("gp" . git-gutter:previous-hunk)
+         ("gj" . git-gutter:next-hunk)
+         ("gn" . git-gutter:next-hunk)
+         ("g+" . git-gutter:stage-hunk)
+         ("g-" . git-gutter:revert-hunk)))
 
 (use-package magit
  :config
@@ -1553,7 +1560,11 @@ represent all current available bindings accurately as a single keymap."
      "]" 'magit-diff-more-context
      )
 
-   (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
+   (evil-define-key 'emacs magit-log-mode-map
+     "q" 'md/magit-quit)
+
+   ;;(setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
+   (setq magit-display-buffer-function 'display-buffer)
 
    ;; I don't know why, but by default I can't get magit-blame to adhere to my
    ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
@@ -1580,8 +1591,8 @@ represent all current available bindings accurately as a single keymap."
 
        ;; Diff gives the full git diff output. Ediff shows ediff for a single
        ;; file.
-       ("gD" . magit-diff-buffer-file)
-       ("gd" . magit-diff-dwim)
+       ("gd" . magit-diff-buffer-file)
+       ("gD" . magit-diff-dwim)
        ("ge" . magit-ediff-popup)
 
        ;; NOTE - this doesn't play nicely with mode-line:
@@ -1713,6 +1724,11 @@ represent all current available bindings accurately as a single keymap."
 (use-package dockerfile-mode)
 
 (use-package csv-mode)
+
+(use-package feature-mode
+  :config (progn
+            (setq feature-indent-offset 4
+                  feature-indent-level 4)))
 
 (use-package org
   :pin org
@@ -2441,7 +2457,7 @@ headlines")
     (md/shackle-advise 'mu4e-compose)
     (md/shackle-advise 'mu4e-headers-search)
     (md/shackle-advise 'magit-dispatch-popup)
-    (md/shackle-advise 'magit-status)
+    (md/shackle-advise 'magit-display-buffer)
 
     (defun md/mu4e-eyebrowse-quit (fn &rest args)
       (apply fn args)
@@ -2476,22 +2492,13 @@ headlines")
             ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
             ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
 
-            ('magit-status-mode :align t :select t :size 0.33)
-            ('magit-popup-mode :align t :select t :size 0.33)
-            ;; ('magit-popup-mode :align 'left :eyebrowse "git" :select t)
-            ;;(magit-status-mode :align 'left :eyebrowse "git" :select t)
-            ;; ('magit-revision-mode :eyebrowse "git" :select t)
-            ;; ('magit-log-mode :eyebrowse "git"  :select t)
+            ('magit-status-mode :eyebrowse "git" :align t :select t :size 0.33 :only t)
+            ('magit-popup-mode :align t :select t :size 0.33 :close-on-realign t)
+            ('magit-diff-mode :eyebrowse "git" :select t :align left :size 0.5 :only t)
+            ('magit-log-mode :eyebrowse "git" :select t :align t :size 0.4 :only t)
+            ('magit-revision-mode :eyebrowse "git" :select t :align t :size 0.5 :close-on-realign t)
 
-            ;; magit status
-            ;; ((rx string-start
-            ;;      (zero-or-more anything)
-            ;;      (one-or-more "magit:")
-            ;;      (zero-or-more anything)
-            ;;      string-end)
-            ;;  :regexp t :eyebrowse "git" :select t)
             ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :same t)
-
             ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
             ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
             ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
@@ -2749,6 +2756,26 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                 ("lj" . md/bookmark-jump-to-last-temp)
                 ("ld" . md/bookmark-temp-delete-all)))
 
+(defvar md/anchored-buffer nil "Current anchored buffer")
+(defvar md/anchored-return-buffer nil "Current return buffer")
+(defun md/anchor-toggle ()
+  (interactive)
+  (if (eq (current-buffer) md/anchored-buffer)
+      (if md/anchored-return-buffer
+          (switch-to-buffer md/anchored-return-buffer)
+        (message "no return buffer!"))
+    (if md/anchored-buffer
+        (progn
+          (setq md/anchored-return-buffer (current-buffer))
+          (switch-to-buffer md/anchored-buffer))
+      (message "no anchor buffer!"))))
+(defun md/anchor-here ()
+  (interactive)
+  (setq md/anchored-buffer (current-buffer))
+  (message (format "Anchored to %s" (current-buffer))))
+(bind-key "la" 'md/anchor-toggle md/leader-map)
+(bind-key "lA" 'md/anchor-here md/leader-map)
+
 (defconst md/scratch-file-elisp "~/.emacs-scratch.el")
 (defun md/scratch-open-file-elisp ()
   (interactive)
@@ -2959,6 +2986,8 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
     (,(regexp-opt '(" ***** ")) . 'outline-5)
     (,(regexp-opt '(" ***** ")) . 'outline-6)
     (org-do-emphasis-faces)
+    (org-activate-dates
+     (0 'org-date t))
     ))
 (font-lock-add-keywords 'diagram-mode diagram-mode-font-lock-keywords t)
 
