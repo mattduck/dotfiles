@@ -8,14 +8,12 @@ function ,dotfiles-reload {
 # Use fzf to cd into a fasd directory.
 function ,cd {
     local dir
-    dir=$(fasd -dRl | fzf-tmux --header=",cd" --exact --query="$1") && cd "${dir}" || return 1
+    dir=$(fasd -dRl | fzf-tmux --header=",cd" --exact --query="$1" --preview="ls {}") && cd "${dir}" || return 1
 }
 
 
-# Use fzf to edit and execute a history command with fc.
-function ,hist-exec {
-    local hist_number
-    hist_number=$((fc -l 1 || history) | fzf --tac --query "$1" --header=",hist-exec" | awk '{print $1}') && fc "$hist_number"
+function ,hist-search {
+    history | grep -i "$1" | sed 's/^ *[0-9]* *//' | sort | uniq
 }
 
 
@@ -45,7 +43,7 @@ function ,liteshell {
 
 
 function ,serve {
-    python -m SimpleHTTPServer $@ || python -m http.server
+    python -m SimpleHTTPServer $@ || python -m http.server $@
 }
 
 
@@ -54,7 +52,7 @@ function ,tmp {
         less /tmp/matt_tmp
     else
         rm /tmp/matt_tmp
-        tee /tmp/matt_tmp | less <&0
+        tee /tmp/matt_tmp | less - <&0
     fi
 }
 
@@ -86,6 +84,7 @@ function ,github-switch-url {
 }
 
 
+# TODO: remove? This is provided by fzf bash completion.
 function ,kill {
     pids=$(ps -ef | sed 1d | fzf-tmux --exact -m --header ",kill" | awk '{print $2}')
 

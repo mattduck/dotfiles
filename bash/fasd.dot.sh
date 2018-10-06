@@ -1,8 +1,14 @@
 # NOTE - fasd installs some default aliases. I'm not explicitly removing them,
 # but I don't really use them either, except for "z".
-eval "$(fasd --init posix-alias bash-hook bash-ccomp bash-ccomp-install)"
+alias f=",cd"
 
-alias f=",cd"  # TODO fix so I can define this in aliases and fasd doesn't override
+# NOTE: using the cached method suggested by Github
+fasd_cache="$HOME/.fasd-init-bash"
+if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
+  fasd --init posix-alias bash-hook bash-ccomp bash-ccomp-install >| "$fasd_cache"
+fi
+source "$fasd_cache"
+unset fasd_cache
 
 # Jump to best match. Use fzf interface if no arg given.
 function j () {

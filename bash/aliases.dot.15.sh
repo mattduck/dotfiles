@@ -21,6 +21,7 @@ alias gg="git status"
 if [[ $(type -t __git_complete) == *function* ]]; then
     __git_complete g __git_main
 fi
+complete -o bashdefault -o default -o nospace -F _fzf_path_completion g
 
 alias k="kubectl"
 

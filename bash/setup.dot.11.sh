@@ -48,6 +48,10 @@ if [ $(command -v sshrc) ]; then
     complete -F _ssh sshrc
 fi
 
+if [ $(command -v kubectl) ]; then
+    source <(kubectl completion bash)
+fi
+
 # Shows the source of a function
 function ,which-function {
     shopt -s extdebug

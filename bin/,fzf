@@ -23,7 +23,6 @@ class Source(object):
     def __init__(self, arg, fzf_input):
         self.arg = arg
         self.fzf_input = fzf_input
-
         self.SOURCES = {
             '1 - fzf': self.fzf,
             '2 - fasd file': self.fasd_files,
@@ -31,11 +30,12 @@ class Source(object):
             '4 - git branch': self.git_branch,
             '5 - git commit': self.git_commit,
             '6 - history': self.history,
+            '7 - om': self.om,
         }
 
     def get_source(self):
         if self.fzf_input:
-            return self.arbitrary().rstrip()
+            return self.stdin().rstrip()
 
         if self.arg:
             real_arg = self.arg
@@ -47,7 +47,7 @@ class Source(object):
     def fzf(self):
         return run('fzf --exact')
 
-    def arbitrary(self):
+    def stdin(self):
         return run('fzf --ansi --exact', stdin=self.fzf_input)
 
     def fasd_dirs(self):
@@ -67,9 +67,11 @@ class Source(object):
     def history(self):
         with open(os.path.expanduser('~/.bash_history')) as f:
             hist = "\n".join(["%s  %s" % (i, s) for i, s in enumerate(f.read().splitlines())])
-
         c = 'fzf --tac --exact | awk \'{$1=""; sub("  ", " "); print}\''
         return run(c, stdin=hist).rstrip()
+
+    def om(self):
+        return run("""ls /server/apps | fzf --exact | awk '{print "/server/apps/" $0}'""")
 
 
 class Action(object):
@@ -109,11 +111,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if args.c:
-        arbitrary_source = sys.stdin.read()
+        stdin_source = sys.stdin.read()
     else:
-        arbitrary_source = None
+        stdin_source = None
 
-    source = Source(args.source, arbitrary_source)
+    source = Source(args.source, stdin_source)
     action = Action(args.action)
-
     action.do_action(source.get_source())
