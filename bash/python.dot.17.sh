@@ -47,8 +47,7 @@ function ,pypath {
     # changes persist through a venv deactivate command.
     if [[ -z "$1" ]]; then
         echo 'PYTHONPATH: '
-        IFS=:
-        eval printf "%s\\\n" \$${1:-PYTHONPATH}
+        IFS=: eval printf "%s\\\n" \$${1:-PYTHONPATH}
         return 0
     fi
 
