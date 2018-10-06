@@ -5,6 +5,7 @@ Usage: ,install_dotfile_symlinks.py
 Creates ~/.foo symlinks for all foo.symlink files in $DOTFILES. Any existing
 dotfiles are backed up to ~/dotfiles_backup/$(date).
 """
+from __future__ import print_function
 
 import sys
 import os
@@ -53,7 +54,7 @@ def main(argv):
         subprocess.Popen(["ln", "-vnsf", dotfiles_path, home_path])
 
     if not backup_made:
-        print "No files to backup, removing timestamp dir"
+        print("No files to backup, removing timestamp dir")
         subprocess.Popen(["rmdir", this_backup_path])
 
 if __name__ == "__main__":
