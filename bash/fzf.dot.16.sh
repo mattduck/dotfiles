@@ -15,6 +15,3 @@ export FZF_DEFAULT_OPTS="-0 --color=bg:8,fg:12,hl:15,bg+:0,fg+:12,hl+:15,info:6,
 source "$(fzf-prefix)/shell/completion.bash"
 export FZF_COMPLETION_TRIGGER="*"
 export FZF_COMPLETION_OPTS='--exact'
-
-# Ensure fzf completion can work with git g alias
-complete -o bashdefault -o default -o nospace -F _fzf_path_completion g
