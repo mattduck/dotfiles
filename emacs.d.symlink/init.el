@@ -163,16 +163,18 @@
 (md/set-default-font)
 
 (setq
-
   ;; Start scrolling when the cursor is one line away from the top/bottom.
-  scroll-margin 1
+  scroll-margin 5
 
   ;; If at the bottom of the file, don't allow scroll beyond that (because
   ;; there's no use in having half a screen of empty space
   scroll-conservatively 999
 
   ;; Only scroll one row at a time. Default behaviour is to centre the row.
-  scroll-step 1)
+  scroll-step 1
+
+  scroll-preserve-screen-position 1
+  )
 
 ;; Remove scrollbars (GUI only) to get extra screen space
 (use-package scroll-bar

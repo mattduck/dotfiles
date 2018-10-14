@@ -287,23 +287,25 @@ show their terminal/GUI-specific default fonts:
 
 ** Scroll behaviour
 #+BEGIN_SRC emacs-lisp
-(setq
+  (setq
+    ;; Start scrolling when the cursor is one line away from the top/bottom.
+    scroll-margin 5
 
-  ;; Start scrolling when the cursor is one line away from the top/bottom.
-  scroll-margin 1
+    ;; If at the bottom of the file, don't allow scroll beyond that (because
+    ;; there's no use in having half a screen of empty space
+    scroll-conservatively 999
 
-  ;; If at the bottom of the file, don't allow scroll beyond that (because
-  ;; there's no use in having half a screen of empty space
-  scroll-conservatively 999
+    ;; Only scroll one row at a time. Default behaviour is to centre the row.
+    scroll-step 1
 
-  ;; Only scroll one row at a time. Default behaviour is to centre the row.
-  scroll-step 1)
+    scroll-preserve-screen-position 1
+    )
 
-;; Remove scrollbars (GUI only) to get extra screen space
-(use-package scroll-bar
-  :if (display-graphic-p)
-  :demand t
-  :config (scroll-bar-mode -1))
+  ;; Remove scrollbars (GUI only) to get extra screen space
+  (use-package scroll-bar
+    :if (display-graphic-p)
+    :demand t
+    :config (scroll-bar-mode -1))
 #+END_SRC
 
 ** Cursor blinking
@@ -4413,19 +4415,5 @@ Close paren for the wrapping ~let~:
   - [ ] git-gutter responsible for freeze?
   - [ ] ag buffer - resume after quit
   - [ ] vi refresh
-
-#+BEGIN_SRC emacs-lisp
-  ;; issue: projectile-project-buffer-p returns true for buffers that
-  ;; aren't visiting a file
-  (helm :sources
-        (map 'list
-             (lambda (project-dir)
-               (let ((default-directory project-dir))
-                 (message (projectile-project-p))
-                 (when (projectile-project-p)
-                   (message (format "%s" (projectile-project-buffers)))
-                   (helm-build-sync-source default-directory
-                     :action  '(("Switch to buffer" . switch-to-buffer))
-                     :candidates (projectile-project-buffer-names)))))
-             (projectile-open-projects)))
-#+END_SRC
+- [2018-09-22 Sat]
+  - shell command: open emacs buffer with the output
