@@ -23,12 +23,10 @@ function ,path() {
     #
     # Also updates $_OLD_VIRTUAL_PATH set by Python's virtualenv, so that path
     # changes persist through a venv deactivate command.
-
     if [[ -z "$1" ]]; then
         echo 'PATH: '
-        IFS=:
-        eval printf "%s\\\n" \$${1:-PATH}
-        return
+        IFS=: eval printf "%s\\\n" \$${1:-PATH}
+        return 0
     fi
 
     if [[ $1 = "--prepend" ]]; then
@@ -71,18 +69,11 @@ function ,dotfiles-ls {
     # ending in .dot.sh.
 
     if [[ $(uname -a) == *Darwin* ]]; then
-        find_re="find -E $DOTFILES -regex"
+        for f in $(find -E $DOTFILES -regex '.+\.dot\.[0-9][0-9]\.sh' | sort -t "." -k 2); do echo $f; done
     else
-        find_re="find $DOTFILES -regextype posix-extended -regex"
+        for f in $(find $DOTFILES -regextype posix-extended -regex '.+\.dot\.[0-9][0-9]\.sh'| sort -t "." -k 2); do echo $f; done
     fi
-
-    for f in $($find_re ".+\.dot\.[0-9][0-9]\.sh" | sort -t "." -k 2); do
-        echo $f
-    done
-
-    for f in $(find $DOTFILES -name "*.dot.sh"); do
-        echo "$f"
-    done
+    for f in $(find "$DOTFILES" -name "*.dot.sh"); do echo "$f"; done
 }
 
 

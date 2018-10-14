@@ -462,6 +462,9 @@
    ;; Org-like binding everywhere
    (bind-key "M-j" 'md/move-line-down evil-normal-state-map)
    (bind-key "M-k" 'md/move-line-up evil-normal-state-map)
+   (bind-key "M-h" 'evil-shift-left-line evil-normal-state-map)
+   (bind-key "M-l" 'evil-shift-right-line evil-normal-state-map)
+
 
    ;; evil-paste-pop is handy, but I don't like the C-n/C-p default bindings,
    ;; because those are common bindings everywhere else in Emacs. Use C-S
@@ -914,7 +917,7 @@ represent all current available bindings accurately as a single keymap."
 
     (defun md/ag-quit ()
       (interactive)
-      (quit-window t)
+      (quit-window nil)
       (eyebrowse-close-window-config))
 
     ;; Not sure if there is a builtin way to achieve this.
@@ -923,6 +926,10 @@ represent all current available bindings accurately as a single keymap."
       (let ((current (get-buffer-window)))
         (compile-goto-error)
         (select-window current)))
+
+    (defun md/ag-resume ()
+      (interactive)
+      (display-buffer "*ag search*"))
 
     ;; Make no-op as we only care about a few bindings
     (md/make-keymap-noop ag-mode-map)
@@ -943,19 +950,22 @@ represent all current available bindings accurately as a single keymap."
     (bind-key "C-f" 'evil-scroll-page-down ag-mode-map)
     (bind-key "C-b" 'evil-scroll-page-up ag-mode-map)
     (bind-key "C-d" 'evil-scroll-down ag-mode-map)
+    (bind-key "G" 'evil-goto-line ag-mode-map)
+    (bind-key "g" 'evil-goto-first-line ag-mode-map)
 
     ;; TODO - fix issue where ag will re-use an existing buffer if the buffer
     ;; that has a match is already open. Can wrap it in a temp shackle rule.
 
     (setq ag-context-lines nil
           ag-highlight-search t
-          ag-reuse-buffers t  ; Only one buffer for ag searches§
+          ag-reuse-buffers t  ; Only one buffer for ag searches
           ag-reuse-window nil))  ; Open files in new window, don't hide search window
 
   :bind (:map md/leader-map
               ("Ad" . ag-dired)
               ("Af" . ag-files)
               ("Ag" . ag)
+              ("Aa" . md/ag-resume)
               ("/" . occur)))
 
 (use-package company
@@ -1000,14 +1010,8 @@ represent all current available bindings accurately as a single keymap."
           ;; window. I will just check the error list and the fringe.
           flycheck-display-errors-function nil
 
-          ;; There's a short delay when flycheck runs, which causes the modeline to change
-          ;; its format (or in my custom powerline stuff, to disappear briefly). It's
-          ;; super annoying if this happens at random points during editing, so change it
-          ;; to only happen on save (and when enabling the mode). This is quite similar to how
-          ;; I had it setup in vim.
-          flycheck-check-syntax-automatically '(idle-change)
-          flycheck-idle-change-delay 5
-
+          flycheck-check-syntax-automatically '(mode-enabled)
+          flycheck-idle-change-delay nil
           flycheck-mode-line-prefix nil)
 
     ;; For some reason in the flycheck mode list map it just uses all vi
@@ -1094,8 +1098,8 @@ represent all current available bindings accurately as a single keymap."
               ("jag" . projectile-ag)
               ("jaf" . ag-project-files)
               ("jad" . ag-project-dired)
-              ("jb" . helm-projectile-switch-to-buffer)
-              ("jp" . helm-projectile-switch-to-buffer)
+              ("jb" . helm-projectile)
+              ("jp" . helm-projectile)
               ("jf" . helm-projectile-find-file)
               ("jF" . md/projectile-find-file-invalidate-cache)))
 
@@ -1315,6 +1319,21 @@ represent all current available bindings accurately as a single keymap."
 (use-package f :demand t)
 (use-package s :demand t)
 
+(require 'debug)
+(add-hook 'debugger-mode-hook 'evil-emacs-state)
+(md/make-keymap-noop debugger-mode-map)
+(bind-key "j" 'evil-next-visual-line debugger-mode-map)
+(bind-key "k" 'evil-previous-visual-line debugger-mode-map)
+(bind-key "q" 'top-level debugger-mode-map)
+(bind-key "n" 'debugger-step-through debugger-mode-map)
+(bind-key "c" 'debugger-continue debugger-mode-map)
+(bind-key "b" 'debugger-frame debugger-mode-map)  ;; breakpoint
+(bind-key "u" 'debugger-frame-clear debugger-mode-map)
+(bind-key "!" 'debugger-eval-expression debugger-mode-map)
+(bind-key "v" 'debugger-toggle-locals debugger-mode-map)
+;;(bind-key "C-w" splitscreen/mode-map debugger-mode-map)
+(bind-key "SPC" md/leader-map debugger-mode-map)
+
 ;; This can be useful when debugging.
 (setq edebug-trace t)
 
@@ -1330,13 +1349,19 @@ represent all current available bindings accurately as a single keymap."
   (setq debug-on-error (not debug-on-error))
   (message (format "debug-on-error %s" debug-on-error)))
 
+(defun md/edebug-quit ()
+  (interactive)
+  (top-level)
+  (shackle--eyebrowse-close-slot-by-tag "debug"))
+
+(bind-key "Ef" 'edebug-defun md/leader-map)
 (bind-key "Ed" 'md/toggle-debug-on-error md/leader-map)
 (bind-key "Em" 'view-echo-area-messages md/leader-map)
 
 (add-hook 'edebug-mode-hook 'evil-normal-state)
 (md/make-keymap-noop edebug-mode-map)
 
-(bind-key "q" 'top-level edebug-mode-map)
+(bind-key "q" 'md/edebug-quit edebug-mode-map)
 (bind-key "S" 'edebug-stop edebug-mode-map)
 (bind-key "n" 'edebug-step-mode edebug-mode-map)
 (bind-key "g" 'edebug-go-mode edebug-mode-map)
@@ -1470,7 +1495,7 @@ represent all current available bindings accurately as a single keymap."
   :demand t
   :config (progn
             (add-hook 'flycheck-mode-hook 'flycheck-pycheckers-setup)
-            (setq flycheck-pycheckers-checkers '(flake8 mypy3)
+            (setq flycheck-pycheckers-checkers '(flake8)
                   flycheck-pycheckers-ignore-codes nil
 
                   ;; Seems this is required - would prefer to leave it to
@@ -1553,7 +1578,11 @@ represent all current available bindings accurately as a single keymap."
      "]" 'magit-diff-more-context
      )
 
-   (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
+   (evil-define-key 'emacs magit-log-mode-map
+     "q" 'md/magit-quit)
+
+   ;;(setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
+   (setq magit-display-buffer-function 'display-buffer)
 
    ;; I don't know why, but by default I can't get magit-blame to adhere to my
    ;; normal-mode map below, even though Evil says I'm in normal mode. Explicitly
@@ -1580,8 +1609,8 @@ represent all current available bindings accurately as a single keymap."
 
        ;; Diff gives the full git diff output. Ediff shows ediff for a single
        ;; file.
-       ("gD" . magit-diff-buffer-file)
-       ("gd" . magit-diff-dwim)
+       ("gd" . magit-diff-buffer-file)
+       ("gD" . magit-diff-dwim)
        ("ge" . magit-ediff-popup)
 
        ;; NOTE - this doesn't play nicely with mode-line:
@@ -1713,6 +1742,11 @@ represent all current available bindings accurately as a single keymap."
 (use-package dockerfile-mode)
 
 (use-package csv-mode)
+
+(use-package feature-mode
+  :config (progn
+            (setq feature-indent-offset 4
+                  feature-indent-level 4)))
 
 (use-package org
   :pin org
@@ -2441,12 +2475,20 @@ headlines")
     (md/shackle-advise 'mu4e-compose)
     (md/shackle-advise 'mu4e-headers-search)
     (md/shackle-advise 'magit-dispatch-popup)
-    (md/shackle-advise 'magit-status)
+    (md/shackle-advise 'magit-display-buffer)
+    ;;(md/shackle-advise 'edebug-pop-to-buffer)
+    ;; (md/shackle-unadvise 'edebug-debugger)
+    ;; (md/shackle-unadvise 'edebug)
+    ;; (md/shackle-unadvise 'edebug-enter)
 
     (defun md/mu4e-eyebrowse-quit (fn &rest args)
       (apply fn args)
       (shackle--eyebrowse-close-slot-by-tag "mail"))
     (advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
+
+    (defun md/is-edebug? (buffer)
+      (interactive)
+      (message (format "%s" edebug-mode)))
 
     ;; TODO ediff
     (setq shackle-rules
@@ -2459,14 +2501,14 @@ headlines")
             ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
             ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
             ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
-            ;; ("*edebug-trace*" :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
-            ('edebug-mode :eyebrowse "debug" :align t :close-on-realign t :size 15 :select nil)
+
+            ;; TODO
+            ;;('(:custom md/is-edebug?) :eyebrowse "debug" :align t :close-on-realign nil :only t :select t)
+            ;;("\\`\\*edebug-trace.*?\\*\\'" :eyebrowse "debug" :regexp t :align right :size 0.5 :select nil)
+
             ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
             ("*Anaconda*" :eyebrowse "anaconda" :align left :close-on-realign t :size 0.5 :select t)
             ("\\*Agenda Commands\\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select t)
-
-            ;; TODO
-            ('restclient-mode :eyebrowse "restclient" :align left :close-on-realign t :size 0.4 :select t)
 
             ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
             ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
@@ -2476,22 +2518,13 @@ headlines")
             ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
             ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
 
-            ('magit-status-mode :align t :select t :size 0.33)
-            ('magit-popup-mode :align t :select t :size 0.33)
-            ;; ('magit-popup-mode :align 'left :eyebrowse "git" :select t)
-            ;;(magit-status-mode :align 'left :eyebrowse "git" :select t)
-            ;; ('magit-revision-mode :eyebrowse "git" :select t)
-            ;; ('magit-log-mode :eyebrowse "git"  :select t)
+            ('magit-status-mode :eyebrowse "git" :align t :select t :size 0.33 :only t)
+            ('magit-popup-mode :align t :select t :size 0.33 :close-on-realign t)
+            ('magit-diff-mode :eyebrowse "git" :select t :align left :size 0.5 :only t)
+            ('magit-log-mode :eyebrowse "git" :select t :align t :size 0.4 :only t)
+            ('magit-revision-mode :eyebrowse "git" :select t :align t :size 0.5 :close-on-realign t)
 
-            ;; magit status
-            ;; ((rx string-start
-            ;;      (zero-or-more anything)
-            ;;      (one-or-more "magit:")
-            ;;      (zero-or-more anything)
-            ;;      string-end)
-            ;;  :regexp t :eyebrowse "git" :select t)
             ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :same t)
-
             ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
             ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
             ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
@@ -2749,6 +2782,26 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                 ("lj" . md/bookmark-jump-to-last-temp)
                 ("ld" . md/bookmark-temp-delete-all)))
 
+(defvar md/anchored-buffer nil "Current anchored buffer")
+(defvar md/anchored-return-buffer nil "Current return buffer")
+(defun md/anchor-toggle ()
+  (interactive)
+  (if (eq (current-buffer) md/anchored-buffer)
+      (if md/anchored-return-buffer
+          (switch-to-buffer md/anchored-return-buffer)
+        (message "no return buffer!"))
+    (if md/anchored-buffer
+        (progn
+          (setq md/anchored-return-buffer (current-buffer))
+          (switch-to-buffer md/anchored-buffer))
+      (message "no anchor buffer!"))))
+(defun md/anchor-here ()
+  (interactive)
+  (setq md/anchored-buffer (current-buffer))
+  (message (format "Anchored to %s" (current-buffer))))
+(bind-key "la" 'md/anchor-toggle md/leader-map)
+(bind-key "lA" 'md/anchor-here md/leader-map)
+
 (defconst md/scratch-file-elisp "~/.emacs-scratch.el")
 (defun md/scratch-open-file-elisp ()
   (interactive)
@@ -2796,7 +2849,14 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (use-package powerline
  :defer 1
  :config
+
  (progn
+   (defadvice vc-mode-line (after strip-backend () activate)
+     "Strip the Git- prefix from the modeline to just display branch name"
+     (when (stringp vc-mode)
+       (let ((gitlogo (replace-regexp-in-string "Git." "" vc-mode)))
+         (setq vc-mode gitlogo))))
+
    (defface md/powerline-inactive '((t (:inherit 'modeline))) "")
    (defface md/powerline-normal '((t (:inherit 'modeline))) "")
    (defface md/powerline-insert '((t (:inherit 'modeline))) "")
@@ -2855,16 +2915,18 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
                                    ;; Evil status
                                    (powerline-raw evil-mode-line-tag face3 'l)
-                                   (funcall separator-left face3 face1)
 
                                    ;; Major mode
+                                   (funcall separator-left face3 face1)
                                    (powerline-raw (format "%s " (powerline-major-mode)) face1 'l)
 
-                                   ;; Projectile
+                                   ;; Modeline
                                    (funcall separator-left face1 mode-line)
                                    (powerline-raw "%b" mode-line 'l)
-                                   (when (and (boundp 'projectile-mode) projectile-mode)
-                                     (powerline-raw (format "%s" (projectile-project-name)) face2 'l))
+
+                                   ;; Projectile
+                                   ;; (when (and (boundp 'projectile-mode) projectile-mode)
+                                   ;;   (powerline-raw (format "%s" (projectile-project-name)) face2 'l))
 
                                    ;; File state
                                    (when (buffer-modified-p)
@@ -2884,28 +2946,29 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                                       face1 'l))))
 
                              (rhs (list
-
                                    ;; Git
+                                   (funcall separator-right mode-line mode-line)
+                                   (or (powerline-vc mode-line 'r)
+                                       (powerline-raw "-" mode-line 'r))
+
+                                   ;; Projectile
                                    (funcall separator-right mode-line face1)
-                                   (powerline-vc face1 'r)
+                                   (if (and (boundp 'projectile-mode) projectile-mode)
+                                     (powerline-raw (format " %s " (projectile-project-name)) face1 'r)
+                                     (powerline-raw "-" face1 'r))
 
                                    ;; Flycheck
-                                   (when (and active flycheck-mode (flycheck-has-current-errors-p))
-                                     (powerline-raw
-                                      (format " [line:%s (%s)] "
-                                              ;; Line of first err
-                                              (save-excursion
-                                                (flycheck-first-error)
-                                                (+ 1 (count-lines (point-min) (point))))
-                                              ;; Total lines
-                                              (length flycheck-current-errors))
-
-                                      ;; Face
-                                      (cond ((flycheck-has-current-errors-p 'error)
-                                             'md/modeline-flycheck-error)
-                                            ((flycheck-has-current-errors-p 'warning)
-                                             'md/modeline-flycheck-warning))
-                                      'r))
+                                   (cond ((and active flycheck-mode (flycheck-has-current-errors-p
+                                                                     'error))
+                                          (funcall separator-right face1 'md/modeline-flycheck-error)
+                                          (powerline-raw " E " 'md/modeline-flycheck-error 'r))
+                                         ((and active flycheck-mode (flycheck-has-current-errors-p
+                                                                     'warning))
+                                          (funcall separator-right face1 'md/modeline-flycheck-warning)
+                                          (powerline-raw " W " 'md/modeline-flycheck-warning 'r))
+                                         (t
+                                          (funcall separator-right face1 face3)
+                                          (powerline-raw " - " 'face3 'r)))
                                    )))
                         (concat (powerline-render lhs)
                                 (powerline-fill mode-line (powerline-width rhs))
@@ -2959,6 +3022,8 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
     (,(regexp-opt '(" ***** ")) . 'outline-5)
     (,(regexp-opt '(" ***** ")) . 'outline-6)
     (org-do-emphasis-faces)
+    (org-activate-dates
+     (0 'org-date t))
     ))
 (font-lock-add-keywords 'diagram-mode diagram-mode-font-lock-keywords t)
 
@@ -3036,7 +3101,14 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (defun md/load-theme ()
   (interactive)
   (md/disable-all-themes)
+  (setq org-todo-keyword-faces nil)
   (call-interactively 'load-theme)
+  (face-spec-set 'git-gutter:unchanged
+                 `((t :inherit 'default
+                      :background ,(face-attribute 'default :background))))
+  (face-spec-set 'git-gutter:separator
+                 `((t :inherit 'default
+                      :background ,(face-attribute 'default :background))))
   (md/powerline-reset))
 
 ;; Initial setup

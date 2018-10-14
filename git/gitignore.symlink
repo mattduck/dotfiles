@@ -213,6 +213,7 @@ tramp
 
 # Flycheck
 flycheck_*.el
+flycheck_*.py
 
 # server auth directory
 #/server/
@@ -242,3 +243,5 @@ tags
 .idea/
 
 .pytest_cache
+.mypy_cache
+

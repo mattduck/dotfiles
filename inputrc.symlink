@@ -27,6 +27,7 @@ set keymap vi-insert
 
 # disable for tramp
 #"\C-j": menu-complete
+# TAB: menu-complete
 "\C-k": menu-complete-backward
 
 # Be quiet
@@ -36,7 +37,7 @@ set bell-style visible
 set mark-symlinked-directories on
 
 # Ask to show more than this number of completions
-set completion-query-items 50
+set completion-query-items 100
 
 # Allow UTF-8 input and output
 set input-meta on
@@ -68,3 +69,11 @@ set expand-tilde off
 # of ringing the bell and requiring completion to be called again.
 set show-all-if-ambiguous on
 set show-all-if-unmodified on
+
+
+# Be more intelligent when autocompleting by also looking at the text after
+# the cursor. For example, when the current line is "cd ~/src/mozil", and
+# the cursor is on the "z", pressing Tab will not autocomplete it to "cd
+# ~/src/mozillail", but to "cd ~/src/mozilla". (This is supported by the
+# Readline used by Bash 4.)
+set skip-completed-text on
