@@ -462,6 +462,9 @@
    ;; Org-like binding everywhere
    (bind-key "M-j" 'md/move-line-down evil-normal-state-map)
    (bind-key "M-k" 'md/move-line-up evil-normal-state-map)
+   (bind-key "M-h" 'evil-shift-left-line evil-normal-state-map)
+   (bind-key "M-l" 'evil-shift-right-line evil-normal-state-map)
+
 
    ;; evil-paste-pop is handy, but I don't like the C-n/C-p default bindings,
    ;; because those are common bindings everywhere else in Emacs. Use C-S
@@ -1007,14 +1010,8 @@ represent all current available bindings accurately as a single keymap."
           ;; window. I will just check the error list and the fringe.
           flycheck-display-errors-function nil
 
-          ;; There's a short delay when flycheck runs, which causes the modeline to change
-          ;; its format (or in my custom powerline stuff, to disappear briefly). It's
-          ;; super annoying if this happens at random points during editing, so change it
-          ;; to only happen on save (and when enabling the mode). This is quite similar to how
-          ;; I had it setup in vim.
-          flycheck-check-syntax-automatically '(idle-change)
-          flycheck-idle-change-delay 5
-
+          flycheck-check-syntax-automatically '(mode-enabled)
+          flycheck-idle-change-delay nil
           flycheck-mode-line-prefix nil)
 
     ;; For some reason in the flycheck mode list map it just uses all vi
@@ -1322,6 +1319,7 @@ represent all current available bindings accurately as a single keymap."
 (use-package f :demand t)
 (use-package s :demand t)
 
+(require 'debug)
 (add-hook 'debugger-mode-hook 'evil-emacs-state)
 (md/make-keymap-noop debugger-mode-map)
 (bind-key "j" 'evil-next-visual-line debugger-mode-map)
@@ -1333,7 +1331,7 @@ represent all current available bindings accurately as a single keymap."
 (bind-key "u" 'debugger-frame-clear debugger-mode-map)
 (bind-key "!" 'debugger-eval-expression debugger-mode-map)
 (bind-key "v" 'debugger-toggle-locals debugger-mode-map)
-(bind-key "C-w" splitscreen/mode-map debugger-mode-map)
+;;(bind-key "C-w" splitscreen/mode-map debugger-mode-map)
 (bind-key "SPC" md/leader-map debugger-mode-map)
 
 ;; This can be useful when debugging.
@@ -2858,7 +2856,14 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (use-package powerline
  :defer 1
  :config
+
  (progn
+   (defadvice vc-mode-line (after strip-backend () activate)
+     "Strip the Git- prefix from the modeline to just display branch name"
+     (when (stringp vc-mode)
+       (let ((gitlogo (replace-regexp-in-string "Git." "" vc-mode)))
+         (setq vc-mode gitlogo))))
+
    (defface md/powerline-inactive '((t (:inherit 'modeline))) "")
    (defface md/powerline-normal '((t (:inherit 'modeline))) "")
    (defface md/powerline-insert '((t (:inherit 'modeline))) "")
@@ -2917,16 +2922,18 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
                                    ;; Evil status
                                    (powerline-raw evil-mode-line-tag face3 'l)
-                                   (funcall separator-left face3 face1)
 
                                    ;; Major mode
+                                   (funcall separator-left face3 face1)
                                    (powerline-raw (format "%s " (powerline-major-mode)) face1 'l)
 
-                                   ;; Projectile
+                                   ;; Modeline
                                    (funcall separator-left face1 mode-line)
                                    (powerline-raw "%b" mode-line 'l)
-                                   (when (and (boundp 'projectile-mode) projectile-mode)
-                                     (powerline-raw (format "%s" (projectile-project-name)) face2 'l))
+
+                                   ;; Projectile
+                                   ;; (when (and (boundp 'projectile-mode) projectile-mode)
+                                   ;;   (powerline-raw (format "%s" (projectile-project-name)) face2 'l))
 
                                    ;; File state
                                    (when (buffer-modified-p)
@@ -2946,28 +2953,29 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                                       face1 'l))))
 
                              (rhs (list
-
                                    ;; Git
+                                   (funcall separator-right mode-line mode-line)
+                                   (or (powerline-vc mode-line 'r)
+                                       (powerline-raw "-" mode-line 'r))
+
+                                   ;; Projectile
                                    (funcall separator-right mode-line face1)
-                                   (powerline-vc face1 'r)
+                                   (if (and (boundp 'projectile-mode) projectile-mode)
+                                     (powerline-raw (format " %s " (projectile-project-name)) face1 'r)
+                                     (powerline-raw "-" face1 'r))
 
                                    ;; Flycheck
-                                   (when (and active flycheck-mode (flycheck-has-current-errors-p))
-                                     (powerline-raw
-                                      (format " [line:%s (%s)] "
-                                              ;; Line of first err
-                                              (save-excursion
-                                                (flycheck-first-error)
-                                                (+ 1 (count-lines (point-min) (point))))
-                                              ;; Total lines
-                                              (length flycheck-current-errors))
-
-                                      ;; Face
-                                      (cond ((flycheck-has-current-errors-p 'error)
-                                             'md/modeline-flycheck-error)
-                                            ((flycheck-has-current-errors-p 'warning)
-                                             'md/modeline-flycheck-warning))
-                                      'r))
+                                   (cond ((and active flycheck-mode (flycheck-has-current-errors-p
+                                                                     'error))
+                                          (funcall separator-right face1 'md/modeline-flycheck-error)
+                                          (powerline-raw " E " 'md/modeline-flycheck-error 'r))
+                                         ((and active flycheck-mode (flycheck-has-current-errors-p
+                                                                     'warning))
+                                          (funcall separator-right face1 'md/modeline-flycheck-warning)
+                                          (powerline-raw " W " 'md/modeline-flycheck-warning 'r))
+                                         (t
+                                          (funcall separator-right face1 face3)
+                                          (powerline-raw " - " 'face3 'r)))
                                    )))
                         (concat (powerline-render lhs)
                                 (powerline-fill mode-line (powerline-width rhs))
@@ -3100,7 +3108,14 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (defun md/load-theme ()
   (interactive)
   (md/disable-all-themes)
+  (setq org-todo-keyword-faces nil)
   (call-interactively 'load-theme)
+  (face-spec-set 'git-gutter:unchanged
+                 `((t :inherit 'default
+                      :background ,(face-attribute 'default :background))))
+  (face-spec-set 'git-gutter:separator
+                 `((t :inherit 'default
+                      :background ,(face-attribute 'default :background))))
   (md/powerline-reset))
 
 ;; Initial setup
