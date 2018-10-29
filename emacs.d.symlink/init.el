@@ -85,7 +85,7 @@
 
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 
-(when (not (display-graphic-p))
+(when (or (not (display-graphic-p)) (string= (system-name) "arch"))
   (menu-bar-mode -1))
 
 (add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
@@ -142,6 +142,12 @@
          (when (not md/font-size)
            (setq md/font-size 13))
          (set-frame-font (format "Menlo-%s" md/font-size) t t))
+
+        ((s-starts-with-p "arch" (system-name))
+         (when (not md/font-size)
+           (setq md/font-size 15))
+         (set-frame-font
+          (format "Inconsolata-%s:antialias=subpixel" md/font-size) t t))
 
         ((s-starts-with-p "omattria" (system-name))
          (when (not md/font-size)

@@ -12,8 +12,8 @@ which pip >/dev/null && eval "$(pip completion --bash)"
 # active. Disable this.
 export VIRTUAL_ENV_DISABLE_PROMPT=1
 
-export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
-export VIRTUALENVWRAPPER_VIRTUALENV=/usr/local/bin/virtualenv
+export VIRTUALENVWRAPPER_PYTHON=$(which python3)
+export VIRTUALENVWRAPPER_VIRTUALENV=$(which virtualenv)
 export VIRTUALENVWRAPPER_HOOK_DIR="$DOTFILES/virtualenvwrapper_hooks"
 export WORKON_HOME=$HOME/.virtualenvs
 mkdir -p "$WORKON_HOME"
@@ -28,15 +28,16 @@ alias ,pydeactivate="deactivate"
 alias ,pywipe="wipeenv"
 alias ,pycdsite="cdsitepackages"
 alias ,pycd="cdvirtualenv"
-alias ,pymk2="mkvirtualenv -p $(pyenv which python2)"
-alias ,pymk3="mkvirtualenv -p $(pyenv which python3)"
-alias ,pymktmp2="mktmpenv -p $(pyenv which python2)"
-alias ,pymktmp3="mktmpenv -p $(pyenv which python3)"
 alias ,pywhich="python --version; which python; which pip"
 alias ,pyrm="rmvirtualen"
 alias ,pylssite="lssitepackages"
-
-
+if [ $(command -v pyenv) ]; then
+    alias ,pymk2="mkvirtualenv -p $(pyenv which python2)"
+    alias ,pymk3="mkvirtualenv -p $(pyenv which python3)"
+    alias ,pymktmp2="mktmpenv -p $(pyenv which python2)"
+    alias ,pymktmp3="mktmpenv -p $(pyenv which python3)"
+fi
+    
 function ,pypath {
     # usage: ,pypath [--prepend] [<directories>]
     #
