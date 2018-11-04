@@ -85,7 +85,8 @@
 
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 
-(when (or (not (display-graphic-p)) (string= (system-name) "arch"))
+(when (or (not (display-graphic-p))
+          (string= (system-name) "arch"))
   (menu-bar-mode -1))
 
 (add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
@@ -142,19 +143,16 @@
          (when (not md/font-size)
            (setq md/font-size 13))
          (set-frame-font (format "Menlo-%s" md/font-size) t t))
-
         ((s-starts-with-p "arch" (system-name))
          (when (not md/font-size)
            (setq md/font-size 15))
          (set-frame-font
           (format "Inconsolata-%s:antialias=subpixel" md/font-size) t t))
-
         ((s-starts-with-p "omattria" (system-name))
          (when (not md/font-size)
            (setq md/font-size 15))
          (set-frame-font
           (format "Inconsolata for Powerline-%s:antialias=subpixel" md/font-size) t t))
-
         (t
          (when (not md/font-size)
            (setq md/font-size 15))
@@ -787,6 +785,7 @@ represent all current available bindings accurately as a single keymap."
 
 (use-package which-key
   :defer 2
+  :load-path "non-elpa/emacs-which-key"
   :config (progn
             ;; Patch with my functions
             (md/which-key-patch)
