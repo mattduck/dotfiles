@@ -260,8 +260,31 @@
   (if (eq window-system 'ns)
     (global-set-key (kbd "M-v") 'md/pbpaste))
 
+(defun copy-from-osx ()
+  "Handle copy/paste intelligently on osx."
+  (let ((pbpaste (purecopy "/usr/bin/pbpaste")))
+    (if (and (eq system-type 'darwin)
+             (file-exists-p pbpaste))
+        (let ((tramp-mode nil)
+              (default-directory "~"))
+          (shell-command-to-string pbpaste)))))
+
+(defun paste-to-osx (text &optional push)
+  (let ((process-connection-type nil))
+    (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
+      (process-send-string proc text)
+      (process-send-eof proc))))
+
+(setq interprogram-cut-function 'paste-to-osx
+      interprogram-paste-function 'copy-from-osx)
+
 (setq gc-cons-threshold 100000000
       garbage-collection-messages t)
+
+(defun md/save-if-not-remote ()
+  (interactive)
+  (if (not (file-remote-p default-directory))
+      (save-buffer)))
 
 (defun md/strip-whitespace-and-save ()
   (interactive)
@@ -374,14 +397,14 @@
    (defun md/normal-state-and-save ()
      (interactive)
      (evil-normal-state)
-     (save-buffer))
+     (md/save-if-not-remote))
 
    (defun md/insert-blank-line-before ()
      (interactive)
      (save-excursion
        (end-of-line)
        (open-line 1)
-       (save-buffer)))
+       (md/save-if-not-remote)))
 
    (defun md/insert-blank-line-after ()
      (interactive)
@@ -389,7 +412,7 @@
        (evil-previous-visual-line)
        (end-of-line)
        (open-line 1)
-       (save-buffer)))
+       (md/save-if-not-remote)))
 
    (defun md/evil-fill (&optional start end)
      (interactive
@@ -884,7 +907,9 @@ represent all current available bindings accurately as a single keymap."
               "Return (kbd-for-state . local-keymap) for current Evil state"
               (kbd (format "<%s-state>" evil-state)))
 
-            ))
+            )
+  :bind (:map md/leader-map
+              ("t <SPC>" . which-key-mode)))
 
 (use-package free-keys
   :defer 10
@@ -1223,7 +1248,7 @@ represent all current available bindings accurately as a single keymap."
    ;; when I change theme and then fontify the buffer. All other lines seem fine.
 
    (setq fic-highlighted-words
-         '("TODO" "FIX" "FIXME" "BUG" "WARN" "WARNING" "HACK" "NOTE" "ERROR" "MATT" "DEPRECATED"))
+         '("TODO" "FIX" "FIXME" "BUG" "WARN" "WARNING" "HACK" "NOTE" "ERROR" "MATT" "DEPRECATED" "BREAKPOINT"))
 
    ;; By default this includes font-lock-string-face, but I don't want strings to
    ;; have these words formatted.
@@ -1379,7 +1404,7 @@ represent all current available bindings accurately as a single keymap."
 
 (defun md/python-pudb-toggle-breakpoint ()
   (interactive)
-  (let ((trace "import pudb; pu.db")
+  (let ((trace "breakpoint()  # BREAKPOINT")
         (line (thing-at-point 'line)))
     (if (and line (string-match trace line))
         (kill-whole-line)
@@ -1388,7 +1413,8 @@ represent all current available bindings accurately as a single keymap."
         (insert trace)
         (python-indent-line)
         (insert "\n")
-        (python-indent-line)))))
+        (python-indent-line)
+        (evil-previous-visual-line)))))
 
 (defun md/python-mode-hook ()
   (md/hideshow-add-bindings python-mode-map)
@@ -1414,7 +1440,7 @@ represent all current available bindings accurately as a single keymap."
       "gj" 'python-nav-forward-defun)
   (md/refresh-python-path))
   :bind (:map md/python-mode-leader-map
-              ("SPC B" . md/python-pudb-toggle-breakpoint)))
+              ("SPC b" . md/python-pudb-toggle-breakpoint)))
 
 ;; Provide autocomplete, jump to definition and eldoc integration.
 (use-package anaconda-mode
@@ -1663,7 +1689,9 @@ represent all current available bindings accurately as a single keymap."
     ;; Make sure SPC uses the go-mode leader map rather than my default leader
     ;; map
     (evil-define-key 'normal go-mode-map
-      (kbd "SPC") md/go-mode-leader-map))
+      (kbd "SPC") md/go-mode-leader-map
+      "gd" 'go-goto-function
+      "gD" 'go-goto-function))
 
   :bind (:map md/go-mode-leader-map
               ("SPC =" . gofmt)))
@@ -2139,6 +2167,10 @@ headlines")
 (bind-key "C-c c" 'org-capture global-map)
 
 ))
+
+(use-package org-bullets
+  :config
+  (add-hook 'org-mode-hook 'org-bullets-mode))
 
 (use-package dired
   :demand t
@@ -2950,7 +2982,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                                                    (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
                                                  org-mode-line-string))
                                        'face nil)
-                                      face1 'l))))
+                                      face2 'l))))
 
                              (rhs (list
                                    ;; Git
