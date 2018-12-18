@@ -88,3 +88,6 @@ function ,pycrm() {
     find "$@" -type f -name '*.pyc' -print0 | xargs -0 rm
     find "$@" -type d -iname '__pycache__' -print0 | xargs -0 rm -r
 }
+
+# New breakpoint() handling
+export PYTHONBREAKPOINT=pudb.start
