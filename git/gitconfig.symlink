@@ -6,6 +6,10 @@ editor = vim
 [core]
 excludesfile = ~/.gitignore
 
+# swap github https for SSH to avoid having to login
+[url "git@github.com:"]
+insteadOf = https://github.com/
+
 [alias]
 s = "!tig status"
 co = checkout
@@ -56,6 +60,7 @@ recent = "for-each-ref --sort='-authordate:iso8601' --format='%(authordate:relat
 l = "!f() { tig $@ || git log --pretty=format:'%C(10)%h %C(12)%ad %C(blue)%an %C(3)%s%C(auto)%d' --date=relative $@; }; f"
 ll = "!git l --all"
 lo = "!tig log"
+gl=log --pretty=format:'%ai\t%h\t%an\t%s\t%d'
 
 [diff]
 # I find this easier to read
@@ -97,3 +102,4 @@ unmerged = 9
 path = "~/.gitconfig-local"
 [github]
 	user = mattduck
+
