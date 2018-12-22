@@ -89,8 +89,9 @@
           (string= (system-name) "arch"))
   (menu-bar-mode -1))
 
-(add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
-(add-to-list 'default-frame-alist '(fullscreen . fullscreen))
+(when (not (string= system-name "arch"))
+  (add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
+  (add-to-list 'default-frame-alist '(fullscreen . fullscreen)))
 
 (defun md/fontify-if-font-lock-mode ()
   (when font-lock-mode
@@ -524,6 +525,10 @@
         :map evil-insert-state-map
         ("C-a" . move-beginning-of-line)
         ("C-e" . move-end-of-line)
+
+        ;; This is useful in linux when no cmd+v
+        :map evil-insert-state-map
+        ("C-v" . evil-paste-after)
 
         ;; Use H/L instead of ^/$
         :map evil-normal-state-map
@@ -3183,8 +3188,10 @@ This is the same as the keychain setup used for new shell logins."
             "if [ $(command -v keychain) ]; then keychain --quiet --eval --agents 'ssh' --inherit 'local-once'; fi")))
          (sock-val (nth 1 (s-match "SSH_AUTH_SOCK=\\(?1:.*\\); " keychain-eval-output)))
          (pid-val (nth 1 (s-match "SSH_AGENT_PID=\\(?1:.*\\); " keychain-eval-output))))
-    (setenv "SSH_AUTH_SOCK" sock-val)
-    (setenv "SSH_AGENT_PID" pid-val)))
+    (when sock-val
+      (setenv "SSH_AUTH_SOCK" sock-val))
+    (when pid-val
+      (setenv "SSH_AGENT_PID" pid-val))))
 
 (md/set-ssh-agent-from-mac-keychain)
 
