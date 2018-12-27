@@ -2166,11 +2166,24 @@ headlines")
 (bind-key "C-c a" 'org-agenda global-map)
 (bind-key "C-c c" 'org-capture global-map)
 
-))
-
 (use-package org-bullets
   :config
-  (add-hook 'org-mode-hook 'org-bullets-mode))
+  (progn
+    (add-hook 'org-mode-hook 'org-bullets-mode)
+
+    (setq org-bullets-bullet-list '(
+                                    ;;"❆"
+                                    "✸"
+                                    "◎"
+                                    "▶"
+                                    "◉"
+                                    "◈"
+                                    "○"
+                                    "◇"
+                                    "◦"
+                                    ))))
+
+))
 
 (use-package dired
   :demand t

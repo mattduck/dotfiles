@@ -2936,17 +2936,30 @@ quite nicely:
     (bind-key "C-c a" 'org-agenda global-map)
     (bind-key "C-c c" 'org-capture global-map)
 #+END_SRC
+** org-bullets
+#+BEGIN_SRC emacs-lisp
+  (use-package org-bullets
+    :config
+    (progn
+      (add-hook 'org-mode-hook 'org-bullets-mode)
+
+      (setq org-bullets-bullet-list '(
+                                      ;;"❆"
+                                      "✸"
+                                      "◎"
+                                      "▶"
+                                      "◉"
+                                      "◈"
+                                      "○"
+                                      "◇"
+                                      "◦"
+                                      ))))
+#+END_SRC
 ** use-package wrapper *END*
 Close the use-package wrapper:
 
 #+BEGIN_SRC emacs-lisp
 ))
-#+END_SRC
-** org-bullets
-#+BEGIN_SRC emacs-lisp
-  (use-package org-bullets
-    :config
-    (add-hook 'org-mode-hook 'org-bullets-mode))
 #+END_SRC
 * Dired
 Dired mode has a lot of features / keys that I don't care about. Start it in
@@ -4444,6 +4457,8 @@ Close paren for the wrapping ~let~:
   - [ ] vi refresh
 - [2018-11-05 Mon]
   - [ ] do something with text-scale-decrease/increase
+- [2018-12-19 Wed]
+  - [ ] stripe buffer
 
 #+BEGIN_SRC emacs-lisp
   ;; issue: projectile-project-buffer-p returns true for buffers that
