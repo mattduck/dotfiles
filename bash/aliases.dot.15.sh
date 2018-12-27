@@ -8,6 +8,7 @@ fi
 alias ls="ls ${lscolorflag}"
 alias l="ls -hlF"
 alias ll="ls -halF"
+alias lt="ls -halFt"
 alias lsd="ls -hlF ${colorflag} | grep --color=never '^d'" # List only directories
 
 alias sudo="sudo " # Enable aliases to be sudo'ed
@@ -38,3 +39,8 @@ alias vssh="vagrant ssh || vagrant up && vagrant ssh"
 alias dockerc="docker-compose"
 
 alias ,bashrc=". ~/.bashrc"
+
+export BAT_THEME="zenburn"
+if command -v bat >/dev/null; then
+    alias cat="bat"
+fi

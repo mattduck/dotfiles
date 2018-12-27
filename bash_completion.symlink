@@ -333,9 +333,11 @@ _complete_alias () {
 
 
 # [2018-10-06] This is expected but not available on mac os.
-_completion_loader() {
-  . "/usr/local/etc/bash-completion.d/$1" >/dev/null 2>&1 && return 124
-}
+if [[ "$(uname -a)" == "*Darwin*" ]]; then
+    _completion_loader() {
+    . "/usr/local/etc/bash-completion.d/$1" >/dev/null 2>&1 && return 124
+    }
+fi
 
 # Set alias completions.
 #

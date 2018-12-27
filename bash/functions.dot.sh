@@ -17,6 +17,10 @@ function ,hist-search {
 }
 
 
+function ,g {
+    rg -C=2 --smart-case $@
+}
+
 function ,ag {
     ag "$@" \
         --color \
@@ -114,4 +118,8 @@ function ,kill {
         $cmd
         echo "...done"
     done
+}
+
+function ,date {
+    python -c 'from __future__ import print_function; import datetime; print(datetime.datetime.now().isoformat())'
 }

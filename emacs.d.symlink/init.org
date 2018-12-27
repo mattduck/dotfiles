@@ -170,7 +170,8 @@ The menu bar is intrusive in terminal Emacs, so disable it. On the OS X app it
 appears as any other app toolbar at the top of the screen, which is fine:
 
 #+BEGIN_SRC emacs-lisp
-  (when (not (display-graphic-p))
+  (when (or (not (display-graphic-p))
+            (string= (system-name) "arch"))
     (menu-bar-mode -1))
 #+END_SRC
 
@@ -179,8 +180,9 @@ appears as any other app toolbar at the top of the screen, which is fine:
 Automatically resize new frames to be fullscreen.
 
 #+BEGIN_SRC emacs-lisp
-  (add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
-  (add-to-list 'default-frame-alist '(fullscreen . fullscreen))
+  (when (not (string= system-name "arch"))
+    (add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
+    (add-to-list 'default-frame-alist '(fullscreen . fullscreen)))
 #+END_SRC
 
 ** Fontify
@@ -259,13 +261,16 @@ linum-format, but adds a space so there is some separation:
            (when (not md/font-size)
              (setq md/font-size 13))
            (set-frame-font (format "Menlo-%s" md/font-size) t t))
-
+          ((s-starts-with-p "arch" (system-name))
+           (when (not md/font-size)
+             (setq md/font-size 15))
+           (set-frame-font
+            (format "Inconsolata-%s:antialias=subpixel" md/font-size) t t))
           ((s-starts-with-p "omattria" (system-name))
            (when (not md/font-size)
              (setq md/font-size 15))
            (set-frame-font
             (format "Inconsolata for Powerline-%s:antialias=subpixel" md/font-size) t t))
-
           (t
            (when (not md/font-size)
              (setq md/font-size 15))
@@ -287,23 +292,25 @@ show their terminal/GUI-specific default fonts:
 
 ** Scroll behaviour
 #+BEGIN_SRC emacs-lisp
-(setq
+  (setq
+    ;; Start scrolling when the cursor is one line away from the top/bottom.
+    scroll-margin 5
 
-  ;; Start scrolling when the cursor is one line away from the top/bottom.
-  scroll-margin 1
+    ;; If at the bottom of the file, don't allow scroll beyond that (because
+    ;; there's no use in having half a screen of empty space
+    scroll-conservatively 999
 
-  ;; If at the bottom of the file, don't allow scroll beyond that (because
-  ;; there's no use in having half a screen of empty space
-  scroll-conservatively 999
+    ;; Only scroll one row at a time. Default behaviour is to centre the row.
+    scroll-step 1
 
-  ;; Only scroll one row at a time. Default behaviour is to centre the row.
-  scroll-step 1)
+    scroll-preserve-screen-position 1
+    )
 
-;; Remove scrollbars (GUI only) to get extra screen space
-(use-package scroll-bar
-  :if (display-graphic-p)
-  :demand t
-  :config (scroll-bar-mode -1))
+  ;; Remove scrollbars (GUI only) to get extra screen space
+  (use-package scroll-bar
+    :if (display-graphic-p)
+    :demand t
+    :config (scroll-bar-mode -1))
 #+END_SRC
 
 ** Cursor blinking
@@ -381,7 +388,7 @@ if on GUI as might connect as client to terminal.
     :defer 1
     :config
     (progn
-      (turn-on-xclip)))
+      (xclip-mode 1)))
 #+END_SRC
 
 ** Message buffer
@@ -788,6 +795,10 @@ by using a noop function:
           ("C-a" . move-beginning-of-line)
           ("C-e" . move-end-of-line)
 
+          ;; This is useful in linux when no cmd+v
+          :map evil-insert-state-map
+          ("C-v" . evil-paste-after)
+
           ;; Use H/L instead of ^/$
           :map evil-normal-state-map
           ("H" . move-beginning-of-line)
@@ -1122,6 +1133,7 @@ easier to discover features / work out where I am:
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
     :defer 2
+    :load-path "non-elpa/emacs-which-key"
     :config (progn
               ;; Patch with my functions
               (md/which-key-patch)
@@ -2110,50 +2122,43 @@ I sometimes see issues where git opens emacsclient in Fundamental mode. Making
 
 *** git-gutter
 #+BEGIN_SRC emacs-lisp
-  ;; (use-package git-gutter
-  ;;    :demand t
-  ;;    :bind (:map md/leader-map
-  ;;          ("g+" . git-gutter:stage-hunk)
-  ;;          ("g-" . git-gutter:revert-hunk)))
+  (use-package git-gutter
+   :init
+   (progn
+     (defun md/set-sensible-column ()
+       "Unless file is too big, either git-gutter mode (when in git dir)"
+       (interactive)
+       (when (and (< (count-lines (point-min) (point-max)) 1500)
+                  (not (and (boundp 'writeroom-mode) writeroom-mode))
+                  (not (eq major-mode 'org-mode)))
+         (if (string= "git" (downcase (format "%s" (vc-backend
+                                                    (buffer-file-name
+                                                     (current-buffer))))))
+             (git-gutter-mode 1))))
+     (add-hook 'find-file-hook 'md/set-sensible-column))
 
 
-    (use-package git-gutter
-     :init
-     (progn
-       (defun md/set-sensible-column ()
-         "Unless file is too big, either git-gutter mode (when in git dir)"
-         (interactive)
-         (when (and (< (count-lines (point-min) (point-max)) 1500)
-                    (not writeroom-mode)
-                    (not (eq major-mode 'org-mode)))
-           (if (string= "git" (downcase (format "%s" (vc-backend
-                                                      (buffer-file-name
-                                                       (current-buffer))))))
-               (git-gutter-mode 1))))
-       (add-hook 'find-file-hook 'md/set-sensible-column))
+   :config
+   (progn
+     (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
+           git-gutter:modified-sign "~"
+           git-gutter:added-sign "+"
+           git-gutter:deleted-sign "-"
 
+           ;; This ensures the separator is always displayed
+           git-gutter:unchanged-sign " "
+           git-gutter:always-show-separator t
 
-     :config
-     (progn
-       (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
-             git-gutter:modified-sign "~"
-             git-gutter:added-sign "+"
-             git-gutter:deleted-sign "-"
-
-             ;; This ensures the separator is always displayed
-             git-gutter:unchanged-sign " "
-             git-gutter:always-show-separator t
-
-             ;; Without this, there's no space between the git-gutter column and the code.
-             git-gutter:separator-sign " "))
-     :bind (:map md/leader-map
-           ("g <RET>" . git-gutter-mode)
-           ("gk" . git-gutter:previous-hunk)
-           ("gp" . git-gutter:previous-hunk)
-           ("gj" . git-gutter:next-hunk)
-           ("gn" . git-gutter:next-hunk)
-           ("g+" . git-gutter:stage-hunk)
-           ("g-" . git-gutter:revert-hunk)))
+           ;; Without this, there's no space between the git-gutter column and the code.
+           git-gutter:separator-sign " "))
+   :bind (:map md/leader-map
+         ("g <RET>" . git-gutter-mode)
+         ("gk" . git-gutter:previous-hunk)
+         ("gp" . git-gutter:previous-hunk)
+         ("gj" . git-gutter:next-hunk)
+         ("gn" . git-gutter:next-hunk)
+         ("g+" . git-gutter:stage-hunk)
+         ("g-" . git-gutter:revert-hunk)))
 #+END_SRC
 
 *** COMMENT diff-hl mode
@@ -4348,6 +4353,26 @@ Sometimes I want machine-specific setup:
   (bind-key "vl" 'md/dotfiles-edit-init-local md/leader-map)
 #+END_SRC
 
+* SSH / Tramp
+#+BEGIN_SRC emacs-lisp
+  (defun md/set-ssh-agent-from-mac-keychain ()
+    "[2018-08-18] For El Capitan setup: use keychain to setup the SSH agent,
+  This is the same as the keychain setup used for new shell logins."
+    (interactive)
+    (let* ((keychain-eval-output
+            (s-trim
+             (shell-command-to-string
+              "if [ $(command -v keychain) ]; then keychain --quiet --eval --agents 'ssh' --inherit 'local-once'; fi")))
+           (sock-val (nth 1 (s-match "SSH_AUTH_SOCK=\\(?1:.*\\); " keychain-eval-output)))
+           (pid-val (nth 1 (s-match "SSH_AGENT_PID=\\(?1:.*\\); " keychain-eval-output))))
+      (when sock-val
+        (setenv "SSH_AUTH_SOCK" sock-val))
+      (when pid-val
+        (setenv "SSH_AGENT_PID" pid-val))))
+
+  (md/set-ssh-agent-from-mac-keychain)
+#+END_SRC
+
 * Profile Emacs startup
 
 Running ~esup~ will start Emacs and profile the startup time. To get GUI on par
@@ -4455,6 +4480,7 @@ Close paren for the wrapping ~let~:
   - [ ] git-gutter responsible for freeze?
   - [ ] ag buffer - resume after quit
   - [ ] vi refresh
+<<<<<<< HEAD
 - [2018-11-05 Mon]
   - [ ] do something with text-scale-decrease/increase
 - [2018-12-19 Wed]
@@ -4475,3 +4501,5 @@ Close paren for the wrapping ~let~:
                      :candidates (projectile-project-buffer-names)))))
              (projectile-open-projects)))
 #+END_SRC
+- [2018-09-22 Sat]
+  - shell command: open emacs buffer with the output

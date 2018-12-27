@@ -92,6 +92,7 @@ call vundle#rc()
 " colours
     Bundle "altercation/vim-colors-solarized"
     Bundle "skammer/vim-css-color"
+    Bundle 'morhetz/gruvbox'
 
 " my plugins
     Bundle "file://" . $DOTFILES . "/splitscreen"
@@ -290,20 +291,24 @@ set autoindent
 " }}}
 
 " Colours {{{
-set t_Co=16 " Solarized uses 16 colours
-let g:CSApprox_verbose_level = 0 " Get rid of CSApprox 16col warnings
-colorscheme solarized
-set background=dark
-let g:solarized_termcolours=16
-function! ToggleBg()
-    if &background == 'dark'
-        set background=light
-    else
-        set background=dark
-    endif
-endfunction
+"set t_Co=16 " Solarized uses 16 colours
+"let g:CSApprox_verbose_level = 0 " Get rid of CSApprox 16col warnings
+"colorscheme solarized
+""let g:solarized_termcolours=16
+"function! ToggleBg()
+"    if &background == 'dark'
+"        set background=light
+"    else
+"        set background=dark
+"    endif
+"endfunction
+"
+"nmap <leader>bg :call ToggleBg()<CR>
 
-nmap <leader>bg :call ToggleBg()<CR>
+set background=dark
+let g:gruvbox_termcolors=16
+let g:gruvbox_contrast_dark="hard"
+colorscheme gruvbox
 
 autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi Todo ctermfg=1  " red
 "autocmd vimrc_enter VimEnter * autocmd vimrc ColorScheme * hi DiffAdd cterm=reverse

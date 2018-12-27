@@ -85,11 +85,13 @@
 
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 
-(when (not (display-graphic-p))
+(when (or (not (display-graphic-p))
+          (string= (system-name) "arch"))
   (menu-bar-mode -1))
 
-(add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
-(add-to-list 'default-frame-alist '(fullscreen . fullscreen))
+(when (not (string= system-name "arch"))
+  (add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
+  (add-to-list 'default-frame-alist '(fullscreen . fullscreen)))
 
 (defun md/fontify-if-font-lock-mode ()
   (when font-lock-mode
@@ -142,13 +144,16 @@
          (when (not md/font-size)
            (setq md/font-size 13))
          (set-frame-font (format "Menlo-%s" md/font-size) t t))
-
+        ((s-starts-with-p "arch" (system-name))
+         (when (not md/font-size)
+           (setq md/font-size 15))
+         (set-frame-font
+          (format "Inconsolata-%s:antialias=subpixel" md/font-size) t t))
         ((s-starts-with-p "omattria" (system-name))
          (when (not md/font-size)
            (setq md/font-size 15))
          (set-frame-font
           (format "Inconsolata for Powerline-%s:antialias=subpixel" md/font-size) t t))
-
         (t
          (when (not md/font-size)
            (setq md/font-size 15))
@@ -163,16 +168,18 @@
 (md/set-default-font)
 
 (setq
-
   ;; Start scrolling when the cursor is one line away from the top/bottom.
-  scroll-margin 1
+  scroll-margin 5
 
   ;; If at the bottom of the file, don't allow scroll beyond that (because
   ;; there's no use in having half a screen of empty space
   scroll-conservatively 999
 
   ;; Only scroll one row at a time. Default behaviour is to centre the row.
-  scroll-step 1)
+  scroll-step 1
+
+  scroll-preserve-screen-position 1
+  )
 
 ;; Remove scrollbars (GUI only) to get extra screen space
 (use-package scroll-bar
@@ -220,7 +227,7 @@
   :defer 1
   :config
   (progn
-    (turn-on-xclip)))
+    (xclip-mode 1)))
 
 (setq message-log-max 10000)
 
@@ -542,6 +549,10 @@
         ("C-a" . move-beginning-of-line)
         ("C-e" . move-end-of-line)
 
+        ;; This is useful in linux when no cmd+v
+        :map evil-insert-state-map
+        ("C-v" . evil-paste-after)
+
         ;; Use H/L instead of ^/$
         :map evil-normal-state-map
         ("H" . move-beginning-of-line)
@@ -802,6 +813,7 @@ represent all current available bindings accurately as a single keymap."
 
 (use-package which-key
   :defer 2
+  :load-path "non-elpa/emacs-which-key"
   :config (progn
             ;; Patch with my functions
             (md/which-key-patch)
@@ -1537,50 +1549,43 @@ represent all current available bindings accurately as a single keymap."
     (add-hook 'git-commit-setup-hook 'md/git-commit-set-fill-column)
     (global-git-commit-mode t)))
 
-;; (use-package git-gutter
-;;    :demand t
-;;    :bind (:map md/leader-map
-;;          ("g+" . git-gutter:stage-hunk)
-;;          ("g-" . git-gutter:revert-hunk)))
+(use-package git-gutter
+ :init
+ (progn
+   (defun md/set-sensible-column ()
+     "Unless file is too big, either git-gutter mode (when in git dir)"
+     (interactive)
+     (when (and (< (count-lines (point-min) (point-max)) 1500)
+                (not (and (boundp 'writeroom-mode) writeroom-mode))
+                (not (eq major-mode 'org-mode)))
+       (if (string= "git" (downcase (format "%s" (vc-backend
+                                                  (buffer-file-name
+                                                   (current-buffer))))))
+           (git-gutter-mode 1))))
+   (add-hook 'find-file-hook 'md/set-sensible-column))
 
 
-  (use-package git-gutter
-   :init
-   (progn
-     (defun md/set-sensible-column ()
-       "Unless file is too big, either git-gutter mode (when in git dir)"
-       (interactive)
-       (when (and (< (count-lines (point-min) (point-max)) 1500)
-                  (not writeroom-mode)
-                  (not (eq major-mode 'org-mode)))
-         (if (string= "git" (downcase (format "%s" (vc-backend
-                                                    (buffer-file-name
-                                                     (current-buffer))))))
-             (git-gutter-mode 1))))
-     (add-hook 'find-file-hook 'md/set-sensible-column))
+ :config
+ (progn
+   (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
+         git-gutter:modified-sign "~"
+         git-gutter:added-sign "+"
+         git-gutter:deleted-sign "-"
 
+         ;; This ensures the separator is always displayed
+         git-gutter:unchanged-sign " "
+         git-gutter:always-show-separator t
 
-   :config
-   (progn
-     (setq git-gutter:ask-p nil  ; Don't ask for confirmation of gadd
-           git-gutter:modified-sign "~"
-           git-gutter:added-sign "+"
-           git-gutter:deleted-sign "-"
-
-           ;; This ensures the separator is always displayed
-           git-gutter:unchanged-sign " "
-           git-gutter:always-show-separator t
-
-           ;; Without this, there's no space between the git-gutter column and the code.
-           git-gutter:separator-sign " "))
-   :bind (:map md/leader-map
-         ("g <RET>" . git-gutter-mode)
-         ("gk" . git-gutter:previous-hunk)
-         ("gp" . git-gutter:previous-hunk)
-         ("gj" . git-gutter:next-hunk)
-         ("gn" . git-gutter:next-hunk)
-         ("g+" . git-gutter:stage-hunk)
-         ("g-" . git-gutter:revert-hunk)))
+         ;; Without this, there's no space between the git-gutter column and the code.
+         git-gutter:separator-sign " "))
+ :bind (:map md/leader-map
+       ("g <RET>" . git-gutter-mode)
+       ("gk" . git-gutter:previous-hunk)
+       ("gp" . git-gutter:previous-hunk)
+       ("gj" . git-gutter:next-hunk)
+       ("gn" . git-gutter:next-hunk)
+       ("g+" . git-gutter:stage-hunk)
+       ("g-" . git-gutter:revert-hunk)))
 
 (use-package magit
  :config
@@ -3217,6 +3222,23 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
   (find-file md/dotfiles-init-local-path))
 
 (bind-key "vl" 'md/dotfiles-edit-init-local md/leader-map)
+
+(defun md/set-ssh-agent-from-mac-keychain ()
+  "[2018-08-18] For El Capitan setup: use keychain to setup the SSH agent,
+This is the same as the keychain setup used for new shell logins."
+  (interactive)
+  (let* ((keychain-eval-output
+          (s-trim
+           (shell-command-to-string
+            "if [ $(command -v keychain) ]; then keychain --quiet --eval --agents 'ssh' --inherit 'local-once'; fi")))
+         (sock-val (nth 1 (s-match "SSH_AUTH_SOCK=\\(?1:.*\\); " keychain-eval-output)))
+         (pid-val (nth 1 (s-match "SSH_AGENT_PID=\\(?1:.*\\); " keychain-eval-output))))
+    (when sock-val
+      (setenv "SSH_AUTH_SOCK" sock-val))
+    (when pid-val
+      (setenv "SSH_AGENT_PID" pid-val))))
+
+(md/set-ssh-agent-from-mac-keychain)
 
 (use-package esup
   :defer 5)
