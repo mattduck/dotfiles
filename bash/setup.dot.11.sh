@@ -58,3 +58,6 @@ function ,which-function {
     declare -F "$@"
     shopt -u extdebug
 }
+
+# Ranger shouldn't use any default config - only want my own bindings
+export RANGER_LOAD_DEFAULT_RC=FALSE

@@ -2,8 +2,6 @@
 
 if [[ -z $TMUX ]]; then return; fi
 
-echo "Setting up tmux environment..."
-
 tmux source-file $DOTFILES/splitscreen/tmux.conf
 
 function ,tm-reload() {
