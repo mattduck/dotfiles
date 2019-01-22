@@ -344,6 +344,7 @@ fi
 # Uncomment and edit these lines to add your own alias completions.
 #
 complete -F _complete_alias k
+complete -F _complete_alias g
 complete -F _complete_alias dockerc
 complete -F _complete_alias ,pyworkon
 complete -F _complete_alias ,pyactivate
