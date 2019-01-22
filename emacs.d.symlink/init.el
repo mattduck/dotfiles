@@ -282,8 +282,9 @@
       (process-send-string proc text)
       (process-send-eof proc))))
 
-(setq interprogram-cut-function 'paste-to-osx
-      interprogram-paste-function 'copy-from-osx)
+(when (eq system-type 'darwin)
+  (setq interprogram-cut-function 'paste-to-osx
+        interprogram-paste-function 'copy-from-osx))
 
 (setq gc-cons-threshold 100000000
       garbage-collection-messages t)
@@ -2027,6 +2028,8 @@ uses the scheduled property rather than the deadline."
 (evil-define-key 'normal md/evil-org-mode-map
   "gk" 'outline-previous-visible-heading
   "gj" 'outline-next-visible-heading
+  "gK" 'md/org-narrow-prev
+  "gJ" 'md/org-narrow-next
   "H" 'org-beginning-of-line
   "L" 'org-end-of-line
   "$" 'org-end-of-line
@@ -2097,6 +2100,38 @@ uses the scheduled property rather than the deadline."
   (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
 
 (add-hook 'org-agenda-mode-hook 'md/evil-org-agenda-mode)
+
+(defun md/org-narrow-next ()
+  (interactive)
+  (when (org-buffer-narrowed-p)
+    (widen))
+  (call-interactively 'org-next-visible-heading)
+  (org-narrow-to-subtree)
+  (outline-hide-subtree)
+  (org-show-entry)
+  (org-show-children))
+
+(defun md/org-narrow-prev ()
+  (interactive)
+  (when (org-buffer-narrowed-p)
+    (widen))
+  (call-interactively 'org-previous-visible-heading)
+  (org-narrow-to-subtree)
+  (outline-hide-subtree)
+  (org-show-entry)
+  (org-show-children))
+
+(bind-key "C-j" 'md/org-narrow-next md/evil-org-mode-map)
+(bind-key "C-k" 'md/org-narrow-prev md/evil-org-mode-map)
+
+(defun md/org-presentation ()
+  (interactive)
+  (setq mode-line-format nil)
+  (md/writeroom-mode)
+  (call-interactively 'text-scale-adjust)
+  (setq org-image-actual-width (/ (car (window-text-pixel-size)) 4))
+  (org-display-inline-images)
+  (org-redisplay-inline-images))
 
 (require 'helm-org)  ; this is part of the helm source but not loaded by default
 

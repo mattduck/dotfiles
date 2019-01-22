@@ -473,23 +473,24 @@ pbpaste to work in Mac OS but don't use it if accessing a file via tramp. This
 enables copy/paste to work between local and remote files:
 
 #+BEGIN_SRC emacs-lisp
-(defun copy-from-osx ()
-  "Handle copy/paste intelligently on osx."
-  (let ((pbpaste (purecopy "/usr/bin/pbpaste")))
-    (if (and (eq system-type 'darwin)
-             (file-exists-p pbpaste))
-        (let ((tramp-mode nil)
-              (default-directory "~"))
-          (shell-command-to-string pbpaste)))))
+  (defun copy-from-osx ()
+    "Handle copy/paste intelligently on osx."
+    (let ((pbpaste (purecopy "/usr/bin/pbpaste")))
+      (if (and (eq system-type 'darwin)
+               (file-exists-p pbpaste))
+          (let ((tramp-mode nil)
+                (default-directory "~"))
+            (shell-command-to-string pbpaste)))))
 
-(defun paste-to-osx (text &optional push)
-  (let ((process-connection-type nil))
-    (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
-      (process-send-string proc text)
-      (process-send-eof proc))))
+  (defun paste-to-osx (text &optional push)
+    (let ((process-connection-type nil))
+      (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
+        (process-send-string proc text)
+        (process-send-eof proc))))
 
-(setq interprogram-cut-function 'paste-to-osx
-      interprogram-paste-function 'copy-from-osx)
+  (when (eq system-type 'darwin)
+    (setq interprogram-cut-function 'paste-to-osx
+          interprogram-paste-function 'copy-from-osx))
 #+END_SRC
 
 ** Garbage Collection
@@ -2747,6 +2748,7 @@ org headings:
           (md/org-agenda-skip-rtn-point))
           )))
 #+END_SRC
+
 ** evil-org-mode
 #+BEGIN_SRC emacs-lisp
   (define-minor-mode md/evil-org-mode
@@ -2760,6 +2762,8 @@ org headings:
   (evil-define-key 'normal md/evil-org-mode-map
     "gk" 'outline-previous-visible-heading
     "gj" 'outline-next-visible-heading
+    "gK" 'md/org-narrow-prev
+    "gJ" 'md/org-narrow-next
     "H" 'org-beginning-of-line
     "L" 'org-end-of-line
     "$" 'org-end-of-line
@@ -2842,6 +2846,45 @@ bindings copied directly from emacs-mode.
     (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
 
   (add-hook 'org-agenda-mode-hook 'md/evil-org-agenda-mode)
+#+END_SRC
+
+** Narrowed movement
+#+BEGIN_SRC emacs-lisp
+  (defun md/org-narrow-next ()
+    (interactive)
+    (when (org-buffer-narrowed-p)
+      (widen))
+    (call-interactively 'org-next-visible-heading)
+    (org-narrow-to-subtree)
+    (outline-hide-subtree)
+    (org-show-entry)
+    (org-show-children))
+
+  (defun md/org-narrow-prev ()
+    (interactive)
+    (when (org-buffer-narrowed-p)
+      (widen))
+    (call-interactively 'org-previous-visible-heading)
+    (org-narrow-to-subtree)
+    (outline-hide-subtree)
+    (org-show-entry)
+    (org-show-children))
+
+  (bind-key "C-j" 'md/org-narrow-next md/evil-org-mode-map)
+  (bind-key "C-k" 'md/org-narrow-prev md/evil-org-mode-map)
+#+END_SRC
+
+** TODO Presentations
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/org-presentation ()
+    (interactive)
+    (setq mode-line-format nil)
+    (md/writeroom-mode)
+    (call-interactively 'text-scale-adjust)
+    (setq org-image-actual-width (/ (car (window-text-pixel-size)) 4))
+    (org-display-inline-images)
+    (org-redisplay-inline-images))
 #+END_SRC
 
 ** helm-org
@@ -2966,6 +3009,8 @@ Close the use-package wrapper:
 #+BEGIN_SRC emacs-lisp
 ))
 #+END_SRC
+
+
 * Dired
 Dired mode has a lot of features / keys that I don't care about. Start it in
 evil mode, and just add in the dired bindings that I want.
@@ -3374,7 +3419,6 @@ edges.
 
 ** Narrowing
 
-Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html:
 
 *** edit-indirect
 #+BEGIN_SRC emacs-lisp
@@ -3393,6 +3437,9 @@ Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs
                 (t (funcall major)))))
       (setq edit-indirect-guess-mode-function 'md/edit-indirect-guess-mode)))
 #+END_SRC
+
+*** DWIM
+Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html:
 
 #+BEGIN_SRC emacs-lisp
   ;; Don't ask for confirmation on narrow-to-region
