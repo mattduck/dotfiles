@@ -3060,7 +3060,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                                           (powerline-raw " W " 'md/modeline-flycheck-warning 'r))
                                          (t
                                           (funcall separator-right face1 face3)
-                                          (powerline-raw " - " 'face3 'r)))
+                                          (powerline-raw " - " face3 'r)))
                                    )))
                         (concat (powerline-render lhs)
                                 (powerline-fill mode-line (powerline-width rhs))
@@ -3193,7 +3193,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (defun md/load-theme ()
   (interactive)
   (md/disable-all-themes)
-  (setq org-todo-keyword-faces nil)
+  (setq org-todo-keyword-faces '())
   (call-interactively 'load-theme)
   (face-spec-set 'git-gutter:unchanged
                  `((t :inherit 'default
@@ -3201,7 +3201,8 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
   (face-spec-set 'git-gutter:separator
                  `((t :inherit 'default
                       :background ,(face-attribute 'default :background))))
-  (md/powerline-reset))
+  (md/powerline-reset)
+  (md/fontify-buffer))
 
 ;; Initial setup
 (md/disable-all-themes)
