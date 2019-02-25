@@ -4159,7 +4159,7 @@ Use some persistent scratch files for various modes:
                                             (powerline-raw " W " 'md/modeline-flycheck-warning 'r))
                                            (t
                                             (funcall separator-right face1 face3)
-                                            (powerline-raw " - " 'face3 'r)))
+                                            (powerline-raw " - " face3 'r)))
                                      )))
                           (concat (powerline-render lhs)
                                   (powerline-fill mode-line (powerline-width rhs))
@@ -4313,31 +4313,32 @@ todo:
 
 ** General
 #+BEGIN_SRC emacs-lisp
-  (defun md/disable-all-themes ()
-    (interactive)
-    (mapc #'disable-theme custom-enabled-themes))
+    (defun md/disable-all-themes ()
+      (interactive)
+      (mapc #'disable-theme custom-enabled-themes))
 
-  (defun md/load-theme ()
-    (interactive)
+    (defun md/load-theme ()
+      (interactive)
+      (md/disable-all-themes)
+      (setq org-todo-keyword-faces '())
+      (call-interactively 'load-theme)
+      (face-spec-set 'git-gutter:unchanged
+                     `((t :inherit 'default
+                          :background ,(face-attribute 'default :background))))
+      (face-spec-set 'git-gutter:separator
+                     `((t :inherit 'default
+                          :background ,(face-attribute 'default :background))))
+      (md/powerline-reset)
+      (md/fontify-buffer))
+
+    ;; Initial setup
     (md/disable-all-themes)
-    (setq org-todo-keyword-faces nil)
-    (call-interactively 'load-theme)
-    (face-spec-set 'git-gutter:unchanged
-                   `((t :inherit 'default
-                        :background ,(face-attribute 'default :background))))
-    (face-spec-set 'git-gutter:separator
-                   `((t :inherit 'default
-                        :background ,(face-attribute 'default :background))))
-    (md/powerline-reset))
+    (if (display-graphic-p)
+        (load-theme 'gruvbox-dark-medium t)
+      (load-theme 'solarized t)
+      (solarized-enable-theme 'dark))
 
-  ;; Initial setup
-  (md/disable-all-themes)
-  (if (display-graphic-p)
-      (load-theme 'gruvbox-dark-medium t)
-    (load-theme 'solarized t)
-    (solarized-enable-theme 'dark))
-
-  (bind-key "tt" 'md/load-theme md/leader-map)
+    (bind-key "tt" 'md/load-theme md/leader-map)
 #+END_SRC
 
 * Writeroom
