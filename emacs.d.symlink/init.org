@@ -3127,6 +3127,7 @@ This is the body
 
 #+BEGIN_SRC emacs-lisp
   (use-package atomic-chrome
+    :demand t
     :config
     (atomic-chrome-start-server)
     (setq atomic-chrome-extension-type-list '(ghost-text)
