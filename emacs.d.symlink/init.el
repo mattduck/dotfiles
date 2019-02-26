@@ -2298,6 +2298,7 @@ headlines")
       (add-to-list 'company-backends 'company-restclient)))
 
 (use-package atomic-chrome
+  :demand t
   :config
   (atomic-chrome-start-server)
   (setq atomic-chrome-extension-type-list '(ghost-text)
@@ -3289,3 +3290,4 @@ This is the same as the keychain setup used for new shell logins."
 (message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
 
 )
+(put 'dired-find-alternate-file 'disabled nil)

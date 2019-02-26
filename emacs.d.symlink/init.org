@@ -3127,6 +3127,7 @@ This is the body
 
 #+BEGIN_SRC emacs-lisp
   (use-package atomic-chrome
+    :demand t
     :config
     (atomic-chrome-start-server)
     (setq atomic-chrome-extension-type-list '(ghost-text)
@@ -4528,7 +4529,6 @@ Close paren for the wrapping ~let~:
   - [ ] git-gutter responsible for freeze?
   - [ ] ag buffer - resume after quit
   - [ ] vi refresh
-<<<<<<< HEAD
 - [2018-11-05 Mon]
   - [ ] do something with text-scale-decrease/increase
 - [2018-12-19 Wed]
