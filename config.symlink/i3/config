@@ -243,6 +243,6 @@ hide_edge_borders smart
 popup_during_fullscreen leave_fullscreen
 
 exec --no-startup-id xsetroot -solid '#1d2021'
-exec --no-startup-id i3-msg 'workspace emacs; exec emacs'
+exec --no-startup-id i3-msg 'workspace 1; exec emacs'
+exec --no-startup-id i3-msg 'workspace 2; exec gnome-terminal'
 #exec --no-startup-id i3-msg 'workspace 2; exec firefox'
-# exec --no-startup-id i3-msg 'workspace 3; exec gnome-terminal'
