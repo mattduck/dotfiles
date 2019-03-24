@@ -90,11 +90,15 @@ set-option -g default-command "if command -v reattach-to-user-namespace >/dev/nu
 
 # Tmux 1.8 has copy-pipe command, which copies selected text to the tmux paste
 # buffer and pipes it to given command
-bind-key -T copy-mode-vi 'y' send -X copy-pipe "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace pbcopy; else /dev/null; fi"
+bind-key -T copy-mode-vi 'y' send -X copy-pipe \
+    "if command -v reattach-to-user-namespace >/dev/null; \
+    then reattach-to-user-namespace pbcopy; \
+    elif command -v xclip >/dev/null; \
+    then xclip -selection clipboard; fi"
 
 # Do the same for the default copy binding of Enter
 unbind -T copy-mode-vi Enter
-bind-key -T copy-mode-vi Enter send -X copy-pipe "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace pbcopy; else /dev/null; fi"
+bind-key -T copy-mode-vi Enter send -X copy-pipe "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace pbcopy; elif command -v xclip >/dev/null; then xclip -selection clipboard; fi"
 
 # Shortcut for running the fzf goto command
 bind-key -r "C-p" new-window -n "goto" 'source "$DOTFILES/tmux/tmux_env.dot.sh" && ,tm-goto'
