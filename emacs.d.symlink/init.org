@@ -266,11 +266,12 @@ linum-format, but adds a space so there is some separation:
              (setq md/font-size 15))
            (set-frame-font
             (format "Inconsolata-%s:antialias=subpixel" md/font-size) t t))
-          ((s-starts-with-p "omattria" (system-name))
+          ((s-starts-with-p "OMETRIA" (system-name))
            (when (not md/font-size)
              (setq md/font-size 15))
            (set-frame-font
             (format "Inconsolata for Powerline-%s:antialias=subpixel" md/font-size) t t))
+            ;; (format "Menlo-%s" md/font-size) t t))
           (t
            (when (not md/font-size)
              (setq md/font-size 15))
@@ -2325,7 +2326,7 @@ I miss :Gbrowse from fugitive:
 	(use-package php-mode
 		:config (progn
 				(defun md/ometria-php-mode-hook ()
-					(when (s-starts-with-p "omattria" (system-name))
+					(when (s-starts-with-p "OMETRIA" (system-name))
 					(setq-local indent-tabs-mode t)
 					(setq-local tab-width 4))
 					;;(whitespace-mode)
@@ -3009,7 +3010,6 @@ Close the use-package wrapper:
 #+BEGIN_SRC emacs-lisp
 ))
 #+END_SRC
-
 
 * Dired
 Dired mode has a lot of features / keys that I don't care about. Start it in

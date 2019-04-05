@@ -149,11 +149,12 @@
            (setq md/font-size 15))
          (set-frame-font
           (format "Inconsolata-%s:antialias=subpixel" md/font-size) t t))
-        ((s-starts-with-p "omattria" (system-name))
+        ((s-starts-with-p "OMETRIA" (system-name))
          (when (not md/font-size)
            (setq md/font-size 15))
          (set-frame-font
           (format "Inconsolata for Powerline-%s:antialias=subpixel" md/font-size) t t))
+          ;; (format "Menlo-%s" md/font-size) t t))
         (t
          (when (not md/font-size)
            (setq md/font-size 15))
@@ -1673,7 +1674,7 @@ represent all current available bindings accurately as a single keymap."
 (use-package php-mode
 	:config (progn
 			(defun md/ometria-php-mode-hook ()
-				(when (s-starts-with-p "omattria" (system-name))
+				(when (s-starts-with-p "OMETRIA" (system-name))
 				(setq-local indent-tabs-mode t)
 				(setq-local tab-width 4))
 				;;(whitespace-mode)
@@ -3290,4 +3291,3 @@ This is the same as the keychain setup used for new shell logins."
 (message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
 
 )
-(put 'dired-find-alternate-file 'disabled nil)
