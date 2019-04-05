@@ -3010,7 +3010,28 @@ Close the use-package wrapper:
 ))
 #+END_SRC
 
+* Annotate mode
+#+BEGIN_SRC emacs-lisp
+  (use-package annotate
+    :demand t
+    :init
+    (progn
+      (add-hook 'prog-mode-hook 'annotate-mode)
 
+      ;; TODO: annotate faces
+      ;; TODO: jump to annotation? Search?
+      (setq annotate-use-messages nil)
+      (defun md/annotate ()
+        (interactive)
+        (call-interactively 'annotate-annotate)
+        (md/save-if-not-remote)))
+
+    :bind (:map md/leader-map
+               ("cj" . md/annotate)
+               ("cn" . annotate-next-annotation)
+               ("cp" . annotate-previous-annotation)
+               ("cJ" . annotate-mode)))
+#+END_SRC
 * Dired
 Dired mode has a lot of features / keys that I don't care about. Start it in
 evil mode, and just add in the dired bindings that I want.
