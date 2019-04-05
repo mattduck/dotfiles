@@ -2226,6 +2226,26 @@ headlines")
 
 ))
 
+(use-package annotate
+  :demand t
+  :init
+  (progn
+    (add-hook 'prog-mode-hook 'annotate-mode)
+
+    ;; TODO: annotate faces
+    ;; TODO: jump to annotation? Search?
+    (setq annotate-use-messages nil)
+    (defun md/annotate ()
+      (interactive)
+      (call-interactively 'annotate-annotate)
+      (md/save-if-not-remote)))
+
+  :bind (:map md/leader-map
+             ("cj" . md/annotate)
+             ("cn" . annotate-next-annotation)
+             ("cp" . annotate-previous-annotation)
+             ("cJ" . annotate-mode)))
+
 (use-package dired
   :demand t
   :init
