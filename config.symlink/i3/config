@@ -222,6 +222,9 @@ mode "md" {
     bindsym k focus up; mode "default"
     bindsym l focus right; mode "default"
 
+    bindsym Shift+4 mode "default"; exec "scrot -z /f/inbox/screenshots/$(date --iso-8601=second).jpg"
+    bindsym --release Shift+Control+4 mode "default"; exec "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg"
+
     bindsym Shift+h move left; mode "default"
     bindsym Shift+j move down; mode "default"
     bindsym Shift+k move up; mode "default"
