@@ -225,10 +225,32 @@
    (face-list)))
 
 (use-package xclip
-  :defer 1
+  :demand t
   :config
   (progn
     (xclip-mode 1)))
+
+(if (eq window-system 'ns)
+  (global-set-key (kbd "M-v") 'evil-paste-after))
+
+(defun copy-from-osx ()
+  "Handle copy/paste intelligently on osx."
+  (let ((pbpaste (purecopy "/usr/bin/pbpaste")))
+    (if (and (eq system-type 'darwin)
+             (file-exists-p pbpaste))
+        (let ((tramp-mode nil)
+              (default-directory "~"))
+          (shell-command-to-string pbpaste)))))
+
+(defun paste-to-osx (text &optional push)
+  (let ((process-connection-type nil))
+    (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
+      (process-send-string proc text)
+      (process-send-eof proc))))
+
+(when (eq system-type 'darwin)
+  (setq interprogram-cut-function 'paste-to-osx
+        interprogram-paste-function 'copy-from-osx))
 
 (setq message-log-max 10000)
 
@@ -260,32 +282,6 @@
 ;; files all over the place
 (setq backup-directory-alist
       `(("." . ,(md/dotfiles-get-path "emacs.d.symlink/.backups"))))
-
-(defun md/pbpaste ()
-  (interactive)
-  (shell-command "pbpaste" t))
-
-  (if (eq window-system 'ns)
-    (global-set-key (kbd "M-v") 'md/pbpaste))
-
-(defun copy-from-osx ()
-  "Handle copy/paste intelligently on osx."
-  (let ((pbpaste (purecopy "/usr/bin/pbpaste")))
-    (if (and (eq system-type 'darwin)
-             (file-exists-p pbpaste))
-        (let ((tramp-mode nil)
-              (default-directory "~"))
-          (shell-command-to-string pbpaste)))))
-
-(defun paste-to-osx (text &optional push)
-  (let ((process-connection-type nil))
-    (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
-      (process-send-string proc text)
-      (process-send-eof proc))))
-
-(when (eq system-type 'darwin)
-  (setq interprogram-cut-function 'paste-to-osx
-        interprogram-paste-function 'copy-from-osx))
 
 (setq gc-cons-threshold 100000000
       garbage-collection-messages t)
