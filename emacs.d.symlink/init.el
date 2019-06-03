@@ -1900,6 +1900,8 @@ represent all current available bindings accurately as a single keymap."
 ;; Global org leader bindings
 (bind-key "a a" 'org-agenda md/leader-map)
 (bind-key "a c" 'org-capture md/leader-map)
+(bind-key "RET" 'org-capture md/leader-map)
+(bind-key "TAB" 'org-agenda md/leader-map)
 
 (defvar md/org-inherit-dates-p t
   "Used by a couple of my util functions, eg. md/org-skip-if-deadline-in-days.")
@@ -2226,7 +2228,7 @@ headlines")
   :demand t
   :init
   (progn
-    (add-hook 'prog-mode-hook 'annotate-mode)
+    ;; (add-hook 'prog-mode-hook 'annotate-mode)
 
     ;; TODO: annotate faces
     ;; TODO: jump to annotation? Search?
@@ -3211,7 +3213,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (defun md/load-theme ()
   (interactive)
   (md/disable-all-themes)
-  (setq org-todo-keyword-faces '())
+  (setq org-todo-keyword-faces nil)
   (call-interactively 'load-theme)
   (face-spec-set 'git-gutter:unchanged
                  `((t :inherit 'default

@@ -2628,6 +2628,8 @@ org headings:
   ;; Global org leader bindings
   (bind-key "a a" 'org-agenda md/leader-map)
   (bind-key "a c" 'org-capture md/leader-map)
+  (bind-key "RET" 'org-capture md/leader-map)
+  (bind-key "TAB" 'org-agenda md/leader-map)
 #+END_SRC
 ** Utility functions
 
@@ -3014,7 +3016,7 @@ Close the use-package wrapper:
     :demand t
     :init
     (progn
-      (add-hook 'prog-mode-hook 'annotate-mode)
+      ;; (add-hook 'prog-mode-hook 'annotate-mode)
 
       ;; TODO: annotate faces
       ;; TODO: jump to annotation? Search?
@@ -4337,32 +4339,32 @@ todo:
 
 ** General
 #+BEGIN_SRC emacs-lisp
-    (defun md/disable-all-themes ()
-      (interactive)
-      (mapc #'disable-theme custom-enabled-themes))
+  (defun md/disable-all-themes ()
+    (interactive)
+    (mapc #'disable-theme custom-enabled-themes))
 
-    (defun md/load-theme ()
-      (interactive)
-      (md/disable-all-themes)
-      (setq org-todo-keyword-faces '())
-      (call-interactively 'load-theme)
-      (face-spec-set 'git-gutter:unchanged
-                     `((t :inherit 'default
-                          :background ,(face-attribute 'default :background))))
-      (face-spec-set 'git-gutter:separator
-                     `((t :inherit 'default
-                          :background ,(face-attribute 'default :background))))
-      (md/powerline-reset)
-      (md/fontify-buffer))
-
-    ;; Initial setup
+  (defun md/load-theme ()
+    (interactive)
     (md/disable-all-themes)
-    (if (display-graphic-p)
-        (load-theme 'gruvbox-dark-medium t)
-      (load-theme 'solarized t)
-      (solarized-enable-theme 'dark))
+    (setq org-todo-keyword-faces nil)
+    (call-interactively 'load-theme)
+    (face-spec-set 'git-gutter:unchanged
+                   `((t :inherit 'default
+                        :background ,(face-attribute 'default :background))))
+    (face-spec-set 'git-gutter:separator
+                   `((t :inherit 'default
+                        :background ,(face-attribute 'default :background))))
+    (md/powerline-reset)
+    (md/fontify-buffer))
 
-    (bind-key "tt" 'md/load-theme md/leader-map)
+  ;; Initial setup
+  (md/disable-all-themes)
+  (if (display-graphic-p)
+      (load-theme 'gruvbox-dark-medium t)
+    (load-theme 'solarized t)
+    (solarized-enable-theme 'dark))
+
+  (bind-key "tt" 'md/load-theme md/leader-map)
 #+END_SRC
 
 * Writeroom
