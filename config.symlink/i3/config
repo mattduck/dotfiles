@@ -222,8 +222,8 @@ mode "md" {
     bindsym k focus up; mode "default"
     bindsym l focus right; mode "default"
 
-    bindsym Shift+4 mode "default"; exec "scrot -z /f/inbox/screenshots/$(date --iso-8601=second).jpg"
-    bindsym --release Shift+Control+4 mode "default"; exec "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg"
+    bindsym Shift+4 exec "scrot -z /f/inbox/screenshots/$(date --iso-8601=second).jpg"; mode "default"
+    bindsym --release Shift+Control+4 exec "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg"; mode "default"
 
     bindsym Shift+h move left; mode "default"
     bindsym Shift+j move down; mode "default"
@@ -245,6 +245,10 @@ mode "md" {
 bindsym $mod+w mode "md"
 
 bindsym $mod+space exec "albert show"
+
+# Same as MacOS
+# bindsym "$mod+Shift+4" exec "scrot -z /f/inbox/screenshots/$(date --iso-8601=second).jpg"
+bindsym --release "$mod+Shift+Control+4" exec "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg"
 
 bindsym $mod+Tab workspace next
 bindsym $mod+Shift+Tab workspace prev
