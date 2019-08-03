@@ -1775,6 +1775,15 @@ represent all current available bindings accurately as a single keymap."
          ("\\.ssh/config\\'" . conf-mode)
          ("\\.ini\\'" . conf-mode)))
 
+(org-babel-do-load-languages
+   'org-babel-load-languages
+   '((js . t)))
+
+;; Fix - the default one uses `required('sys')` which is not available in
+;; modern node versions.
+  (setq org-babel-js-function-wrapper
+    "process.stdout.write(require('util').inspect(function(){%s}()));")
+
 (use-package coffee-mode)
 
 (use-package dockerfile-mode)
@@ -2055,8 +2064,8 @@ uses the scheduled property rather than the deadline."
 
 (defun md/org-gcal-fetch-and-agenda-redo ()
   (interactive)
-  (ignore-errors
-    (md/org-gcal-fetch))
+  ;;(ignore-errors
+  ;;  (md/org-gcal-fetch))
   (org-agenda-redo))
 
 (define-minor-mode md/evil-org-agenda-mode
@@ -2090,6 +2099,7 @@ uses the scheduled property rather than the deadline."
 
   (kbd "q") 'md/org-agenda-quit
   (kbd "r") 'md/org-gcal-fetch-and-agenda-redo  ; Recalculate the agenda
+  (kbd "R") 'org-agenda-refile
   (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view - toggle archived, logs, clocks etc.
   (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
   (kbd "/") 'org-agenda-filter-by-regexp  ; Search
@@ -2166,7 +2176,70 @@ uses the scheduled property rather than the deadline."
  org-src-tab-acts-natively t)
 
 (setq org-export-headline-levels 6
-      org-export-with-section-numbers 4)
+      org-export-with-section-numbers 2
+      org-html-head-include-default-style nil
+      org-export-with-section-numbers nil
+      org-html-htmlize-output-type nil
+      org-export-babel-evaluate nil
+      org-html-head "
+<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css\">
+<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css\">
+<script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js\"></script>
+<script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js\"></script>
+<script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/javascript.min.js\"></script>
+
+   <style type=\"text/css\">
+ b {color: #000}
+ a {font-weight: normal; color: blue}
+ a>code {font-weight: normal; color: blue}
+ html {font-size: 19px; max-width: 100%; margin: 20px 10%; font-family: Freeserif, serif; line-height:1.2}
+ pre {font-family: monospace; color: #000; font-size: 13px; line-height: 1.4; max-width: 720px}
+ code {font-family: monospace; font-size: 13px; background-color: rgba(27,31,35,.05); padding: 2px 4px; max-width: 720px;}
+ p, dl { color: #555}
+ dt { color: #000; font-weight: bold; margin-top: 8px;}
+ hr {margin-bottom: 40px; margin-left: 0; margin-right: 0}
+ h1 {font-size: 24px}
+ h1, h2, h3 {margin-bottom: 8px}
+ h2, h3, h4 {font-family: sans-serif}
+ p {margin-top: 8px}
+ img {margin-top: 16px; margin-bottom: 16px; max-width: 100%;}
+ hr {min-height: 4px; background-color: #000}
+ hr.hrsmaller {min-height: 1px; background-color: #000}
+ ul {padding-left: 20px}
+ ul > li {list-style-type: circle}
+ li {color: #555; margin-top: 8px; margin-bottom: 8px;}
+ a:hover {color: blue}
+ h1, h2, h3, h4, p, ol, li, hr, dl {width:540px; max-width: 100%}
+   </style>
+
+<script type=\"text/javascript\">
+const init = () => {
+    document.querySelectorAll('.src-js').forEach(el => {
+        newcode = document.createElement('code');
+        newcode.classList.add('hljs', 'javascript');
+        newcode.innerHTML = el.innerHTML;
+        newpre = document.createElement('pre');
+        newpre.appendChild(newcode);
+        el.parentNode.replaceChild(newpre, el);
+    });
+    hljs.initHighlighting();
+
+    document.querySelectorAll('h2').forEach(el => {
+        hr = document.createElement('hr');
+        el.parentNode.insertBefore(hr, el);
+        br = document.createElement('br');
+        el.parentNode.insertBefore(br, el);
+    });
+    document.querySelectorAll('h3').forEach(el => {
+        br = document.createElement('br');
+        el.parentNode.insertBefore(br, el);
+    });
+    document.querySelectorAll('h2')[1].scrollIntoView();
+
+}
+window.addEventListener('load', init, false );
+</script>
+")
 
 (use-package ox-reveal)
 
