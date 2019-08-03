@@ -46,9 +46,10 @@ function ,liteshell {
 }
 
 
-function ,serve {
-    python -m SimpleHTTPServer $@ || python -m http.server $@
-}
+# [2019-03-24 Sun] Moved this to a separate script so can configure further.
+# function ,serve {
+#     python -m SimpleHTTPServer $@ || python -m http.server $@
+# }
 
 
 function ,tmp {
