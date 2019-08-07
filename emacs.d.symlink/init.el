@@ -1538,6 +1538,49 @@ represent all current available bindings accurately as a single keymap."
                   ;; pylint/flake8 config though.
                   flycheck-pycheckers-max-line-length 120)))
 
+(use-package polymode
+  :ensure t
+  :mode ("\.py$" . poly-python-sql-mode)
+  :config
+  (setq polymode-prefix-key (kbd "C-c n"))
+  (define-hostmode poly-python-hostmode :mode 'python-mode)
+
+  (define-innermode poly-sql-expr-python-innermode
+    :mode 'sql-mode
+    :head-matcher (rx "r" (= 3 (char "\"'")) (* (any space)))
+    :tail-matcher (rx (= 3 (char "\"'")))
+    :head-mode 'host
+    :tail-mode 'host)
+
+  (defun poly-python-sql-eval-chunk (beg end msg)
+    "Calls out to `sql-send-region' with the polymode chunk region"
+    (sql-send-region beg end))
+
+  (define-polymode poly-python-sql-mode
+    :hostmode 'poly-python-hostmode
+    :innermodes '(poly-sql-expr-python-innermode)
+    (setq polymode-eval-region-function #'poly-python-sql-eval-chunk)
+    (define-key poly-python-sql-mode-map (kbd "C-c C-c") 'polymode-eval-chunk))
+  (setq polymode-prefix-key (kbd "C-c n"))
+  (define-hostmode poly-python-hostmode :mode 'python-mode)
+
+  (define-innermode poly-sql-expr-python-innermode
+    :mode 'sql-mode
+    :head-matcher (rx "r" (= 3 (char "\"'")) (* (any space)))
+    :tail-matcher (rx (= 3 (char "\"'")))
+    :head-mode 'host
+    :tail-mode 'host)
+
+  (defun poly-python-sql-eval-chunk (beg end msg)
+    "Calls out to `sql-send-region' with the polymode chunk region"
+    (sql-send-region beg end))
+
+  (define-polymode poly-python-sql-mode
+    :hostmode 'poly-python-hostmode
+    :innermodes '(poly-sql-expr-python-innermode)
+    (setq polymode-eval-region-function #'poly-python-sql-eval-chunk)
+    (define-key poly-python-sql-mode-map (kbd "C-c C-c") 'polymode-eval-chunk)))
+
 (use-package git-commit
   :config
   (progn
@@ -2179,6 +2222,8 @@ uses the scheduled property rather than the deadline."
       org-export-with-section-numbers 2
       org-html-head-include-default-style nil
       org-export-with-section-numbers nil
+      org-html-validation-link nil
+      org-html-postamble nil
       org-html-htmlize-output-type nil
       org-export-babel-evaluate nil
       org-html-head "
@@ -2195,6 +2240,7 @@ uses the scheduled property rather than the deadline."
  html {font-size: 19px; max-width: 100%; margin: 20px 10%; font-family: Freeserif, serif; line-height:1.2}
  pre {font-family: monospace; color: #000; font-size: 13px; line-height: 1.4; max-width: 720px}
  code {font-family: monospace; font-size: 13px; background-color: rgba(27,31,35,.05); padding: 2px 4px; max-width: 720px;}
+ pre > code { background-color: #ffffff !important; }
  p, dl { color: #555}
  dt { color: #000; font-weight: bold; margin-top: 8px;}
  hr {margin-bottom: 40px; margin-left: 0; margin-right: 0}
@@ -2210,6 +2256,8 @@ uses the scheduled property rather than the deadline."
  li {color: #555; margin-top: 8px; margin-bottom: 8px;}
  a:hover {color: blue}
  h1, h2, h3, h4, p, ol, li, hr, dl {width:540px; max-width: 100%}
+ blockquote {font-style: italic; border-left: 2px solid #555; padding-left: 10px; }
+#table-of-contents > h2 {display:none};
    </style>
 
 <script type=\"text/javascript\">
@@ -2239,6 +2287,8 @@ const init = () => {
 }
 window.addEventListener('load', init, false );
 </script>
+
+<script charset=\"UTF-8\" src=\"org-info.js\"></script>
 ")
 
 (use-package ox-reveal)
