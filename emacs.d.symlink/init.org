@@ -3075,6 +3075,30 @@ quite nicely:
   (use-package ox-reveal)
 #+END_SRC
 
+Set Latex options to colour the links to blue by default:
+
+#+BEGIN_SRC emacs-lisp
+    (setq org-latex-default-class "report"
+          org-latex-default-packages-alist '(("AUTO" "inputenc" t
+                                              ("pdflatex"))
+                                             ("T1" "fontenc" t
+                                              ("pdflatex"))
+                                             ("" "graphicx" t)
+                                             ("" "grffile" t)
+                                             ("" "longtable" nil)
+                                             ("" "wrapfig" nil)
+                                             ("" "rotating" nil)
+                                             ("normalem" "ulem" t)
+                                             ("" "amsmath" t)
+                                             ("" "textcomp" t)
+                                             ("" "amssymb" t)
+                                             ("" "capt-of" nil)
+                                             ("linktoc=all,colorlinks=true,linkcolor=black,urlcolor=blue" "hyperref" nil)))
+
+
+
+#+END_SRC
+
 ** org-gcal
 #+BEGIN_SRC emacs-lisp
   (defun md/org-gcal-fetch ()

@@ -2293,6 +2293,23 @@ window.addEventListener('load', init, false );
 
 (use-package ox-reveal)
 
+(setq org-latex-default-class "report"
+      org-latex-default-packages-alist '(("AUTO" "inputenc" t
+                                          ("pdflatex"))
+                                         ("T1" "fontenc" t
+                                          ("pdflatex"))
+                                         ("" "graphicx" t)
+                                         ("" "grffile" t)
+                                         ("" "longtable" nil)
+                                         ("" "wrapfig" nil)
+                                         ("" "rotating" nil)
+                                         ("normalem" "ulem" t)
+                                         ("" "amsmath" t)
+                                         ("" "textcomp" t)
+                                         ("" "amssymb" t)
+                                         ("" "capt-of" nil)
+                                         ("linktoc=all,colorlinks=true,linkcolor=black,urlcolor=blue" "hyperref" nil)))
+
 (defun md/org-gcal-fetch ()
   "Always refresh gcal token before fetching, as it expires every hour"
   (interactive)
