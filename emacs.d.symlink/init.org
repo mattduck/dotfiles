@@ -2673,6 +2673,7 @@ org headings:
   (bind-key "SPC c" 'org-ctrl-c-ctrl-c md/org-mode-leader-map)
   (bind-key "SPC l" 'md/org-insert-link-from-paste md/org-mode-leader-map)
   (bind-key "SPC O" 'org-open-at-point md/org-mode-leader-map)
+  (bind-key "SPC u" 'org-priority-up md/org-mode-leader-map)
 
   ;; Global org leader bindings
   (bind-key "a a" 'org-agenda md/leader-map)
@@ -2848,6 +2849,7 @@ org headings:
             (kbd "M-H") 'org-shiftmetaleft
             (kbd "M-K") 'org-shiftmetaup
             (kbd "M-J") 'org-shiftmetadown
+            (kbd "C-c u") 'org-priority-up
             ))
         '(normal insert))
 

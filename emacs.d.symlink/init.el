@@ -1937,6 +1937,7 @@ represent all current available bindings accurately as a single keymap."
 (bind-key "SPC c" 'org-ctrl-c-ctrl-c md/org-mode-leader-map)
 (bind-key "SPC l" 'md/org-insert-link-from-paste md/org-mode-leader-map)
 (bind-key "SPC O" 'org-open-at-point md/org-mode-leader-map)
+(bind-key "SPC u" 'org-priority-up md/org-mode-leader-map)
 
 ;; Global org leader bindings
 (bind-key "a a" 'org-agenda md/leader-map)
@@ -2106,6 +2107,7 @@ represent all current available bindings accurately as a single keymap."
           (kbd "M-H") 'org-shiftmetaleft
           (kbd "M-K") 'org-shiftmetaup
           (kbd "M-J") 'org-shiftmetadown
+          (kbd "C-c u") 'org-priority-up
           ))
       '(normal insert))
 
@@ -2369,6 +2371,8 @@ headlines")
                                     ))))
 
 (defun md/org-md-import ()
+  "Use pandoc to convert clipboard markdown contents into org,
+and insert in current buffer."
   (interactive)
   (insert
    (with-temp-buffer
@@ -2376,30 +2380,34 @@ headlines")
      (buffer-string))))
 
 (defun md/org-md-export ()
+  "Use pandoc to copy the region or buffer into the clipboard,
+converting to markdown."
   (interactive)
   (if (use-region-p)
       (copy-region-as-kill (region-beginning) (region-end))
     (copy-region-as-kill (point-min) (point-max)))
-  ;; use sed to remove backslahes that get appended around some special chars,
+  ;; Use sed to remove backslashes that get appended around some special chars,
   ;; as this is less friendly when working with people who are editing markdown.
-  (shell-command "pbpaste | pandoc --from org --to gfm | sed -e 's/\\\[/\[/g' -e 's/\\\]/\]/g' -e 's/\\>/>/g' -e 's/\\</</g' | pbcopy" nil nil))
+  ;; The awful backslahes here are because we are replacing a backslash, and then have to escape
+  ;; both (1) in emacs and (2) in sed, because the backslash has signficance in both programs.
+  (shell-command "pbpaste | pandoc --from org --to gfm | sed -e 's/\\\\\\[/\\[/g' -e 's/\\\\\\]/\\]/g' -e 's/\\\\>/>/g' -e 's/\\\\</</g' | pbcopy" nil nil))
 
 (defun md/org-html-export ()
+  "Use pandoc to copy the region or buffer into the clipboard,
+converting to html. This is also opened in the browser so it can
+be quickly copy/pasted into eg. gmail."
   (interactive)
   (if (use-region-p)
       (copy-region-as-kill (region-beginning) (region-end))
     (copy-region-as-kill (point-min) (point-max)))
-  (let ((path (format "%s.html" (shell-command "mktemp"))))
-    (shell-command (format "pbpaste | pandoc --from org --to html -o %s | pbcopy" path) nil nil)
+  (let ((path (format "%s.html" (shell-command "mktemp")))
+        (from (if (string= major-mode "markdown-mode") "gfm" "org")))
+    (shell-command (format "pbpaste | pandoc --from %s --to html -o %s | pbcopy" from path) nil nil)
     (shell-command (format "open %s" path))))
 
 (bind-key "Tm" 'md/org-md-export md/leader-map)
 (bind-key "TM" 'md/org-md-import md/leader-map)
 (bind-key "Th" 'md/org-html-export md/leader-map)
-
-;; TODO:
-;; global (OS) binding to use pandoc to convert text in place from anywhere?
-;; or alfred?
 
 ))
 
