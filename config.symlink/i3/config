@@ -105,10 +105,10 @@ client.background       "#ffffd7"
 
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
-set $ws1 "1-emacs"
-set $ws2 "2-term"
-set $ws3 "3-ff"
-set $ws4 "4-ffp"
+set $ws1 "1 emacs"
+set $ws2 "2"
+set $ws3 "3"
+set $ws4 "4"
 set $ws5 "5"
 set $ws6 "6"
 set $ws7 "7"
@@ -146,7 +146,7 @@ bindsym $mod+Shift+j move workspace to output down
 bindsym $mod+Shift+k move workspace to output up
 bindsym $mod+Shift+l move workspace to output right
 
-# reload the configuration file
+# Reload the configuration file
 #bindsym $mod+Shift+c reload
 # restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
 #bindsym $mod+Shift+r restart
@@ -191,6 +191,8 @@ bar {
         #mode hide
         position top
         status_command ~/.config/i3-status-bash.sh
+        tray_output primary
+        strip_workspace_numbers yes
 
         colors {
                 background "#32302f"
@@ -245,6 +247,7 @@ mode "md" {
 bindsym $mod+w mode "md"
 
 bindsym $mod+space exec "albert show"
+bindsym $mod+Shift+space exec "emacsclient -ne '(call-interactively (quote md/alfred))'"
 
 # Same as MacOS
 # bindsym "$mod+Shift+4" exec "scrot -z /f/inbox/screenshots/$(date --iso-8601=second).jpg"
@@ -257,18 +260,21 @@ default_border pixel 1
 hide_edge_borders smart
 popup_during_fullscreen leave_fullscreen
 
-assign [class="Emacs"] $ws1
-assign [class="Gnome-terminal"] $ws2
-assign [class="Terminal"] $ws2
-assign [class="Firefox"] $ws3
-# Can't distinguish private windows at creation time as they have
-# the same title:
-# WM_CLASS(STRING) = "Navigator", "Firefox"
-# WM_NAME(STRING) = "Mozilla Firefox"
-for_window [title=".*\(Private Browsing\).*"] move to workspace $ws4
+# [2019-09-08 Sun 14:33] Disabling these for now - want to try something different
+# assign [class="Emacs"] $ws1
+# assign [class="Gnome-terminal"] $ws2
+# assign [class="Terminal"] $ws2
+# assign [class="Firefox"] $ws3
+# # Can't distinguish private windows at creation time as they have
+# # the same title:
+# for_window [title=".*\(Private Browsing\).*"] move to workspace $ws4
 
-exec --no-startup-id xsetroot -solid '#1d2021'
+exec --no-startup-id xsetroot -solid '#1d2021'  # Dark bg
+exec --no-startup-id ~/.fehbg  # Bg image
 exec --no-startup-id i3-msg 'workspace $ws1; exec emacs'
-exec --no-startup-id i3-msg 'workspace $ws2; exec gnome-terminal'
-exec --no-startup-id i3-msg 'workspace $ws3; exec firefox'
-exec --no-startup-id i3-msg 'workspace $ws4; exec firefox --private-window'
+# exec --no-startup-id i3-msg 'workspace $ws2; exec gnome-terminal'
+# exec --no-startup-id i3-msg 'workspace $ws3; exec firefox'
+# exec --no-startup-id i3-msg 'workspace $ws4; exec firefox --private-window'
+
+# try emacs floating test
+for_window [class="^Emacs$" instance="^alfred$"] floating enable
