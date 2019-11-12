@@ -12,6 +12,7 @@ emacs.d.symlink/projectile*
 emacs.d.symlink/#*
 emacs.d.symlink/.#*
 emacs.d.symlink/init.html
+emacs.d.symlink/init.tex
 emacs.d.symlink/*.elc
 emacs.d.symlink/image-dired
 emacs.d.symlink/network-security.data

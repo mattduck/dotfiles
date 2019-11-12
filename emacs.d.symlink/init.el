@@ -1914,6 +1914,13 @@ represent all current available bindings accurately as a single keymap."
 (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm evil-insert-state-map)
 (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
 (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm evil-insert-state-map)
+(bind-key "C-c T" 'md/org-timestamp-time-clipboard org-mode-map)
+(bind-key "C-c T" 'md/org-timestamp-time-clipboard evil-normal-state-map)
+(bind-key "C-c T" 'md/org-timestamp-time-clipboard evil-insert-state-map)
+
+(bind-key "C-c D" 'md/org-timestamp-date-clipboard org-mode-map)
+(bind-key "C-c D" 'md/org-timestamp-date-clipboard evil-normal-state-map)
+(bind-key "C-c D" 'md/org-timestamp-date-clipboard evil-insert-state-map)
 
 (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
 (bind-key "C-c L" 'org-download-yank org-mode-map)
@@ -1938,6 +1945,7 @@ represent all current available bindings accurately as a single keymap."
 (bind-key "SPC l" 'md/org-insert-link-from-paste md/org-mode-leader-map)
 (bind-key "SPC L" 'org-download-yank md/org-mode-leader-map)
 (bind-key "SPC O" 'org-open-at-point md/org-mode-leader-map)
+(bind-key "SPC u" 'org-priority-up md/org-mode-leader-map)
 
 ;; Global org leader bindings
 (bind-key "a a" 'org-agenda md/leader-map)
@@ -1958,6 +1966,23 @@ represent all current available bindings accurately as a single keymap."
   (interactive)
   (org-insert-time-stamp (current-time) nil t))
 
+(defun md/org-timestamp-date-clipboard ()
+  "Copy timestamp without time to the clipboard"
+  (interactive)
+  (with-temp-buffer
+    (org-insert-time-stamp (current-time) nil t)
+    (buffer-string)
+    (clipboard-kill-region (point-min) (point-max))))
+
+(defun md/org-timestamp-time-clipboard ()
+  "Copy timestamp with time to the clipboard"
+  (interactive)
+  (with-temp-buffer
+    (org-insert-time-stamp (current-time) t t)
+    (buffer-string)
+    (clipboard-kill-region (point-min) (point-max))))
+
+
 (defun md/org-insert-link-from-paste ()
   "Perform org-insert-link with the current contents of the clipboard"
   (interactive)
@@ -1976,7 +2001,7 @@ represent all current available bindings accurately as a single keymap."
 
 (defun md/org-get-priority (inherit)
   "Get priority for the current line. If inherit is t, retrieve
-priority from the closest parent headline"
+  priority from the closest parent headline"
   (if (not inherit)
       (org-get-priority (thing-at-point 'line))
     (save-excursion
@@ -1989,22 +2014,22 @@ priority from the closest parent headline"
 
 (defun md/org-agenda-skip-rtn-point ()
   "If you customise org-agenda-skip-function, your skip function has to return
-the point at which you want the agenda to continue processing the file. In my
-  case I always want this to be the end of the subtree."
+  the point at which you want the agenda to continue processing the file. In my
+    case I always want this to be the end of the subtree."
   (org-end-of-subtree t)
   (point))
 
 (defun md/org-skip-if-deadline-in-days (user-fn)
   "A utility function that can be used for org-agenda-skip-function. It calls
-  `(user-fn number-of-days-until-deadline)`. If `user-fn` returns a `t` value,
-  the agenda item will be skipped.
+    `(user-fn number-of-days-until-deadline)`. If `user-fn` returns a `t` value,
+    the agenda item will be skipped.
 
-  You could use this to eg. skip all items that have a deadline
-  in more than 60 days by running as part of your config:
+    You could use this to eg. skip all items that have a deadline
+    in more than 60 days by running as part of your config:
 
-  '(org-agenda-skip-function
-      '(md/org-skip-if-deadline-in-days (lambda (d) (if (eq d nil) t (> d 60)))))
-  "
+    '(org-agenda-skip-function
+        '(md/org-skip-if-deadline-in-days (lambda (d) (if (eq d nil) t (> d 60)))))
+    "
   (save-excursion
     (let* ((deadline-time (org-get-deadline-time (point)
                                                  md/org-inherit-dates-p))
@@ -2017,7 +2042,7 @@ the point at which you want the agenda to continue processing the file. In my
 
 (defun md/org-skip-if-scheduled-in-days (user-fn)
   "This function is just like org-skip-if-deadline-in-days, but
-uses the scheduled property rather than the deadline."
+  uses the scheduled property rather than the deadline."
   (save-excursion
     (let* ((scheduled-time (org-get-scheduled-time (point)
                                                    md/org-inherit-dates-p))
@@ -2030,24 +2055,24 @@ uses the scheduled property rather than the deadline."
 
 (defun md/org-skip-if-priority-level (user-fn)
   "Utility function that can be used for org-agenda-skip-function. It calls
-  `(user-fn priority-level`). If `user-fn` returns a `t` value, the agenda item
-  will be skipped. If the item doesn't have a priority assigned, the level used
-  is 0.
+    `(user-fn priority-level`). If `user-fn` returns a `t` value, the agenda item
+    will be skipped. If the item doesn't have a priority assigned, the level used
+    is 0.
 
-  You could use this to eg. skip all items that don't have a priority:
+    You could use this to eg. skip all items that don't have a priority:
 
-  '(org-agenda-skip-function
-       '(md/org-skip-if-priority-level (lambda (p) (<= p 0))))
-  "
+    '(org-agenda-skip-function
+         '(md/org-skip-if-priority-level (lambda (p) (<= p 0))))
+    "
   (save-excursion
     (if (funcall user-fn (md/org-get-priority t))
         (md/org-agenda-skip-rtn-point))))
 
 (defun md/org-skip-if-not-match-parent-kwd (keyword)
   "Utility function that can be used for org-agenda-skip-function. It searches
-  parents of the current node for a matching keyword. If the match isn't found,
-  it returns the skip point expected by org-agenda-skip-function.
-  "
+    parents of the current node for a matching keyword. If the match isn't found,
+    it returns the skip point expected by org-agenda-skip-function.
+    "
   (save-excursion
     (let (top bottom)
       (setq bottom (save-excursion (org-end-of-subtree t) (point)))
@@ -2090,6 +2115,7 @@ uses the scheduled property rather than the deadline."
           (kbd "M-H") 'org-shiftmetaleft
           (kbd "M-K") 'org-shiftmetaup
           (kbd "M-J") 'org-shiftmetadown
+          (kbd "C-c u") 'org-priority-up
           ))
       '(normal insert))
 
@@ -2386,6 +2412,45 @@ headlines")
 (defun md/org-toggle-list-utf ()
   (interactive)
   (if md/org-toggle-list-utf-val (md/org-list-utf-disable) (md/org-list-utf-enable)))
+
+(defun md/org-md-import ()
+  "Use pandoc to convert clipboard markdown contents into org,
+and insert in current buffer."
+  (interactive)
+  (insert
+   (with-temp-buffer
+     (shell-command "pbpaste | pandoc --from gfm --to org" (current-buffer) (current-buffer))
+     (buffer-string))))
+
+(defun md/org-md-export ()
+  "Use pandoc to copy the region or buffer into the clipboard,
+converting to markdown."
+  (interactive)
+  (if (use-region-p)
+      (copy-region-as-kill (region-beginning) (region-end))
+    (copy-region-as-kill (point-min) (point-max)))
+  ;; Use sed to remove backslashes that get appended around some special chars,
+  ;; as this is less friendly when working with people who are editing markdown.
+  ;; The awful backslahes here are because we are replacing a backslash, and then have to escape
+  ;; both (1) in emacs and (2) in sed, because the backslash has signficance in both programs.
+  (shell-command "pbpaste | pandoc --from org --to gfm | sed -e 's/\\\\\\[/\\[/g' -e 's/\\\\\\]/\\]/g' -e 's/\\\\>/>/g' -e 's/\\\\</</g' | pbcopy" nil nil))
+
+(defun md/org-html-export ()
+  "Use pandoc to copy the region or buffer into the clipboard,
+converting to html. This is also opened in the browser so it can
+be quickly copy/pasted into eg. gmail."
+  (interactive)
+  (if (use-region-p)
+      (copy-region-as-kill (region-beginning) (region-end))
+    (copy-region-as-kill (point-min) (point-max)))
+  (let ((path (format "%s.html" (shell-command "mktemp")))
+        (from (if (string= major-mode "markdown-mode") "gfm" "org")))
+    (shell-command (format "pbpaste | pandoc --from %s --to html -o %s | pbcopy" from path) nil nil)
+    (shell-command (format "open %s" path))))
+
+(bind-key "Tm" 'md/org-md-export md/leader-map)
+(bind-key "TM" 'md/org-md-import md/leader-map)
+(bind-key "Th" 'md/org-html-export md/leader-map)
 
 ))
 
