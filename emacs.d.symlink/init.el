@@ -89,10 +89,6 @@
           (string= (system-name) "arch"))
   (menu-bar-mode -1))
 
-(when (not (string= system-name "arch"))
-  (add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
-  (add-to-list 'default-frame-alist '(fullscreen . fullscreen)))
-
 (defun md/fontify-if-font-lock-mode ()
   (when font-lock-mode
     (font-lock-ensure)))
@@ -768,7 +764,7 @@
                                ;; (foreground-color . "#eeeeec")
                                (height . 10)
                                (internal-border-width . 20)
-                               (left . 0.33)
+                               (left . 3)
                                (left-fringe . 0)
                                (line-spacing . 3)
                                (menu-bar-lines . 0)
@@ -777,7 +773,7 @@
                                (tool-bar-lines . 0)
                                (top . 48)
                                ;; enable this to remove frame border
-                               (undecorated . nil)
+                               (undecorated . t)
                                (unsplittable . t)
                                (vertical-scroll-bars . nil)
                                (width . 110))))
@@ -3573,3 +3569,4 @@ This is the same as the keychain setup used for new shell logins."
 (message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
 
 )
+(put 'dired-find-alternate-file 'disabled nil)
