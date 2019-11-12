@@ -61,12 +61,19 @@ This wraps the rest of the file.
 
 #+BEGIN_SRC emacs-lisp
   (setq custom-file (md/dotfiles-get-path "emacs.d.symlink/custom.el"))
-  (load custom-file 'noerror)
+
+  ;; [2019-11-05 Tue] Commenting this out - it interferes with some face definitions etc.
+  ;;(load custom-file 'noerror)
 
   ;; Kill custom buffers on q
   (setq custom-buffer-done-kill t)
 
   (defgroup md/custom nil "Placeholder group, mostly just here to silence warnings" :group 'md/custom)
+
+  (custom-set-variables
+   '(custom-safe-themes
+     (quote
+      ("a2f27a9cf29c4148a6ade6f780250a62f9b6b2e460ead2df30cf4916135fa514" "e6c57d23ebe550228ff6a0b640c045244312e87bb69a7941f7909625d105eae9" "f6e6ef708c51a7ba82be632c142126e92206ab0ef40b50817bb32ce297bc0983" "29242a0f9e6987aa972e108a80413878d3c431dd8e6c69b9d824273b88f0c63f" "dd94b107dd63cde4eadc558550379f8bfb9e773d780ca3ff305d7ccd17049034" "579b8afedbd64052f45d921ffe40a91c4f80c2c28a54864905a11e834d8f0f38" "089736e335b34fc7d1bb7f42c5f315b1bafd935abd0511c62edce549caab8ee1" "73438b705bb3d7583e9edb6fcf6dc6a86a7c6ce4b59500de0ee941547fc80d4c" "4c7121d2591363cabf74f57e656a698291d4cda52c7cd2da08a860364f761091" "72d07f0ef90edcc4a674f3ba6305c66feb2db8400122c9c0bc37b0097455e939" "7687ce37b6a86109edccc24989fbdb8e35dabefd718d6d70f3042daed5f90b1d" "f06afcb8fded3e57346ce01be80cde0cab09fd82ca11c8758612f5b4d996ea3d" "0e6a2147a71a363987a3071ed1b25c729e04b4355d80276ae8bb2438a4ad6250" "1e1a6ed4c050f07c088190483d7f6aa8277875fd49533ca747067348dc45b3c6" "760ce657e710a77bcf6df51d97e51aae2ee7db1fba21bbad07aab0fa0f42f834" "45a8b89e995faa5c69aa79920acff5d7cb14978fbf140cdd53621b09d782edcf" "1f38fb71e55e5ec5f14a39d03ca7d7a416123d3f0847745c7bade053ca58f043" "97965ccdac20cae22c5658c282544892959dc541af3e9ef8857dbf22eb70e82b" "9129c2759b8ba8e8396fe92535449de3e7ba61fd34569a488dd64e80f5041c9f" "527df6ab42b54d2e5f4eec8b091bd79b2fa9a1da38f5addd297d1c91aa19b616" "f8067b7d0dbffb29a79e0843797efabdf5e1cf326639874d8b407e9b034136a4" "f8fb7488faa7a70aee20b63560c36b3773bd0e4c56230a97297ad54ff8263930" "d96587ec2c7bf278269b8ec2b800c7d9af9e22d816827639b332b0e613314dfd" "85e6bb2425cbfeed2f2b367246ad11a62fb0f6d525c157038a0d0eaaabc1bfee" "d2e9c7e31e574bf38f4b0fb927aaff20c1e5f92f72001102758005e53d77b8c9" "ecba61c2239fbef776a72b65295b88e5534e458dfe3e6d7d9f9cb353448a569e" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "34ed3e2fa4a1cb2ce7400c7f1a6c8f12931d8021435bad841fdc1192bd1cc7da" "304c39b190267e9b863c0cf9c989da76dcfbb0649cbcb89592e7c5c08348fce9" "b3bcf1b12ef2a7606c7697d71b934ca0bdd495d52f901e73ce008c4c9825a3aa" "6b2636879127bf6124ce541b1b2824800afc49c6ccd65439d6eb987dbf200c36" "c968804189e0fc963c641f5c9ad64bca431d41af2fb7e1d01a2a6666376f819c" "cabc32838ccceea97404f6fcb7ce791c6e38491fd19baa0fcfb336dcc5f6e23c" "0961d780bd14561c505986166d167606239af3e2c3117265c9377e9b8204bf96" "cd736a63aa586be066d5a1f0e51179239fe70e16a9f18991f6f5d99732cabb32" "6daa09c8c2c68de3ff1b83694115231faa7e650fdbb668bc76275f0f2ce2a437" "b67b2279fa90e4098aa126d8356931c7a76921001ddff0a8d4a0541080dee5f6" "7559ac0083d1f08a46f65920303f970898a3d80f05905d01e81d49bb4c7f9e39" "146061a7ceea4ccc75d975a3bb41432382f656c50b9989c7dc1a7bb6952f6eb4" "227fabfb7d3f2334d1352ef507b1494ab08e143b49237617e99bd6b44eef73d4" "aaffceb9b0f539b6ad6becb8e96a04f2140c8faa1de8039a343a4f1e009174fb" "5057614f7e14de98bbc02200e2fe827ad897696bfd222d1bcab42ad8ff313e20" "a63355b90843b228925ce8b96f88c587087c3ee4f428838716505fd01cf741c8" "0daf22a3438a9c0998c777a771f23435c12a1d8844969a28f75820dd71ff64e1" "6d0a48fd812d94910f159c23880f0145c0d0324cc43c2cbf08a3907829711619" "c5a66e8d5c579bb8bc24bfde216c8eb8bdc8e42ec10286443a8369e5ea58dc6c" "10409f46959ade6f875dcbd42443460aab5f071fdd4865475e7002a550636e82" "107523dfa441684e91fcf479c9c4a6556bd6201cbe631cba8f7b5356fce5bfc5" "9728f07d59a9192baeeb4f2ac6ddb0b469dd6a4489818a98516c5d482fe9eba4" "28cd2fd9da1f5d1d023dc53008290070c5b89625de147ae7eb91987f30985937" "e08b999f30ebb71bdb447dcb53ad59769bc2a60a6728eef69f6399d064b1da4c" "d79c093e1ea2482c67acb2e03b49645010291259d623b5e34e4dc1b8efd6470d" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default))))
 #+END_SRC
 
 ** use-package setup
@@ -216,21 +223,20 @@ first column of the buffer. This copies the code from linum's =dynamic=
 linum-format, but adds a space so there is some separation:
 
 #+BEGIN_SRC emacs-lisp
-(setq linum-format
-      (lambda (line-number)
-        (let ((w (length (number-to-string
-                          (count-lines (point-min) (point-max))))))
-          (propertize
-           (format
-            (concat "%" (number-to-string w) "d ")
-            line-number) 'face 'linum))))
+  (setq linum-format
+        (lambda (line-number)
+          (let ((w (length (number-to-string
+                            (count-lines (point-min) (point-max))))))
+            (propertize
+             (format
+              (concat "%" (number-to-string w) "d ")
+              line-number) 'face 'linum))))
 
-;; TODO - I thought use-package would defer the loading of this until I do "ln",
-;; but "ln" doesn't work.
-(use-package linum
-  :defer 1
-  :bind (:map md/leader-map
-         ("tn" . linum-mode)))
+  ;; TODO - I thought use-package would defer the loading of this until I do "ln",
+  ;; but "ln" doesn't work.
+  (use-package linum
+    :bind (:map md/leader-map
+           ("tn" . linum-mode)))
 #+END_SRC
 
 ** Highlight cursor line
@@ -240,46 +246,49 @@ linum-format, but adds a space so there is some separation:
 #+END_SRC
 
 ** Default font
+
 #+BEGIN_SRC emacs-lisp
-  (defvar md/font-size nil)
+  (defvar md/font-size 175)
 
   (defun md/font-size-incr ()
     (interactive)
-    (when md/font-size
-      (setq md/font-size (+ md/font-size 1)))
-    (md/set-default-font))
+    (set-face-attribute 'default nil
+                        :height
+                        (+ (face-attribute 'default :height)
+                           5)))
 
   (defun md/font-size-decr ()
     (interactive)
-    (when md/font-size
-      (setq md/font-size (- md/font-size 1)))
-    (md/set-default-font))
+    (set-face-attribute 'default nil
+                        :height
+                        (- (face-attribute 'default :height)
+                           5)))
 
   (defun md/set-default-font ()
     (interactive)
-    (cond ((s-starts-with-p "mattmbp" (system-name))
-           (when (not md/font-size)
-             (setq md/font-size 13))
-           (set-frame-font (format "Menlo-%s" md/font-size) t t))
-          ((s-starts-with-p "arch" (system-name))
-           (when (not md/font-size)
-             (setq md/font-size 15))
-           (set-frame-font
-            (format "Inconsolata-%s:antialias=subpixel" md/font-size) t t))
-          ((s-starts-with-p "OMETRIA" (system-name))
-           (when (not md/font-size)
-             (setq md/font-size 15))
-           (set-frame-font
-            (format "Inconsolata for Powerline-%s:antialias=subpixel" md/font-size) t t))
-            ;; (format "Menlo-%s" md/font-size) t t))
-          (t
-           (when (not md/font-size)
-             (setq md/font-size 15))
-           (set-frame-font (format "Roboto Mono Light for Powerline-%s:antialias=subpixel" md/font-size) t t))))
+    (set-face-attribute 'default nil
+                        :height md/font-size
+                        :family "Inconsolata")
+    (run-hooks 'after-setting-font-hook 'after-setting-font-hooks))
 
-  ;; TODO add bindings for buffer-only, copying C-x C-+
+
+  ;;   (interactive)
+  ;;   (cond
+  ;;         ((s-starts-with-p "arch" (system-name))
+  ;;          (set-frame-font
+  ;;             (format "Inconsolata-%s:antialias=subpixel" md/font-size) t t))
+  ;;         ((s-starts-with-p "OMETRIA" (system-name))
+  ;;          (set-frame-font
+  ;;           (format "Inconsolata for Powerline-%s:antialias=subpixel" md/font-size) t t))
+  ;;         (t
+  ;;          (set-frame-font (format "Roboto Mono Light for Powerline-%s:antialias=subpixel" md/font-size) t t))))
+
+  ;; ;; TODO add bindings for buffer-only, copying C-x C-+
   (bind-key "+" 'md/font-size-incr md/leader-map)
   (bind-key "-" 'md/font-size-decr md/leader-map)
+
+  ;; Fix for issue where italic fonts don't actually use the italic property.
+  (set-face-attribute 'italic nil :slant 'italic :underline nil)
 #+END_SRC
 
 When using a server with both GUI and terminal clients attached, I want them to
@@ -287,7 +296,7 @@ show their terminal/GUI-specific default fonts:
 
 #+BEGIN_SRC emacs-lisp
   (use-package s :demand t)
-  (add-hook 'focus-in-hook 'md/set-default-font)
+  ;; (add-hook 'focus-in-hook 'md/set-default-font)
   (md/set-default-font)
 #+END_SRC
 
@@ -882,16 +891,15 @@ by using a noop function:
 
 ** Evil surround
 #+BEGIN_SRC emacs-lisp
-(use-package evil-surround
- :config
- (progn
-   (global-evil-surround-mode 1)))
+  (use-package evil-surround
+   :config
+   (progn
+     (global-evil-surround-mode 1)))
 #+END_SRC
 
 ** Easymotion
 #+BEGIN_SRC emacs-lisp
 (use-package ace-jump-mode
-
  :config
  (progn
    (setq
@@ -928,164 +936,13 @@ actually use it to insert anything in insert mode.
       (key-chord-define evil-replace-state-map "jk" 'evil-normal-state)
       (key-chord-mode 1)))
 #+END_SRC
-* Helm
-** Base helm
-- [ ] NOTE - describe-function and describe-variable don't use helm until helm
-  has been configured. Work out how to load helm when they're called.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package helm
-    :defer 5
-    :config
-    (progn
-      ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
-      (helm-mode 1)
-      (helm-autoresize-mode 0)
-      (helm-descbinds-mode 1)
-
-      ;; No need to display the header - it takes up room and doesn't add much.
-      (setq helm-display-header-line t)
-
-      ;; I don't need to know about some files
-      (setq helm-ff-skip-boring-files t)
-      (push "\\.$" helm-boring-file-regexp-list)
-      (push "\\.\\.$" helm-boring-file-regexp-list)
-
-      ;; This lets me quickly ag/grep for "todo" comments using the same
-      ;; ag/grep functions that I usually do.
-      (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
-
-      ;; Put C-j / C-l the sane way around.
-      (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map))
-
-    :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
-           ([remap occur] . helm-occur)
-           ([remap dabbrev-expand] . helm-dabbrev)
-           ([remap list-buffers] . helm-buffers-list)
-           ("M-x" . helm-M-x)
-           ("C-x b" . helm-buffers-list)
-           ("C-x p" . helm-mini)
-
-           :map lisp-interaction-mode-map
-           ([remap completion-at-point] . helm-lisp-completion)
-
-           :map emacs-lisp-mode-map
-           ([remap completion-at-point] . helm-lisp-completion)
-
-           :map md/leader-map
-           ("bb" . helm-buffers-list)
-           ("f" . helm-find-files)
-           ("x" . helm-M-x)
-           ("X" . helm-resume)
-           ("p" . helm-mini)
-
-           :map help-map
-           ("X" . helm-colors)))
-
-#+END_SRC
-
-** Alfred
-#+BEGIN_SRC emacs-lisp
-  (defun md/alfred-source-math ()
-    (helm-build-dummy-source "Math"
-      :requires-pattern t
-      :nohighlight t
-      :nomark t
-      :multimatch nil
-      :pattern-transformer
-      (lambda (p)
-        (format "%s" (ignore-errors (eval (car (read-from-string p))))))
-      :action '(("Math" . (lambda (candidate) nil)))))
-
-
-  (defvar md/alfred-source-search-candidates
-    '(("Google" . ("g" . "https://www.google.co.uk/search?q=%s"))
-      ("DuckDuckGo" . ("d" . "https://www.duckduckgo.com/?q=%s"))))
-
-  (defun md/alfred-source-search ()
-    (helm-build-sync-source "Search"
-      :nohighlight t
-      :nomark t
-      :multimatch nil
-      :requires-pattern t
-      :candidates md/alfred-source-search-candidates
-      :match '((lambda (candidate)
-                 (message "pattern: %s / candidate: %s / result: %s" helm-pattern candidate
-                          (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern))))
-                 (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern)))))
-      :fuzzy-match nil
-      :action '(("Search" . (lambda (candidate)
-                              (message "action candidate: %s / val: %s" candidate (string-remove-prefix (format "%s " (car (split-string helm-pattern))) helm-pattern))
-                              (browse-url (format (cdr candidate)  ;; the url
-                                                  (url-hexify-string
-                                                   ;; This removes the "g " part from the string
-                                                   (string-remove-prefix (format "%s " (car (split-string helm-pattern))) helm-pattern)
-                                                   ))))))))
-
-
-  (defun md/alfred ()
-    (interactive)
-    (with-current-buffer (get-buffer-create "*alfred*")
-      (let ((frame (make-frame '((name . "alfred")
-                                 (auto-raise . t)
-                                 ;; (background-color . "DeepSkyBlue3")
-                                 ;; (cursor-color . "MediumPurple1")
-                                 ;; (font . "Menlo 15")
-                                 ;; (foreground-color . "#eeeeec")
-                                 (height . 10)
-                                 (internal-border-width . 20)
-                                 (left . 0.33)
-                                 (left-fringe . 0)
-                                 (line-spacing . 3)
-                                 (menu-bar-lines . 0)
-                                 ;; (minibuffer . only)
-                                 (right-fringe . 0)
-                                 (tool-bar-lines . 0)
-                                 (top . 48)
-                                 ;; enable this to remove frame border
-                                 (undecorated . nil)
-                                 (unsplittable . t)
-                                 (vertical-scroll-bars . nil)
-                                 (width . 110))))
-            (alert-hide-all-notifications t)
-            (inhibit-message t)
-            (mode-line-format nil)
-            (helm-mode-line-string nil)
-            (helm-full-frame t)
-            ;;(helm-echo-input-in-header-line t)
-            (helm-display-header-line nil)
-            (helm-use-undecorated-frame-option nil))
-        (helm :sources (list (md/alfred-source-search) (md/alfred-source-math))
-              :prompt ""
-              :buffer "*alfred*")
-        (delete-frame frame)
-        ;; For some reason without killing the buffer it messes up future state.
-        (kill-buffer (current-buffer))
-        (x-urgency-hint (selected-frame) nil))))
-#+END_SRC
-
-** COMMENT helm-ag (not using anymore)
-#+BEGIN_SRC emacs-lisp
-  (use-package helm-ag
-    :defer 5
-    :config
-    (defun md/ag ()
-      "Run helm-do-ag on the default-directory"
-      (interactive)
-      (helm-do-ag default-directory))
-    :bind (:map md/leader-map
-                ("ag" . md/ag)))
-#+END_SRC
 * Help
 ** help-fns+
 This package provides ~describe-keymap~ to M-k in the help-map, which is
 handy. It does some other things too (TODO - read docs).
 
 #+BEGIN_SRC emacs-lisp
-  (use-package help-fns+ :defer 1)
+  (use-package help-fns+ :defer 1 :demand t)
 #+END_SRC
 
 ** Help mode
@@ -1100,7 +957,6 @@ I prefer to use vi keys to navigate help-mode:
     (kbd "<RET>") 'help-follow-symbol)
 #+END_SRC
 
-
 ** helpful (https://github.com/Wilfred/helpful)
 
 Alternative to the main "describe-function/command" functions, which displays
@@ -1113,6 +969,7 @@ it's nicer than the default.
     (quit-window t))
 
   (use-package helpful
+    :demand t
     :defer 1
     :config
     (progn
@@ -1125,7 +982,6 @@ it's nicer than the default.
       (evil-define-key 'normal helpful-mode-map
         "q" 'md/quit-and-kill-window)))
 #+END_SRC
-
 
 ** Which-key
 
@@ -1210,6 +1066,7 @@ easier to discover features / work out where I am:
 
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
+    :demand t
     :defer 2
     :load-path "non-elpa/emacs-which-key"
     :config (progn
@@ -1328,6 +1185,7 @@ This is handy sometimes - it provides ~free-keys~, which lists unbound keys.
 
 #+BEGIN_SRC emacs-lisp
   (use-package free-keys
+    :demand t
     :defer 10
     :config
       (progn
@@ -1420,6 +1278,7 @@ Company seems to work nicely without much configuration.
 
 #+BEGIN_SRC emacs-lisp
   (use-package company
+    :demand t
     :defer 2
     :config
     (progn
@@ -1440,6 +1299,7 @@ Company seems to work nicely without much configuration.
 ** Flycheck
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
+    :demand t
     :init
     (progn
       (add-hook 'prog-mode-hook 'flycheck-mode))
@@ -1497,6 +1357,7 @@ Company seems to work nicely without much configuration.
 *** Base projectile
 #+BEGIN_SRC emacs-lisp
   (use-package projectile
+    :demand t
     :config
     (progn
       (setq projectile-file-exists-local-cache-expire 30
@@ -1636,6 +1497,7 @@ eg. one terminal popwin per project.
 ** Dumb-jump
 #+BEGIN_SRC emacs-lisp
   (use-package dumb-jump
+    :demand t
     :config
     (dumb-jump-mode 1)
     (setq dumb-jump-selector 'helm
@@ -1734,26 +1596,27 @@ eg. one terminal popwin per project.
 ** Highlight keywords in comments
 
 #+BEGIN_SRC emacs-lisp
-(use-package fic-mode
- :defer 1
- :init
- (progn
-   (add-hook 'prog-mode-hook 'fic-mode))
- :config
- (progn
-   ;; NOTE: fic-mode doesn't seem to fontify the buffer, so words don't appear
-   ;; highlighted unless either something else fontifies the buffer, or we do it
-   ;; manually. Would like to improve this.
-   ;;
-   ;; FIX: fic-mode doesn't seem to identify words on the same line as my cursor
-   ;; when I change theme and then fontify the buffer. All other lines seem fine.
+  (use-package fic-mode
+   :demand t
+   :defer 1
+   :init
+   (progn
+     (add-hook 'prog-mode-hook 'fic-mode))
+   :config
+   (progn
+     ;; NOTE: fic-mode doesn't seem to fontify the buffer, so words don't appear
+     ;; highlighted unless either something else fontifies the buffer, or we do it
+     ;; manually. Would like to improve this.
+     ;;
+     ;; FIX: fic-mode doesn't seem to identify words on the same line as my cursor
+     ;; when I change theme and then fontify the buffer. All other lines seem fine.
 
-   (setq fic-highlighted-words
-         '("TODO" "FIX" "FIXME" "BUG" "WARN" "WARNING" "HACK" "NOTE" "ERROR" "MATT" "DEPRECATED" "BREAKPOINT"))
+     (setq fic-highlighted-words
+           '("TODO" "FIX" "FIXME" "BUG" "WARN" "WARNING" "HACK" "NOTE" "ERROR" "MATT" "DEPRECATED" "BREAKPOINT"))
 
-   ;; By default this includes font-lock-string-face, but I don't want strings to
-   ;; have these words formatted.
-   (setq fic-activated-faces '(font-lock-doc-face font-lock-comment-face))))
+     ;; By default this includes font-lock-string-face, but I don't want strings to
+     ;; have these words formatted.
+     (setq fic-activated-faces '(font-lock-doc-face font-lock-comment-face))))
 #+END_SRC
 
 I can use this with grep/ag to quickly find the todo comments:
@@ -1841,7 +1704,6 @@ I can use this with grep/ag to quickly find the todo comments:
 
 #+BEGIN_SRC emacs-lisp
   (use-package hideshow
-    :demand t
     :config (progn
               (add-hook 'hs-minor-mode-hook 'hs-hide-all)
               (add-hook 'prog-mode-hook 'hs-minor-mode)
@@ -1859,7 +1721,6 @@ I can use this with grep/ag to quickly find the todo comments:
 
 
   (use-package hideshow-orgmode
-    :demand t
     :config (progn
               (defun md/hideshow-add-bindings (keymap)
                 (evil-define-key 'normal keymap
@@ -1895,7 +1756,6 @@ I can use this with grep/ag to quickly find the todo comments:
 #+BEGIN_SRC emacs-lisp
   ;; outline-magic provides org-cycle
   (use-package outline-magic
-    :demand t
     :config
     (progn
      ;; TODO update hideshow-org? Think it accomplishes similar thing.
@@ -1962,6 +1822,34 @@ the underlying terminal (ie. I get the usual readline bindings).
   (evil-set-initial-state 'ansi-term-mode 'emacs)
   (evil-set-initial-state 'term-mode 'emacs)
 #+END_SRC
+** Neotree
+
+
+#+BEGIN_SRC emacs-lisp
+  (use-package neotree
+    :demand t
+    :config
+    (progn
+      (evil-set-initial-state 'neotree-mode 'normal)
+      (setq neo-theme 'nerd neo-smart-open t neo-show-hidden-files
+            t)
+
+      (bind-key "N" 'neotree-toggle md/leader-map)
+      (evil-define-key 'normal neotree-mode-map (kbd "J") 'neotree-dir)
+      (evil-define-key 'normal neotree-mode-map (kbd "q") 'neotree-hide)
+      (evil-define-key 'normal neotree-mode-map (kbd "r") 'neotree-refresh)
+      (evil-define-key 'normal neotree-mode-map (kbd "RET") 'neotree-enter)
+      (evil-define-key 'normal neotree-mode-map (kbd "TAB") 'neotree-quick-look)
+      (evil-define-key 'normal neotree-mode-map (kbd "'") 'neotree-stretch-toggle)
+      (evil-define-key 'normal neotree-mode-map (kbd "H") 'neotree-select-up-node)
+      (evil-define-key 'normal neotree-mode-map (kbd "L") 'neotree-change-root)
+      (evil-define-key 'normal neotree-mode-map (kbd "h") 'neotree-enter)
+      (evil-define-key 'normal neotree-mode-map (kbd "l") 'neotree-enter)
+      (evil-define-key 'normal neotree-mode-map (kbd "C-c C-c")
+        'neotree-change-root))
+    :bind (:map md/leader-map
+                (";d" . neotree-toggle)))
+#+END_SRC
 * Language support
 ** Emacs-lisp
 
@@ -2011,7 +1899,7 @@ the underlying terminal (ie. I get the usual readline bindings).
   ;;
   ;; Provides some enhancements to edebug mode. Doesn't look like it is
   ;; maintained, but it's useful even if just for the syntax highlighting.
-  (use-package edebug-x)
+  (use-package edebug-x :demand t)
 
   (defun md/toggle-debug-on-error ()
     (interactive)
@@ -2073,7 +1961,7 @@ Override the edebug keymap to only contain features/keys that I care about:
     (setq-local fill-column 90))
   (add-hook 'python-mode-hook 'md/python-mode-hook)
 
-  (use-package find-file) ;; builtin, provides ff-basename
+  (use-package find-file :demand t) ;; builtin, provides ff-basename
   (defun md/refresh-python-path ()
     (interactive)
     (when (f-directory? "/server/apps")
@@ -2139,10 +2027,10 @@ Override the edebug keymap to only contain features/keys that I care about:
                 ("SPC I" . py-isort-buffer)))
 
   ;; Provide company completion for anaconda
-  (use-package company-anaconda)
+  (use-package company-anaconda :demand t)
 
   ;; Syntax and completion for pip requirements files.
-  (use-package pip-requirements)
+  (use-package pip-requirements :demand t)
 
   (use-package pytest
     :commands (pytest-all pytest-one pytest-failed pytest-pdb-one pytest-pdb-all)
@@ -2219,6 +2107,7 @@ I sometimes see issues where git opens emacsclient in Fundamental mode. Making
 
 #+BEGIN_SRC emacs-lisp
   (use-package git-commit
+    :demand t
     :config
     (progn
       (defun md/git-commit-set-fill-column ()
@@ -2231,6 +2120,7 @@ I sometimes see issues where git opens emacsclient in Fundamental mode. Making
 *** git-gutter
 #+BEGIN_SRC emacs-lisp
   (use-package git-gutter
+   :demand t
    :init
    (progn
      (defun md/set-sensible-column ()
@@ -2297,6 +2187,7 @@ I sometimes see issues where git opens emacsclient in Fundamental mode. Making
 *** magit
 #+BEGIN_SRC emacs-lisp
   (use-package magit
+   :demand t
    :config
    (progn
      (evil-set-initial-state 'magit-blame-mode 'normal)
@@ -2373,6 +2264,7 @@ I miss :Gbrowse from fugitive:
 
 #+BEGIN_SRC emacs-lisp
   (use-package github-browse-file
+    :demand t
     :config
     (progn
       (setq github-browse-file-show-line-at-point t))
@@ -2429,26 +2321,30 @@ I miss :Gbrowse from fugitive:
 
 ** PHP
 #+BEGIN_SRC emacs-lisp
-	(use-package php-mode
-		:config (progn
-				(defun md/ometria-php-mode-hook ()
-					(when (s-starts-with-p "OMETRIA" (system-name))
-					(setq-local indent-tabs-mode t)
-					(setq-local tab-width 4))
-					;;(whitespace-mode)
-					;; Don't auto indent as php indentation doesn't match existing conventions
-					;; on om.console
-					(electric-indent-mode -1))
+  (use-package php-mode
+      :demand t
+      :config (progn
+              (defun md/ometria-php-mode-hook ()
+                  (when (s-starts-with-p "OMETRIA" (system-name))
+                  (setq-local indent-tabs-mode t)
+                  (setq-local tab-width 4))
+                  ;;(whitespace-mode)
+                  ;; Don't auto indent as php indentation doesn't match existing conventions
+                  ;; on om.console
+                  (electric-indent-mode -1))
 
-				(add-hook 'php-mode-hook 'md/ometria-php-mode-hook)))
+              (add-hook 'php-mode-hook 'md/ometria-php-mode-hook)))
 #+END_SRC
 ** Golang
 #+BEGIN_SRC emacs-lisp
   (when (not (getenv "GOPATH"))
-   (setenv "GOPATH" "/Users/matt/golang")
-   (setenv "GO15VENDOREXPERIMENT" "1"))
+    (if (string= (system-name) "arch")
+        (setenv "GOPATH" "/f/users/matt/golang")
+      (setenv "GOPATH" "/Users/matt/golang"))
+    (setenv "GO15VENDOREXPERIMENT" "1"))
 
   (use-package go-mode
+    :demand t
     :config
     (progn
       (add-hook 'before-save-hook 'gofmt-before-save)
@@ -2464,12 +2360,12 @@ I miss :Gbrowse from fugitive:
                 ("SPC =" . gofmt)))
 
   (use-package company-go
+    :demand t
     :init
     (progn
       (add-hook 'go-mode-hook
                 (lambda ()
                   (set (make-local-variable 'company-backends) '(company-go))))))
-
 #+END_SRC
 
 ** MIT Scheme
@@ -2479,6 +2375,7 @@ I miss :Gbrowse from fugitive:
 #+BEGIN_SRC emacs-lisp
 
   (use-package scheme
+    :demand t
     :config
     (progn
       ;; For SICP
@@ -2520,13 +2417,13 @@ Not sure if this provides anything beyond syntax highlighting, but that's enough
 for now:
 
 #+BEGIN_SRC emacs-lisp
-  (use-package yaml-mode)
+  (use-package yaml-mode :demand t)
 #+END_SRC
 
 ** Lua
 
 #+BEGIN_SRC emacs-lisp
-  (use-package lua-mode)
+  (use-package lua-mode :demand t)
 #+END_SRC
 
 ** Terraform
@@ -2635,6 +2532,14 @@ org headings:
     (progn
 #+END_SRC
 
+** org-download
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-download :demand t
+    :config (progn
+              (org-download-enable)))
+#+END_SRC
+
 ** General setup
 
 #+BEGIN_SRC emacs-lisp
@@ -2689,6 +2594,13 @@ org headings:
         ;; Use UTF-8 ellipsis character
         org-ellipsis "…"
 
+        ;; Don't display the bold/underline/emphasis markup
+        org-hide-emphasis-markers t
+
+        org-pretty-entities nil
+        org-fontify-quote-and-verse-blocks t
+        org-image-actual-width 400
+
         ;; If press M-RET I want a new line, not to split the line
         org-M-RET-may-split-line nil)
 
@@ -2722,8 +2634,7 @@ org headings:
   (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm evil-insert-state-map)
 
   (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
-
-
+  (bind-key "C-c L" 'org-download-yank org-mode-map)
 #+END_SRC
 
 ** Leader
@@ -2746,6 +2657,7 @@ org headings:
   (bind-key "SPC t" 'org-todo md/org-mode-leader-map)
   (bind-key "SPC c" 'org-ctrl-c-ctrl-c md/org-mode-leader-map)
   (bind-key "SPC l" 'md/org-insert-link-from-paste md/org-mode-leader-map)
+  (bind-key "SPC L" 'org-download-yank md/org-mode-leader-map)
   (bind-key "SPC O" 'org-open-at-point md/org-mode-leader-map)
 
   ;; Global org leader bindings
@@ -2777,8 +2689,8 @@ org headings:
                      (with-temp-buffer
                        (evil-paste-after nil)
                        (delete-trailing-whitespace)
-                       (buffer-string))))
-
+                       (buffer-string))
+                     (read-string "Description: ")))
 
   (defun md/org-back-to-top-level-heading ()
     "Go back to the current top level heading."
@@ -2819,26 +2731,26 @@ org headings:
     "
     (save-excursion
       (let* ((deadline-time (org-get-deadline-time (point)
-                                                      md/org-inherit-dates-p))
+                                                   md/org-inherit-dates-p))
              (days (if deadline-time
                        (time-to-number-of-days
                         (time-subtract deadline-time (org-current-effective-time))))))
-          (if (funcall user-fn days)  ; Returns t if we should skip
-              (md/org-agenda-skip-rtn-point))
-          )))
+        (if (funcall user-fn days)  ; Returns t if we should skip
+            (md/org-agenda-skip-rtn-point))
+        )))
 
   (defun md/org-skip-if-scheduled-in-days (user-fn)
     "This function is just like org-skip-if-deadline-in-days, but
   uses the scheduled property rather than the deadline."
     (save-excursion
       (let* ((scheduled-time (org-get-scheduled-time (point)
-                                                      md/org-inherit-dates-p))
+                                                     md/org-inherit-dates-p))
              (days (if scheduled-time
                        (time-to-number-of-days
                         (time-subtract scheduled-time (org-current-effective-time))))))
-          (if (funcall user-fn days)  ; Returns t if we should skip
-              (md/org-agenda-skip-rtn-point))
-          )))
+        (if (funcall user-fn days)  ; Returns t if we should skip
+            (md/org-agenda-skip-rtn-point))
+        )))
 
   (defun md/org-skip-if-priority-level (user-fn)
     "Utility function that can be used for org-agenda-skip-function. It calls
@@ -2862,13 +2774,13 @@ org headings:
     "
     (save-excursion
       (let (top bottom)
-          (setq bottom (save-excursion (org-end-of-subtree t) (point)))
-          (setq top (save-excursion (md/org-back-to-top-level-heading) (point)))
-          (if
-              (re-search-backward (format org-heading-keyword-regexp-format keyword) top t)
-              nil
+        (setq bottom (save-excursion (org-end-of-subtree t) (point)))
+        (setq top (save-excursion (md/org-back-to-top-level-heading) (point)))
+        (if
+            (re-search-backward (format org-heading-keyword-regexp-format keyword) top t)
+            nil
           (md/org-agenda-skip-rtn-point))
-          )))
+        )))
 #+END_SRC
 
 ** evil-org-mode
@@ -2940,6 +2852,12 @@ bindings copied directly from emacs-mode.
     (org-agenda-quit)
     (shackle--eyebrowse-close-slot-by-tag "agenda"))
 
+  (defun md/org-agenda-todo ()
+    "Wrap org-agenda-todo but always use the prefix. Saves me pressing C-u."
+    (interactive)
+    (setq current-prefix-arg '(4))  ; C-u
+    (call-interactively 'org-agenda-todo))
+
   (evil-set-initial-state 'org-agenda-mode 'normal)
 
   (evil-define-key 'normal md/evil-org-agenda-mode-map
@@ -2949,17 +2867,20 @@ bindings copied directly from emacs-mode.
     (kbd "C-n") 'org-agenda-next-line
     (kbd "k") 'org-agenda-previous-line
     (kbd "p") 'org-agenda-previous-line
-    (kbd "c") 'org-agenda-capture
     (kbd "C-p") 'org-agenda-previous-line
 
     (kbd "RET") 'org-agenda-goto
+
+    (kbd "T") 'md/org-agenda-todo
+    (kbd "E") 'org-agenda-set-effort
+    (kbd "R") 'org-agenda-refile
+    (kbd "c") 'org-agenda-set-tags
 
     (kbd "]") 'org-agenda-later
     (kbd "[") 'org-agenda-earlier
 
     (kbd "q") 'md/org-agenda-quit
     (kbd "r") 'md/org-gcal-fetch-and-agenda-redo  ; Recalculate the agenda
-    (kbd "R") 'org-agenda-refile
     (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view - toggle archived, logs, clocks etc.
     (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
     (kbd "/") 'org-agenda-filter-by-regexp  ; Search
@@ -3166,6 +3087,7 @@ Set Latex options to colour the links to blue by default:
     "Always refresh gcal token before fetching, as it expires every hour"
     (interactive)
     (ignore-errors ;; Error is thrown if token doesn't already exist in the gcal file
+      ;; TODO could this only prompt once per hour?
       (org-gcal-refresh-token))
     (sleep-for 1)
     (org-gcal-fetch))
@@ -3208,7 +3130,7 @@ Set Latex options to colour the links to blue by default:
     (progn
       (add-hook 'org-mode-hook 'org-bullets-mode)
 
-      (setq org-bullets-bullet-list '(
+      (setq   org-bullets-bullet-list '(
                                       ;;"❆"
                                       "✸"
                                       "◎"
@@ -3220,11 +3142,252 @@ Set Latex options to colour the links to blue by default:
                                       "◦"
                                       ))))
 #+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (defvar md/org-toggle-list-utf-val t)
+
+  (defun md/org-list-utf-enable ()
+    ;; TODO: use different pretty icons for each indent level?
+    (interactive)
+    (font-lock-add-keywords 'org-mode
+                            '(("^ *\\([-]\\) "
+                               (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+    (setq md/org-toggle-list-utf-val t)
+    (when (string= major-mode "org-mode") (org-mode-restart))
+    (message "List list-utf enabled"))
+
+  (defun md/org-list-utf-disable ()
+    (interactive)
+    (font-lock-remove-keywords 'org-mode
+                               '(("^ *\\([-]\\) "
+                                  (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+    (setq md/org-toggle-list-utf-val nil)
+    (when (string= major-mode "org-mode") (org-mode-restart))
+    (message "List list-utf disabled"))
+
+  (defun md/org-toggle-list-utf ()
+    (interactive)
+    (if md/org-toggle-list-utf-val (md/org-list-utf-disable) (md/org-list-utf-enable)))
+#+END_SRC
+
 ** use-package wrapper *END*
 Close the use-package wrapper:
 
 #+BEGIN_SRC emacs-lisp
 ))
+#+END_SRC
+* Helm
+** Base helm
+- [ ] NOTE - describe-function and describe-variable don't use helm until helm
+  has been configured. Work out how to load helm when they're called.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package helm
+    :demand t
+    :defer 5
+    :config
+    (progn
+      ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
+      (helm-mode 1)
+      (helm-autoresize-mode 0)
+      (helm-descbinds-mode 1)
+
+      ;; No need to display the header - it takes up room and doesn't add much.
+      (setq helm-display-header-line t)
+
+      ;; I don't need to know about some files
+      (setq helm-ff-skip-boring-files t)
+      (push "\\.$" helm-boring-file-regexp-list)
+      (push "\\.\\.$" helm-boring-file-regexp-list)
+
+      ;; This lets me quickly ag/grep for "todo" comments using the same
+      ;; ag/grep functions that I usually do.
+      (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
+
+      ;; Put C-j / C-l the sane way around.
+      (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
+      (bind-key "C-l" 'helm-execute-persistent-action helm-map)
+      (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
+      (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map))
+
+    :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
+           ([remap occur] . helm-occur)
+           ([remap dabbrev-expand] . helm-dabbrev)
+           ([remap list-buffers] . helm-buffers-list)
+           ("M-x" . helm-M-x)
+           ("C-x b" . helm-buffers-list)
+           ("C-x p" . helm-mini)
+
+           :map lisp-interaction-mode-map
+           ([remap completion-at-point] . helm-lisp-completion)
+
+           :map emacs-lisp-mode-map
+           ([remap completion-at-point] . helm-lisp-completion)
+
+           :map md/leader-map
+           ("bb" . helm-buffers-list)
+           ("f" . helm-find-files)
+           ("x" . helm-M-x)
+           ("X" . helm-resume)
+           ("p" . helm-mini)
+
+           :map help-map
+           ("X" . helm-colors)))
+
+#+END_SRC
+
+** Alfred
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/alfred-source-math ()
+    (helm-build-dummy-source "Math"
+      :requires-pattern t
+      :nohighlight t
+      :nomark t
+      :multimatch nil
+      :pattern-transformer
+      (lambda (p)
+        (format "%s" (ignore-errors (eval (car (read-from-string p))))))
+      :action '(("Math" . (lambda (candidate) nil)))))
+
+  (defvar md/alfred-source-search-candidates
+    '(("Google" . ("g" . "https://www.google.co.uk/search?q=%s"))
+      ("DuckDuckGo" . ("d" . "https://www.duckduckgo.com/?q=%s"))
+      ("Dictionary.com" . ("spell" . "https://www.dictionary.com/browse/%s"))))
+
+  (defun md/strip-first-word (s)
+    (string-remove-prefix (format "%s " (car (split-string s))) s))
+
+  (defun md/alfred-source-search ()
+    (helm-build-sync-source "Search"
+      :nohighlight t
+      :nomark t
+      :multimatch nil
+      :requires-pattern t
+      :candidates md/alfred-source-search-candidates
+      :match '((lambda (candidate)
+                 ;;(message "pattern: %s / candidate: %s / result: %s" helm-pattern candidate
+                 ;;         (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern))))
+                 (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern)))))
+      :fuzzy-match nil
+      :filtered-candidate-transformer '((lambda (candidates source)
+                                         (map 'list (lambda (c) (cons (format "%s: %s" (car c) (md/strip-first-word helm-pattern)) (cdr c))) candidates)))
+      :action '(("Search" . (lambda (candidate)
+                              ;;(message "action candidate: %s / val: %s" candidate (string-remove-prefix (format "%s " (car (split-string helm-pattern))) helm-pattern))
+                              (browse-url (format (cdr candidate)  ;; the url
+                                                  (url-hexify-string
+                                                   ;; This removes the "g " part from the string
+                                                   (md/strip-first-word helm-pattern)))))))))
+
+  (defun md/alfred-source-web-bookmarks ()
+    (helm-build-sync-source "Web Bookmarks"
+      :multimatch nil
+      :requires-pattern nil
+      :candidates '(("Gmail" . "https://mail.google.com")
+                    ("Google Calendar" . "https://calendar.google.com")
+                    ("Slack: emacs.london" . "https://app.slack.com/client/TJ29PTDDX")
+                    ("Emacs.london" . "https://emacs.london")
+                    ("RSS" . "https://tt.mattduck.com")
+                    ("Github" . "https://github.com/"))
+      :action '(("Open" . (lambda (candidate) (browse-url candidate))))))
+
+  (defun md/alfred-source-apps ()
+    (helm-build-sync-source "Apps"
+      :multimatch nil
+      :requires-pattern nil
+      :candidates (lambda ()
+                    (-map
+                     (lambda (item)
+                       (s-chop-suffix ".desktop" item))
+                       (-filter (lambda (d) (not (or (string= d ".") (string= d ".."))))
+                                (directory-files "/usr/share/applications"))))
+      :action '(("Launch" . (lambda (candidate)
+                              (shell-command (concat "gtk-launch " candidate " >/dev/null 2>&1 & disown") nil nil))))))
+
+  (defun md/alfred-source-system ()
+    (helm-build-sync-source "System"
+      :multimatch nil
+      :requires-pattern nil
+      :candidates '(("Lock" . "i3lock -c 282828")
+                    ("Sleep" . "systemctl suspend -i")
+                    ("Restart" . "systemctl reboot -i")
+                    ("Shutdown" . "systemctl poweroff -i"))
+      :action '(("Execute" . (lambda (candidate)
+                               (shell-command (concat candidate " >/dev/null 2>&1 & disown") nil nil))))))
+
+  (defun md/alfred-source-i3 ()
+    (helm-build-sync-source "i3 Workspace"
+      :multimatch nil
+      :requires-pattern nil
+      :candidates (lambda ()
+                    (s-split "\n"
+                             (with-temp-buffer
+                               ;; List workspaces
+                               (shell-command "i3-msg -t get_workspaces | jq '.[] | .name'   | cut -d\"\\\"\" -f2" (current-buffer) nil)
+                               (buffer-string)) t))
+      :action '(("Goto" . (lambda (candidate)
+                            (shell-command (concat "i3-msg workspace " candidate " >/dev/null 2>&1 & disown")))))))
+
+  (defun md/alfred-source-i3-new-ws ()
+    (helm-build-dummy-source "i3 New Workspace"
+      :action '(("Goto" . (lambda (candidate)
+                            (shell-command (concat "i3-msg workspace " candidate " >/dev/null 2>&1 & disown")))))))
+
+  (defun md/alfred ()
+    (interactive)
+    (with-current-buffer (get-buffer-create "*alfred*")
+      (let ((frame (make-frame '((name . "alfred")
+                                 (window-system . x)
+                                 (auto-raise . t)
+                                 (height . 10)
+                                 ;; (border-color . "DeepSkyBlue3")
+                                 ;; (border-width . 30)
+                                 (internal-border-width . 20)
+                                 (left . 0.33)
+                                 (left-fringe . 0)
+                                 (line-spacing . 3)
+                                 (menu-bar-lines . 0)
+                                 (right-fringe . 0)
+                                 (tool-bar-lines . 0)
+                                 (top . 48)
+                                 ;; enable this to remove frame border
+                                 (undecorated . nil)
+                                 (unsplittable . t)
+                                 (vertical-scroll-bars . nil)
+                                 (width . 110))))
+            (alert-hide-all-notifications t)
+            (inhibit-message t)
+            (mode-line-format nil)
+            (helm-mode-line-string nil)
+            (helm-full-frame t)
+            (helm-display-header-line nil)
+            (helm-use-undecorated-frame-option nil))
+        (helm :sources (list (md/alfred-source-i3)
+                             (md/alfred-source-system)
+                             (md/alfred-source-apps)
+                             (md/alfred-source-web-bookmarks)
+                             (md/alfred-source-search)
+                             (md/alfred-source-i3-new-ws))
+              :prompt ""
+              :buffer "*alfred*")
+        (delete-frame frame)
+        ;; For some reason without killing the buffer it messes up future state.
+        (kill-buffer (current-buffer))
+        ;; I don't want this to cause the main frame to flash
+        (x-urgency-hint (selected-frame) nil))))
+#+END_SRC
+
+** COMMENT helm-ag (not using anymore)
+#+BEGIN_SRC emacs-lisp
+  (use-package helm-ag
+    :defer 5
+    :config
+    (defun md/ag ()
+      "Run helm-do-ag on the default-directory"
+      (interactive)
+      (helm-do-ag default-directory))
+    :bind (:map md/leader-map
+                ("ag" . md/ag)))
 #+END_SRC
 
 * Annotate mode
@@ -3311,34 +3474,6 @@ causes it to jump out of the popwin window.
 (use-package dired-single
   :demand t)
 
-#+END_SRC
-* Neotree
-
-
-#+BEGIN_SRC emacs-lisp
-  (use-package neotree
-    :demand t
-    :config
-    (progn
-      (evil-set-initial-state 'neotree-mode 'normal)
-      (setq neo-theme 'nerd neo-smart-open t neo-show-hidden-files
-            t)
-
-      (bind-key "N" 'neotree-toggle md/leader-map)
-      (evil-define-key 'normal neotree-mode-map (kbd "J") 'neotree-dir)
-      (evil-define-key 'normal neotree-mode-map (kbd "q") 'neotree-hide)
-      (evil-define-key 'normal neotree-mode-map (kbd "r") 'neotree-refresh)
-      (evil-define-key 'normal neotree-mode-map (kbd "RET") 'neotree-enter)
-      (evil-define-key 'normal neotree-mode-map (kbd "TAB") 'neotree-quick-look)
-      (evil-define-key 'normal neotree-mode-map (kbd "'") 'neotree-stretch-toggle)
-      (evil-define-key 'normal neotree-mode-map (kbd "H") 'neotree-select-up-node)
-      (evil-define-key 'normal neotree-mode-map (kbd "L") 'neotree-change-root)
-      (evil-define-key 'normal neotree-mode-map (kbd "h") 'neotree-enter)
-      (evil-define-key 'normal neotree-mode-map (kbd "l") 'neotree-enter)
-      (evil-define-key 'normal neotree-mode-map (kbd "C-c C-c")
-        'neotree-change-root))
-    :bind (:map md/leader-map
-                (";d" . neotree-toggle)))
 #+END_SRC
 * Restclient
 For 80% of use-cases, I think [[https://github.com/pashky/restclient.el][restclient]] will be more convenient than Postman.
@@ -3506,509 +3641,75 @@ This is the body
           sendmail-program "/usr/local/bin/msmtp"))
 
 #+END_SRC
-* Window manager
-** COMMENT Elscreen
 
-Elscreen provides "tabs" that let me sort of arrange windows how I did it in
-vim. They're not ideal though, because the tabs either appear in several places
-on the screen, or nowhere.
-
+* Feeds
 #+BEGIN_SRC emacs-lisp
-  (use-package elscreen
-   :defer 1
-   :config
-   (progn
-     (defun md/elscreen-display-tabs ()
-       (interactive)
-       (setq elscreen-display-tab t
-             elscreen-tab-display-kill-screen nil
-             elscreen-tab-display-control nil)
-
-       ;; This is how elscreen redraws
-       (elscreen-notify-screen-modification 'force))
-
-     (md/elscreen-display-tabs)))
-#+END_SRC
-
-** COMMENT Popwin
-
-https://github.com/m2ym/popwin-el.
-
-Popwin helps bring some sanity to Emacs windows. By default, Emacs tends to
-clobber the windows that I'm working on with various other applications
-(eg. for help, flycheck, shell/term). Popwin lets me contain all of these
-less-important buffers in a single window and then dismiss it. This way they
-don't interfere with the buffers I'm actually working on.
-
-It hasn't been maintained for a while, but hopefully I won't see too many rough
-edges.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package popwin
+  (use-package elfeed
     :demand t
     :config
     (progn
-      (defun md/popwin-toggle ()
-        "Either close popwin or open it in its last buffer"
+      (setq elfeed-search-title-max-width 110
+            elfeed-search-filter "@2-weeks-ago -hidden")
+
+      (add-hook 'elfeed-new-entry-hook
+                (elfeed-make-tagger :before "1 month ago"
+                                    :remove 'unread))
+
+      (defun md/elfeed-search-toggle-unread ()
         (interactive)
-        (if popwin:focus-window
-            (popwin:close-popup-window)
-          (popwin:display-last-buffer)))
+        (elfeed-search-toggle-all 'unread))
 
-      (defun md/popwin-org ()
+      (defun md/elfeed-search-toggle-hide ()
         (interactive)
-        (when popwin:focus-window (popwin:close-popup-window))
-        (if (get-buffer "index.org")
-            (popwin:display-buffer "index.org")
-          (message "No buffer: index.org")))
+        (elfeed-search-toggle-all 'hidden))
 
-      (defun md/popwin-scratch ()
-        (interactive)
-        (when popwin:focus-window (popwin:close-popup-window))
-        (popwin:display-buffer "*scratch*"))
+      (evil-set-initial-state 'elfeed-search-mode 'emacs)
+      (md/make-keymap-noop elfeed-search-mode-map)
+      (bind-key "SPC" md/leader-map elfeed-search-mode-map)
+      (bind-key "C-h" help-mode-map elfeed-search-mode-map)
+      (bind-key "q" 'elfeed-search-quit-window elfeed-search-mode-map)
+      (bind-key "j" 'evil-next-visual-line elfeed-search-mode-map)
+      (bind-key "n" 'evil-next-visual-line elfeed-search-mode-map)
+      (bind-key "C-n" 'evil-next-visual-line elfeed-search-mode-map)
+      (bind-key "k" 'evil-previous-visual-line elfeed-search-mode-map)
+      (bind-key "p" 'evil-previous-visual-line elfeed-search-mode-map)
+      (bind-key "C-p" 'evil-previous-visual-line elfeed-search-mode-map)
+      (bind-key "C-f" 'evil-scroll-page-down elfeed-search-mode-map)
+      (bind-key "C-b" 'evil-scroll-page-up elfeed-search-mode-map)
+      (bind-key "C-d" 'evil-scroll-down elfeed-search-mode-map)
+      (bind-key "l" 'elfeed-search-show-entry elfeed-search-mode-map)
+      (bind-key "o" 'elfeed-search-browse-url elfeed-search-mode-map)
+      (bind-key "r" 'elfeed-search-update--force elfeed-search-mode-map)
+      (bind-key "R" 'elfeed-search-fetch elfeed-search-mode-map)
+      (bind-key "|" 'elfeed-search-clear-filter elfeed-search-mode-map)
+      (bind-key "/" 'elfeed-search-set-filter elfeed-search-mode-map)
+      (bind-key "g" 'elfeed-search-first-entry elfeed-search-mode-map)
+      (bind-key "G" 'elfeed-search-last-entry elfeed-search-mode-map)
+      (bind-key "u" 'md/elfeed-search-toggle-unread elfeed-search-mode-map)
+      (bind-key "H" 'md/elfeed-search-toggle-hide elfeed-search-mode-map)
 
-      (defun md/popwin-messages ()
-        (interactive)
-        (when popwin:focus-window (popwin:close-popup-window))
-        (popwin:display-buffer "*Messages*"))
+      (evil-set-initial-state 'elfeed-show-mode 'emacs)
+      (md/make-keymap-noop elfeed-show-mode-map)
+      (bind-key "h" 'elfeed-kill-buffer elfeed-show-mode-map)
+      (bind-key "q" 'elfeed-kill-buffer elfeed-show-mode-map)
+      (bind-key "SPC" md/leader-map elfeed-show-mode-map)
+      (bind-key "C-h" help-mode-map elfeed-show-mode-map)
+      (bind-key "n" 'evil-next-visual-line elfeed-show-mode-map)
+      (bind-key "C-n" 'evil-next-visual-line elfeed-show-mode-map)
+      (bind-key "C-p" 'evil-previous-visual-line elfeed-show-mode-map)
+      (bind-key "C-f" 'evil-scroll-page-down elfeed-show-mode-map)
+      (bind-key "C-b" 'evil-scroll-page-up elfeed-show-mode-map)
+      (bind-key "C-d" 'evil-scroll-down elfeed-show-mode-map)
+      (bind-key "o" 'elfeed-show-visit elfeed-show-mode-map)
+      (bind-key "j" 'elfeed-show-next-link elfeed-show-mode-map)
+      (bind-key "l" 'elfeed-show-next-link elfeed-show-mode-map)
 
-      (defun md/popwin-ansi-term ()
-        "Copied from
-  https://github.com/m2ym/popwin-el/blob/master/misc/popwin-term.el. For some
-  reason this is necessary to open term in a popwin window. Shell and eshell work
-  out of the box."
-        (interactive)
-        (when popwin:focus-window (popwin:close-popup-window))
-        (popwin:display-buffer
-         (or (get-buffer "*ansi-term*")
-             (save-window-excursion
-               (call-interactively 'ansi-term)))))
+      (bind-key "R" 'elfeed md/leader-map)
 
-      (defun md/popwin-eshell ()
-        (interactive)
-        (when popwin:focus-window (popwin:close-popup-window))
-        (popwin:display-buffer
-         (or (get-buffer "*eshell*")
-             (save-window-excursion
-               (call-interactively 'eshell)))))
-
-      (defun md/popwin-dired-single-magic-buffer ()
-        (interactive)
-        (when popwin:focus-window (popwin:close-popup-window))
-        (popwin:display-buffer
-         (or (get-buffer dired-single-magic-buffer-name)
-             (save-window-excursion
-               (call-interactively 'dired-single-magic-buffer)))))
-
-      ;; Disable popwin-mode in an active Helm session, to prevent it from conflicting
-      ;; with Helm windows. Also ensure that popwin-last-config doesn't return
-      ;; helm buffers.
-      (defvar md/popwin-last-config nil)
-      (add-hook 'helm-before-initialize-hook
-                (lambda ()
-                  (when popwin:focus-window (progn (popwin:close-popup-window)))))
-      (add-hook 'helm-after-initialize-hook
-                (lambda ()
-                  (setq md/popwin-last-config-store popwin:popup-last-config)
-                  (popwin:display-buffer helm-buffer t)
-                  (popwin-mode -1)
-                  ))
-      (add-hook 'helm-cleanup-hook (lambda ()
-                                     (popwin-mode 1)
-                                     (setq popwin:popup-last-config md/popwin-last-config-store)))
-      (push '("^\*helm.+\*$" :regexp t :dedicated nil :height 15) popwin:special-display-config)
-
-      (setq popwin:popup-window-height 10)
-
-      ;; TODO why isn't dired working? Judging by the examples it should, but
-      ;; dired buffers just appear in their own windows. Tried on 24.5 and 25.1.
-      (push '(dired-mode :dedicated t :height 20 :stick t) popwin:special-display-config)
-
-      ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
-      ;; Generally I only ever want one popwin window open.
-      (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
-      (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
-      (push '(help-mode :dedicated t :stick t :height 25) popwin:special-display-config)
-      (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
-      (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
-      (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
-      (push '("*Warnings*" :tail t :dedicated t) popwin:special-display-config)
-      (push '(completion-list-mode :noselect t :dedicated t) popwin:special-display-config)
-      (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
-      (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
-      (push '(ag-mode :noselect t :dedicated t :stick t :tail nil :height 15) popwin:special-display-config)
-      (push '(occur-mode :noselect t :dedicated t :stick t) popwin:special-display-config)
-      (push '("*vc-change-log*" :dedicated t) popwin:special-display-config)
-      (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
-      (push '("*HTTP Response*" :height 20 :dedicated t :stick t :noselect t) popwin:special-display-config)
-      (push '("*Shell Command Output*" :dedicated t :tail t) popwin:special-display-config)
-      (push '("*Async Shell Command*" :dedicated t :tail t) popwin:special-display-config)
-      (push '(shell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
-      (push '(eshell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
-      (push '(term-mode :dedicated t :height 15 :stick t :tail t)
-            popwin:special-display-config)  ; only works with md/popwin-ansi-term
-      (push '(inferior-scheme-mode :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
-
-      (popwin-mode 1))
-    :bind (:map md/leader-map
-                ;; I can't get arbitrary buffers/files to play nicely, so
-                ;; just have the dedicated buffers.
-                (";a" . md/popwin-toggle)
-                (";d" . md/popwin-dired-single-magic-buffer)
-                (";i" . md/popwin-org)
-                (";s" . md/popwin-scratch)
-                (";t" . md/popwin-ansi-term)
-                (";e" . md/popwin-eshell)
-                (";m" . md/popwin-messages)))
+      ;; elfeed-show-mode uses shr
+      (setq shr-width 70
+            shr-use-fonts nil)))
 #+END_SRC
-
-** Narrowing
-
-
-*** edit-indirect
-#+BEGIN_SRC emacs-lisp
-  (use-package edit-indirect
-    :demand t
-    :config
-    (progn
-      (defun md/edit-indirect-guess-mode (parent-buffer beg end)
-        (let ((major (with-current-buffer parent-buffer major-mode)))
-          (cond ((eq major 'python-mode)
-                 (sql-mode))
-                ((eq major 'php-mode)
-                 (sql-mode))
-                ((eq major 'web-mode)
-                 (sql-mode))
-                (t (funcall major)))))
-      (setq edit-indirect-guess-mode-function 'md/edit-indirect-guess-mode)))
-#+END_SRC
-
-*** DWIM
-Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html:
-
-#+BEGIN_SRC emacs-lisp
-  ;; Don't ask for confirmation on narrow-to-region
-  (put 'narrow-to-region 'disabled nil)
-
-  (bind-key "n" narrow-map md/leader-map)
-  (bind-key "i" 'org-tree-to-indirect-buffer narrow-map)
-  (bind-key "v" 'md/narrow-to-region-indirect narrow-map)
-  (bind-key "f" 'md/narrow-dwim narrow-map)
-  (bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
-                                          ; better than "n" for narrow-to-region
-
-  (defun md/narrow-dwim (p)
-    "Widen if buffer is narrowed, narrow-dwim otherwise.
-    Dwim means: region, org-src-block, org-subtree, or
-    defun, whichever applies first. Narrowing to
-    org-src-block actually calls `org-edit-src-code'.
-
-    With prefix P, don't widen, just narrow even if buffer
-    is already narrowed."
-    (interactive "P")
-    (declare (interactive-only))
-    (cond ((and (buffer-narrowed-p) (not p)) (widen))
-          ((region-active-p)
-           (edit-indirect-region (region-beginning)
-                                 (region-end)
-                                 t))
-          (edit-indirect--overlay
-           (edit-indirect-commit))
-          (org-src-mode
-           (org-edit-src-exit))
-          ((derived-mode-p 'org-mode)
-           ;; `org-edit-src-code' is not a real narrowing
-           ;; command. Remove this first conditional if
-           ;; you don't want it.
-           (cond ((ignore-errors (org-edit-src-code) t))
-                 ((ignore-errors (org-narrow-to-block) t))
-                 (t (org-narrow-to-subtree))))
-          ((derived-mode-p 'latex-mode)
-           (LaTeX-narrow-to-environment))
-          ((derived-mode-p 'restclient-mode)
-           (restclient-narrow-to-current))
-          (t (narrow-to-defun))))
-
-  (defun md/narrow-to-region-indirect (start end)
-    "Restrict editing in this buffer to the current region, indirectly."
-    (interactive "r")
-    (deactivate-mark)
-    (let ((buf (clone-indirect-buffer nil nil)))
-      (with-current-buffer buf
-        (narrow-to-region start end))
-        (switch-to-buffer buf)))
-#+END_SRC
-
-** Splitscreen
-#+BEGIN_SRC emacs-lisp
-(setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
-
-;; NOTE - for some reason this doesn't seem to load with "defer"
-(use-package splitscreen
- :load-path md/splitscreen-path
- :demand t
- :ensure nil
- :config
- (progn
-   (splitscreen-mode)
-   (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
-#+END_SRC
-
-** Winner
-#+BEGIN_SRC emacs-lisp
-  (use-package winner
-    :demand t
-    :config (winner-mode 1)
-    :bind (:map splitscreen/prefix
-                ("u" . winner-undo)
-                ("U" . winner-redo)))
-#+END_SRC
-** Eyebrowse
-#+BEGIN_SRC emacs-lisp
-  (use-package eyebrowse
-    :demand t
-    :config
-    (progn
-      (setq eyebrowse-wrap-around t
-            eyebrowse-mode-line-separator " "
-            eyebrowse-mode-line-left-delimiter ""
-            eyebrowse-mode-line-right-delimiter ""
-            eyebrowse-mode-line-style t
-            eyebrowse-new-workspace t)
-      (eyebrowse-mode 1))
-    :bind (:map splitscreen/prefix
-                ("!" . eyebrowse-switch-to-window-config)))
-#+END_SRC
-
-** Shackle (https://github.com/mattduck/shackle)
-
-Shackle has a lot of overlap with Popwin, ie. I can force certain applications
-into smaller windows on the side of the screen - Flycheck, terminals, help, etc.
-I'm trying it as it looks like there are some advantages:
-
-- Easier to read the codebase / implementation.
-
-- Popwin isn't maintained.
-
-- Shackle rules apply whenever ~display-buffer-alist~ is used, which makes it
-  (1) more generalised and (2) predictable. I had some issues with Popwin not
-  displaying certain buffers that looked awkward to debug.
-
-Shackle didn't support "sticky" type windows out of the box, but it was easy to
-add the ~:close-on-realign~ flag to simulate this behaviour.
-
-#+BEGIN_SRC emacs-lisp
-  (defun md/use-display-buffer-alist (fn &rest args)
-    "Wrap a function that displays a buffer. Save window excursion, and
-    re-display the new buffer using `display-buffer`, which allows Shackle to
-    detect and process it. "
-    (let ((buffer-to-display nil)
-          (res nil))
-      (save-window-excursion
-        (setq res (apply fn args))
-        (setq buffer-to-display (current-buffer)))
-      (display-buffer buffer-to-display)
-      res))
-
-  (use-package shackle
-    :load-path "non-elpa/shackle"  ; fork
-    :demand t
-    :config
-    (progn
-
-      (defun md/shackle-down ()
-        (interactive)
-        (delete-window shackle-last-window))
-
-      (defun md/shackle-up ()
-        (interactive)
-        (if shackle-last-buffer
-            (display-buffer shackle-last-buffer)
-          (message "No previous shackle buffer found")))
-
-      ;; TODO - check len is > 1
-      (defun md/shackle-toggle ()
-        (interactive)
-        (if (and (window-live-p shackle-last-window) (> (length (window-list)) 1))
-            (md/shackle-down)
-          (md/shackle-up)))
-
-      (defmacro md/shackle-advise (fn)
-        "Add advise to given function to wrap with md/shackle-wrapper."
-        `(advice-add ,fn :around 'md/use-display-buffer-alist
-                     '((name . "md/shackle"))))
-
-      (defmacro md/shackle-unadvise (fn)
-        `(advice-remove ,fn 'md/use-display-buffer-alist))
-
-      ;; Add advice for functions that display a new buffer but usually escape
-      ;; Shackle (eg. due to not calling display-buffer).
-      (md/shackle-advise 'helpful-function)
-      (md/shackle-advise 'helpful-command)
-      (md/shackle-advise 'helpful-macro)
-      (md/shackle-advise 'helpful-variable)
-      (md/shackle-advise 'helpful-callable)
-      (md/shackle-advise 'helpful-command)
-      (md/shackle-advise 'helpful-at-point)
-      (md/shackle-advise 'ansi-term)
-      (md/shackle-advise 'term)
-      (md/shackle-advise 'eshell)
-      (md/shackle-advise 'shell)
-      (md/shackle-advise 'dired)
-      (md/shackle-advise 'dired-jump)
-      (md/shackle-advise 'dired-single-buffer)
-      (md/shackle-advise 'projectile-run-term)
-      (md/shackle-advise 'undo-tree-visualize)
-      (md/shackle-advise 'run-scheme)
-      (md/shackle-advise 'mu4e~main-view)
-      (md/shackle-advise 'mu4e-compose)
-      (md/shackle-advise 'mu4e-headers-search)
-      (md/shackle-advise 'magit-dispatch-popup)
-      (md/shackle-advise 'magit-display-buffer)
-      ;;(md/shackle-advise 'edebug-pop-to-buffer)
-      ;; (md/shackle-unadvise 'edebug-debugger)
-      ;; (md/shackle-unadvise 'edebug)
-      ;; (md/shackle-unadvise 'edebug-enter)
-
-      (defun md/mu4e-eyebrowse-quit (fn &rest args)
-        (apply fn args)
-        (shackle--eyebrowse-close-slot-by-tag "mail"))
-      (advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
-
-      (defun md/is-edebug? (buffer)
-        (interactive)
-        (message (format "%s" edebug-mode)))
-
-      ;; TODO ediff
-      (setq shackle-rules
-            `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
-              ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select t)
-              ('helpful-mode :align t :close-on-realign t :size 0.33 :select t)
-              ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-              ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-              ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-              ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
-              ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
-              ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
-
-              ;; TODO
-              ;;('(:custom md/is-edebug?) :eyebrowse "debug" :align t :close-on-realign nil :only t :select t)
-              ;;("\\`\\*edebug-trace.*?\\*\\'" :eyebrowse "debug" :regexp t :align right :size 0.5 :select nil)
-
-              ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
-              ("*Anaconda*" :eyebrowse "anaconda" :align left :close-on-realign t :size 0.5 :select t)
-              ("\\*Agenda Commands\\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select t)
-
-              ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
-              ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
-              ('grep-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
-              ('ag-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
-              ('term-mode :align t :close-on-realign t :size 0.4 :select t)
-              ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
-              ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
-
-              ('magit-status-mode :eyebrowse "git" :align t :select t :size 0.33 :only t)
-              ('magit-popup-mode :align t :select t :size 0.33 :close-on-realign t)
-              ('magit-diff-mode :eyebrowse "git" :select t :align left :size 0.5 :only t)
-              ('magit-log-mode :eyebrowse "git" :select t :align t :size 0.4 :only t)
-              ('magit-revision-mode :eyebrowse "git" :select t :align t :size 0.5 :close-on-realign t)
-
-              ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :same t)
-              ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
-              ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
-              ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
-              ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
-              ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
-              (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t) ;; TODO regex
-              (".*init.org" :regexp t :same t :select t)
-              (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
-              (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
-              (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
-              ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
-              (dired-mode :align nil :select t)))
-
-      (defmacro shackle-with-temp (rules body)
-        "Execute body with temporary shackle rules"
-        `(let ((shackle-rules (append ,rules shackle-rules)))
-           ,body))
-
-      ;; This is deprecated but works for now - need to figure out how to implement it
-      ;; with display-buffer-alist. It prevents us from opening a new frame every
-      ;; time I use mu4e.
-      (setq-default display-buffer-reuse-frames t)
-
-      ;; Ensure Helm doesn't interfere with Shackle buffers too much.
-      ;; - Use Shackle to control and position Helm buffers.
-      ;; - But ensure that shackle-last-buffer is not set to any Helm buffer.
-      ;;
-      ;; TODO - ideally Helm would cleanup buffers immediately to avoid
-      ;; interfering with other buffer display commands.
-      (setq helm-display-function 'pop-to-buffer) ; make sure helm popups are detected.
-      (defvar md/shackle-buffer-store nil)
-      (defvar md/shackle-window-store nil)
-      (defun md/helm-shackle-setup ()
-        (setq md/shackle-buffer-store shackle-last-buffer
-              md/shackle-window-store shackle-last-window))
-      (defun md/helm-shackle-teardown ()
-        (when md/shackle-buffer-store
-          (setq shackle-last-buffer md/shackle-buffer-store
-                shackle-last-window md/shackle-window-store)))
-      (add-hook 'helm-before-initialize-hook 'md/helm-shackle-setup)
-      (add-hook 'helm-cleanup-hook 'md/helm-shackle-teardown)
-
-      ;; NOTE: In order to get Shackle working with some org-mode commands, we
-      ;; have to override an internal function. Org is quite opinionated about
-      ;; window display, and usually this function will unset various buffer
-      ;; display variables before calling switch-to-buffer-other-window.
-      ;; I'd rather just control those buffers with Shackle.
-      (require 'org)
-      (fmakunbound 'org-switch-to-buffer-other-window)
-      (defun org-switch-to-buffer-other-window (&rest args)
-        (apply 'switch-to-buffer-other-window args))
-      (setq org-agenda-window-setup 'only-window)
-
-      (defun md/shackle-match ()
-        (interactive)
-        (message (format "%s" (shackle-match (current-buffer)))))
-
-      (shackle-mode 1))
-
-    :bind (:map md/leader-map
-                ("; ;" . display-buffer)  ;; Uses display-buffer-alist, so Shackle rules will apply.
-                (";a" . md/shackle-toggle)))
-#+END_SRC
-
-** Dedicated
-
-I'm inlining this because it's so small. Allows toggling of "dedicated" status
-for windows using ~set-window-dedicated-p~, which prevents Emacs from displaying
-another buffer in the window.
-
-#+BEGIN_SRC emacs-lisp
-  ;; Copyright (C) 2000 Eric Crampton <eric@atdesk.com>
-  ;; https://github.com/emacsorphanage/dedicated
-  ;; GPL v2.
-
-  (defvar dedicated-mode nil
-    "Mode variable for dedicated minor mode.")
-  (make-variable-buffer-local 'dedicated-mode)
-
-  (defun dedicated-mode (&optional arg)
-    "Dedicated minor mode."
-    (interactive "P")
-    (setq dedicated-mode (not dedicated-mode))
-    (set-window-dedicated-p (selected-window) dedicated-mode)
-    (if (not (assq 'dedicated-mode minor-mode-alist))
-        (setq minor-mode-alist
-              (cons '(dedicated-mode " D")
-                    minor-mode-alist))))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "bd" 'dedicated-mode md/leader-map)
-  (bind-key "tD" 'dedicated-mode md/leader-map)
-#+END_SRC
-
 * Bookmarks
 
 Provide some utility functions and helm commands around managing
@@ -4282,6 +3983,7 @@ Use some persistent scratch files for various modes:
 ** Powerline
 #+BEGIN_SRC emacs-lisp
   (use-package powerline
+   :demand t
    :defer 1
    :config
 
@@ -4524,7 +4226,7 @@ todo:
 ** Solarized
 #+BEGIN_SRC emacs-lisp
   (use-package color-theme-solarized
-   :demand t
+   :demand nil
    :ensure nil
    :load-path "non-elpa/color-theme-solarized"
    :config
@@ -4546,13 +4248,34 @@ todo:
 #+END_SRC
 
 ** Gruvbox
+
 #+BEGIN_SRC emacs-lisp
-  (use-package gruvbox
-    :demand t
-    :load-path "non-elpa/emacs-theme-gruvbox"
-    :config
-    (progn
-      (add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-gruvbox"))))
+  (add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-gruvbox"))
+    ;; (use-package gruvbox
+    ;;   :demand nil
+    ;;   :load-path "non-elpa/emacs-theme-gruvbox"
+    ;;   :config
+    ;;   (progn
+    ;;     (add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-gruvbox"))))
+#+END_SRC
+
+** Wiki
+
+- [ ] TODO: compiling this actually loads the theme which messes with existing
+  values etc. Why?
+
+It's important that we /don't/ demand this, as that will eval the file and apply
+the theme outside the usual customize workflow. Instead it should just be loaded
+with ~load-theme~.
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-md-wiki"))
+  ;; (use-package md-wiki-theme
+  ;;   :demand nil
+  ;;   :load-path "non-elpa/emacs-theme-md-wiki"
+  ;;   :config
+  ;;   (progn
+  ;;     (add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-md-wiki"))))
 #+END_SRC
 
 ** General
@@ -4573,7 +4296,9 @@ todo:
                    `((t :inherit 'default
                         :background ,(face-attribute 'default :background))))
     (md/powerline-reset)
-    (md/fontify-buffer))
+    (md/fontify-buffer)
+    (set-window-buffer nil (current-buffer)) ;; temp?
+    (when (and (boundp writeroom-mode) writeroom-mode) (md/writeroom-mode)))
 
   ;; Initial setup
   (md/disable-all-themes)
@@ -4583,6 +4308,7 @@ todo:
     (solarized-enable-theme 'dark))
 
   (bind-key "tt" 'md/load-theme md/leader-map)
+  (md/set-default-font)
 #+END_SRC
 
 * Writeroom
@@ -4591,32 +4317,572 @@ Remove writing distractions:
 
 #+BEGIN_SRC emacs-lisp
   (use-package writeroom-mode
-   :defer 1
    :demand t
    :config
    (progn
-     (defun md/writeroom-mode ()
+     ;; Ensure font resets as writeroom mode as I'm setting writeroom to use a separate font.
+     ;;(add-hook 'writeroom-mode-hook 'md/set-default-font)
+
+     (defun md/writeroom-mode (&rest force)
        "Handle clash with git-gutter mode as both use fringes"
        ;; TODO: why doesn't this work using writeroom-mode-hook?
        (interactive)
-       (message (format "%s" writeroom-mode))
        (if (not writeroom-mode)
            (progn
+             (md/org-list-utf-enable) ; Prettify list bullets
              (git-gutter-mode 0)
              (redraw-frame)
              (writeroom-mode 1)
+             (setq header-line-format " " ; Add header space
+                   line-spacing 0.1)  ; Decrease spacing
              (redraw-frame))
-         (writeroom-mode 0)))
+         (when (not force)  ;; Normally we toggle, but allow override by flag.
+           (setq header-line-format nil  ; Revert
+                 line-spacing 0.2) ; Revert
+           (md/org-list-utf-disable) ; Revert
+           (writeroom-mode 0))))
 
-     (setq writeroom-width 90
-           writeroom-mode-line t  ; Keep modeline
+     (setq writeroom-width 79
+           writeroom-mode-line nil  ; Keep modeline
            writeroom-maximize-window nil  ; Don't delete other windows
-           writeroom-fullscreen-effect 'fullboth
+           writeroom-fullscreen-effect nil
            writeroom-fringes-outside-margins nil
            writeroom-major-modes nil
-           writeroom-restore-window-config nil))
-   :bind (:map md/leader-map
-          ("tW" . md/writeroom-mode)))
+           writeroom-restore-window-config nil)
+
+     (defvar md/wiki-view-enabled nil)
+
+     )
+
+     :bind (:map md/leader-map
+                 ("tW" . md/wiki-reader)))
+
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  ;; TODO a way to revert all these changes to their original setting.
+  ;; maybe a macro where that idea can be reapplied - after something is disabled, all the original values get restored.
+
+  (defun md/wiki-reader ()
+    (interactive)
+    (md/org-list-utf-enable)
+    (setq line-spacing 0.1)
+    (setq left-margin-width 10)
+    (setq right-margin-width 5)
+    (setq header-line-format " ")
+    (setq mode-line-format " ")
+    (setq-local org-bullets-bullet-list '(" " " " " " " " "◦" "◦" "◦" "◦" "◦" "◦" "◦" "◦"))
+    (setq-local org-hide-leading-stars-before-indent-mode nil)
+    (setq-local org-indent-indentation-per-level 2)
+    (setq-local org-cycle-separator-lines 1)
+    (setq-local org-ellipsis "▼")
+    (org-indent-mode 1)
+    (set-window-buffer nil (current-buffer))
+    (font-lock-fontify-buffer)
+    ;;(read-only-mode)
+    )
+
+  (bind-key "tW" 'md/wiki-reader md/leader-map)
+#+END_SRC
+* Window manager
+
+** Splitscreen
+#+BEGIN_SRC emacs-lisp
+(setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
+
+;; NOTE - for some reason this doesn't seem to load with "defer"
+(use-package splitscreen
+ :load-path md/splitscreen-path
+ :demand t
+ :ensure nil
+ :config
+ (progn
+   (splitscreen-mode)
+   (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
+#+END_SRC
+** COMMENT Elscreen
+
+Elscreen provides "tabs" that let me sort of arrange windows how I did it in
+vim. They're not ideal though, because the tabs either appear in several places
+on the screen, or nowhere.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package elscreen
+   :defer 1
+   :config
+   (progn
+     (defun md/elscreen-display-tabs ()
+       (interactive)
+       (setq elscreen-display-tab t
+             elscreen-tab-display-kill-screen nil
+             elscreen-tab-display-control nil)
+
+       ;; This is how elscreen redraws
+       (elscreen-notify-screen-modification 'force))
+
+     (md/elscreen-display-tabs)))
+#+END_SRC
+
+** COMMENT Popwin
+
+https://github.com/m2ym/popwin-el.
+
+Popwin helps bring some sanity to Emacs windows. By default, Emacs tends to
+clobber the windows that I'm working on with various other applications
+(eg. for help, flycheck, shell/term). Popwin lets me contain all of these
+less-important buffers in a single window and then dismiss it. This way they
+don't interfere with the buffers I'm actually working on.
+
+It hasn't been maintained for a while, but hopefully I won't see too many rough
+edges.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package popwin
+    :config
+    (progn
+      (defun md/popwin-toggle ()
+        "Either close popwin or open it in its last buffer"
+        (interactive)
+        (if popwin:focus-window
+            (popwin:close-popup-window)
+          (popwin:display-last-buffer)))
+
+      (defun md/popwin-org ()
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (if (get-buffer "index.org")
+            (popwin:display-buffer "index.org")
+          (message "No buffer: index.org")))
+
+      (defun md/popwin-scratch ()
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (popwin:display-buffer "*scratch*"))
+
+      (defun md/popwin-messages ()
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (popwin:display-buffer "*Messages*"))
+
+      (defun md/popwin-ansi-term ()
+        "Copied from
+  https://github.com/m2ym/popwin-el/blob/master/misc/popwin-term.el. For some
+  reason this is necessary to open term in a popwin window. Shell and eshell work
+  out of the box."
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (popwin:display-buffer
+         (or (get-buffer "*ansi-term*")
+             (save-window-excursion
+               (call-interactively 'ansi-term)))))
+
+      (defun md/popwin-eshell ()
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (popwin:display-buffer
+         (or (get-buffer "*eshell*")
+             (save-window-excursion
+               (call-interactively 'eshell)))))
+
+      (defun md/popwin-dired-single-magic-buffer ()
+        (interactive)
+        (when popwin:focus-window (popwin:close-popup-window))
+        (popwin:display-buffer
+         (or (get-buffer dired-single-magic-buffer-name)
+             (save-window-excursion
+               (call-interactively 'dired-single-magic-buffer)))))
+
+      ;; Disable popwin-mode in an active Helm session, to prevent it from conflicting
+      ;; with Helm windows. Also ensure that popwin-last-config doesn't return
+      ;; helm buffers.
+      (defvar md/popwin-last-config nil)
+      (add-hook 'helm-before-initialize-hook
+                (lambda ()
+                  (when popwin:focus-window (progn (popwin:close-popup-window)))))
+      (add-hook 'helm-after-initialize-hook
+                (lambda ()
+                  (setq md/popwin-last-config-store popwin:popup-last-config)
+                  (popwin:display-buffer helm-buffer t)
+                  (popwin-mode -1)
+                  ))
+      (add-hook 'helm-cleanup-hook (lambda ()
+                                     (popwin-mode 1)
+                                     (setq popwin:popup-last-config md/popwin-last-config-store)))
+      (push '("^\*helm.+\*$" :regexp t :dedicated nil :height 15) popwin:special-display-config)
+
+      (setq popwin:popup-window-height 10)
+
+      ;; TODO why isn't dired working? Judging by the examples it should, but
+      ;; dired buffers just appear in their own windows. Tried on 24.5 and 25.1.
+      (push '(dired-mode :dedicated t :height 20 :stick t) popwin:special-display-config)
+
+      ;; NOTE: `:dedicated t` means matching buffers will reuse the same window.
+      ;; Generally I only ever want one popwin window open.
+      (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
+      (push '("index.org" :height 20 :dedicated t :stick t) popwin:special-display-config)
+      (push '(help-mode :dedicated t :stick t :height 25) popwin:special-display-config)
+      (push '("^\\*scratch\\*$" :regexp t :dedicated t :stick t) popwin:special-display-config)
+      (push '("^\\*Flycheck.+\\*$" :regexp t :dedicated t :stick t :noselect t) popwin:special-display-config)
+      (push '("*Messages*" :tail t :dedicated t) popwin:special-display-config)
+      (push '("*Warnings*" :tail t :dedicated t) popwin:special-display-config)
+      (push '(completion-list-mode :noselect t :dedicated t) popwin:special-display-config)
+      (push '(compilation-mode :noselect t :stick t :dedicated t :tail t) popwin:special-display-config)
+      (push '(grep-mode :noselect t :dedicated t) popwin:special-display-config)
+      (push '(ag-mode :noselect t :dedicated t :stick t :tail nil :height 15) popwin:special-display-config)
+      (push '(occur-mode :noselect t :dedicated t :stick t) popwin:special-display-config)
+      (push '("*vc-change-log*" :dedicated t) popwin:special-display-config)
+      (push '("*undo-tree*" :width 60 :position right :dedicated t) popwin:special-display-config)
+      (push '("*HTTP Response*" :height 20 :dedicated t :stick t :noselect t) popwin:special-display-config)
+      (push '("*Shell Command Output*" :dedicated t :tail t) popwin:special-display-config)
+      (push '("*Async Shell Command*" :dedicated t :tail t) popwin:special-display-config)
+      (push '(shell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
+      (push '(eshell-mode :regexp t :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
+      (push '(term-mode :dedicated t :height 15 :stick t :tail t)
+            popwin:special-display-config)  ; only works with md/popwin-ansi-term
+      (push '(inferior-scheme-mode :dedicated t :height 15 :stick t :tail t) popwin:special-display-config)
+
+      (popwin-mode 1))
+    :bind (:map md/leader-map
+                ;; I can't get arbitrary buffers/files to play nicely, so
+                ;; just have the dedicated buffers.
+                (";a" . md/popwin-toggle)
+                (";d" . md/popwin-dired-single-magic-buffer)
+                (";i" . md/popwin-org)
+                (";s" . md/popwin-scratch)
+                (";t" . md/popwin-ansi-term)
+                (";e" . md/popwin-eshell)
+                (";m" . md/popwin-messages)))
+#+END_SRC
+
+** Narrowing
+
+
+*** edit-indirect
+#+BEGIN_SRC emacs-lisp
+  (use-package edit-indirect
+    :config
+    (progn
+      (defun md/edit-indirect-guess-mode (parent-buffer beg end)
+        (let ((major (with-current-buffer parent-buffer major-mode)))
+          (cond ((eq major 'python-mode)
+                 (sql-mode))
+                ((eq major 'php-mode)
+                 (sql-mode))
+                ((eq major 'web-mode)
+                 (sql-mode))
+                (t (funcall major)))))
+      (setq edit-indirect-guess-mode-function 'md/edit-indirect-guess-mode)))
+#+END_SRC
+
+*** DWIM
+Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html:
+
+#+BEGIN_SRC emacs-lisp
+  ;; Don't ask for confirmation on narrow-to-region
+  (put 'narrow-to-region 'disabled nil)
+
+  (bind-key "n" narrow-map md/leader-map)
+  (bind-key "i" 'org-tree-to-indirect-buffer narrow-map)
+  (bind-key "v" 'md/narrow-to-region-indirect narrow-map)
+  (bind-key "f" 'md/narrow-dwim narrow-map)
+  (bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
+                                          ; better than "n" for narrow-to-region
+
+  (defun md/narrow-dwim (p)
+    "Widen if buffer is narrowed, narrow-dwim otherwise.
+    Dwim means: region, org-src-block, org-subtree, or
+    defun, whichever applies first. Narrowing to
+    org-src-block actually calls `org-edit-src-code'.
+
+    With prefix P, don't widen, just narrow even if buffer
+    is already narrowed."
+    (interactive "P")
+    (declare (interactive-only))
+    (cond ((and (buffer-narrowed-p) (not p)) (widen))
+          ((region-active-p)
+           (edit-indirect-region (region-beginning)
+                                 (region-end)
+                                 t))
+          (edit-indirect--overlay
+           (edit-indirect-commit))
+          (org-src-mode
+           (org-edit-src-exit))
+          ((derived-mode-p 'org-mode)
+           ;; `org-edit-src-code' is not a real narrowing
+           ;; command. Remove this first conditional if
+           ;; you don't want it.
+           (cond ((ignore-errors (org-edit-src-code) t))
+                 ((ignore-errors (org-narrow-to-block) t))
+                 (t (org-narrow-to-subtree))))
+          ((derived-mode-p 'latex-mode)
+           (LaTeX-narrow-to-environment))
+          ((derived-mode-p 'restclient-mode)
+           (restclient-narrow-to-current))
+          (t (narrow-to-defun))))
+
+  (defun md/narrow-to-region-indirect (start end)
+    "Restrict editing in this buffer to the current region, indirectly."
+    (interactive "r")
+    (deactivate-mark)
+    (let ((buf (clone-indirect-buffer nil nil)))
+      (with-current-buffer buf
+        (narrow-to-region start end))
+        (switch-to-buffer buf)))
+#+END_SRC
+
+** Winner
+#+BEGIN_SRC emacs-lisp
+  (use-package winner
+    :demand t
+    :config (winner-mode 1)
+    :bind (:map splitscreen/prefix
+                ("u" . winner-undo)
+                ("U" . winner-redo)))
+#+END_SRC
+** Eyebrowse
+#+BEGIN_SRC emacs-lisp
+  (use-package eyebrowse
+    :demand t
+    :config
+    (progn
+      (setq eyebrowse-wrap-around t
+            eyebrowse-mode-line-separator " "
+            eyebrowse-mode-line-left-delimiter ""
+            eyebrowse-mode-line-right-delimiter ""
+            eyebrowse-mode-line-style t
+            eyebrowse-new-workspace t)
+      (eyebrowse-mode 1))
+    :bind (:map splitscreen/prefix
+                ("!" . eyebrowse-switch-to-window-config)))
+#+END_SRC
+
+** Shackle (https://github.com/mattduck/shackle)
+
+Shackle has a lot of overlap with Popwin, ie. I can force certain applications
+into smaller windows on the side of the screen - Flycheck, terminals, help, etc.
+I'm trying it as it looks like there are some advantages:
+
+- Easier to read the codebase / implementation.
+
+- Popwin isn't maintained.
+
+- Shackle rules apply whenever ~display-buffer-alist~ is used, which makes it
+  (1) more generalised and (2) predictable. I had some issues with Popwin not
+  displaying certain buffers that looked awkward to debug.
+
+Shackle didn't support "sticky" type windows out of the box, but it was easy to
+add the ~:close-on-realign~ flag to simulate this behaviour.
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/use-display-buffer-alist (fn &rest args)
+    "Wrap a function that displays a buffer. Save window excursion, and
+    re-display the new buffer using `display-buffer`, which allows Shackle to
+    detect and process it. "
+    (let ((buffer-to-display nil)
+          (res nil))
+      (save-window-excursion
+        (setq res (apply fn args))
+        (setq buffer-to-display (current-buffer)))
+      (display-buffer buffer-to-display)
+      res))
+
+  (use-package shackle
+    :load-path "non-elpa/shackle"  ; fork
+    :demand t
+    :config
+    (progn
+
+      (defun md/shackle-down ()
+        (interactive)
+        (delete-window shackle-last-window))
+
+      (defun md/shackle-up ()
+        (interactive)
+        (if shackle-last-buffer
+            (display-buffer shackle-last-buffer)
+          (message "No previous shackle buffer found")))
+
+      ;; TODO - check len is > 1
+      (defun md/shackle-toggle ()
+        (interactive)
+        (if (and (window-live-p shackle-last-window) (> (length (window-list)) 1))
+            (md/shackle-down)
+          (md/shackle-up)))
+
+      (defmacro md/shackle-advise (fn)
+        "Add advise to given function to wrap with md/shackle-wrapper."
+        `(advice-add ,fn :around 'md/use-display-buffer-alist
+                     '((name . "md/shackle"))))
+
+      (defmacro md/shackle-unadvise (fn)
+        `(advice-remove ,fn 'md/use-display-buffer-alist))
+
+      ;; Add advice for functions that display a new buffer but usually escape
+      ;; Shackle (eg. due to not calling display-buffer).
+      (md/shackle-advise 'helpful-function)
+      (md/shackle-advise 'helpful-command)
+      (md/shackle-advise 'helpful-macro)
+      (md/shackle-advise 'helpful-variable)
+      (md/shackle-advise 'helpful-callable)
+      (md/shackle-advise 'helpful-command)
+      (md/shackle-advise 'helpful-at-point)
+      (md/shackle-advise 'ansi-term)
+      (md/shackle-advise 'term)
+      (md/shackle-advise 'eshell)
+      (md/shackle-advise 'shell)
+      (md/shackle-advise 'dired)
+      (md/shackle-advise 'dired-jump)
+      (md/shackle-advise 'dired-single-buffer)
+      (md/shackle-advise 'projectile-run-term)
+      (md/shackle-advise 'undo-tree-visualize)
+      (md/shackle-advise 'run-scheme)
+      (md/shackle-advise 'mu4e~main-view)
+      (md/shackle-advise 'mu4e-compose)
+      (md/shackle-advise 'mu4e-headers-search)
+      (md/shackle-advise 'magit-dispatch-popup)
+      (md/shackle-advise 'magit-display-buffer)
+      ;;(md/shackle-advise 'edebug-pop-to-buffer)
+      ;; (md/shackle-unadvise 'edebug-debugger)
+      ;; (md/shackle-unadvise 'edebug)
+      ;; (md/shackle-unadvise 'edebug-enter)
+
+      (defun md/mu4e-eyebrowse-quit (fn &rest args)
+        (apply fn args)
+        (shackle--eyebrowse-close-slot-by-tag "mail"))
+      (advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
+
+      (defun md/is-edebug? (buffer)
+        (interactive)
+        (message (format "%s" edebug-mode)))
+
+      ;; TODO ediff
+      (setq shackle-rules
+            `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
+              ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select t)
+              ('helpful-mode :align t :close-on-realign t :size 0.33 :select t)
+              ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+              ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+              ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+              ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
+              ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
+              ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
+
+              ;; TODO
+              ;;('(:custom md/is-edebug?) :eyebrowse "debug" :align t :close-on-realign nil :only t :select t)
+              ;;("\\`\\*edebug-trace.*?\\*\\'" :eyebrowse "debug" :regexp t :align right :size 0.5 :select nil)
+
+              ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
+              ("*Anaconda*" :eyebrowse "anaconda" :align left :close-on-realign t :size 0.5 :select t)
+              ("\\*Agenda Commands\\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select t)
+
+              ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
+              ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
+              ('grep-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
+              ('ag-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
+              ('term-mode :align t :close-on-realign t :size 0.4 :select t)
+              ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
+              ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
+
+              ('magit-status-mode :eyebrowse "git" :align t :select t :size 0.33 :only t)
+              ('magit-popup-mode :align t :select t :size 0.33 :close-on-realign t)
+              ('magit-diff-mode :eyebrowse "git" :select t :align left :size 0.5 :only t)
+              ('magit-log-mode :eyebrowse "git" :select t :align t :size 0.4 :only t)
+              ('magit-revision-mode :eyebrowse "git" :select t :align t :size 0.5 :close-on-realign t)
+
+              ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :same t)
+              ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
+              ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
+              ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
+              ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
+              ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
+              (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t) ;; TODO regex
+              (".*init.org" :regexp t :same t :select t)
+              (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
+              (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
+              (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
+              ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
+              (dired-mode :align nil :select t)))
+
+      (defmacro shackle-with-temp (rules body)
+        "Execute body with temporary shackle rules"
+        `(let ((shackle-rules (append ,rules shackle-rules)))
+           ,body))
+
+      ;; This is deprecated but works for now - need to figure out how to implement it
+      ;; with display-buffer-alist. It prevents us from opening a new frame every
+      ;; time I use mu4e.
+      (setq-default display-buffer-reuse-frames t)
+
+      ;; Ensure Helm doesn't interfere with Shackle buffers too much.
+      ;; - Use Shackle to control and position Helm buffers.
+      ;; - But ensure that shackle-last-buffer is not set to any Helm buffer.
+      ;;
+      ;; TODO - ideally Helm would cleanup buffers immediately to avoid
+      ;; interfering with other buffer display commands.
+      (setq helm-display-function 'pop-to-buffer) ; make sure helm popups are detected.
+      (defvar md/shackle-buffer-store nil)
+      (defvar md/shackle-window-store nil)
+      (defun md/helm-shackle-setup ()
+        (setq md/shackle-buffer-store shackle-last-buffer
+              md/shackle-window-store shackle-last-window))
+      (defun md/helm-shackle-teardown ()
+        (when md/shackle-buffer-store
+          (setq shackle-last-buffer md/shackle-buffer-store
+                shackle-last-window md/shackle-window-store)))
+      (add-hook 'helm-before-initialize-hook 'md/helm-shackle-setup)
+      (add-hook 'helm-cleanup-hook 'md/helm-shackle-teardown)
+
+      ;; NOTE: In order to get Shackle working with some org-mode commands, we
+      ;; have to override an internal function. Org is quite opinionated about
+      ;; window display, and usually this function will unset various buffer
+      ;; display variables before calling switch-to-buffer-other-window.
+      ;; I'd rather just control those buffers with Shackle.
+      (require 'org)
+      (fmakunbound 'org-switch-to-buffer-other-window)
+      (defun org-switch-to-buffer-other-window (&rest args)
+        (apply 'switch-to-buffer-other-window args))
+      (setq org-agenda-window-setup 'only-window)
+
+      (defun md/shackle-match ()
+        (interactive)
+        (message (format "%s" (shackle-match (current-buffer)))))
+
+      (shackle-mode 1))
+
+    :bind (:map md/leader-map
+                ("; ;" . display-buffer)  ;; Uses display-buffer-alist, so Shackle rules will apply.
+                (";a" . md/shackle-toggle)))
+#+END_SRC
+
+** Dedicated
+
+I'm inlining this because it's so small. Allows toggling of "dedicated" status
+for windows using ~set-window-dedicated-p~, which prevents Emacs from displaying
+another buffer in the window.
+
+#+BEGIN_SRC emacs-lisp
+  ;; Copyright (C) 2000 Eric Crampton <eric@atdesk.com>
+  ;; https://github.com/emacsorphanage/dedicated
+  ;; GPL v2.
+
+  (defvar dedicated-mode nil
+    "Mode variable for dedicated minor mode.")
+  (make-variable-buffer-local 'dedicated-mode)
+
+  (defun dedicated-mode (&optional arg)
+    "Dedicated minor mode."
+    (interactive "P")
+    (setq dedicated-mode (not dedicated-mode))
+    (set-window-dedicated-p (selected-window) dedicated-mode)
+    (if (not (assq 'dedicated-mode minor-mode-alist))
+        (setq minor-mode-alist
+              (cons '(dedicated-mode " D")
+                    minor-mode-alist))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "bd" 'dedicated-mode md/leader-map)
+  (bind-key "tD" 'dedicated-mode md/leader-map)
 #+END_SRC
 
 * Dotfiles
@@ -4797,5 +5063,3 @@ Close paren for the wrapping ~let~:
   - shell command: open emacs buffer with the output
 - [2019-07-04 Thu]
   - [ ] outshine mode - integrate. ensure works with gfm/markdown.
-- [2019-07-15 Mon]
-  - [ ] org mode - display online images inline
