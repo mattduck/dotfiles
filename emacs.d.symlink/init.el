@@ -126,7 +126,7 @@
 ;; Disable this for a minute
 ;;(global-hl-line-mode 1)
 
-(defvar md/font-size 175)
+(defvar md/font-size 125)
 
 (defun md/font-size-incr ()
   (interactive)
@@ -140,7 +140,7 @@
   (set-face-attribute 'default nil
                       :height
                       (- (face-attribute 'default :height)
-                         5)))
+                         10)))
 
 (defun md/set-default-font ()
   (interactive)
@@ -809,6 +809,22 @@
   (kbd "C-o") 'help-go-back
   (kbd "<RET>") 'help-follow-symbol)
 
+(defvar md/keys-help-map (make-sparse-keymap))
+
+(bind-key "k" md/keys-help-map help-map)
+
+(bind-key "K" 'describe-keymap md/keys-help-map)
+(bind-key "p" 'describe-personal-keybindings md/keys-help-map)
+(bind-key "@" 'free-keys md/keys-help-map)
+(bind-key "SPC" 'md/which-key md/keys-help-map)
+
+(global-set-key (kbd "C-SPC") 'md/which-key)
+
+;; Setting this mode on replaces describe-bindings, and
+;; loads helm-descbinds.el, which I might want to use elsewhere.
+(add-hook 'helm-descbinds-mode-hook
+          (lambda () (bind-key "b" 'helm-descbinds md/keys-help-map)))
+
 (defun md/quit-and-kill-window ()
   (interactive)
   (quit-window t))
@@ -1009,22 +1025,6 @@ represent all current available bindings accurately as a single keymap."
   :config
     (progn
       (bind-key "@" 'free-keys help-map)))
-
-(defvar md/keys-help-map (make-sparse-keymap))
-
-(bind-key "k" md/keys-help-map help-map)
-
-(bind-key "K" 'describe-keymap md/keys-help-map)
-(bind-key "p" 'describe-personal-keybindings md/keys-help-map)
-(bind-key "@" 'free-keys md/keys-help-map)
-(bind-key "SPC" 'md/which-key md/keys-help-map)
-
-(global-set-key (kbd "C-SPC") 'md/which-key)
-
-;; Setting this mode on replaces describe-bindings, and
-;; loads helm-descbinds.el, which I might want to use elsewhere.
-(add-hook 'helm-descbinds-mode-hook
-          (lambda () (bind-key "b" 'helm-descbinds md/keys-help-map)))
 
 (use-package ag
   :config
