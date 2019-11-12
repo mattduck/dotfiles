@@ -24,27 +24,6 @@ font pango:Fira 11
 # font -misc-fixed-medium-r-normal--13-120-75-75-C-70-iso10646-1
 # The font above is very space-efficient, that is, it looks good, sharp and
 # clear in small sizes. However, its unicode glyph coverage is limited, the old
-# X core fonts rendering does not support right-to-left and this being a bitmap
-# font, it doesn’t scale on retina/hidpi displays.
-
-# Use Mouse+$mod to drag floating windows to their wanted position
-floating_modifier $mod
-
-# start a terminal
-#bindsym $mod+Return exec i3-sensible-terminal
-
-# kill focused window
-bindsym $mod+Shift+q kill
-
-# start dmenu (a program launcher)
-bindsym $mod+f exec dmenu_run
-# There also is the (new) i3-dmenu-desktop which only displays applications
-# shipping a .desktop file. It is a wrapper around dmenu, so you need that
-# installed.
-# bindsym $mod+f exec --no-startup-id i3-dmenu-desktop
-
-# change focus
-#bindsym $mod+j focus left
 #bindsym $mod+k focus down
 #bindsym $mod+l focus up
 #bindsym $mod+semicolon focus right
@@ -58,6 +37,7 @@ bindsym $mod+f exec dmenu_run
 
 # class                 border  backgr. text    indicator child_border
 client.focused          "#285577" "#87afaf" "#ffffd7" "#2e9ef4"   "#285577"
+# client.focused          "#d5c4a1" "#87afaf" "#d5c4a1" "#d5c4a1"   "#d5c4a1"
 client.focused_inactive "#1d2021" "#5f676a" "#ffffd7" "#484e50"   "#5f676a"
 client.unfocused        "#333333" "#222222" "#888888" "#292d2e"   "#222222"
 client.urgent           "#2f343a" "#9d0006" "#ffffd7" "#9d0006"   "#9d0006"
@@ -192,15 +172,17 @@ bar {
         position top
         status_command ~/.config/i3-status-bash.sh
         tray_output primary
+        workspace_buttons no
         strip_workspace_numbers yes
 
         colors {
-                background "#32302f"
+                #background "#32302f"
+                background "#1d2021"
                 statusline "#eeeeee"
                 separator "#666666"
                 #                  border  backgr. text
                 #focused_workspace  "#87afaf" "#285577" "#ffffff"
-                focused_workspace  "#87afaf" "#83a598" "#ffffd7"
+                focused_workspace  #87afaf" "#83a598" "#ffffd7"
                 active_workspace   "#333333" "#5f676a" "#ffffd7"
                 inactive_workspace "#333333" "#222222" "#888888"
                 urgent_workspace   "#333333" "#9d0006" "#ffffd7"
@@ -216,13 +198,15 @@ mode "md" {
     bindsym o fullscreen toggle; mode "default"
     bindsym Shift+r restart; mode "default"
 
-    bindsym Shift+5 split h; mode "default"; exec albert show
-    bindsym Shift+apostrophe split v; mode "default"; exec albert show
+    bindsym Shift+5 split h; mode "default"; fullscreen disable; exec "emacsclient -ne '(call-interactively (quote md/alfred))'"
+    bindsym Shift+apostrophe split v; mode "default"; fullscreen disable; exec "emacsclient -ne '(call-interactively (quote md/alfred))'"
 
     bindsym h focus left; mode "default"
     bindsym j focus down; mode "default"
     bindsym k focus up; mode "default"
     bindsym l focus right; mode "default"
+
+    bindsym Shift+3 exec i3-input -F "%s" -P "i3-msg: "; mode default
 
     bindsym Shift+4 exec "scrot -z /f/inbox/screenshots/$(date --iso-8601=second).jpg"; mode "default"
     bindsym --release Shift+Control+4 exec "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg"; mode "default"
@@ -231,6 +215,11 @@ mode "md" {
     bindsym Shift+j move down; mode "default"
     bindsym Shift+k move up; mode "default"
     bindsym Shift+l move right; mode "default"
+
+    # Floating / scratchpad
+    bindsym q scratchpad show; mode "default"
+    bindsym Shift+q move scratchpad; mode "default"
+    bindsym t floating toggle; mode "default"
 
     bindsym $mod+h resize shrink width 10 px or 10 ppt; mode "default"
     bindsym $mod+j resize grow height 10 px or 10 ppt; mode "default"
@@ -246,12 +235,12 @@ mode "md" {
 
 bindsym $mod+w mode "md"
 
-bindsym $mod+space exec "albert show"
-bindsym $mod+Shift+space exec "emacsclient -ne '(call-interactively (quote md/alfred))'"
+bindsym $mod+Shift+space exec "albert show"
+bindsym $mod+space fullscreen disable; exec "emacsclient -ne '(call-interactively (quote md/alfred))'"
 
 # Same as MacOS
 # bindsym "$mod+Shift+4" exec "scrot -z /f/inbox/screenshots/$(date --iso-8601=second).jpg"
-bindsym --release "$mod+Shift+Control+4" exec "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg"
+# bindsym --release "$mod+Shift+Control+4" exec "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg"
 
 bindsym $mod+Tab workspace next
 bindsym $mod+Shift+Tab workspace prev
@@ -270,7 +259,8 @@ popup_during_fullscreen leave_fullscreen
 # for_window [title=".*\(Private Browsing\).*"] move to workspace $ws4
 
 exec --no-startup-id xsetroot -solid '#1d2021'  # Dark bg
-exec --no-startup-id ~/.fehbg  # Bg image
+#exec --no-startup-id ~/.fehbg  # Bg image
+
 exec --no-startup-id i3-msg 'workspace $ws1; exec emacs'
 # exec --no-startup-id i3-msg 'workspace $ws2; exec gnome-terminal'
 # exec --no-startup-id i3-msg 'workspace $ws3; exec firefox'
@@ -278,3 +268,10 @@ exec --no-startup-id i3-msg 'workspace $ws1; exec emacs'
 
 # try emacs floating test
 for_window [class="^Emacs$" instance="^alfred$"] floating enable
+# for_window [class="^Emacs$" instance="^alfred$"] border pixel 1
+
+# gaps
+for_window [class=".*"] border pixel 0
+for_window [class="^Emacs$" instance="^alfred$"] border pixel 1
+gaps inner 20
+gaps top -15

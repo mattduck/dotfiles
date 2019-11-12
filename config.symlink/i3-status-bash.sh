@@ -28,6 +28,7 @@ ICON_CLOCK=⌚
 ICON_CALENDAR=📅
 ICON_FLOPPY_A=💾
 ICON_FLOPPY_B=🖫
+ICON_PENGUIN=🐧
 
 IFS=$'\n'
 
@@ -102,8 +103,10 @@ while :; do
         if [ $DUP_USB_DAYS_AGO -lt 1 ]; then DUP_USB_COLOR="$GREY"; fi
     else DUP_USB_MSG="?";
     fi
+    PACMAN_DATE=$(,pacman-when)
 
     output=''
+    text "   $ICON_PENGUIN $PACMAN_DATE" $GREY
     text "   ${ICON_FLOPPY_A} S3 $DUP_S3_MSG" $DUP_S3_COLOR
     text "   ${ICON_FLOPPY_A} USB $DUP_USB_MSG" $DUP_USB_COLOR
     text "   $ICON_LOAD $LOAD" $GREY
@@ -113,6 +116,7 @@ while :; do
     text "   $ICON_BATTERY_STATUS $ICON_BATTERY ${BATTERY_PERCENT}" $BATTERY_COLOR
     text "   $ICON_CLOCK ${DT_DATE}, $DT_TIME" $GREY
     text " "
+    text "               "
     echo -e "[${output%??}],"
     sleep 2
 

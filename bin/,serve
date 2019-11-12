@@ -11,7 +11,11 @@ address = ("", 8000)
 def main():
     with socketserver.TCPServer(address, h) as httpd:
         print("Serving on {}...".format(address))
-        httpd.serve_forever()
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            # Close the socket
+            httpd.server_close()
 
 
 if __name__ == "__main__":
