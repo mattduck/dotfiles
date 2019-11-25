@@ -96,10 +96,6 @@
           (string= (system-name) "arch"))
   (menu-bar-mode -1))
 
-(when (not (string= system-name "arch"))
-  (add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
-  (add-to-list 'default-frame-alist '(fullscreen . fullscreen)))
-
 (defun md/fontify-if-font-lock-mode ()
   (when font-lock-mode
     (font-lock-ensure)))
@@ -130,7 +126,7 @@
 ;; Disable this for a minute
 ;;(global-hl-line-mode 1)
 
-(defvar md/font-size 175)
+(defvar md/font-size 125)
 
 (defun md/font-size-incr ()
   (interactive)
@@ -144,7 +140,7 @@
   (set-face-attribute 'default nil
                       :height
                       (- (face-attribute 'default :height)
-                         5)))
+                         10)))
 
 (defun md/set-default-font ()
   (interactive)
@@ -676,6 +672,134 @@
     (key-chord-define evil-replace-state-map "jk" 'evil-normal-state)
     (key-chord-mode 1)))
 
+(use-package helm
+  :defer 5
+  :config
+  (progn
+    ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
+    (helm-mode 1)
+    (helm-autoresize-mode 0)
+    (helm-descbinds-mode 1)
+
+    ;; No need to display the header - it takes up room and doesn't add much.
+    (setq helm-display-header-line t)
+
+    ;; I don't need to know about some files
+    (setq helm-ff-skip-boring-files t)
+    (push "\\.$" helm-boring-file-regexp-list)
+    (push "\\.\\.$" helm-boring-file-regexp-list)
+
+    ;; This lets me quickly ag/grep for "todo" comments using the same
+    ;; ag/grep functions that I usually do.
+    (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
+
+    ;; Put C-j / C-l the sane way around.
+    (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
+    (bind-key "C-l" 'helm-execute-persistent-action helm-map)
+    (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
+    (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map))
+
+  :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
+         ([remap occur] . helm-occur)
+         ([remap dabbrev-expand] . helm-dabbrev)
+         ([remap list-buffers] . helm-buffers-list)
+         ("M-x" . helm-M-x)
+         ("C-x b" . helm-buffers-list)
+         ("C-x p" . helm-mini)
+
+         :map lisp-interaction-mode-map
+         ([remap completion-at-point] . helm-lisp-completion)
+
+         :map emacs-lisp-mode-map
+         ([remap completion-at-point] . helm-lisp-completion)
+
+         :map md/leader-map
+         ("bb" . helm-buffers-list)
+         ("f" . helm-find-files)
+         ("x" . helm-M-x)
+         ("X" . helm-resume)
+         ("p" . helm-mini)
+
+         :map help-map
+         ("X" . helm-colors)))
+
+(defun md/alfred-source-math ()
+  (helm-build-dummy-source "Math"
+    :requires-pattern t
+    :nohighlight t
+    :nomark t
+    :multimatch nil
+    :pattern-transformer
+    (lambda (p)
+      (format "%s" (ignore-errors (eval (car (read-from-string p))))))
+    :action '(("Math" . (lambda (candidate) nil)))))
+
+
+(defvar md/alfred-source-search-candidates
+  '(("Google" . ("g" . "https://www.google.co.uk/search?q=%s"))
+    ("DuckDuckGo" . ("d" . "https://www.duckduckgo.com/?q=%s"))))
+
+(defun md/alfred-source-search ()
+  (helm-build-sync-source "Search"
+    :nohighlight t
+    :nomark t
+    :multimatch nil
+    :requires-pattern t
+    :candidates md/alfred-source-search-candidates
+    :match '((lambda (candidate)
+               (message "pattern: %s / candidate: %s / result: %s" helm-pattern candidate
+                        (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern))))
+               (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern)))))
+    :fuzzy-match nil
+    :action '(("Search" . (lambda (candidate)
+                            (message "action candidate: %s / val: %s" candidate (string-remove-prefix (format "%s " (car (split-string helm-pattern))) helm-pattern))
+                            (browse-url (format (cdr candidate)  ;; the url
+                                                (url-hexify-string
+                                                 ;; This removes the "g " part from the string
+                                                 (string-remove-prefix (format "%s " (car (split-string helm-pattern))) helm-pattern)
+                                                 ))))))))
+
+
+(defun md/alfred ()
+  (interactive)
+  (with-current-buffer (get-buffer-create "*alfred*")
+    (let ((frame (make-frame '((name . "alfred")
+                               (auto-raise . t)
+                               ;; (background-color . "DeepSkyBlue3")
+                               ;; (cursor-color . "MediumPurple1")
+                               ;; (font . "Menlo 15")
+                               ;; (foreground-color . "#eeeeec")
+                               (height . 10)
+                               (internal-border-width . 20)
+                               (left . 3)
+                               (left-fringe . 0)
+                               (line-spacing . 3)
+                               (menu-bar-lines . 0)
+                               ;; (minibuffer . only)
+                               (right-fringe . 0)
+                               (tool-bar-lines . 0)
+                               (top . 48)
+                               ;; enable this to remove frame border
+                               (undecorated . t)
+                               (unsplittable . t)
+                               (vertical-scroll-bars . nil)
+                               (width . 110))))
+          (alert-hide-all-notifications t)
+          (inhibit-message t)
+          (mode-line-format nil)
+          (helm-mode-line-string nil)
+          (helm-full-frame t)
+          ;;(helm-echo-input-in-header-line t)
+          (helm-display-header-line nil)
+          (helm-use-undecorated-frame-option nil))
+      (helm :sources (list (md/alfred-source-search) (md/alfred-source-math))
+            :prompt ""
+            :buffer "*alfred*")
+      (delete-frame frame)
+      ;; For some reason without killing the buffer it messes up future state.
+      (kill-buffer (current-buffer))
+      (x-urgency-hint (selected-frame) nil))))
+
 (use-package help-fns+ :defer 1 :demand t)
 
 (evil-set-initial-state 'help-mode 'normal)
@@ -684,6 +808,22 @@
   (kbd "C-i") 'help-go-forward
   (kbd "C-o") 'help-go-back
   (kbd "<RET>") 'help-follow-symbol)
+
+(defvar md/keys-help-map (make-sparse-keymap))
+
+(bind-key "k" md/keys-help-map help-map)
+
+(bind-key "K" 'describe-keymap md/keys-help-map)
+(bind-key "p" 'describe-personal-keybindings md/keys-help-map)
+(bind-key "@" 'free-keys md/keys-help-map)
+(bind-key "SPC" 'md/which-key md/keys-help-map)
+
+(global-set-key (kbd "C-SPC") 'md/which-key)
+
+;; Setting this mode on replaces describe-bindings, and
+;; loads helm-descbinds.el, which I might want to use elsewhere.
+(add-hook 'helm-descbinds-mode-hook
+          (lambda () (bind-key "b" 'helm-descbinds md/keys-help-map)))
 
 (defun md/quit-and-kill-window ()
   (interactive)
@@ -885,22 +1025,6 @@ represent all current available bindings accurately as a single keymap."
   :config
     (progn
       (bind-key "@" 'free-keys help-map)))
-
-(defvar md/keys-help-map (make-sparse-keymap))
-
-(bind-key "k" md/keys-help-map help-map)
-
-(bind-key "K" 'describe-keymap md/keys-help-map)
-(bind-key "p" 'describe-personal-keybindings md/keys-help-map)
-(bind-key "@" 'free-keys md/keys-help-map)
-(bind-key "SPC" 'md/which-key md/keys-help-map)
-
-(global-set-key (kbd "C-SPC") 'md/which-key)
-
-;; Setting this mode on replaces describe-bindings, and
-;; loads helm-descbinds.el, which I might want to use elsewhere.
-(add-hook 'helm-descbinds-mode-hook
-          (lambda () (bind-key "b" 'helm-descbinds md/keys-help-map)))
 
 (use-package ag
   :config
