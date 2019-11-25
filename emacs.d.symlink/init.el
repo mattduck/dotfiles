@@ -2452,6 +2452,24 @@ be quickly copy/pasted into eg. gmail."
 (bind-key "TM" 'md/org-md-import md/leader-map)
 (bind-key "Th" 'md/org-html-export md/leader-map)
 
+(use-package ox-org :demand t)
+
+(use-package org-mind-map
+  :demand t
+  :config
+  (setq org-mind-map-include-text t
+        org-mind-map-engine "dot"
+        org-mind-map-tag-colors '(("green" . "#abff96")
+                                  ("amber" . "#ffd896")
+                                  ("red" . "#f5989b"))
+        org-mind-map-default-graph-attribs '(("autosize" . "false")
+                                             ("size" . "9,12")
+                                             ("resolution" . "100")
+                                             ("nodesep" . "0.25")
+                                             ("overlap" . "false")
+                                             ("splines" . "ortho")  ;; straight lines that wrap around
+                                             ("rankdir" . "TB"))))
+
 ))
 
 (use-package helm
@@ -2836,6 +2854,10 @@ be quickly copy/pasted into eg. gmail."
       (interactive)
       (elfeed-search-toggle-all 'hidden))
 
+    (defun md/elfeed-search-toggle-starred ()
+      (interactive)
+      (elfeed-search-toggle-all 'starred))
+
     (evil-set-initial-state 'elfeed-search-mode 'emacs)
     (md/make-keymap-noop elfeed-search-mode-map)
     (bind-key "SPC" md/leader-map elfeed-search-mode-map)
@@ -2860,6 +2882,7 @@ be quickly copy/pasted into eg. gmail."
     (bind-key "G" 'elfeed-search-last-entry elfeed-search-mode-map)
     (bind-key "u" 'md/elfeed-search-toggle-unread elfeed-search-mode-map)
     (bind-key "H" 'md/elfeed-search-toggle-hide elfeed-search-mode-map)
+    (bind-key "s" 'md/elfeed-search-toggle-starred elfeed-search-mode-map)
 
     (evil-set-initial-state 'elfeed-show-mode 'emacs)
     (md/make-keymap-noop elfeed-show-mode-map)
@@ -3460,7 +3483,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
   (setq right-margin-width 5)
   (setq header-line-format " ")
   (setq mode-line-format " ")
-  (setq-local org-bullets-bullet-list '(" " " " " " " " "◦" "◦" "◦" "◦" "◦" "◦" "◦" "◦"))
+  (setq-local org-bullets-bullet-list '(" " " " " " " " " " "◦" "◦" "◦" "◦" "◦" "◦" "◦"))
   (setq-local org-hide-leading-stars-before-indent-mode nil)
   (setq-local org-indent-indentation-per-level 2)
   (setq-local org-cycle-separator-lines 1)
