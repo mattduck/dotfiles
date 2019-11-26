@@ -84,14 +84,14 @@
                       (fic-face (:foreground md/hl :background md/bg))
 
                       ;; outline-mode
-                      (outline-1                               (:foreground md/hl :height 1.5 :family md/sans :weight 'normal))
-                      (outline-2                               (:foreground md/hl :height 1.4 :family md/sans :weight 'normal))
-                      (outline-3                               (:foreground md/hl :height 1.3 :family md/sans :weight 'normal))
-                      (outline-4                               (:foreground md/hl :height 1.3 :family md/sans :weight 'normal))
-                      (outline-5                               (:foreground md/hl :height 1.2 :family md/sans :weight 'normal))
-                      (outline-6                               (:foreground md/hl :height 1.2 :family md/sans :weight 'normal))
-                      (outline-7                               (:foreground md/hl :height 1.1 :family md/sans :weight 'normal))
-                      (outline-8                               (:foreground md/hl :height 1.1 :family md/sans :weight 'normal))
+                      (outline-1                               (:foreground md/hl :height 1.2 :family md/sans :weight 'normal))
+                      (outline-2                               (:foreground md/hl :height 1.2 :family md/sans :weight 'normal))
+                      (outline-3                               (:foreground md/hl :height 1.1 :family md/sans :weight 'normal))
+                      (outline-4                               (:foreground md/hl :height 1.1 :family md/sans :weight 'normal))
+                      (outline-5                               (:foreground md/hl :height 1.0 :family md/sans :weight 'normal))
+                      (outline-6                               (:foreground md/hl :height 1.0 :family md/sans :weight 'normal))
+                      (outline-7                               (:foreground md/hl :height 1.0 :family md/sans :weight 'normal))
+                      (outline-8                               (:foreground md/hl :height 1.0 :family md/sans :weight 'normal))
 
                       ;; org-mode
                       (org-hide                                  (:foreground md/bg :family md/fixed))  ;; Should be invisible
