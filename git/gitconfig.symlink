@@ -7,8 +7,8 @@ editor = vim
 excludesfile = ~/.gitignore
 
 # swap github https for SSH to avoid having to login
-[url "git@github.com:"]
-insteadOf = https://github.com/
+#[url "git@github.com:"]
+#insteadOf = https://github.com/
 
 [alias]
 s = "!tig status"
