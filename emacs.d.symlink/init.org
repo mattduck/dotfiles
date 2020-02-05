@@ -600,6 +600,58 @@ easy enough to implement:
       (fill-region start end)))
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+  (require 'ht)
+  (defvar md/variable-layers (ht-create)
+    "A hashmap of (scope -> layer), where each layer is a hashmap of symbols
+  to arbitrary values. Stores the state for md/toggle-variable-layer")
+
+  (defun md/toggle-variable-layer (scope var-alist &optional enable-fn disable-fn)
+    "Apply and restore a given list of variables.
+
+  VAR-ALIST is an alist of (symbol . value), where symbol is a
+  variable that exists in global scope.
+
+  When called the first time, apply the given VAR-ALIST (the
+  equivalent of calling setq on each list item). When called a
+  second time, restore the values for each symbol that were present
+  /before/ the first invocation.
+
+  If supplied, ENABLE-FN and DISABLE-FN are respectively called on enable/disable.
+
+  SCOPE is used to allow for multiple versions of
+  toggle-variable-layer to be used simultaneously.
+
+  If a variable is modified after a layer is applied, then the
+  restoration will ignore that symbol, and it will maintain its
+  modified value.
+
+  All scope layers are stored in md/variable-layers."
+    (interactive)
+    (if (ht-get md/variable-layers scope)
+        ;; Layer is already applied: restore the old values
+        (progn
+          (let ((oldlayer (ht-get md/variable-layers scope)))
+            (-map (lambda (item)
+                    ;; If current val == the val we passed in, then assume that the symbol hasn't been
+                    ;; modified, and is therefore save to restore to its original value.
+                    (when (equal (symbol-value (car item)) (cdr item))
+                      (set (car item) (ht-get oldlayer (car item)))))
+                  var-alist))
+          (ht-remove md/variable-layers scope)  ; Remove this layer's state
+          (when disable-fn (funcall disable-fn))
+          (message "Variable layer disabled: %s" scope))
+      ;; Layer is not applied: apply the given values and store the originals
+      (let ((newlayer (ht-create)))  ;; nested dict
+        (-map (lambda (item)
+                   (ht-set newlayer (car item) (symbol-value (car item)))  ; Save the current value
+                   (set (car item) (cdr item)))  ; Set the new value
+                   var-alist)
+        (ht-set md/variable-layers scope newlayer)  ; Store the layer in md/variable-layers
+        (when enable-fn (funcall enable-fn))
+        (message "Variable layer enabled: %s" scope))))
+#+END_SRC
+
 ** Bindings
 I seem to use =describe-face= a lot:
 #+BEGIN_SRC emacs-lisp
@@ -1458,6 +1510,13 @@ Company seems to work nicely without much configuration.
       (add-hook 'prog-mode-hook 'flycheck-mode))
     :config
     (progn
+      (defun md/flyspell-mode ()
+        "Flyspell the buffer immediately after enabling flyspell mode"
+        (interactive)
+        (flyspell-mode)
+        (when flyspell-mode
+          (flyspell-buffer)))
+
       (defface md/modeline-flycheck-error '((t (:inherit 'error))) "")
       (defface md/modeline-flycheck-warning '((t (:inherit 'warning))) "")
 
@@ -1494,8 +1553,15 @@ Company seems to work nicely without much configuration.
                 ("sj" . flycheck-next-error)
                 ("sp" . flycheck-previous-error)
                 ("sk" . flycheck-previous-error)
-                ("S <RET>" . flyspell-mode)
+                ("S <RET>" . md/flyspell-mode)
                 ("SS" . flyspell-correct-word-before-point)))
+
+  (defun md/maybe-enable-flyspell ()
+    (interactive)
+    (when (< (count-lines (point-min) (point-max)) 5000)
+      (flyspell-mode 1)))
+
+  (add-hook 'org-mode-hook 'md/maybe-enable-flyspell)
 #+END_SRC
 
 ** Compilation-mode
@@ -1974,7 +2040,14 @@ the underlying terminal (ie. I get the usual readline bindings).
   (add-hook 'term-mode-hook 'evil-emacs-state)
   (evil-set-initial-state 'ansi-term-mode 'emacs)
   (evil-set-initial-state 'term-mode 'emacs)
+
+  (use-package vterm
+    :demand t
+    :config
+    (evil-set-initial-state 'vterm-mode 'emacs)
+    (add-hook 'vterm-mode-hook 'evil-emacs-state))
 #+END_SRC
+
 ** Neotree
 
 
@@ -2745,7 +2818,8 @@ org headings:
         org-clock-out-remove-zero-time-clocks t
 
         ;; Use UTF-8 ellipsis character
-        org-ellipsis "…"
+        ;; org-ellipsis "…"
+        org-ellipsis "  "
 
         ;; Don't display the bold/underline/emphasis markup
         org-hide-emphasis-markers t
@@ -2753,6 +2827,24 @@ org headings:
         org-pretty-entities nil
         org-fontify-quote-and-verse-blocks t
         org-image-actual-width 400
+
+
+        ;; I shouldn't need to set this manually but in my current emacs
+        ;; version the "note" entry is in an unexpected format, causing
+        ;; the template insert function to fail. I can remove this
+        ;; when that issue is fixed.
+        org-structure-template-alist
+        '(("n" . "note")
+          ("a" . "export ascii")
+          ("c" . "center")
+          ("C" . "comment")
+          ("e" . "example")
+          ("E" . "export")
+          ("h" . "export html")
+          ("l" . "export latex")
+          ("q" . "quote")
+          ("s" . "src")
+          ("v" . "verse"))
 
         ;; If press M-RET I want a new line, not to split the line
         org-M-RET-may-split-line nil)
@@ -3161,6 +3253,7 @@ adhere to ~helm-org-format-outline-path~.
         org-export-with-section-numbers nil
         org-html-validation-link nil
         org-html-postamble nil
+        org-export-with-sub-superscripts nil  ;; don't mess up things_with_underscores in html export
         org-html-htmlize-output-type nil
         org-export-babel-evaluate nil
         org-html-head "
@@ -3310,15 +3403,28 @@ Set Latex options to colour the links to blue by default:
       (add-hook 'org-mode-hook 'org-bullets-mode)
 
       (setq   org-bullets-bullet-list '(
-                                      ;;"❆"
-                                      "✸"
-                                      "◎"
-                                      "▶"
-                                      "◉"
-                                      "◈"
-                                      "○"
-                                      "◇"
-                                      "◦"
+                                        ;;"❆"
+                                        ;;"▶"
+                                        "▷"
+                                        "▷"
+                                        "▷"
+                                        "▹"
+                                        "▹"
+                                        "▹"
+                                        "▹"
+                                        "▹"
+                                        "▹"
+                                        "▹"
+                                        "▹"
+
+                                        ;; "✸"
+                                        ;; "◎"
+                                        ;; "▶"
+                                        ;; "◉"
+                                        ;; "◈"
+                                        ;; "○"
+                                        ;; "◇"
+                                        ;; "◦"
                                       ))))
 #+END_SRC
 
@@ -3326,7 +3432,6 @@ Set Latex options to colour the links to blue by default:
   (defvar md/org-toggle-list-utf-val t)
 
   (defun md/org-list-utf-enable ()
-    ;; TODO: use different pretty icons for each indent level?
     (interactive)
     (font-lock-add-keywords 'org-mode
                             '(("^ *\\([-]\\) "
@@ -3552,7 +3657,8 @@ Close the use-package wrapper:
     (helm-build-sync-source "System"
       :multimatch nil
       :requires-pattern nil
-      :candidates '(("Lock" . "i3lock -c 282828")
+      ;;:candidates '(("Lock" . "i3lock -c 000000")
+      :candidates '(("Lock" . "xset dpms force off")  ;; turns screen off and triggers i3lock
                     ("Sleep" . "systemctl suspend -i")
                     ("Restart" . "systemctl reboot -i")
                     ("Shutdown" . "systemctl poweroff -i"))
@@ -3893,7 +3999,7 @@ This is the body
     :config
     (progn
       (setq elfeed-search-title-max-width 110
-            elfeed-search-filter "@2-weeks-ago -hidden")
+            elfeed-search-filter "@2-weeks-ago -hidden !ojwtech")
 
       (add-hook 'elfeed-new-entry-hook
                 (elfeed-make-tagger :before "1 month ago"
@@ -4604,7 +4710,7 @@ Remove writing distractions:
      )
 
      :bind (:map md/leader-map
-                 ("tW" . md/wiki-reader)))
+                 ("tW" . md/toggle-org-pretty)))
 
 #+END_SRC
 
@@ -4612,26 +4718,47 @@ Remove writing distractions:
   ;; TODO a way to revert all these changes to their original setting.
   ;; maybe a macro where that idea can be reapplied - after something is disabled, all the original values get restored.
 
-  (defun md/wiki-reader ()
+  (defun md/toggle-org-pretty ()
     (interactive)
-    (md/org-list-utf-enable)
-    (setq line-spacing 0.1)
-    (setq left-margin-width 10)
-    (setq right-margin-width 5)
-    (setq header-line-format " ")
-    (setq mode-line-format " ")
-    (setq-local org-bullets-bullet-list '(" " " " " " " " " " "◦" "◦" "◦" "◦" "◦" "◦" "◦"))
-    (setq-local org-hide-leading-stars-before-indent-mode nil)
-    (setq-local org-indent-indentation-per-level 2)
-    (setq-local org-cycle-separator-lines 1)
-    (setq-local org-ellipsis "▼")
-    (org-indent-mode 1)
-    (set-window-buffer nil (current-buffer))
-    (font-lock-fontify-buffer)
-    ;;(read-only-mode)
-    )
+    (require 'org-indent)
+    (make-local-variable 'org-hide-leading-stars-before-indent-mode)
+    (make-local-variable 'org-indent-indentation-per-level)
+    (make-local-variable 'org-cycle-separator-lines)
+    (make-local-variable 'org-bullets-bullet-list)
+    (md/toggle-variable-layer
+     (format "org-pretty-%s" (current-buffer))
+     '((line-spacing . 0.25)
+       (left-margin-width . 10)
+       (right-margin-width . 5)
+       (header-line-format . " ")
+       (mode-line-format . " ")
+       (org-hide-leading-stars-before-indent-mode . nil)
+       (org-indent-indentation-per-level . 2)
+       (org-cycle-separator-lines . 1)
+       (org-bullets-bullet-list . ("▷"
+                                   "▷"
+                                   "▷"
+                                   "▹"
+                                   "▹"
+                                   "▹"
+                                   "▹"
+                                   "▹"
+                                   "▹"
+                                   "▹")))
+     (lambda () ;; Enable fn
+       (set-window-buffer nil (current-buffer))
+       (font-lock-fontify-buffer)
+       (org-indent-mode 1)
+       (md/org-list-utf-enable)
+       )
+     (lambda () ;; Disable fn
+       (set-window-buffer nil (current-buffer))
+       (font-lock-fontify-buffer)
+       (org-indent-mode 0)
+       (md/org-list-utf-disable)
+       )))
 
-  (bind-key "tW" 'md/wiki-reader md/leader-map)
+  (bind-key "tW" 'md/toggle-org-pretty md/leader-map)
 #+END_SRC
 * Window manager
 
