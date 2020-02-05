@@ -226,14 +226,16 @@ mode "md" {
     bindsym $mod+k resize shrink height 10 px or 10 ppt; mode "default"
     bindsym $mod+l resize grow width 10 px or 10 ppt; mode "default"
 
-    bindsym m exec "xrandr --output eDP1 --auto --primary --output HDMI1 --auto --same-as eDP1"; mode "default"
-    bindsym Shift+m exec "xrandr --output eDP1 --auto --primary --output HDMI1 --auto --above eDP1"; mode "default"
+    bindsym m exec ",display mirror; xbacklight -set 0"; mode "default"
+    bindsym Shift+m exec ",display second"; mode "default"
+    bindsym Shift+Control+m exec ",display laptop"; mode "default"
 
     bindsym space layout toggle all; mode "default"
     bindsym Shift+X exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -b 'Yes, exit i3' 'i3-msg exit'"; mode "default"
 }
 
 bindsym $mod+w mode "md"
+bindsym $mod+q scratchpad show;
 
 bindsym $mod+Shift+space exec "albert show"
 bindsym $mod+space fullscreen disable; exec "emacsclient -ne '(call-interactively (quote md/alfred))'"
