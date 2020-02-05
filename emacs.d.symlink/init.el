@@ -1750,6 +1750,7 @@ represent all current available bindings accurately as a single keymap."
       (interactive)
       (setq fill-column 70))
     (add-hook 'git-commit-setup-hook 'md/git-commit-set-fill-column)
+    (add-hook 'git-commit-setup-hook 'evil-insert-state)
     (global-git-commit-mode t)))
 
 (use-package git-gutter
