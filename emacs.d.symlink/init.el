@@ -2692,16 +2692,42 @@ be quickly copy/pasted into eg. gmail."
   :config
   (setq org-mind-map-include-text t
         org-mind-map-engine "dot"
-        org-mind-map-tag-colors '(("green" . "#abff96")
-                                  ("amber" . "#ffd896")
-                                  ("red" . "#f5989b"))
+        org-mind-map-tag-colors 'nil
         org-mind-map-default-graph-attribs '(("autosize" . "false")
                                              ("size" . "9,12")
                                              ("resolution" . "100")
                                              ("nodesep" . "0.25")
                                              ("overlap" . "false")
                                              ("splines" . "ortho")  ;; straight lines that wrap around
-                                             ("rankdir" . "TB"))))
+                                             ("rankdir" . "TB")))
+
+  (defun md/org-mind-map-export ()
+    "org-mind-map export with some tag/property replacement"
+    (interactive)
+    (let ((current-buffer-contents (buffer-string))
+          (base-filename (file-name-sans-extension buffer-file-name))
+          (buffer-offset 0))
+       (with-temp-buffer
+         (insert current-buffer-contents)
+         (goto-char (point-min))
+         (org-align-all-tags)
+         (org-element-map (org-element-parse-buffer 'object nil) 'headline
+             (lambda (elem)
+               (goto-char (+ (org-element-property :begin elem) buffer-offset))
+               (let ((first-tag (car (org-get-tags nil t)))
+                     (elem-buffer-size (buffer-size))
+                     (elem-offset 0))
+                 (cond ((string= first-tag "red") (org-set-property "OMM-COLOR" "#AF7575"))
+                       ((string= first-tag "amber") (org-set-property "OMM-COLOR" "#EFD8A1"))
+                       ((string= first-tag "green") (org-set-property "OMM-COLOR" "#BCD693"))
+                       ((string= first-tag "blue") (org-set-property "OMM-COLOR" "#AFD7DB"))
+                       (t nil))
+                 (org-set-tags "")
+                 ;; Offset is used to account for the fact that we have added/removed characters,
+                 ;; so the old :begin value will be wrong.
+                 (setq elem-offset (- (buffer-size) elem-buffer-size))
+                 (setq buffer-offset (+ buffer-offset elem-offset)))))
+         (org-mind-map-write-named (concat base-filename ".mind-map") nil t)))))
 
 ))
 
