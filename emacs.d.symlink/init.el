@@ -2670,10 +2670,15 @@ be quickly copy/pasted into eg. gmail."
   (if (use-region-p)
       (copy-region-as-kill (region-beginning) (region-end))
     (copy-region-as-kill (point-min) (point-max)))
-  (let ((path (format "%s.html" (shell-command "mktemp")))
+  (let ((path (format "%s.html"
+                      (with-temp-buffer
+                        (progn
+                          (shell-command "mktemp" (current-buffer) (current-buffer))
+                          (buffer-string)))))
         (from (if (string= major-mode "markdown-mode") "gfm" "org")))
-    (shell-command (format "pbpaste | pandoc --from %s --to html -o %s | pbcopy" from path) nil nil)
-    (shell-command (format "open %s" path))))
+    (message path)
+    (shell-command (format "pbpaste | pandoc --from %s --to html | tee %s | pbcopy" from path) nil nil)
+    (shell-command (format "firefox %s" path)) nil nil))
 
 (bind-key "Tm" 'md/org-md-export md/leader-map)
 (bind-key "TM" 'md/org-md-import md/leader-map)
@@ -2683,6 +2688,7 @@ be quickly copy/pasted into eg. gmail."
 
 (use-package org-mind-map
   :demand t
+  :load-path "non-elpa/org-mind-map" ;; includes my fix https://github.com/the-humanities/org-mind-map/pull/52
   :config
   (setq org-mind-map-include-text t
         org-mind-map-engine "dot"
