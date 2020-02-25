@@ -689,6 +689,7 @@ by using a noop function:
 #+BEGIN_SRC emacs-lisp
   (setq delete-by-moving-to-trash t)
   (setq recentf-max-saved-items 100)
+  (setq compilation-read-command nil) ; Don't prompt me to run make
 #+END_SRC
 * Evil
 ** Base evil
@@ -987,158 +988,6 @@ actually use it to insert anything in insert mode.
       (key-chord-define evil-replace-state-map "jj" 'md/normal-state-and-save)
       (key-chord-define evil-replace-state-map "jk" 'evil-normal-state)
       (key-chord-mode 1)))
-#+END_SRC
-
-* Helm
-** Base helm
-- [ ] NOTE - describe-function and describe-variable don't use helm until helm
-  has been configured. Work out how to load helm when they're called.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package helm
-    :defer 5
-    :config
-    (progn
-      ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
-      (helm-mode 1)
-      (helm-autoresize-mode 0)
-      (helm-descbinds-mode 1)
-
-      ;; No need to display the header - it takes up room and doesn't add much.
-      (setq helm-display-header-line t)
-
-      ;; I don't need to know about some files
-      (setq helm-ff-skip-boring-files t)
-      (push "\\.$" helm-boring-file-regexp-list)
-      (push "\\.\\.$" helm-boring-file-regexp-list)
-
-      ;; This lets me quickly ag/grep for "todo" comments using the same
-      ;; ag/grep functions that I usually do.
-      (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
-
-      ;; Put C-j / C-l the sane way around.
-      (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
-      (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map))
-
-    :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
-           ([remap occur] . helm-occur)
-           ([remap dabbrev-expand] . helm-dabbrev)
-           ([remap list-buffers] . helm-buffers-list)
-           ("M-x" . helm-M-x)
-           ("C-x b" . helm-buffers-list)
-           ("C-x p" . helm-mini)
-
-           :map lisp-interaction-mode-map
-           ([remap completion-at-point] . helm-lisp-completion)
-
-           :map emacs-lisp-mode-map
-           ([remap completion-at-point] . helm-lisp-completion)
-
-           :map md/leader-map
-           ("bb" . helm-buffers-list)
-           ("f" . helm-find-files)
-           ("x" . helm-M-x)
-           ("X" . helm-resume)
-           ("p" . helm-mini)
-
-           :map help-map
-           ("X" . helm-colors)))
-
-#+END_SRC
-
-** Alfred
-#+BEGIN_SRC emacs-lisp
-  (defun md/alfred-source-math ()
-    (helm-build-dummy-source "Math"
-      :requires-pattern t
-      :nohighlight t
-      :nomark t
-      :multimatch nil
-      :pattern-transformer
-      (lambda (p)
-        (format "%s" (ignore-errors (eval (car (read-from-string p))))))
-      :action '(("Math" . (lambda (candidate) nil)))))
-
-
-  (defvar md/alfred-source-search-candidates
-    '(("Google" . ("g" . "https://www.google.co.uk/search?q=%s"))
-      ("DuckDuckGo" . ("d" . "https://www.duckduckgo.com/?q=%s"))))
-
-  (defun md/alfred-source-search ()
-    (helm-build-sync-source "Search"
-      :nohighlight t
-      :nomark t
-      :multimatch nil
-      :requires-pattern t
-      :candidates md/alfred-source-search-candidates
-      :match '((lambda (candidate)
-                 (message "pattern: %s / candidate: %s / result: %s" helm-pattern candidate
-                          (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern))))
-                 (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern)))))
-      :fuzzy-match nil
-      :action '(("Search" . (lambda (candidate)
-                              (message "action candidate: %s / val: %s" candidate (string-remove-prefix (format "%s " (car (split-string helm-pattern))) helm-pattern))
-                              (browse-url (format (cdr candidate)  ;; the url
-                                                  (url-hexify-string
-                                                   ;; This removes the "g " part from the string
-                                                   (string-remove-prefix (format "%s " (car (split-string helm-pattern))) helm-pattern)
-                                                   ))))))))
-
-
-  (defun md/alfred ()
-    (interactive)
-    (with-current-buffer (get-buffer-create "*alfred*")
-      (let ((frame (make-frame '((name . "alfred")
-                                 (auto-raise . t)
-                                 ;; (background-color . "DeepSkyBlue3")
-                                 ;; (cursor-color . "MediumPurple1")
-                                 ;; (font . "Menlo 15")
-                                 ;; (foreground-color . "#eeeeec")
-                                 (height . 10)
-                                 (internal-border-width . 20)
-                                 (left . 3)
-                                 (left-fringe . 0)
-                                 (line-spacing . 3)
-                                 (menu-bar-lines . 0)
-                                 ;; (minibuffer . only)
-                                 (right-fringe . 0)
-                                 (tool-bar-lines . 0)
-                                 (top . 48)
-                                 ;; enable this to remove frame border
-                                 (undecorated . t)
-                                 (unsplittable . t)
-                                 (vertical-scroll-bars . nil)
-                                 (width . 110))))
-            (alert-hide-all-notifications t)
-            (inhibit-message t)
-            (mode-line-format nil)
-            (helm-mode-line-string nil)
-            (helm-full-frame t)
-            ;;(helm-echo-input-in-header-line t)
-            (helm-display-header-line nil)
-            (helm-use-undecorated-frame-option nil))
-        (helm :sources (list (md/alfred-source-search) (md/alfred-source-math))
-              :prompt ""
-              :buffer "*alfred*")
-        (delete-frame frame)
-        ;; For some reason without killing the buffer it messes up future state.
-        (kill-buffer (current-buffer))
-        (x-urgency-hint (selected-frame) nil))))
-#+END_SRC
-
-** COMMENT helm-ag (not using anymore)
-#+BEGIN_SRC emacs-lisp
-  (use-package helm-ag
-    :defer 5
-    :config
-    (defun md/ag ()
-      "Run helm-do-ag on the default-directory"
-      (interactive)
-      (helm-do-ag default-directory))
-    :bind (:map md/leader-map
-                ("ag" . md/ag)))
 #+END_SRC
 
 * Help
@@ -3512,22 +3361,35 @@ Set Latex options to colour the links to blue by default:
     :demand t
     :load-path "non-elpa/org-mind-map" ;; includes my fix https://github.com/the-humanities/org-mind-map/pull/52
     :config
-    (setq org-mind-map-include-text t
+    (setq org-mind-map-include-text nil
           org-mind-map-engine "dot"
           org-mind-map-tag-colors 'nil
+          org-mind-map-wrap-text-length 30
+          org-mind-map-default-node-attribs '(("shape" . "plaintext"))
+          org-mind-map-default-edge-attribs '(("color" . "#cccccc")
+                                              ("arrowhead" . "none")
+                                              ("arrowtail" . "none"))
           org-mind-map-default-graph-attribs '(("autosize" . "false")
-                                               ("size" . "9,12")
+                                               ("size" . "125,50")
                                                ("resolution" . "100")
-                                               ("nodesep" . "0.25")
+                                               ("nodesep" . "0.1")
+                                               ("margin" . "0.1")
                                                ("overlap" . "false")
                                                ("splines" . "ortho")  ;; straight lines that wrap around
-                                               ("rankdir" . "TB")))
+                                               ("rankdir" . "LR")))
 
     (defun md/org-mind-map-export ()
       "org-mind-map export with some tag/property replacement"
       (interactive)
-      (let ((current-buffer-contents (buffer-string))
-            (base-filename (file-name-sans-extension buffer-file-name))
+      (let ((current-buffer-contents ;; either selected region or whole buffer
+             (if (region-active-p)
+                 (buffer-substring (region-beginning) (region-end))
+               (buffer-string)))
+            (base-filename  ;; if can't detect filename, prompt for it
+             (file-name-sans-extension
+              (file-name-sans-extension
+               (if buffer-file-name buffer-file-name
+                 (completing-read "filename: " (directory-files "."))))))
             (buffer-offset 0))
          (with-temp-buffer
            (insert current-buffer-contents)
@@ -3691,7 +3553,6 @@ Close the use-package wrapper:
     (helm-build-sync-source "System"
       :multimatch nil
       :requires-pattern nil
-      ;;:candidates '(("Lock" . "i3lock -c 000000")
       :candidates '(("Lock" . "xset dpms force off")  ;; turns screen off and triggers i3lock
                     ("Sleep" . "systemctl suspend -i")
                     ("Restart" . "systemctl reboot -i")
@@ -3724,8 +3585,6 @@ Close the use-package wrapper:
                                  (window-system . x)
                                  (auto-raise . t)
                                  (height . 10)
-                                 ;; (border-color . "DeepSkyBlue3")
-                                 ;; (border-width . 30)
                                  (internal-border-width . 20)
                                  (left . 0.33)
                                  (left-fringe . 0)
