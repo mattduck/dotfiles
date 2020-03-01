@@ -2702,8 +2702,9 @@ be quickly copy/pasted into eg. gmail."
   (helm-build-sync-source "Web Bookmarks"
     :multimatch nil
     :requires-pattern nil
-    :candidates '(("Gmail" . "https://mail.google.com")
-                  ("Google Calendar" . "https://calendar.google.com")
+    :candidates '(("Localhost" . "http://localhost:8000")
+                  ("Gmail" . "https://mail.google.com")
+                  ("Calendar" . "https://calendar.google.com")
                   ("Slack: emacs.london" . "https://app.slack.com/client/TJ29PTDDX")
                   ("Emacs.london" . "https://emacs.london")
                   ("Github" . "https://github.com/"))
@@ -4033,6 +4034,16 @@ This is the same as the keychain setup used for new shell logins."
       (setenv "SSH_AGENT_PID" pid-val))))
 
 (md/set-ssh-agent-from-mac-keychain)
+
+(defun md/org-clock-status ()
+  "Return current clock status as a string"
+  (if (not (org-clock-is-active))
+      "-"
+    (save-window-excursion
+      (org-clock-goto)
+      (format "%s %s"
+              (format-seconds "%.2h:%.2m" (org-time-convert-to-integer (org-time-since org-clock-start-time)))
+              (s-truncate 60 (substring-no-properties (org-get-heading t t t t)))))))
 
 (use-package esup
   :defer 5)
