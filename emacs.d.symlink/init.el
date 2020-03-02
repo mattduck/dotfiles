@@ -2037,8 +2037,8 @@ represent all current available bindings accurately as a single keymap."
 
 ;; Global org leader bindings
 (bind-key "a a" 'org-agenda md/leader-map)
-(bind-key "a c" 'org-capture md/leader-map)
-(bind-key "RET" 'org-capture md/leader-map)
+(bind-key "a c" 'helm-org-capture-templates md/leader-map)
+(bind-key "RET" 'helm-org-capture-templates md/leader-map)
 (bind-key "TAB" 'org-agenda md/leader-map)
 
 (defvar md/org-inherit-dates-p t
@@ -2670,10 +2670,11 @@ be quickly copy/pasted into eg. gmail."
          :map help-map
          ("X" . helm-colors)))
 
-;; org-mode stuff
+(defun md/strip-first-word (s)
+  "Remove the first word from a string. This function just exists for readability."
+  (string-remove-prefix (format "%s " (car (split-string s))) s))
 
-(defun md/org-capture-popup-frame ()
-  (interactive)
+(defun md/org-capture-popup-frame (template-shortcut)
   (make-frame '((name . "org-capture")
                 (window-system . x)
                 (auto-raise . t)
@@ -2681,9 +2682,9 @@ be quickly copy/pasted into eg. gmail."
                 (width . 120)
                 (left . 0.3)
                 (top . 0.2)))
+  (message template-shortcut)
   (select-frame-by-name "org-capture")
-  ;; TODO: how to only show the template selection window
-  (ignore-errors (org-capture))
+  (org-capture nil template-shortcut)
   (delete-other-windows))
 
 (defadvice org-capture-finalize
@@ -2698,10 +2699,14 @@ be quickly copy/pasted into eg. gmail."
   (if (equal "org-capture" (frame-parameter nil 'name))
       (delete-frame)))
 
-
-(defun md/strip-first-word (s)
-  "Remove the first word from a string. This function just exists for readability."
-  (string-remove-prefix (format "%s " (car (split-string s))) s))
+(defun md/alfred-source-org-capture-templates ()
+  "Run org-capture in a popup window. Copied from helm-org.el, but plugs in my
+popup version of org-capture instead of using the usual org-capture."
+  (helm-build-sync-source "Org Capture Templates:"
+    :candidates (cl-loop for template in org-capture-templates
+                         collect (cons (nth 1 template) (nth 0 template)))
+    :action '(("Capture" . (lambda (template-shortcut)
+                             (md/org-capture-popup-frame template-shortcut))))))
 
 (defvar md/alfred-source-search-candidates
   '(("Google" . ("g" . "https://www.google.co.uk/search?q=%s"))
@@ -2740,6 +2745,18 @@ be quickly copy/pasted into eg. gmail."
                   ("Github" . "https://github.com/"))
     :action '(("Open" . (lambda (candidate) (browse-url candidate))))))
 
+(defun md/alfred-source-system ()
+  "System commands - lock, sleep etc."
+  (helm-build-sync-source "System"
+    :multimatch nil
+    :requires-pattern nil
+    :candidates '(("Lock" . "xset dpms force off")  ;; turns screen off and triggers i3lock
+                  ("Sleep" . "systemctl suspend -i")
+                  ("Restart" . "systemctl reboot -i")
+                  ("Shutdown" . "systemctl poweroff -i"))
+    :action '(("Execute" . (lambda (candidate)
+                             (shell-command (concat candidate " >/dev/null 2>&1 & disown") nil nil))))))
+
 (defun md/alfred-source-apps ()
   "Use gtk-launch to open installed .desktop programs. This isn't perfect - eg. the program names
 are ugly. It works fine though."
@@ -2754,19 +2771,6 @@ are ugly. It works fine though."
                             (directory-files "/usr/share/applications"))))
     :action '(("Launch" . (lambda (candidate)
                             (shell-command (concat "gtk-launch " candidate " >/dev/null 2>&1 & disown") nil nil))))))
-
-(defun md/alfred-source-system ()
-  "System commands - lock, sleep etc."
-  (helm-build-sync-source "System"
-    :multimatch nil
-    :requires-pattern nil
-    :candidates '(("Lock" . "xset dpms force off")  ;; turns screen off and triggers i3lock
-                  ("Sleep" . "systemctl suspend -i")
-                  ("Restart" . "systemctl reboot -i")
-                  ("Shutdown" . "systemctl poweroff -i"))
-    :action '(("Execute" . (lambda (candidate)
-                             (shell-command (concat candidate " >/dev/null 2>&1 & disown") nil nil))))))
-
 
 (defun md/alfred-source-webserver ()
   "Start a webserver process in a particular directory."
@@ -2863,6 +2867,7 @@ are ugly. It works fine though."
       (helm :sources (list (md/alfred-source-system)
                            (md/alfred-source-search)
                            (md/alfred-source-webserver)
+                           (md/alfred-source-org-capture-templates)
                            (md/alfred-source-web-bookmarks)
                            (md/alfred-source-apps)
                            (md/alfred-source-directories)
@@ -2872,7 +2877,7 @@ are ugly. It works fine though."
             :buffer "*alfred*")
       (delete-frame frame)
       ;; For some reason without killing the buffer it messes up future state.
-      (kill-buffer (current-buffer))
+      (kill-buffer "*alfred*")
       ;; I don't want this to cause the main frame to flash
       (x-urgency-hint (selected-frame) nil))))
 

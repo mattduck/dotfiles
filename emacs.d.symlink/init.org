@@ -2766,8 +2766,8 @@ org headings:
 
   ;; Global org leader bindings
   (bind-key "a a" 'org-agenda md/leader-map)
-  (bind-key "a c" 'org-capture md/leader-map)
-  (bind-key "RET" 'org-capture md/leader-map)
+  (bind-key "a c" 'helm-org-capture-templates md/leader-map)
+  (bind-key "RET" 'helm-org-capture-templates md/leader-map)
   (bind-key "TAB" 'org-agenda md/leader-map)
 #+END_SRC
 ** Utility functions
@@ -3497,10 +3497,18 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
 
 
 #+BEGIN_SRC emacs-lisp
-  ;; org-mode stuff
+  (defun md/strip-first-word (s)
+    "Remove the first word from a string. This function just exists for readability."
+    (string-remove-prefix (format "%s " (car (split-string s))) s))
+#+END_SRC
 
-  (defun md/org-capture-popup-frame ()
-    (interactive)
+*** Org capture
+
+This allows me to capture in a popup frame. The ~defadvice~ parts were taken from
+somewhere on the web - they just handle automatic deleting of the frame.
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/org-capture-popup-frame (template-shortcut)
     (make-frame '((name . "org-capture")
                   (window-system . x)
                   (auto-raise . t)
@@ -3508,9 +3516,9 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
                   (width . 120)
                   (left . 0.3)
                   (top . 0.2)))
+    (message template-shortcut)
     (select-frame-by-name "org-capture")
-    ;; TODO: how to only show the template selection window
-    (ignore-errors (org-capture))
+    (org-capture nil template-shortcut)
     (delete-other-windows))
 
   (defadvice org-capture-finalize
@@ -3525,11 +3533,20 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
     (if (equal "org-capture" (frame-parameter nil 'name))
         (delete-frame)))
 
+  (defun md/alfred-source-org-capture-templates ()
+    "Run org-capture in a popup window. Copied from helm-org.el, but plugs in my
+  popup version of org-capture instead of using the usual org-capture."
+    (helm-build-sync-source "Org Capture Templates:"
+      :candidates (cl-loop for template in org-capture-templates
+                           collect (cons (nth 1 template) (nth 0 template)))
+      :action '(("Capture" . (lambda (template-shortcut)
+                               (md/org-capture-popup-frame template-shortcut))))))
 
-  (defun md/strip-first-word (s)
-    "Remove the first word from a string. This function just exists for readability."
-    (string-remove-prefix (format "%s " (car (split-string s))) s))
+#+END_SRC
 
+*** Search
+
+#+BEGIN_SRC emacs-lisp
   (defvar md/alfred-source-search-candidates
     '(("Google" . ("g" . "https://www.google.co.uk/search?q=%s"))
       ("DuckDuckGo" . ("d" . "https://www.duckduckgo.com/?q=%s"))
@@ -3553,7 +3570,9 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
                                                   (url-hexify-string
                                                    ;; This removes the "g " part from the string
                                                    (md/strip-first-word helm-pattern)))))))))
-
+#+END_SRC
+*** Web bookmarks
+#+BEGIN_SRC emacs-lisp
   (defun md/alfred-source-web-bookmarks ()
     "Open predefined web bookmarks."
     (helm-build-sync-source "Web Bookmarks"
@@ -3566,7 +3585,24 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
                     ("Emacs.london" . "https://emacs.london")
                     ("Github" . "https://github.com/"))
       :action '(("Open" . (lambda (candidate) (browse-url candidate))))))
+#+END_SRC
+*** System commands
+#+BEGIN_SRC emacs-lisp
+  (defun md/alfred-source-system ()
+    "System commands - lock, sleep etc."
+    (helm-build-sync-source "System"
+      :multimatch nil
+      :requires-pattern nil
+      :candidates '(("Lock" . "xset dpms force off")  ;; turns screen off and triggers i3lock
+                    ("Sleep" . "systemctl suspend -i")
+                    ("Restart" . "systemctl reboot -i")
+                    ("Shutdown" . "systemctl poweroff -i"))
+      :action '(("Execute" . (lambda (candidate)
+                               (shell-command (concat candidate " >/dev/null 2>&1 & disown") nil nil))))))
 
+#+END_SRC
+*** Launch programs
+#+BEGIN_SRC emacs-lisp
   (defun md/alfred-source-apps ()
     "Use gtk-launch to open installed .desktop programs. This isn't perfect - eg. the program names
   are ugly. It works fine though."
@@ -3581,20 +3617,10 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
                               (directory-files "/usr/share/applications"))))
       :action '(("Launch" . (lambda (candidate)
                               (shell-command (concat "gtk-launch " candidate " >/dev/null 2>&1 & disown") nil nil))))))
+#+END_SRC
+*** Run a webserver
 
-  (defun md/alfred-source-system ()
-    "System commands - lock, sleep etc."
-    (helm-build-sync-source "System"
-      :multimatch nil
-      :requires-pattern nil
-      :candidates '(("Lock" . "xset dpms force off")  ;; turns screen off and triggers i3lock
-                    ("Sleep" . "systemctl suspend -i")
-                    ("Restart" . "systemctl reboot -i")
-                    ("Shutdown" . "systemctl poweroff -i"))
-      :action '(("Execute" . (lambda (candidate)
-                               (shell-command (concat candidate " >/dev/null 2>&1 & disown") nil nil))))))
-
-
+#+BEGIN_SRC emacs-lisp
   (defun md/alfred-source-webserver ()
     "Start a webserver process in a particular directory."
     (helm-build-sync-source "Webserver"
@@ -3611,7 +3637,9 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
                   (string-match (s-chop-prefix "serve " helm-pattern) candidate))))
       :action '(("Serve" . (lambda (candidate)
                              (shell-command (format "cd '%s'; ,serve >/tmp/helm-webserver 2>&1 & disown" candidate) nil nil))))))
-
+#+END_SRC
+*** Kill processes
+#+BEGIN_SRC emacs-lisp
   (defun md/alfred-source-processes ()
     "Source which uses `ps` to list processes, and then offer options to interact with them."
     (helm-build-async-source "Processes"
@@ -3628,7 +3656,9 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
                               (start-process "helm-source-noop" nil "true")))
       :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
                 ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand))))))))
-
+#+END_SRC
+*** Open directories
+#+BEGIN_SRC emacs-lisp
   (defun md/alfred-source-directories ()
     "Open a directory."
     (helm-build-async-source "Directories"
@@ -3643,7 +3673,9 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
       ;; Invoke terminal because ranger needs a terminal. If you copy/paste this you may not need a
       ;; terminal - xdg-open could open a GUI file manager.
       :action '(("Open" . (lambda (cand) (shell-command (format "gnome-terminal -- /bin/sh -c \"xdg-open '%s'\" & disown" cand) nil nil))))))
-
+#+END_SRC
+*** Open files
+#+BEGIN_SRC emacs-lisp
   (defun md/alfred-source-files ()
     "Open a file with its default program."
     (helm-build-async-source "Files"
@@ -3656,7 +3688,9 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
                                    "helm-source-fd" nil (format "fd -t f -a -d 15 --full-path --color never '%s' /f 2>/dev/null" pat)))
                               (start-process "helm-source-noop" nil "true")))
       :action '(("Open" . (lambda (cand) (call-process "sh" nil nil nil "-c" (format "xdg-open '%s' & disown" cand)))))))
-
+#+END_SRC
+*** Main Alfred command
+#+BEGIN_SRC emacs-lisp
   (defun md/alfred ()
     "Entry point to create the 'alfred' frame and run helm."
     (interactive)
@@ -3690,6 +3724,7 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
         (helm :sources (list (md/alfred-source-system)
                              (md/alfred-source-search)
                              (md/alfred-source-webserver)
+                             (md/alfred-source-org-capture-templates)
                              (md/alfred-source-web-bookmarks)
                              (md/alfred-source-apps)
                              (md/alfred-source-directories)
@@ -3699,7 +3734,7 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
               :buffer "*alfred*")
         (delete-frame frame)
         ;; For some reason without killing the buffer it messes up future state.
-        (kill-buffer (current-buffer))
+        (kill-buffer "*alfred*")
         ;; I don't want this to cause the main frame to flash
         (x-urgency-hint (selected-frame) nil))))
 #+END_SRC
