@@ -1,12 +1,13 @@
-(defun md/dotfiles-get-root ()
-  (or
-    (getenv "DOTFILES")
-    (concat (expand-file-name "~") "/dotfiles")))
-
 (defun md/dotfiles-get-path (path)
-  (concat (md/dotfiles-get-root) "/" path))
+  "Lookup files that are in my dotfiles directory"
+  (concat
+   (or (getenv "DOTFILES")
+       (concat (expand-file-name "~") "/dotfiles"))
+   "/"
+   path))
 
 (defun md/dotfiles-compile ()
+  "Use org-babel-tangle to create init.el and byte-compile it"
   (interactive)
   (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
   (setq-local org-confirm-babel-evaluate nil)
@@ -2669,6 +2670,35 @@ be quickly copy/pasted into eg. gmail."
          :map help-map
          ("X" . helm-colors)))
 
+;; org-mode stuff
+
+(defun md/org-capture-popup-frame ()
+  (interactive)
+  (make-frame '((name . "org-capture")
+                (window-system . x)
+                (auto-raise . t)
+                (height . 20)
+                (width . 120)
+                (left . 0.3)
+                (top . 0.2)))
+  (select-frame-by-name "org-capture")
+  ;; TODO: how to only show the template selection window
+  (ignore-errors (org-capture))
+  (delete-other-windows))
+
+(defadvice org-capture-finalize
+    (after delete-capture-frame activate)
+  "Advise capture-finalize to close the frame"
+  (if (equal "org-capture" (frame-parameter nil 'name))
+      (delete-frame)))
+
+(defadvice org-capture-destroy
+    (after delete-capture-frame activate)
+  "Advise capture-destroy to close the frame"
+  (if (equal "org-capture" (frame-parameter nil 'name))
+      (delete-frame)))
+
+
 (defun md/strip-first-word (s)
   "Remove the first word from a string. This function just exists for readability."
   (string-remove-prefix (format "%s " (car (split-string s))) s))
@@ -2690,7 +2720,7 @@ be quickly copy/pasted into eg. gmail."
                (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern)))))
     :fuzzy-match nil
     :filtered-candidate-transformer (lambda (candidates source)
-                                       (map 'list (lambda (c) (cons (format "%s: %s" (car c) (md/strip-first-word helm-pattern)) (cdr c))) candidates))
+                                      (map 'list (lambda (c) (cons (format "%s: %s" (car c) (md/strip-first-word helm-pattern)) (cdr c))) candidates))
     :action '(("Search" . (lambda (candidate)
                             (browse-url (format (cdr candidate)  ;; the url
                                                 (url-hexify-string
@@ -2720,8 +2750,8 @@ are ugly. It works fine though."
                   (-map
                    (lambda (item)
                      (s-chop-suffix ".desktop" item))
-                     (-filter (lambda (d) (not (or (string= d ".") (string= d ".."))))
-                              (directory-files "/usr/share/applications"))))
+                   (-filter (lambda (d) (not (or (string= d ".") (string= d ".."))))
+                            (directory-files "/usr/share/applications"))))
     :action '(("Launch" . (lambda (candidate)
                             (shell-command (concat "gtk-launch " candidate " >/dev/null 2>&1 & disown") nil nil))))))
 
@@ -2750,7 +2780,7 @@ are ugly. It works fine though."
     :match '((lambda (candidate)
                (and
                 (s-starts-with? "serve " helm-pattern)
-                 ;; this is what helm-default-match-function does
+                ;; this is what helm-default-match-function does
                 (string-match (s-chop-prefix "serve " helm-pattern) candidate))))
     :action '(("Serve" . (lambda (candidate)
                            (shell-command (format "cd '%s'; ,serve >/tmp/helm-webserver 2>&1 & disown" candidate) nil nil))))))
@@ -2763,11 +2793,11 @@ are ugly. It works fine though."
     :requires-pattern t
     :candidates-process (lambda ()
                           (if (s-starts-with? "p " helm-pattern)
-                            (let ((pat (s-chop-prefix "p " helm-pattern)))
-                              (start-process-shell-command
-                               ;; The weird grep -v at the end is a silly quick way to strip the grep
-                               ;; itself from showing in the results.
-                               "helm-source-ps" nil (format "ps axh -o pid,group,args --cols 90 -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args --cols 90'" pat)))
+                              (let ((pat (s-chop-prefix "p " helm-pattern)))
+                                (start-process-shell-command
+                                 ;; The weird grep -v at the end is a silly quick way to strip the grep
+                                 ;; itself from showing in the results.
+                                 "helm-source-ps" nil (format "ps axh -o pid,group,args --cols 90 -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args --cols 90'" pat)))
                             (start-process "helm-source-noop" nil "true")))
     :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
               ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand))))))))
@@ -2779,9 +2809,9 @@ are ugly. It works fine though."
     :requires-pattern t
     :candidates-process (lambda ()
                           (if (and (s-starts-with? "fd " helm-pattern) (> (length helm-pattern) 4))
-                            (let ((pat (s-chop-prefix "fd " helm-pattern)))
-                              (start-process-shell-command
-                               "helm-source-fd" nil (format "fd -t d -a -d 8 --full-path --color never '%s' /f 2>/dev/null" pat)))
+                              (let ((pat (s-chop-prefix "fd " helm-pattern)))
+                                (start-process-shell-command
+                                 "helm-source-fd" nil (format "fd -t d -a -d 8 --full-path --color never '%s' /f 2>/dev/null" pat)))
                             (start-process "helm-source-noop" nil "true")))
     ;; Invoke terminal because ranger needs a terminal. If you copy/paste this you may not need a
     ;; terminal - xdg-open could open a GUI file manager.
@@ -2794,9 +2824,9 @@ are ugly. It works fine though."
     :requires-pattern t
     :candidates-process (lambda ()
                           (if (and (s-starts-with? "f " helm-pattern) (> (length helm-pattern) 4))
-                            (let ((pat (s-chop-prefix "f " helm-pattern)))
-                              (start-process-shell-command
-                               "helm-source-fd" nil (format "fd -t f -a -d 15 --full-path --color never '%s' /f 2>/dev/null" pat)))
+                              (let ((pat (s-chop-prefix "f " helm-pattern)))
+                                (start-process-shell-command
+                                 "helm-source-fd" nil (format "fd -t f -a -d 15 --full-path --color never '%s' /f 2>/dev/null" pat)))
                             (start-process "helm-source-noop" nil "true")))
     :action '(("Open" . (lambda (cand) (call-process "sh" nil nil nil "-c" (format "xdg-open '%s' & disown" cand)))))))
 
@@ -4036,14 +4066,19 @@ This is the same as the keychain setup used for new shell logins."
 (md/set-ssh-agent-from-mac-keychain)
 
 (defun md/org-clock-status ()
-  "Return current clock status as a string"
+  "Return a string appropriate for my i3 status bar,
+   showing the current clock time and the heading."
+  (interactive)
   (if (not (org-clock-is-active))
       "-"
-    (save-window-excursion
-      (org-clock-goto)
-      (format "%s %s"
-              (format-seconds "%.2h:%.2m" (org-time-convert-to-integer (org-time-since org-clock-start-time)))
-              (s-truncate 60 (substring-no-properties (org-get-heading t t t t)))))))
+    (with-current-buffer (org-clock-is-active)  ; this returns the current clocking buffer
+      (save-excursion
+        (save-restriction
+          (goto-char org-clock-marker)
+          (org-back-to-heading t)
+          (format "%s %s"
+                  (format-seconds "%.2h:%.2m" (org-time-convert-to-integer (org-time-since org-clock-start-time)))
+                  (s-truncate 60 (substring-no-properties (org-get-heading)))))))))
 
 (use-package esup
   :defer 5)

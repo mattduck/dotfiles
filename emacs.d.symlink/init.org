@@ -5,15 +5,16 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
 [[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
 
 #+BEGIN_SRC emacs-lisp
-  (defun md/dotfiles-get-root ()
-    (or
-      (getenv "DOTFILES")
-      (concat (expand-file-name "~") "/dotfiles")))
-
   (defun md/dotfiles-get-path (path)
-    (concat (md/dotfiles-get-root) "/" path))
+    "Lookup files that are in my dotfiles directory"
+    (concat
+     (or (getenv "DOTFILES")
+         (concat (expand-file-name "~") "/dotfiles"))
+     "/"
+     path))
 
   (defun md/dotfiles-compile ()
+    "Use org-babel-tangle to create init.el and byte-compile it"
     (interactive)
     (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
     (setq-local org-confirm-babel-evaluate nil)
@@ -3496,182 +3497,211 @@ I've [[https://www.mattduck.com/emacs-fuzzy-launcher.html][written about this in
 
 
 #+BEGIN_SRC emacs-lisp
-    (defun md/strip-first-word (s)
-      "Remove the first word from a string. This function just exists for readability."
-      (string-remove-prefix (format "%s " (car (split-string s))) s))
+  ;; org-mode stuff
 
-    (defvar md/alfred-source-search-candidates
-      '(("Google" . ("g" . "https://www.google.co.uk/search?q=%s"))
-        ("DuckDuckGo" . ("d" . "https://www.duckduckgo.com/?q=%s"))
-        ("Dictionary.com" . ("spell" . "https://www.dictionary.com/browse/%s"))))
+  (defun md/org-capture-popup-frame ()
+    (interactive)
+    (make-frame '((name . "org-capture")
+                  (window-system . x)
+                  (auto-raise . t)
+                  (height . 20)
+                  (width . 120)
+                  (left . 0.3)
+                  (top . 0.2)))
+    (select-frame-by-name "org-capture")
+    ;; TODO: how to only show the template selection window
+    (ignore-errors (org-capture))
+    (delete-other-windows))
 
-    (defun md/alfred-source-search ()
-      "Perform web searches - eg. on DuckDuckGo. Similar to the 'g ' and 'd ' features on Alfred."
-      (helm-build-sync-source "Search"
-        :nohighlight t
-        :nomark t
-        :multimatch nil
-        :requires-pattern t
-        :candidates md/alfred-source-search-candidates
-        :match '((lambda (candidate)
-                   (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern)))))
-        :fuzzy-match nil
-        :filtered-candidate-transformer (lambda (candidates source)
-                                           (map 'list (lambda (c) (cons (format "%s: %s" (car c) (md/strip-first-word helm-pattern)) (cdr c))) candidates))
-        :action '(("Search" . (lambda (candidate)
-                                (browse-url (format (cdr candidate)  ;; the url
-                                                    (url-hexify-string
-                                                     ;; This removes the "g " part from the string
-                                                     (md/strip-first-word helm-pattern)))))))))
+  (defadvice org-capture-finalize
+      (after delete-capture-frame activate)
+    "Advise capture-finalize to close the frame"
+    (if (equal "org-capture" (frame-parameter nil 'name))
+        (delete-frame)))
 
-    (defun md/alfred-source-web-bookmarks ()
-      "Open predefined web bookmarks."
-      (helm-build-sync-source "Web Bookmarks"
-        :multimatch nil
-        :requires-pattern nil
-        :candidates '(("Localhost" . "http://localhost:8000")
-                      ("Gmail" . "https://mail.google.com")
-                      ("Calendar" . "https://calendar.google.com")
-                      ("Slack: emacs.london" . "https://app.slack.com/client/TJ29PTDDX")
-                      ("Emacs.london" . "https://emacs.london")
-                      ("Github" . "https://github.com/"))
-        :action '(("Open" . (lambda (candidate) (browse-url candidate))))))
-
-    (defun md/alfred-source-apps ()
-      "Use gtk-launch to open installed .desktop programs. This isn't perfect - eg. the program names
-    are ugly. It works fine though."
-      (helm-build-sync-source "Launch"
-        :multimatch nil
-        :requires-pattern nil
-        :candidates (lambda ()
-                      (-map
-                       (lambda (item)
-                         (s-chop-suffix ".desktop" item))
-                         (-filter (lambda (d) (not (or (string= d ".") (string= d ".."))))
-                                  (directory-files "/usr/share/applications"))))
-        :action '(("Launch" . (lambda (candidate)
-                                (shell-command (concat "gtk-launch " candidate " >/dev/null 2>&1 & disown") nil nil))))))
-
-    (defun md/alfred-source-system ()
-      "System commands - lock, sleep etc."
-      (helm-build-sync-source "System"
-        :multimatch nil
-        :requires-pattern nil
-        :candidates '(("Lock" . "xset dpms force off")  ;; turns screen off and triggers i3lock
-                      ("Sleep" . "systemctl suspend -i")
-                      ("Restart" . "systemctl reboot -i")
-                      ("Shutdown" . "systemctl poweroff -i"))
-        :action '(("Execute" . (lambda (candidate)
-                                 (shell-command (concat candidate " >/dev/null 2>&1 & disown") nil nil))))))
+  (defadvice org-capture-destroy
+      (after delete-capture-frame activate)
+    "Advise capture-destroy to close the frame"
+    (if (equal "org-capture" (frame-parameter nil 'name))
+        (delete-frame)))
 
 
-    (defun md/alfred-source-webserver ()
-      "Start a webserver process in a particular directory."
-      (helm-build-sync-source "Webserver"
-        :multimatch nil
-        :requires-pattern t
-        :candidates '(("mattduck.com" . "/f/www.mattduck.com/build")
-                      ("shonamcgovern.com" . "/f/clients/shona-mcgovern/shonamcgovern.com/site")
-                      ("emacs.london" . "/f/emacs.london/london-emacs-hacking.github.io")
-                      ("pkb" . "/f/md.pkb"))
-        :match '((lambda (candidate)
-                   (and
-                    (s-starts-with? "serve " helm-pattern)
-                     ;; this is what helm-default-match-function does
-                    (string-match (s-chop-prefix "serve " helm-pattern) candidate))))
-        :action '(("Serve" . (lambda (candidate)
-                               (shell-command (format "cd '%s'; ,serve >/tmp/helm-webserver 2>&1 & disown" candidate) nil nil))))))
+  (defun md/strip-first-word (s)
+    "Remove the first word from a string. This function just exists for readability."
+    (string-remove-prefix (format "%s " (car (split-string s))) s))
 
-    (defun md/alfred-source-processes ()
-      "Source which uses `ps` to list processes, and then offer options to interact with them."
-      (helm-build-async-source "Processes"
-        :nohighlight t  ;; Because grep is doing the matching, not helm
-        :multimatch nil
-        :requires-pattern t
-        :candidates-process (lambda ()
-                              (if (s-starts-with? "p " helm-pattern)
+  (defvar md/alfred-source-search-candidates
+    '(("Google" . ("g" . "https://www.google.co.uk/search?q=%s"))
+      ("DuckDuckGo" . ("d" . "https://www.duckduckgo.com/?q=%s"))
+      ("Dictionary.com" . ("spell" . "https://www.dictionary.com/browse/%s"))))
+
+  (defun md/alfred-source-search ()
+    "Perform web searches - eg. on DuckDuckGo. Similar to the 'g ' and 'd ' features on Alfred."
+    (helm-build-sync-source "Search"
+      :nohighlight t
+      :nomark t
+      :multimatch nil
+      :requires-pattern t
+      :candidates md/alfred-source-search-candidates
+      :match '((lambda (candidate)
+                 (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern)))))
+      :fuzzy-match nil
+      :filtered-candidate-transformer (lambda (candidates source)
+                                        (map 'list (lambda (c) (cons (format "%s: %s" (car c) (md/strip-first-word helm-pattern)) (cdr c))) candidates))
+      :action '(("Search" . (lambda (candidate)
+                              (browse-url (format (cdr candidate)  ;; the url
+                                                  (url-hexify-string
+                                                   ;; This removes the "g " part from the string
+                                                   (md/strip-first-word helm-pattern)))))))))
+
+  (defun md/alfred-source-web-bookmarks ()
+    "Open predefined web bookmarks."
+    (helm-build-sync-source "Web Bookmarks"
+      :multimatch nil
+      :requires-pattern nil
+      :candidates '(("Localhost" . "http://localhost:8000")
+                    ("Gmail" . "https://mail.google.com")
+                    ("Calendar" . "https://calendar.google.com")
+                    ("Slack: emacs.london" . "https://app.slack.com/client/TJ29PTDDX")
+                    ("Emacs.london" . "https://emacs.london")
+                    ("Github" . "https://github.com/"))
+      :action '(("Open" . (lambda (candidate) (browse-url candidate))))))
+
+  (defun md/alfred-source-apps ()
+    "Use gtk-launch to open installed .desktop programs. This isn't perfect - eg. the program names
+  are ugly. It works fine though."
+    (helm-build-sync-source "Launch"
+      :multimatch nil
+      :requires-pattern nil
+      :candidates (lambda ()
+                    (-map
+                     (lambda (item)
+                       (s-chop-suffix ".desktop" item))
+                     (-filter (lambda (d) (not (or (string= d ".") (string= d ".."))))
+                              (directory-files "/usr/share/applications"))))
+      :action '(("Launch" . (lambda (candidate)
+                              (shell-command (concat "gtk-launch " candidate " >/dev/null 2>&1 & disown") nil nil))))))
+
+  (defun md/alfred-source-system ()
+    "System commands - lock, sleep etc."
+    (helm-build-sync-source "System"
+      :multimatch nil
+      :requires-pattern nil
+      :candidates '(("Lock" . "xset dpms force off")  ;; turns screen off and triggers i3lock
+                    ("Sleep" . "systemctl suspend -i")
+                    ("Restart" . "systemctl reboot -i")
+                    ("Shutdown" . "systemctl poweroff -i"))
+      :action '(("Execute" . (lambda (candidate)
+                               (shell-command (concat candidate " >/dev/null 2>&1 & disown") nil nil))))))
+
+
+  (defun md/alfred-source-webserver ()
+    "Start a webserver process in a particular directory."
+    (helm-build-sync-source "Webserver"
+      :multimatch nil
+      :requires-pattern t
+      :candidates '(("mattduck.com" . "/f/www.mattduck.com/build")
+                    ("shonamcgovern.com" . "/f/clients/shona-mcgovern/shonamcgovern.com/site")
+                    ("emacs.london" . "/f/emacs.london/london-emacs-hacking.github.io")
+                    ("pkb" . "/f/md.pkb"))
+      :match '((lambda (candidate)
+                 (and
+                  (s-starts-with? "serve " helm-pattern)
+                  ;; this is what helm-default-match-function does
+                  (string-match (s-chop-prefix "serve " helm-pattern) candidate))))
+      :action '(("Serve" . (lambda (candidate)
+                             (shell-command (format "cd '%s'; ,serve >/tmp/helm-webserver 2>&1 & disown" candidate) nil nil))))))
+
+  (defun md/alfred-source-processes ()
+    "Source which uses `ps` to list processes, and then offer options to interact with them."
+    (helm-build-async-source "Processes"
+      :nohighlight t  ;; Because grep is doing the matching, not helm
+      :multimatch nil
+      :requires-pattern t
+      :candidates-process (lambda ()
+                            (if (s-starts-with? "p " helm-pattern)
                                 (let ((pat (s-chop-prefix "p " helm-pattern)))
                                   (start-process-shell-command
                                    ;; The weird grep -v at the end is a silly quick way to strip the grep
                                    ;; itself from showing in the results.
                                    "helm-source-ps" nil (format "ps axh -o pid,group,args --cols 90 -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args --cols 90'" pat)))
-                                (start-process "helm-source-noop" nil "true")))
-        :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
-                  ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand))))))))
+                              (start-process "helm-source-noop" nil "true")))
+      :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
+                ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand))))))))
 
-    (defun md/alfred-source-directories ()
-      "Open a directory."
-      (helm-build-async-source "Directories"
-        :multimatch nil
-        :requires-pattern t
-        :candidates-process (lambda ()
-                              (if (and (s-starts-with? "fd " helm-pattern) (> (length helm-pattern) 4))
+  (defun md/alfred-source-directories ()
+    "Open a directory."
+    (helm-build-async-source "Directories"
+      :multimatch nil
+      :requires-pattern t
+      :candidates-process (lambda ()
+                            (if (and (s-starts-with? "fd " helm-pattern) (> (length helm-pattern) 4))
                                 (let ((pat (s-chop-prefix "fd " helm-pattern)))
                                   (start-process-shell-command
                                    "helm-source-fd" nil (format "fd -t d -a -d 8 --full-path --color never '%s' /f 2>/dev/null" pat)))
-                                (start-process "helm-source-noop" nil "true")))
-        ;; Invoke terminal because ranger needs a terminal. If you copy/paste this you may not need a
-        ;; terminal - xdg-open could open a GUI file manager.
-        :action '(("Open" . (lambda (cand) (shell-command (format "gnome-terminal -- /bin/sh -c \"xdg-open '%s'\" & disown" cand) nil nil))))))
+                              (start-process "helm-source-noop" nil "true")))
+      ;; Invoke terminal because ranger needs a terminal. If you copy/paste this you may not need a
+      ;; terminal - xdg-open could open a GUI file manager.
+      :action '(("Open" . (lambda (cand) (shell-command (format "gnome-terminal -- /bin/sh -c \"xdg-open '%s'\" & disown" cand) nil nil))))))
 
-    (defun md/alfred-source-files ()
-      "Open a file with its default program."
-      (helm-build-async-source "Files"
-        :multimatch nil
-        :requires-pattern t
-        :candidates-process (lambda ()
-                              (if (and (s-starts-with? "f " helm-pattern) (> (length helm-pattern) 4))
+  (defun md/alfred-source-files ()
+    "Open a file with its default program."
+    (helm-build-async-source "Files"
+      :multimatch nil
+      :requires-pattern t
+      :candidates-process (lambda ()
+                            (if (and (s-starts-with? "f " helm-pattern) (> (length helm-pattern) 4))
                                 (let ((pat (s-chop-prefix "f " helm-pattern)))
                                   (start-process-shell-command
                                    "helm-source-fd" nil (format "fd -t f -a -d 15 --full-path --color never '%s' /f 2>/dev/null" pat)))
-                                (start-process "helm-source-noop" nil "true")))
-        :action '(("Open" . (lambda (cand) (call-process "sh" nil nil nil "-c" (format "xdg-open '%s' & disown" cand)))))))
+                              (start-process "helm-source-noop" nil "true")))
+      :action '(("Open" . (lambda (cand) (call-process "sh" nil nil nil "-c" (format "xdg-open '%s' & disown" cand)))))))
 
-    (defun md/alfred ()
-      "Entry point to create the 'alfred' frame and run helm."
-      (interactive)
-      (with-current-buffer (get-buffer-create "*alfred*")
-        (let ((frame (make-frame '((name . "alfred")
-                                   (window-system . x)
-                                   (auto-raise . t)
-                                   (height . 10)
-                                   (internal-border-width . 20)
-                                   (left . 0.33)
-                                   (left-fringe . 0)
-                                   (line-spacing . 3)
-                                   (menu-bar-lines . 0)
-                                   (right-fringe . 0)
-                                   (tool-bar-lines . 0)
-                                   (top . 48)
-                                   ;; enable this to remove frame border
-                                   (undecorated . nil)
-                                   (unsplittable . t)
-                                   (vertical-scroll-bars . nil)
-                                   (width . 120))))
-              (alert-hide-all-notifications t)
-              (inhibit-message t)
-              (mode-line-format nil)
-              (helm-mode-line-string nil)
-              (helm-full-frame t)
-              (helm-display-header-line nil)
-              (helm-use-undecorated-frame-option nil)
-              ;; If we run an async shell, don't show us anything
-              (async-shell-command-display-buffer nil))
-          (helm :sources (list (md/alfred-source-system)
-                               (md/alfred-source-search)
-                               (md/alfred-source-webserver)
-                               (md/alfred-source-web-bookmarks)
-                               (md/alfred-source-apps)
-                               (md/alfred-source-directories)
-                               (md/alfred-source-files)
-                               (md/alfred-source-processes))
-                :prompt ""
-                :buffer "*alfred*")
-          (delete-frame frame)
-          ;; For some reason without killing the buffer it messes up future state.
-          (kill-buffer (current-buffer))
-          ;; I don't want this to cause the main frame to flash
-          (x-urgency-hint (selected-frame) nil))))
+  (defun md/alfred ()
+    "Entry point to create the 'alfred' frame and run helm."
+    (interactive)
+    (with-current-buffer (get-buffer-create "*alfred*")
+      (let ((frame (make-frame '((name . "alfred")
+                                 (window-system . x)
+                                 (auto-raise . t)
+                                 (height . 10)
+                                 (internal-border-width . 20)
+                                 (left . 0.33)
+                                 (left-fringe . 0)
+                                 (line-spacing . 3)
+                                 (menu-bar-lines . 0)
+                                 (right-fringe . 0)
+                                 (tool-bar-lines . 0)
+                                 (top . 48)
+                                 ;; enable this to remove frame border
+                                 (undecorated . nil)
+                                 (unsplittable . t)
+                                 (vertical-scroll-bars . nil)
+                                 (width . 120))))
+            (alert-hide-all-notifications t)
+            (inhibit-message t)
+            (mode-line-format nil)
+            (helm-mode-line-string nil)
+            (helm-full-frame t)
+            (helm-display-header-line nil)
+            (helm-use-undecorated-frame-option nil)
+            ;; If we run an async shell, don't show us anything
+            (async-shell-command-display-buffer nil))
+        (helm :sources (list (md/alfred-source-system)
+                             (md/alfred-source-search)
+                             (md/alfred-source-webserver)
+                             (md/alfred-source-web-bookmarks)
+                             (md/alfred-source-apps)
+                             (md/alfred-source-directories)
+                             (md/alfred-source-files)
+                             (md/alfred-source-processes))
+              :prompt ""
+              :buffer "*alfred*")
+        (delete-frame frame)
+        ;; For some reason without killing the buffer it messes up future state.
+        (kill-buffer (current-buffer))
+        ;; I don't want this to cause the main frame to flash
+        (x-urgency-hint (selected-frame) nil))))
 #+END_SRC
 
 ** COMMENT helm-ag (not using anymore)
@@ -5260,16 +5290,26 @@ Sometimes I want machine-specific setup:
 I use this to put my current clocked task in my i3 status bar, using ~emacsclient
 -e '(md/org-clock-status)'~.
 
+There was a gotcha here - I initially used ~(org-clock-goto)~ to jump to the
+current clock, but this was making visible changes to the buffer (eg. by calling
+~(org-reveal)~ to unfold the current item) that I couldn't undo using
+~(save-window-excusion)~ or ~(save-restriction)~.
+
 #+begin_src emacs-lisp
   (defun md/org-clock-status ()
-    "Return current clock status as a string"
+    "Return a string appropriate for my i3 status bar,
+     showing the current clock time and the heading."
+    (interactive)
     (if (not (org-clock-is-active))
         "-"
-      (save-window-excursion
-        (org-clock-goto)
-        (format "%s %s"
-                (format-seconds "%.2h:%.2m" (org-time-convert-to-integer (org-time-since org-clock-start-time)))
-                (s-truncate 60 (substring-no-properties (org-get-heading t t t t)))))))
+      (with-current-buffer (org-clock-is-active)  ; this returns the current clocking buffer
+        (save-excursion
+          (save-restriction
+            (goto-char org-clock-marker)
+            (org-back-to-heading t)
+            (format "%s %s"
+                    (format-seconds "%.2h:%.2m" (org-time-convert-to-integer (org-time-since org-clock-start-time)))
+                    (s-truncate 60 (substring-no-properties (org-get-heading)))))))))
 #+end_src
 
 * Profile Emacs startup
