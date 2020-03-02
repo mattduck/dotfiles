@@ -3606,7 +3606,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
       :requires-pattern nil
       :fuzzy-match t
       :candidates '(("Stop org clock" . nil))
-      :action '(("Stop" . (lambda (cand) (org-clock-out nil nil nil))))))
+      :action '(("Stop" . (lambda (cand) (org-clock-out nil t nil))))))
 #+END_SRC
 
 *** Search

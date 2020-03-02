@@ -2757,7 +2757,7 @@ popup version of org-capture instead of using the usual org-capture."
     :requires-pattern nil
     :fuzzy-match t
     :candidates '(("Stop org clock" . nil))
-    :action '(("Stop" . (lambda (cand) (org-clock-out nil nil nil))))))
+    :action '(("Stop" . (lambda (cand) (org-clock-out nil t nil))))))
 
 (defvar md/alfred-source-search-candidates
   '(("Google" . ("g" . "https://www.google.co.uk/search?q=%s"))
