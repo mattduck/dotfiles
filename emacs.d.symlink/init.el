@@ -347,6 +347,11 @@
           (message "Deleted file %s" filename)
           (kill-buffer))))))
 
+(defun md/kill-buffer-and-frame ()
+  (interactive)
+  (kill-buffer)
+  (delete-frame))
+
 (defun md/rename-file-and-buffer ()
   (interactive)
   (let ((filename (buffer-file-name)))
@@ -647,6 +652,7 @@ All scope layers are stored in md/variable-layers."
         ("bh" . previous-buffer)
         ("bl" . next-buffer)
         ("k" . kill-buffer)
+        ("K" . md/kill-buffer-and-frame)
         ("bK" . md/remove-file-and-buffer)
         ("bR" . md/rename-file-and-buffer)
         ("bk" . kill-buffer)
@@ -2682,7 +2688,6 @@ be quickly copy/pasted into eg. gmail."
                 (width . 120)
                 (left . 0.3)
                 (top . 0.2)))
-  (message template-shortcut)
   (select-frame-by-name "org-capture")
   (org-capture nil template-shortcut)
   (delete-other-windows))
@@ -2702,11 +2707,57 @@ be quickly copy/pasted into eg. gmail."
 (defun md/alfred-source-org-capture-templates ()
   "Run org-capture in a popup window. Copied from helm-org.el, but plugs in my
 popup version of org-capture instead of using the usual org-capture."
-  (helm-build-sync-source "Org Capture Templates:"
+  (helm-build-sync-source "Org Capture"
+    :fuzzy-match nil
+    :multimatch nil
     :candidates (cl-loop for template in org-capture-templates
                          collect (cons (nth 1 template) (nth 0 template)))
     :action '(("Capture" . (lambda (template-shortcut)
                              (md/org-capture-popup-frame template-shortcut))))))
+
+(defun md/alfred-source-org-light ()
+  (helm-build-sync-source "Org"
+    :requires-pattern t
+    :multimatch nil
+    :candidates
+    (let ((cands nil)
+          (case-fold-search nil)) ; make search case-sensitive
+      (cl-loop for f in (org-agenda-files)
+               do (save-window-excursion
+                    (with-current-buffer (find-file f)
+                      (save-excursion
+                        (goto-char (point-min))
+                        (cl-loop until (not (search-forward-regexp "^*+ \\(NOW\\) " nil t)) do
+                                 (add-to-list 'cands
+                                              (cons (substring-no-properties (org-get-heading))
+                                                    (cons (current-buffer) (point)))))))))
+      cands)
+  :match '((lambda (candidate)
+             (and
+              (s-starts-with? "now " helm-pattern)
+              (string-match (s-chop-prefix "now " helm-pattern) candidate))))
+  :action '(("None" . (lambda (cand)
+                        (make-frame '((name . "org-popup")
+                                      (window-system . x)
+                                      (auto-raise . t)
+                                      (height . 20)
+                                      (width . 120)
+                                      (left . 0.3)
+                                      (top . 0.2)))
+                        (select-frame-by-name "org-popup")
+                        (with-current-buffer (car cand)
+                           (save-excursion
+                             (goto-char (cdr cand))
+                             (org-tree-to-indirect-buffer))))))))
+
+(defun md/alfred-source-org-clock-out ()
+  "Open predefined web bookmarks."
+  (helm-build-sync-source "Org clock"
+    :multimatch nil
+    :requires-pattern nil
+    :fuzzy-match t
+    :candidates '(("Stop org clock" . nil))
+    :action '(("Stop" . (lambda (cand) (org-clock-out nil nil nil))))))
 
 (defvar md/alfred-source-search-candidates
   '(("Google" . ("g" . "https://www.google.co.uk/search?q=%s"))
@@ -2868,6 +2919,8 @@ are ugly. It works fine though."
                            (md/alfred-source-search)
                            (md/alfred-source-webserver)
                            (md/alfred-source-org-capture-templates)
+                           (md/alfred-source-org-light)
+                           (md/alfred-source-org-clock-out)
                            (md/alfred-source-web-bookmarks)
                            (md/alfred-source-apps)
                            (md/alfred-source-directories)
