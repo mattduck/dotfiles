@@ -453,7 +453,7 @@ All scope layers are stored in md/variable-layers."
         '("SPC" "TAB")))
 
 (setq delete-by-moving-to-trash t)
-(setq recentf-max-saved-items 100)
+(setq recentf-max-saved-items 200)
 (setq compilation-read-command nil) ; Don't prompt me to run make
 
 (use-package evil
@@ -2720,35 +2720,43 @@ popup version of org-capture instead of using the usual org-capture."
     :requires-pattern t
     :multimatch nil
     :candidates
+    ;; Loop over my agenda files. For each one, use a regex to match all the headlines starting with
+    ;; the "NOW" keyword. Collect the headline, the buffer and the point.
     (let ((cands nil)
           (case-fold-search nil)) ; make search case-sensitive
       (cl-loop for f in (org-agenda-files)
                do (save-window-excursion
                     (with-current-buffer (find-file f)
                       (save-excursion
-                        (goto-char (point-min))
-                        (cl-loop until (not (search-forward-regexp "^*+ \\(NOW\\) " nil t)) do
-                                 (add-to-list 'cands
-                                              (cons (substring-no-properties (org-get-heading))
-                                                    (cons (current-buffer) (point)))))))))
+                        (save-restriction
+                          (widen)
+                          (goto-char (point-min))
+                          (cl-loop until (not (search-forward-regexp "^*+ \\(NOW\\) " nil t)) do
+                                   (add-to-list 'cands
+                                                (cons (substring-no-properties (org-get-heading))
+                                                      (cons (current-buffer) (point))))))))))
       cands)
-  :match '((lambda (candidate)
-             (and
-              (s-starts-with? "now " helm-pattern)
-              (string-match (s-chop-prefix "now " helm-pattern) candidate))))
-  :action '(("None" . (lambda (cand)
-                        (make-frame '((name . "org-popup")
-                                      (window-system . x)
-                                      (auto-raise . t)
-                                      (height . 40)
-                                      (width . 100)
-                                      (left . 0.3)
-                                      (top . 0.2)))
-                        (select-frame-by-name "org-popup")
-                        (with-current-buffer (car cand)
-                           (save-excursion
-                             (goto-char (cdr cand))
-                             (org-tree-to-indirect-buffer))))))))
+    ;; Similar pattern to elsewhere - only match these items if I search for "now $query".
+    :match '((lambda (candidate)
+               (and
+                (s-starts-with? "now " helm-pattern)
+                (string-match (s-chop-prefix "now " helm-pattern) candidate))))
+    ;; Open the item in a new frame, using org-tree-to-indirect-buffer.
+    :action '(("None" . (lambda (cand)
+                          (make-frame '((name . "org-popup")
+                                        (window-system . x)
+                                        (auto-raise . t)
+                                        ;; I'm actually ignoring the size params as it gets
+                                        ;; tiled by i3.
+                                        (height . 40)
+                                        (width . 100)
+                                        (left . 0.3)
+                                        (top . 0.2)))
+                          (select-frame-by-name "org-popup")
+                          (with-current-buffer (car cand)
+                            (save-excursion
+                              (goto-char (cdr cand))
+                              (org-tree-to-indirect-buffer))))))))
 
 (defun md/alfred-source-org-clock-out ()
   "Open predefined web bookmarks."
@@ -2892,7 +2900,7 @@ are ugly. It works fine though."
     (let ((frame (make-frame '((name . "alfred")
                                (window-system . x)
                                (auto-raise . t)
-                               (height . 10)
+                              (height . 10)
                                (internal-border-width . 20)
                                (left . 0.33)
                                (left-fringe . 0)
