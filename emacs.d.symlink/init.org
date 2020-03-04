@@ -23,12 +23,6 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
 #+END_SRC
 
 * Initialise
-
-** Profiling
-#+BEGIN_SRC emacs-lisp
-(defconst md/emacs-init-start (current-time))
-#+END_SRC
-
 ** Emacs Package setup
 #+BEGIN_SRC emacs-lisp
   (package-initialize)
@@ -5433,14 +5427,11 @@ w/terminal, I can disable exec-path-from-shell.
 
 * Teardown
 
-Profiling. This number comes out slightly different to ~(emacs-init-time)~
-
-#+BEGIN_SRC emacs-lisp
-(defconst md/emacs-init-end (current-time))
-
-(defconst md/emacs-boot-time (float-time (time-subtract md/emacs-init-end md/emacs-init-start)))
-(message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
-#+END_SRC
+I used to manually record a start and end time for this load, which would be
+slightly different to ~(emacs-init-time)~. As of 2020 I no longer care enough to
+have the extra code in my init file - it was more relevant when I used to
+regularly start a new Emacs instance in the terminal. Nowadays I just use the
+server/client.
 
 * COMMENT TODO
 # - [ ] getting slowdowns where python3 uses 99% cpu. Seems to occcur sometimes
