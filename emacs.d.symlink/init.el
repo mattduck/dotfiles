@@ -7,24 +7,28 @@
    path))
 
 (defun md/dotfiles-compile ()
-  "Use org-babel-tangle to create init.el and byte-compile it"
+  "Use org-babel-tangle to create init.el and byte-compile it."
   (interactive)
   (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
   (setq-local org-confirm-babel-evaluate nil)
   (org-babel-tangle nil "init.el")
   (byte-compile-file (md/dotfiles-get-path "emacs.d.symlink/init.el")))
 
-(defconst md/emacs-init-start (current-time))
-
+;; Load packages. It's necessary to call this early.
 (package-initialize)
 
+;; The archives that package-list-packages and package-install will use.
+;; The default only includes elpa.gnu.org, but a lot of my installed packages
+;; come from MELPA.
 (setq package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
         ("marmalade" . "https://marmalade-repo.org/packages/")
         ("melpa" . "https://melpa.milkbox.net/packages/")
-        ("org" . "http://orgmode.org/elpa/"))) ; no TLS for org?
+        ("org" . "https://orgmode.org/elpa/")))
 
-(setq load-prefer-newer t)  ; new in v24.4
+;; If there are multiple versions of a file, prefer the newer one. The default
+;; is to use the first one found.
+(setq load-prefer-newer t)
 
 (setq custom-file (md/dotfiles-get-path "emacs.d.symlink/custom.el"))
 
@@ -4150,8 +4154,3 @@ This is the same as the keychain setup used for new shell logins."
 (require 'server)
 (when (not (server-running-p))
    (server-start))
-
-(defconst md/emacs-init-end (current-time))
-
-(defconst md/emacs-boot-time (float-time (time-subtract md/emacs-init-end md/emacs-init-start)))
-(message (format "md/emacs-boot-time: %s" md/emacs-boot-time))

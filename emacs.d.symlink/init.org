@@ -14,7 +14,7 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
      path))
 
   (defun md/dotfiles-compile ()
-    "Use org-babel-tangle to create init.el and byte-compile it"
+    "Use org-babel-tangle to create init.el and byte-compile it."
     (interactive)
     (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
     (setq-local org-confirm-babel-evaluate nil)
@@ -23,17 +23,23 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
 #+END_SRC
 
 * Initialise
-** Emacs Package setup
+** Packages
 #+BEGIN_SRC emacs-lisp
+  ;; Load packages. It's necessary to call this early.
   (package-initialize)
 
+  ;; The archives that package-list-packages and package-install will use.
+  ;; The default only includes elpa.gnu.org, but a lot of my installed packages
+  ;; come from MELPA.
   (setq package-archives
         '(("gnu" . "https://elpa.gnu.org/packages/")
           ("marmalade" . "https://marmalade-repo.org/packages/")
           ("melpa" . "https://melpa.milkbox.net/packages/")
-          ("org" . "http://orgmode.org/elpa/"))) ; no TLS for org?
+          ("org" . "https://orgmode.org/elpa/")))
 
-  (setq load-prefer-newer t)  ; new in v24.4
+  ;; If there are multiple versions of a file, prefer the newer one. The default
+  ;; is to use the first one found.
+  (setq load-prefer-newer t)
 #+END_SRC
 
 ** Custom file
