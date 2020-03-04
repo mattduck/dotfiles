@@ -29,22 +29,6 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
 (defconst md/emacs-init-start (current-time))
 #+END_SRC
 
-** Init performance optimising
-
-This wraps the rest of the file.
-
-- Increase the GC threshold to 100MB. This decreases Emacs load time by approx
-  600ms when not using ~use-package~. With ~use-package~, it still decreases load
-  time by 250ms.
-
-- The default file-handler-name-alist contains some regexps that are run against
-  every .el/.elc loaded on startup. Preventing this apparently decreases load
-  time, although I haven't noticed much.
-
-#+BEGIN_SRC emacs-lisp
-  (let ((file-handler-name-alist nil))
-#+END_SRC
-
 ** Emacs Package setup
 #+BEGIN_SRC emacs-lisp
   (package-initialize)
@@ -507,6 +491,12 @@ Increase the threshold:
   (setq gc-cons-threshold 100000000
         garbage-collection-messages t)
 #+END_SRC
+
+[2020-03-04 Wed] I used to do this just for startup. It would decrease load time
+by approx 600ms when not using ~use-package~, and 250ms when using it. I later
+ended up permanently setting it high, but I don't remember why. I should
+investigate this.
+
 * Misc utils
 ** Odd functions
 
@@ -5450,13 +5440,6 @@ Profiling. This number comes out slightly different to ~(emacs-init-time)~
 
 (defconst md/emacs-boot-time (float-time (time-subtract md/emacs-init-end md/emacs-init-start)))
 (message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
-
-#+END_SRC
-
-Close paren for the wrapping ~let~:
-
-#+BEGIN_SRC emacs-lisp
-)
 #+END_SRC
 
 * COMMENT TODO

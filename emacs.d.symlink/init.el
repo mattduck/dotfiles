@@ -16,8 +16,6 @@
 
 (defconst md/emacs-init-start (current-time))
 
-(let ((file-handler-name-alist nil))
-
 (package-initialize)
 
 (setq package-archives
@@ -4157,5 +4155,3 @@ This is the same as the keychain setup used for new shell logins."
 
 (defconst md/emacs-boot-time (float-time (time-subtract md/emacs-init-end md/emacs-init-start)))
 (message (format "md/emacs-boot-time: %s" md/emacs-boot-time))
-
-)
