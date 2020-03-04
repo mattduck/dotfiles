@@ -101,7 +101,7 @@ function ,kill {
         echo
 
         # -15 is the default signal
-        read -p "Enter kill signal for $pid if requored (defaults to 15 SIGTERM): " -r
+        read -p "Enter kill signal for $pid if required (defaults to 15 SIGTERM): " -r
         if [ -z $REPLY ]; then
             cmd="kill $pid"
         else
