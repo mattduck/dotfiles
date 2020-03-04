@@ -3,7 +3,11 @@ WHITE=ffffd7
 YELLOW=d79921
 # GREEN=98971a
 GREEN=b8bb26
-GREY=ebdbb2
+GREY1=ebdbb2
+GREY2=d5c4a1
+GREY3=bdae93
+GREY4=a89984
+GREY=$GREY4
 # RED=cc241d
 RED=fb4934
 AQUA=689d6a
@@ -29,7 +33,8 @@ ICON_CALENDAR=📅
 ICON_FLOPPY_A=💾
 ICON_FLOPPY_B=🖫
 ICON_PENGUIN=🐧
-
+ICON_PENCIL=✎
+ICON_ORG_MODE=$ICON_PENCIL
 IFS=$'\n'
 
 # text <string> <colour_name>
@@ -53,7 +58,7 @@ while :; do
     BATTERY_STATUS=$(echo "$ACPI" | grep "$BATTERY_ID" | awk -F'[,:%]'  '{print $2}' | sed 's/ //g')
     if [[ $BATTERY_STATUS == *"Unknown"* ]] && [[ "$(acpi -a)" == *"on-line"* ]] ; then BATTERY_STATUS="Full"; fi
     if [[ $BATTERY_PERCENT -gt 80 ]]; then ICON_BATTERY=$ICON_BATTERY_FULL; BATTERY_COLOR=$GREY;
-    elif [[ $BATTERY_PERCENT -gt 60 ]]; then ICON_BATTERY=$ICON_BATTERY_THREE_QUARTERS;
+    elif [[ $BATTERY_PERCENT -gt 60 ]]; then ICON_BATTERY=$ICON_BATTERY_THREE_QUARTERS; BATTERY_COLOR=$GREY;
     elif [[ $BATTERY_PERCENT -gt 30 ]]; then ICON_BATTERY=$ICON_BATTERY_HALF; BATTERY_COLOR=$YELLOW;
     elif [[ $BATTERY_PERCENT -gt 10 ]]; then ICON_BATTERY=$ICON_BATTERY_QUARTER; BATTERY_COLOR=$RED;
     else ICON_BATTERY=$ICON_BATTERY_EMPTY;
@@ -105,18 +110,22 @@ while :; do
     fi
     PACMAN_DATE=$(,pacman-when)
 
+    EMACS_CLOCK=$(emacsclient -ne '(ignore-errors (md/org-clock-status))' || '-');
+
     output=''
-    text "   $ICON_PENGUIN $PACMAN_DATE" $GREY
-    text "   ${ICON_FLOPPY_A} S3 $DUP_S3_MSG" $DUP_S3_COLOR
-    text "   ${ICON_FLOPPY_A} USB $DUP_USB_MSG" $DUP_USB_COLOR
-    text "   $ICON_LOAD $LOAD" $GREY
-    text "   $ICON_WIFI $NETWORK_NAME" $GREY
-    text "   $ICON_AUDIO $AUDIO" $GREY
-    text "   $ICON_BRIGHTNESS $BRIGHTNESS" $GREY
-    text "   $ICON_BATTERY_STATUS $ICON_BATTERY ${BATTERY_PERCENT}" $BATTERY_COLOR
-    text "   $ICON_CLOCK ${DT_DATE}, $DT_TIME" $GREY
-    text " "
-    text "               "
+    # The 1:-1 thing strips the wrapping quotation marks from emacsclient.
+    text "  ${ICON_ORG_MODE} ${EMACS_CLOCK:1:-1}" $WHITE
+    text "  ${ICON_PENGUIN} $PACMAN_DATE" $GREY
+    text "  ${ICON_FLOPPY_A} S3:$DUP_S3_MSG" $DUP_S3_COLOR
+    text "  ${ICON_FLOPPY_A} USB:$DUP_USB_MSG" $DUP_USB_COLOR
+    text "  ${ICON_LOAD} $LOAD" $GREY
+    text "  ${ICON_WIFI} $NETWORK_NAME" $GREY
+    text "  ${ICON_AUDIO} $AUDIO" $GREY
+    text "  ${ICON_BRIGHTNESS} $BRIGHTNESS" $GREY
+    text "  ${ICON_BATTERY_STATUS} ${ICON_BATTERY} ${BATTERY_PERCENT}" $BATTERY_COLOR
+    text "  ${ICON_CLOCK} ${DT_DATE}, $DT_TIME" $GREY
+    text "  "
+    # text "               "
     echo -e "[${output%??}],"
     sleep 2
 

@@ -13,12 +13,17 @@ set $mod Mod4
 
 # Font for window titles. Will also be used by the bar unless a different font
 # is used in the bar {} block below.
-#font pango:monospace 10
-font pango:Fira 11
+# font pango:monospace 10
+# font pango:Fira 11
+# font pango:Inconsolata 12
+# font pango:Lucida Grande 11
+# font pango:Roboto 12
+font pango:Noto Sans 11
+# font pango:Canterell 11
 
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
-#font pango:DejaVu Sans Mono 8
+# font pango:DejaVu Sans Mono 10
 
 # Before i3 v4.8, we used to recommend this one as the default:
 # font -misc-fixed-medium-r-normal--13-120-75-75-C-70-iso10646-1
@@ -85,7 +90,7 @@ client.background       "#ffffd7"
 
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
-set $ws1 "1 emacs"
+set $ws1 "1"
 set $ws2 "2"
 set $ws3 "3"
 set $ws4 "4"
@@ -172,8 +177,8 @@ bar {
         position top
         status_command ~/.config/i3-status-bash.sh
         tray_output primary
-        workspace_buttons no
-        strip_workspace_numbers yes
+        workspace_buttons yes
+        strip_workspace_numbers no
 
         colors {
                 #background "#32302f"
@@ -181,11 +186,11 @@ bar {
                 statusline "#eeeeee"
                 separator "#666666"
                 #                  border  backgr. text
-                #focused_workspace  "#87afaf" "#285577" "#ffffff"
-                focused_workspace  #87afaf" "#83a598" "#ffffd7"
-                active_workspace   "#333333" "#5f676a" "#ffffd7"
-                inactive_workspace "#333333" "#222222" "#888888"
-                urgent_workspace   "#333333" "#9d0006" "#ffffd7"
+                # focused_workspace  "#1d2021" "#ebdbb2" "#1d2021"
+                focused_workspace  "#1d2021" "#1d2021" "#ffffd7"
+                active_workspace   "#1d2021" "#1d2021" "#a89984"
+                inactive_workspace "#1d2021" "#1d2021" "#a89984"
+                urgent_workspace   "#1d2021" "#1d2021" "#a89984"
         }
 }
 
@@ -217,7 +222,6 @@ mode "md" {
     bindsym Shift+l move right; mode "default"
 
     # Floating / scratchpad
-    bindsym q scratchpad show; mode "default"
     bindsym Shift+q move scratchpad; mode "default"
     bindsym t floating toggle; mode "default"
 
@@ -237,19 +241,23 @@ mode "md" {
 bindsym $mod+w mode "md"
 bindsym $mod+q scratchpad show;
 
-bindsym $mod+Shift+space exec "albert show"
+bindsym $mod+Shift+space exec "dmenu_run"
 bindsym $mod+space fullscreen disable; exec "emacsclient -ne '(call-interactively (quote md/alfred))'"
 
 # Same as MacOS
 # bindsym "$mod+Shift+4" exec "scrot -z /f/inbox/screenshots/$(date --iso-8601=second).jpg"
 # bindsym --release "$mod+Shift+Control+4" exec "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg"
 
-bindsym $mod+Tab workspace next
-bindsym $mod+Shift+Tab workspace prev
+bindsym $mod+Tab workspace next_on_output
+bindsym $mod+Shift+Tab workspace prev_on_output
 
 default_border pixel 1
 hide_edge_borders smart
+# smart_gaps on
 popup_during_fullscreen leave_fullscreen
+
+gaps inner 20
+# gaps top -12
 
 # [2019-09-08 Sun 14:33] Disabling these for now - want to try something different
 # assign [class="Emacs"] $ws1
@@ -260,20 +268,20 @@ popup_during_fullscreen leave_fullscreen
 # # the same title:
 # for_window [title=".*\(Private Browsing\).*"] move to workspace $ws4
 
-exec --no-startup-id xsetroot -solid '#1d2021'  # Dark bg
+exec --no-startup-id xsetroot -solid '#0d1001'  # Dark bg
 #exec --no-startup-id ~/.fehbg  # Bg image
 
 exec --no-startup-id i3-msg 'workspace $ws1; exec emacs'
-# exec --no-startup-id i3-msg 'workspace $ws2; exec gnome-terminal'
-# exec --no-startup-id i3-msg 'workspace $ws3; exec firefox'
-# exec --no-startup-id i3-msg 'workspace $ws4; exec firefox --private-window'
 
 # try emacs floating test
-for_window [class="^Emacs$" instance="^alfred$"] floating enable
-# for_window [class="^Emacs$" instance="^alfred$"] border pixel 1
 
 # gaps
 for_window [class=".*"] border pixel 0
+for_window [class="^Emacs$" instance="^alfred$"] floating enable
 for_window [class="^Emacs$" instance="^alfred$"] border pixel 1
-gaps inner 20
-gaps top -15
+
+for_window [class="^Emacs$" instance="^org-capture$"] floating enable
+for_window [class="^Emacs$" instance="^org-capture$"] border pixel 1
+
+# for_window [class="^Emacs$" instance="^org-popup"] floating enable
+# for_window [class="^Emacs$" instance="^org-popup"] border pixel 1
