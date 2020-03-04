@@ -96,6 +96,10 @@ is still relevant.
 
 ** Non elpa load path
 
+I have a few packages that I load which aren't installed by
+package-install. These are usually either my own sources that I maintain, or
+sometimes just packages that aren't available to install elsewhere. I put them
+in a directory named ~non-elpa~:
 
 #+BEGIN_SRC emacs-lisp
   (when (file-exists-p (md/dotfiles-get-path "emacs.d.symlink/non-elpa"))
@@ -114,6 +118,7 @@ Initialise environment from shell:
    :config
    (progn (exec-path-from-shell-initialize)))
 #+END_SRC
+
 * Sane Emacs behaviour
 
 These are mostly to get the base appearance / behaviour of Emacs close to
