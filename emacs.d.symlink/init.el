@@ -30,16 +30,10 @@
 ;; is to use the first one found.
 (setq load-prefer-newer t)
 
+;; This is the custom file I used to use. I'm keeping the same path.
 (setq custom-file (md/dotfiles-get-path "emacs.d.symlink/custom.el"))
 
-;; [2019-11-05 Tue] Commenting this out - it interferes with some face definitions etc.
-;;(load custom-file 'noerror)
-
-;; Kill custom buffers on q
-(setq custom-buffer-done-kill t)
-
-(defgroup md/custom nil "Placeholder group, mostly just here to silence warnings" :group 'md/custom)
-
+;; This just marks some themes as safe. At some point I copy/pasted it from the custom file.
 (custom-set-variables
  '(custom-safe-themes
    (quote

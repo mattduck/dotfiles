@@ -44,26 +44,31 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
 
 ** Custom file
 
+[2020-03-04] Some time back I disabled loading of the custom-file. I found that
+it would sometimes contain things I didn't expect to be persisted - for example,
+it would have hard-coded values for org-mode TODO keywords, which only fit with
+one particular theme. In general I prefer to define all my configuration as code
+explcitly, rather than having Emacs add things to the custom-file.
+
 #+BEGIN_SRC emacs-lisp
+  ;; This is the custom file I used to use. I'm keeping the same path.
   (setq custom-file (md/dotfiles-get-path "emacs.d.symlink/custom.el"))
 
-  ;; [2019-11-05 Tue] Commenting this out - it interferes with some face definitions etc.
-  ;;(load custom-file 'noerror)
-
-  ;; Kill custom buffers on q
-  (setq custom-buffer-done-kill t)
-
-  (defgroup md/custom nil "Placeholder group, mostly just here to silence warnings" :group 'md/custom)
-
+  ;; This just marks some themes as safe. At some point I copy/pasted it from the custom file.
   (custom-set-variables
    '(custom-safe-themes
      (quote
       ("a2f27a9cf29c4148a6ade6f780250a62f9b6b2e460ead2df30cf4916135fa514" "e6c57d23ebe550228ff6a0b640c045244312e87bb69a7941f7909625d105eae9" "f6e6ef708c51a7ba82be632c142126e92206ab0ef40b50817bb32ce297bc0983" "29242a0f9e6987aa972e108a80413878d3c431dd8e6c69b9d824273b88f0c63f" "dd94b107dd63cde4eadc558550379f8bfb9e773d780ca3ff305d7ccd17049034" "579b8afedbd64052f45d921ffe40a91c4f80c2c28a54864905a11e834d8f0f38" "089736e335b34fc7d1bb7f42c5f315b1bafd935abd0511c62edce549caab8ee1" "73438b705bb3d7583e9edb6fcf6dc6a86a7c6ce4b59500de0ee941547fc80d4c" "4c7121d2591363cabf74f57e656a698291d4cda52c7cd2da08a860364f761091" "72d07f0ef90edcc4a674f3ba6305c66feb2db8400122c9c0bc37b0097455e939" "7687ce37b6a86109edccc24989fbdb8e35dabefd718d6d70f3042daed5f90b1d" "f06afcb8fded3e57346ce01be80cde0cab09fd82ca11c8758612f5b4d996ea3d" "0e6a2147a71a363987a3071ed1b25c729e04b4355d80276ae8bb2438a4ad6250" "1e1a6ed4c050f07c088190483d7f6aa8277875fd49533ca747067348dc45b3c6" "760ce657e710a77bcf6df51d97e51aae2ee7db1fba21bbad07aab0fa0f42f834" "45a8b89e995faa5c69aa79920acff5d7cb14978fbf140cdd53621b09d782edcf" "1f38fb71e55e5ec5f14a39d03ca7d7a416123d3f0847745c7bade053ca58f043" "97965ccdac20cae22c5658c282544892959dc541af3e9ef8857dbf22eb70e82b" "9129c2759b8ba8e8396fe92535449de3e7ba61fd34569a488dd64e80f5041c9f" "527df6ab42b54d2e5f4eec8b091bd79b2fa9a1da38f5addd297d1c91aa19b616" "f8067b7d0dbffb29a79e0843797efabdf5e1cf326639874d8b407e9b034136a4" "f8fb7488faa7a70aee20b63560c36b3773bd0e4c56230a97297ad54ff8263930" "d96587ec2c7bf278269b8ec2b800c7d9af9e22d816827639b332b0e613314dfd" "85e6bb2425cbfeed2f2b367246ad11a62fb0f6d525c157038a0d0eaaabc1bfee" "d2e9c7e31e574bf38f4b0fb927aaff20c1e5f92f72001102758005e53d77b8c9" "ecba61c2239fbef776a72b65295b88e5534e458dfe3e6d7d9f9cb353448a569e" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "34ed3e2fa4a1cb2ce7400c7f1a6c8f12931d8021435bad841fdc1192bd1cc7da" "304c39b190267e9b863c0cf9c989da76dcfbb0649cbcb89592e7c5c08348fce9" "b3bcf1b12ef2a7606c7697d71b934ca0bdd495d52f901e73ce008c4c9825a3aa" "6b2636879127bf6124ce541b1b2824800afc49c6ccd65439d6eb987dbf200c36" "c968804189e0fc963c641f5c9ad64bca431d41af2fb7e1d01a2a6666376f819c" "cabc32838ccceea97404f6fcb7ce791c6e38491fd19baa0fcfb336dcc5f6e23c" "0961d780bd14561c505986166d167606239af3e2c3117265c9377e9b8204bf96" "cd736a63aa586be066d5a1f0e51179239fe70e16a9f18991f6f5d99732cabb32" "6daa09c8c2c68de3ff1b83694115231faa7e650fdbb668bc76275f0f2ce2a437" "b67b2279fa90e4098aa126d8356931c7a76921001ddff0a8d4a0541080dee5f6" "7559ac0083d1f08a46f65920303f970898a3d80f05905d01e81d49bb4c7f9e39" "146061a7ceea4ccc75d975a3bb41432382f656c50b9989c7dc1a7bb6952f6eb4" "227fabfb7d3f2334d1352ef507b1494ab08e143b49237617e99bd6b44eef73d4" "aaffceb9b0f539b6ad6becb8e96a04f2140c8faa1de8039a343a4f1e009174fb" "5057614f7e14de98bbc02200e2fe827ad897696bfd222d1bcab42ad8ff313e20" "a63355b90843b228925ce8b96f88c587087c3ee4f428838716505fd01cf741c8" "0daf22a3438a9c0998c777a771f23435c12a1d8844969a28f75820dd71ff64e1" "6d0a48fd812d94910f159c23880f0145c0d0324cc43c2cbf08a3907829711619" "c5a66e8d5c579bb8bc24bfde216c8eb8bdc8e42ec10286443a8369e5ea58dc6c" "10409f46959ade6f875dcbd42443460aab5f071fdd4865475e7002a550636e82" "107523dfa441684e91fcf479c9c4a6556bd6201cbe631cba8f7b5356fce5bfc5" "9728f07d59a9192baeeb4f2ac6ddb0b469dd6a4489818a98516c5d482fe9eba4" "28cd2fd9da1f5d1d023dc53008290070c5b89625de147ae7eb91987f30985937" "e08b999f30ebb71bdb447dcb53ad59769bc2a60a6728eef69f6399d064b1da4c" "d79c093e1ea2482c67acb2e03b49645010291259d623b5e34e4dc1b8efd6470d" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default))))
 #+END_SRC
 
-** use-package setup
+** use-package
 
-If ~use-package~ isn't installed, I should install it.
+I use [[https://github.com/jwiegley/use-package][use-package]] to configure some package-related features like lazy
+loading. It's also a nice way to structure ~init.el~, although I get some of that
+structure from using this org-mode approach.
+
+These are just a few configuration options for ~use-package~, as it's required for
+a lot of the rest of init.org:
 
 #+BEGIN_SRC emacs-lisp
 (setq use-package-always-ensure nil
@@ -76,9 +81,12 @@ If ~use-package~ isn't installed, I should install it.
 (require 'bind-key)  ; Required for :bind in use-package
 #+END_SRC
 
-** Brew site-lisp
+** MacOS: Brew site-lisp
 
 Ensure any brew-installed packages are added to the load path (eg. for mu4e).
+
+[2020-03-04] I haven't used MacOS for a while so I don't know for sure if this
+is still relevant.
 
 #+BEGIN_SRC emacs-lisp
 (when (file-exists-p "/usr/local/share/emacs/site-lisp")
