@@ -2522,7 +2522,7 @@ and insert in current buffer."
   (interactive)
   (insert
    (with-temp-buffer
-     (shell-command "pbpaste | pandoc --from gfm --to org" (current-buffer) (current-buffer))
+     (shell-command "xclip -selection clipboard -o | pandoc --from gfm --to org" (current-buffer) (current-buffer))
      (buffer-string))))
 
 (defun md/org-md-export ()
@@ -2536,7 +2536,7 @@ converting to markdown."
   ;; as this is less friendly when working with people who are editing markdown.
   ;; The awful backslahes here are because we are replacing a backslash, and then have to escape
   ;; both (1) in emacs and (2) in sed, because the backslash has signficance in both programs.
-  (shell-command "pbpaste | pandoc --from org --to gfm | sed -e 's/\\\\\\[/\\[/g' -e 's/\\\\\\]/\\]/g' -e 's/\\\\>/>/g' -e 's/\\\\</</g' | pbcopy" nil nil))
+  (shell-command "xclip -selection clipboard -o | pandoc --from org --to gfm | sed -e 's/\\\\\\[/\\[/g' -e 's/\\\\\\]/\\]/g' -e 's/\\\\>/>/g' -e 's/\\\\</</g' | xclip -selection clipboard" nil nil))
 
 (defun md/org-html-export ()
   "Use pandoc to copy the region or buffer into the clipboard,
@@ -2546,15 +2546,10 @@ be quickly copy/pasted into eg. gmail."
   (if (use-region-p)
       (copy-region-as-kill (region-beginning) (region-end))
     (copy-region-as-kill (point-min) (point-max)))
-  (let ((path (format "%s.html"
-                      (with-temp-buffer
-                        (progn
-                          (shell-command "mktemp" (current-buffer) (current-buffer))
-                          (buffer-string)))))
+  (let ((path (format "%s.html" (s-trim-right (shell-command-to-string "mktemp"))))
         (from (if (string= major-mode "markdown-mode") "gfm" "org")))
-    (message path)
-    (shell-command (format "pbpaste | pandoc --from %s --to html | tee %s | pbcopy" from path) nil nil)
-    (shell-command (format "firefox %s" path)) nil nil))
+    (async-shell-command (format "xclip -selection clipboard -o | pandoc --from %s --to html | tee %s | xclip -selection clipboard" from path) nil nil)
+    (shell-command (format "firefox %s" path) nil nil)))
 
 (bind-key "Tm" 'md/org-md-export md/leader-map)
 (bind-key "TM" 'md/org-md-import md/leader-map)
@@ -2711,8 +2706,11 @@ popup version of org-capture instead of using the usual org-capture."
     :action '(("Capture" . (lambda (template-shortcut)
                              (md/org-capture-popup-frame template-shortcut))))))
 
-(defun md/alfred-source-org-light ()
-  (helm-build-sync-source "Org"
+(defun md/alfred-source-org-light (my-helm-title my-helm-prefix my-org-keyword)
+  "MY-HELM-TITLE is the title given to the Helm source.
+MY-ORG-KEYWORD is the org keyword to search for.
+MY-HELM-PREFIX is a prefix that should be typed before any candidates start matching."
+  (helm-build-sync-source my-helm-title
     :requires-pattern t
     :multimatch nil
     :candidates
@@ -2727,16 +2725,16 @@ popup version of org-capture instead of using the usual org-capture."
                         (save-restriction
                           (widen)
                           (goto-char (point-min))
-                          (cl-loop until (not (search-forward-regexp "^*+ \\(NOW\\) " nil t)) do
+                          (cl-loop until (not (search-forward-regexp (format "^*+ \\(%s\\) " my-org-keyword) nil t)) do
                                    (add-to-list 'cands
                                                 (cons (substring-no-properties (org-get-heading))
                                                       (cons (current-buffer) (point))))))))))
       cands)
     ;; Similar pattern to elsewhere - only match these items if I search for "now $query".
-    :match '((lambda (candidate)
+    :match `((lambda (candidate)
                (and
-                (s-starts-with? "now " helm-pattern)
-                (string-match (s-chop-prefix "now " helm-pattern) candidate))))
+                (s-starts-with? ,(format "%s " my-helm-prefix) helm-pattern)
+                (string-match (s-chop-prefix ,(format "%s " my-helm-prefix) helm-pattern) candidate))))
     ;; Open the item in a new frame, using org-tree-to-indirect-buffer.
     :action '(("None" . (lambda (cand)
                           (make-frame '((name . "org-popup")
@@ -2923,7 +2921,8 @@ are ugly. It works fine though."
                            (md/alfred-source-search)
                            (md/alfred-source-webserver)
                            (md/alfred-source-org-capture-templates)
-                           (md/alfred-source-org-light)
+                           (md/alfred-source-org-light "Org - NOW" "now" "NOW")
+                           (md/alfred-source-org-light "Org - BACK" "back" "BACK")
                            (md/alfred-source-org-clock-out)
                            (md/alfred-source-web-bookmarks)
                            (md/alfred-source-apps)
@@ -3637,7 +3636,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 (org-babel-do-load-languages
  'org-babel-load-languages
- '((diagram . t)))
+ '((shell . t)))
 
 (bind-key (kbd "\\") 'diagram-mode md/leader-map)
 
