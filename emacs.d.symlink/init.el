@@ -62,7 +62,8 @@
  :config
  (progn (exec-path-from-shell-initialize)))
 
-(defvar md/leader-map (make-sparse-keymap))
+(define-prefix-command 'md/leader-map)
+;; (defvar md/leader-map (make-sparse-keymap))
 
 (defvar md/python-mode-leader-map (make-sparse-keymap))
 (set-keymap-parent md/python-mode-leader-map md/leader-map)
@@ -452,6 +453,10 @@ All scope layers are stored in md/variable-layers."
 (setq recentf-max-saved-items 200)
 (setq compilation-read-command nil) ; Don't prompt me to run make
 
+;; This is handy - instead of popping up a separate GPG UI prompt,
+;; using loopback mode will allow Emacs to prompt in the minibuffer.
+(setq epa-pinentry-mode 'loopback)
+
 (use-package evil
  :demand t
  :config
@@ -726,6 +731,246 @@ All scope layers are stored in md/variable-layers."
     (key-chord-define evil-replace-state-map "jk" 'evil-normal-state)
     (key-chord-mode 1)))
 
+;;;; Below are configurations for EXWM.
+
+(defun md/exwm-file-enable ()
+  "If this file exists, my .xinitrc will load exwm instead of i3."
+  (interactive)
+  (f-touch "~/.exwm-enabled")
+  (message "exwm file touched"))
+
+(defun md/exwm-file-disable ()
+  "If this file exists, my .xinitrc will load exwm instead of i3.
+Calling this will delete the file, causing i3 to load next time."
+  (interactive)
+  (delete-file "~/.exwm-enabled")
+  (message "exwm file deleted"))
+
+(defun md/exwm-enabled ()
+  (file-exists-p "~/.exwm-enabled"))
+
+(when (file-exists-p "~/.exwm-enabled")
+  ;; Required for sane bindings
+  (evil-set-initial-state 'exwm-mode 'emacs)
+
+  ;; Load EXWM.
+  (require 'exwm)
+
+  ;; Fix problems with Ido (if you use it).
+  ;; (require 'exwm-config)
+  ;; (exwm-config-ido)
+
+  ;; Set the initial number of workspaces (they can also be created later).
+  (setq exwm-workspace-number 1)
+
+  (setq exwm-workspace-show-all-buffers t
+        exwm-layout-show-all-buffers t)
+
+  ;; Hide modeline for exwm buffers
+  (add-hook 'exwm-manage-finish-hook 'exwm-layout-hide-mode-line)
+
+  (setq exwm-workspace-minibuffer-position nil)
+
+  ;; All buffers created in EXWM mode are named "*EXWM*". You may want to
+  ;; change it in `exwm-update-class-hook' and `exwm-update-title-hook', which
+  ;; are run when a new X window class name or title is available.  Here's
+  ;; some advice on this topic:
+  ;; + Always use `exwm-workspace-rename-buffer` to avoid naming conflict.
+  ;; + For applications with multiple windows (e.g. GIMP), the class names of
+                                        ;    all windows are probably the same.  Using window titles for them makes
+  ;;   more sense.
+  ;; In the following example, we use class names for all windows expect for
+  ;; Java applications and GIMP.
+  (add-hook 'exwm-update-class-hook
+            (lambda ()
+              (unless (or (string-prefix-p "sun-awt-X11-" exwm-instance-name)
+                          (string= "gimp" exwm-instance-name))
+                (exwm-workspace-rename-buffer exwm-class-name))))
+  (add-hook 'exwm-update-title-hook
+            (lambda ()
+              (when (or (not exwm-instance-name)
+                        (string-prefix-p "sun-awt-X11-" exwm-instance-name)
+                        (string= "gimp" exwm-instance-name))
+                (exwm-workspace-rename-buffer exwm-title))))
+
+
+  (defun md/exwm-cycle ()
+    (interactive)
+    (exwm-workspace-switch
+     (if (= exwm-workspace-current-index (- (exwm-workspace--count) 1))
+         0
+       (+ exwm-workspace-current-index 1))))
+
+  (defun md/exwm-input-toggle-keyboard ()
+    (interactive)
+    (call-interactively 'exwm-input-toggle-keyboard)
+    (message "exwm: %s" exwm--input-mode))
+
+
+  ;; Global keybindings can be defined with `exwm-input-global-keys'.
+  ;; Here are a few examples:
+  (setq exwm-input-global-keys
+        `(;; Bind "s-r" to exit char-mode and fullscreen mode.
+          ([?\s-r] . exwm-reset)
+
+          ;; TODO: helm-mini and helm-m-x don't cause screen issues, which is interesting.
+          ;; There are particular alfred sources that cause the frame problems.
+          (,(kbd "s-<SPC>") . md/alfred-no-frame)
+          (,(kbd "s-t") . md/alfred)
+          (,(kbd "C-<SPC>") . md/leader-map)
+
+          ([?\s-w] . splitscreen/prefix)
+          (,(kbd "s-<tab>") . eyebrowse-next-window-config)
+          ([?\s-f] . exwm-layout-toggle-fullscreen)
+          ([?\s-z] . md/exwm-input-toggle-keyboard)))
+
+  ;; To add a key binding only available in line-mode, simply define it in
+  ;; `exwm-mode-map'.  The following example shortens 'C-c q' to 'C-q'.
+  (define-key exwm-mode-map [?\C-q] #'exwm-input-send-next-key)
+
+  ;; The following example demonstrates how to use simulation keys to mimic
+  ;; the behavior of Emacs.  The value of `exwm-input-simulation-keys` is a
+  ;; list of cons cells (SRC . DEST), where SRC is the key sequence you press
+  ;; and DEST is what EXWM actually sends to application.  Note that both SRC
+  ;; and DEST should be key sequences (vector or string).
+  (setq exwm-input-simulation-keys
+        '(
+          ;; movement
+          ([?\C-b] . [left])
+          ;; ([?\M-b] . [C-left])
+          ([?\C-f] . [right])
+          ;; ([?\M-f] . [C-right])
+          ([?\C-p] . [up])
+          ([?\C-n] . [down])
+          ([?\C-a] . [home])
+          ([?\C-e] . [end])))
+          ;; ([?\M-v] . [prior])
+          ;; ([?\C-v] . [next])
+          ;; ([?\C-d] . [delete])
+          ;; ([?\C-k] . [S-end delete])
+          ;; cut/paste.
+          ;; ([?\C-w] . [?\C-x])
+          ;; ([?\M-w] . [?\C-c])
+          ;; ([?\C-y] . [?\C-v])
+          ;; search
+          ;; ([?\C-s] . [?\C-f])))
+
+
+  ;; Do not forget to enable EXWM. It will start by itself when things are
+  ;; ready.  You can put it _anywhere_ in your configuration.
+  (exwm-enable)
+
+  ;; You can hide the minibuffer and echo area when they're not used, by
+  ;; uncommenting the following line.
+                                        ;(setq exwm-workspace-minibuffer-position 'bottom)
+  (require 'exwm-randr)
+  ;; (setq exwm-randr-workspace-output-plist '(0 "VGA1"))
+  ;; (add-hook 'exwm-randr-screen-change-hook
+  ;;           (lambda ()
+  ;;             (start-process-shell-command
+  ;;              "xrandr" nil "xrandr --output VGA1 --left-of LVDS1 --auto")))
+
+
+  (defun md/exwm-display-one ()
+    "If monitor is connected, only use that. Otherwise, only use the main display."
+    (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+          default-output)
+      (with-temp-buffer
+        (call-process "xrandr" nil t nil)
+        (goto-char (point-min))
+        (re-search-forward xrandr-output-regexp nil 'noerror)
+        (setq default-output (match-string 1))
+        (forward-line)
+        (if (not (re-search-forward xrandr-output-regexp nil 'noerror))
+            (call-process "xrandr" nil nil nil "--output" default-output "--auto")
+          (call-process
+           "xrandr" nil nil nil
+           "--output" (match-string 1) "--primary" "--auto" "--same-as" default-output
+           "--output" default-output "--off")
+          (setq exwm-randr-workspace-output-plist (list 0 (match-string 1)))))))
+
+  (defun md/exwm-display-mirror ()
+    "Mirror display"
+    (interactive)
+    (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
+          default-output)
+      (with-temp-buffer
+        (call-process "xrandr" nil t nil)
+        (goto-char (point-min))
+        (re-search-forward xrandr-output-regexp nil 'noerror)
+        (setq default-output (match-string 1))
+        (forward-line)
+        (if (not (re-search-forward xrandr-output-regexp nil 'noerror))
+            (call-process "xrandr" nil nil nil "--output" default-output "--auto")
+          (call-process
+           "xrandr" nil nil nil
+           "--output" default-output "--auto" "--primary"
+           "--output" (match-string 1) "--auto" "--same-as" default-output)
+          (setq exwm-randr-workspace-output-plist (list 0 default-output))))))
+
+  ;; ---------------
+
+  (defvar md/status-mode-display-timer nil)
+  (defvar md/status-mode-idle-timer nil)
+
+  (defun md/status-mode-post-command-hook ()
+    ;; stop the timer that was run
+    (when md/status-mode-display-timer
+      (cancel-timer md/status-mode-display-timer)
+      (setq md/status-mode-display-timer nil)
+      (message "")))
+
+  (defun md/status-mode-enable ()
+    "Set up the idle timer and hooks to show the status"
+    (interactive)
+
+    (when (not md/status-mode-idle-timer)
+      ;; after idle, start the display loop
+      (setq md/status-mode-idle-timer
+            (run-with-idle-timer
+             2 t '(lambda ()
+                    ;; every n seconds, display the message
+                    (when md/status-mode-display-timer
+                      (cancel-timer md/status-mode-display-timer))
+                    (setq md/status-mode-display-timer
+                          (run-with-timer
+                           0 2 '(lambda ()
+                                  ;; TODO for another time: use fonts rather than colours for cross-theme.
+                                  ;; TODO: make more appropriate for dotfiles?
+                                  (let* ((message-log-max nil) ; ensure not logged in message buffer
+                                         (output (s-trim-right
+                                                  (shell-command-to-string "/f/users/matt/.config/i3-status-bash-once.sh")))
+                                         (output-as-list (car (read-from-string output)))
+                                         (propertized-string (mapconcat
+                                                              (lambda (item)
+                                                                (concat
+                                                                 ;; (propertize " " 'face `(:family "Noto sans" :height 0.8))
+                                                                 (propertize (nth 0 item)
+                                                                             'face
+                                                                             `(:foreground ,(nth 2 item) :family "Font Awesome 5 Free" :height 0.6))
+                                                                 (propertize (nth 1 item)
+                                                                             'face
+                                                                             `(:foreground ,(nth 2 item) :family "Noto sans" :height 0.7))))
+                                                               output-as-list "")))
+
+                                    (message propertized-string))))))))
+
+      ;; this should stop the loop
+      (add-hook 'post-command-hook 'md/status-mode-post-command-hook)))
+
+  (defun md/status-mode-disable ()
+    "Remove the idle timer and hooks"
+    (interactive)
+    (when md/status-mode-idle-timer
+      (cancel-timer md/status-mode-idle-timer)
+      (setq md/status-mode-idle-timer nil))
+    (md/status-mode-post-command-hook)
+    (remove-hook 'post-command-hook 'md/status-mode-post-command-hook))
+
+  (md/status-mode-enable)
+
+  (exwm-randr-enable))
+
 (use-package help-fns+ :defer 1 :demand t)
 
 (evil-set-initial-state 'help-mode 'normal)
@@ -840,10 +1085,10 @@ represent all current available bindings accurately as a single keymap."
             ;; Patch with my functions
             (md/which-key-patch)
 
-            (setq which-key-idle-delay 0.1
+            (setq which-key-idle-delay 1
                   which-key-max-description-length 30
                   which-key-allow-evil-operators nil
-                  which-key-inhibit-regexps '("C-w")
+                  which-key-inhibit-regexps '("C-w" "s-w")
                   which-key-show-operator-state-maps nil
                   which-key-sort-order 'which-key-key-order-alpha
                   which-key-highlighted-command-list '("md/"))
@@ -2695,6 +2940,10 @@ be quickly copy/pasted into eg. gmail."
   (if (equal "org-capture" (frame-parameter nil 'name))
       (delete-frame)))
 
+(defun md/org-capture-no-popup-frame (template-shortcut)
+  "A version that doesn't open a new frame, for use with exwm"
+  (org-capture nil template-shortcut))
+
 (defun md/alfred-source-org-capture-templates ()
   "Run org-capture in a popup window. Copied from helm-org.el, but plugs in my
 popup version of org-capture instead of using the usual org-capture."
@@ -2704,7 +2953,9 @@ popup version of org-capture instead of using the usual org-capture."
     :candidates (cl-loop for template in org-capture-templates
                          collect (cons (nth 1 template) (nth 0 template)))
     :action '(("Capture" . (lambda (template-shortcut)
-                             (md/org-capture-popup-frame template-shortcut))))))
+                             (if (md/exwm-enabled)
+                                 (md/org-capture-no-popup-frame template-shortcut)
+                               (md/org-capture-popup-frame template-shortcut)))))))
 
 (defun md/alfred-source-org-light (my-helm-title my-helm-prefix my-org-keyword)
   "MY-HELM-TITLE is the title given to the Helm source.
@@ -2737,16 +2988,18 @@ MY-HELM-PREFIX is a prefix that should be typed before any candidates start matc
                 (string-match (s-chop-prefix ,(format "%s " my-helm-prefix) helm-pattern) candidate))))
     ;; Open the item in a new frame, using org-tree-to-indirect-buffer.
     :action '(("None" . (lambda (cand)
-                          (make-frame '((name . "org-popup")
-                                        (window-system . x)
-                                        (auto-raise . t)
-                                        ;; I'm actually ignoring the size params as it gets
-                                        ;; tiled by i3.
-                                        (height . 40)
-                                        (width . 100)
-                                        (left . 0.3)
-                                        (top . 0.2)))
-                          (select-frame-by-name "org-popup")
+                          ;; Only make a separate frame when I'm not on exwm
+                          (when (not (md/exwm-enabled))
+                            (make-frame '((name . "org-popup")
+                                          (window-system . x)
+                                          (auto-raise . t)
+                                          ;; I'm actually ignoring the size params as it gets
+                                          ;; tiled by i3.
+                                          (height . 40)
+                                          (width . 100)
+                                          (left . 0.3)
+                                          (top . 0.2)))
+                            (select-frame-by-name "org-popup"))
                           (with-current-buffer (car cand)
                             (save-excursion
                               (goto-char (cdr cand))
@@ -2887,6 +3140,26 @@ are ugly. It works fine though."
                             (start-process "helm-source-noop" nil "true")))
     :action '(("Open" . (lambda (cand) (call-process "sh" nil nil nil "-c" (format "xdg-open '%s' & disown" cand)))))))
 
+(defun md/alfred--helm (buffer)
+  (helm :sources (list (md/alfred-source-system)
+                       (md/alfred-source-search)
+                       (md/alfred-source-webserver)
+                       (md/alfred-source-org-capture-templates)
+                       (md/alfred-source-org-light "Org - NOW" "now" "NOW")
+                       (md/alfred-source-org-light "Org - BACK" "back" "BACK")
+                       (md/alfred-source-org-clock-out)
+                       (md/alfred-source-web-bookmarks)
+                       (md/alfred-source-apps)
+                       (md/alfred-source-directories)
+                       (md/alfred-source-files)
+                       (md/alfred-source-processes))
+        :prompt ""
+        :buffer buffer))
+
+(defun md/alfred-no-frame ()
+  (interactive)
+  (md/alfred--helm nil))
+
 (defun md/alfred ()
   "Entry point to create the 'alfred' frame and run helm."
   (interactive)
@@ -2917,20 +3190,7 @@ are ugly. It works fine though."
           (helm-use-undecorated-frame-option nil)
           ;; If we run an async shell, don't show us anything
           (async-shell-command-display-buffer nil))
-      (helm :sources (list (md/alfred-source-system)
-                           (md/alfred-source-search)
-                           (md/alfred-source-webserver)
-                           (md/alfred-source-org-capture-templates)
-                           (md/alfred-source-org-light "Org - NOW" "now" "NOW")
-                           (md/alfred-source-org-light "Org - BACK" "back" "BACK")
-                           (md/alfred-source-org-clock-out)
-                           (md/alfred-source-web-bookmarks)
-                           (md/alfred-source-apps)
-                           (md/alfred-source-directories)
-                           (md/alfred-source-files)
-                           (md/alfred-source-processes))
-            :prompt ""
-            :buffer "*alfred*")
+      (md/alfred--helm "*alfred*")
       (delete-frame frame)
       ;; For some reason without killing the buffer it messes up future state.
       (kill-buffer "*alfred*")
@@ -3802,8 +4062,10 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
  :ensure nil
  :config
  (progn
-   (splitscreen-mode)
-   (bind-key "C-w" splitscreen/mode-map edebug-mode-map)))
+   (if (md/exwm-enabled)
+       (splitscreen-mode 0) ;; If exwm is on, this is provided by s-w
+     (splitscreen-mode 1)
+     (bind-key "C-w" splitscreen/mode-map edebug-mode-map))))
 
 (use-package edit-indirect
   :config
