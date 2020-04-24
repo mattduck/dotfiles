@@ -2,7 +2,7 @@
   "Lookup files that are in my dotfiles directory"
   (concat
    (or (getenv "DOTFILES")
-       (concat (expand-file-name "~") "/dotfiles"))
+       (concat (expand-file-name "~") "/f/dotfiles"))
    "/"
    path))
 
@@ -3274,103 +3274,6 @@ are ugly. It works fine though."
         atomic-chrome-default-major-mode 'markdown-mode
         atomic-chrome-url-major-mode-alist '(("github\\.com" . gfm-mode))))
 
-(use-package mu4e
-  :config
-  (progn
-
-   (bind-key "M" 'mu4e md/leader-map)
-
-    (setq
-     ;; Don't save message to Sent Messages, Gmail/IMAP takes care of this
-     ;; automatically.
-     mu4e-sent-messages-behavior 'delete
-
-     ;; We're using mbsync to fetch mail
-     ;;mu4e-get-mail-command "mbsync -a"
-    mu4e-get-mail-command "true"
-
-     ;; Use Helm (defaults to ido)
-     mu4e-completing-read-function 'completing-read
-
-     ;; UTF-8 instead of letters
-     mu4e-use-fancy-chars t
-
-     mu4e-confirm-quit nil
-     mu4e-compose-dont-reply-to-self t
-
-     ;; This is supposed to fix issues with duplicate UIDs when using mbsync.
-     mu4e-change-filenames-when-moving t
-
-     mu4e-view-date-format "%Y-%m-%d %H:%M"
-     mu4e-view-show-addresses t
-     mu4e-view-prefer-html nil
-     mu4e-view-auto-mark-as-read nil
-
-     ;; TODO - does this have any bad effects??
-     mu4e-headers-skip-duplicates t
-
-     mu4e-headers-date-format "%Y/%m/%d %H:%M"
-     mu4e-headers-date-format-long "%Y/%m/%d %H:%M"
-     mu4e-headers-time-format "%H:%M"
-     mu4e-headers-include-related nil
-     mu4e-headers-fields
-     '((:flags . 6) (:from . 22) (:thread-subject . 60)
-       (:human-date . 19) (:to . 22) (:maildir))
-
-     mu4e-headers-visible-flags
-     '(draft flagged replied trashed attach encrypted signed)
-
-     mu4e-headers-new-mark       '("N" . "N")
-     mu4e-headers-unread-mark    '("u" . "u")
-     mu4e-headers-seen-mark      '("S" . "S")
-     mu4e-headers-attach-mark    '("a" . "a")
-     mu4e-headers-draft-mark     '("D" . "⚒")
-     mu4e-headers-flagged-mark   `("F" . "★★ ")
-     mu4e-headers-encrypted-mark '("x" . "x")
-     mu4e-headers-trashed-mark   '("T" . "⏚")
-     mu4e-headers-signed-mark    '("s" . "☡")
-     mu4e-headers-passed-mark    '("P" . "❯")  ;; ie. forwarded
-     mu4e-headers-replied-mark   '("R" . "❮"))
-
-     ;; Custom view actions
-     (add-to-list 'mu4e-view-actions
-                  '("ViewInBrowser" . mu4e-action-view-in-browser) t)))
-
-(use-package mu4e-alert
-  :disabled
-  :config
-  (mu4e-alert-set-default-style 'notifier)
-  (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
-  (setq
-   mu4e-alert-notify-repeated-mails nil
-   mu4e-alert-email-notification-types '(count)))
-
-(use-package mu4e-maildirs-extension
-  :after mu4e
-  :config
-  (progn
-    (mu4e-maildirs-extension)))
-
-(use-package evil-mu4e
-  :after mu4e
-  :config
-  (evil-mu4e-init))
-
-(defun md/send-mail-validator ()
-    (unless (yes-or-no-p "Are you want to send this mail? ")
-      (signal 'quit nil)))
-
-(use-package message
-  :config
-  (add-hook 'message-send-hook 'md/send-mail-validator))
-
-(use-package smtpmail
-  :config
-  (setq mail-user-agent 'message-mail-user-agent
-        message-send-mail-function 'message-send-mail-with-sendmail
-        message-kill-buffer-on-exit t
-        sendmail-program "/usr/local/bin/msmtp"))
-
 (use-package elfeed
   :demand t
   :config
@@ -3607,6 +3510,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 (use-package bookmark+
     :demand t
+    :load-path "non-elpa/bookmark-plus"
     :bind (:map md/leader-map
                 ("ll" . md/helm-bookmarks)
                 ("jl" . md/helm-bookmarks-project)
@@ -4215,9 +4119,9 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
     (md/shackle-advise 'projectile-run-term)
     (md/shackle-advise 'undo-tree-visualize)
     (md/shackle-advise 'run-scheme)
-    (md/shackle-advise 'mu4e~main-view)
-    (md/shackle-advise 'mu4e-compose)
-    (md/shackle-advise 'mu4e-headers-search)
+    ;;(md/shackle-advise 'mu4e~main-view)
+    ;;(md/shackle-advise 'mu4e-compose)
+    ;;(md/shackle-advise 'mu4e-headers-search)
     (md/shackle-advise 'magit-dispatch-popup)
     (md/shackle-advise 'magit-display-buffer)
     ;;(md/shackle-advise 'edebug-pop-to-buffer)
@@ -4225,10 +4129,10 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
     ;; (md/shackle-unadvise 'edebug)
     ;; (md/shackle-unadvise 'edebug-enter)
 
-    (defun md/mu4e-eyebrowse-quit (fn &rest args)
-      (apply fn args)
-      (shackle--eyebrowse-close-slot-by-tag "mail"))
-    (advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
+    ;;(defun md/mu4e-eyebrowse-quit (fn &rest args)
+    ;;  (apply fn args)
+    ;;  (shackle--eyebrowse-close-slot-by-tag "mail"))
+    ;;(advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
 
     (defun md/is-edebug? (buffer)
       (interactive)
@@ -4277,9 +4181,9 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
             (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t) ;; TODO regex
             (".*init.org" :regexp t :same t :select t)
             (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
-            (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
-            (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
-            ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
+            ;;(,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
+            ;;(,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
+            ;;('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
             (dired-mode :align nil :select t)))
 
     (defmacro shackle-with-temp (rules body)

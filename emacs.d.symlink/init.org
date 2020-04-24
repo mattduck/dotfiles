@@ -9,7 +9,7 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
     "Lookup files that are in my dotfiles directory"
     (concat
      (or (getenv "DOTFILES")
-         (concat (expand-file-name "~") "/dotfiles"))
+         (concat (expand-file-name "~") "/f/dotfiles"))
      "/"
      path))
 
@@ -4219,7 +4219,7 @@ This is the body
           atomic-chrome-url-major-mode-alist '(("github\\.com" . gfm-mode))))
 #+END_SRC
 
-* Email
+* COMMENT Email
 
 - Dependencies:
 
@@ -4601,6 +4601,7 @@ Bookmark package configuration and bindings:
 
   (use-package bookmark+
       :demand t
+      :load-path "non-elpa/bookmark-plus"
       :bind (:map md/leader-map
                   ("ll" . md/helm-bookmarks)
                   ("jl" . md/helm-bookmarks-project)
@@ -5468,9 +5469,9 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
       (md/shackle-advise 'projectile-run-term)
       (md/shackle-advise 'undo-tree-visualize)
       (md/shackle-advise 'run-scheme)
-      (md/shackle-advise 'mu4e~main-view)
-      (md/shackle-advise 'mu4e-compose)
-      (md/shackle-advise 'mu4e-headers-search)
+      ;;(md/shackle-advise 'mu4e~main-view)
+      ;;(md/shackle-advise 'mu4e-compose)
+      ;;(md/shackle-advise 'mu4e-headers-search)
       (md/shackle-advise 'magit-dispatch-popup)
       (md/shackle-advise 'magit-display-buffer)
       ;;(md/shackle-advise 'edebug-pop-to-buffer)
@@ -5478,10 +5479,10 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
       ;; (md/shackle-unadvise 'edebug)
       ;; (md/shackle-unadvise 'edebug-enter)
 
-      (defun md/mu4e-eyebrowse-quit (fn &rest args)
-        (apply fn args)
-        (shackle--eyebrowse-close-slot-by-tag "mail"))
-      (advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
+      ;;(defun md/mu4e-eyebrowse-quit (fn &rest args)
+      ;;  (apply fn args)
+      ;;  (shackle--eyebrowse-close-slot-by-tag "mail"))
+      ;;(advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
 
       (defun md/is-edebug? (buffer)
         (interactive)
@@ -5530,9 +5531,9 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
               (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t) ;; TODO regex
               (".*init.org" :regexp t :same t :select t)
               (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
-              (,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
-              (,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
-              ('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
+              ;;(,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
+              ;;(,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
+              ;;('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
               (dired-mode :align nil :select t)))
 
       (defmacro shackle-with-temp (rules body)
