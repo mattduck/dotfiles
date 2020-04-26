@@ -984,31 +984,6 @@ by using a noop function:
      (global-evil-surround-mode 1)))
 #+END_SRC
 
-** COMMENT Easymotion
-
-TODO - remove this, I don't use it anymore.
-
-#+BEGIN_SRC emacs-lisp
-(use-package ace-jump-mode
- :config
- (progn
-   (setq
-    ace-jump-mode-move-keys '(?f ?j ?d ?k ?s ?l ?a ?\; ?g ?h ?r ?u ?e ?i ?w ?o ?t ?y ?b ?v ?n ?c ?m ?x)
-    ace-jump-mode-scope 'window  ; If scope is wider than window performance drops a lot
-    ace-jump-word-mode-use-query-char nil))
-
- :bind (:map evil-normal-state-map
-             ("f" . nil)
-             ("f j" . evil-ace-jump-line-mode)
-             ("f k" . evil-ace-jump-line-mode)
-             ("f w" . evil-ace-jump-word-mode)
-             ("f b" . evil-ace-jump-word-mode)
-             ("f f" . evil-ace-jump-char-mode)
-             ("f F" . evil-ace-jump-char-mode)
-             ("f t" . evil-ace-jump-char-mode)
-             ("f T" . evil-ace-jump-char-mode)))
-#+END_SRC
-
 ** Key Chord
 I can't just set my insert mode "jj" and "jk" bindings in the insert-mode-map,
 because if I do that then "j" gets assigned as a prefix key, and I can't
