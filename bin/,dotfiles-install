@@ -56,6 +56,5 @@ def main(argv):
     if not backup_made:
         print("No files to backup, removing timestamp dir")
         subprocess.Popen(["rmdir", this_backup_path])
-
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
