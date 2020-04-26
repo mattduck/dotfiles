@@ -149,10 +149,6 @@ inherit from the ~md/leader-map~.
 
 #+BEGIN_SRC emacs-lisp
   (define-prefix-command 'md/leader-map)
-  ;; (defvar md/leader-map (make-sparse-keymap))
-
-  (defvar md/python-mode-leader-map (make-sparse-keymap))
-  (set-keymap-parent md/python-mode-leader-map md/leader-map)
 
   (defvar md/go-mode-leader-map (make-sparse-keymap))
   (set-keymap-parent md/go-mode-leader-map md/leader-map)
@@ -252,12 +248,6 @@ linum-format, but adds a space so there is some separation:
   (use-package linum
     :bind (:map md/leader-map
            ("tn" . linum-mode)))
-#+END_SRC
-
-** Highlight cursor line
-#+BEGIN_SRC emacs-lisp
-;; Disable this for a minute
-;;(global-hl-line-mode 1)
 #+END_SRC
 
 ** Default font
@@ -529,6 +519,9 @@ Increase the threshold:
 by approx 600ms when not using ~use-package~, and 250ms when using it. I later
 ended up permanently setting it high, but I don't remember why. I should
 investigate this.
+
+[2020-04-26 Sun] The ~lsp-mode~ docs also suggest you should increase the
+threshold for performance reasons.
 
 * Misc utils
 ** Odd functions
@@ -2338,47 +2331,53 @@ There are a few generic LSP packages that provide most of the language-aware
 features:
 
 #+BEGIN_SRC emacs-lisp
-    (use-package lsp-mode
-      :config
-      (setq lsp-idle-delay 0.5
-            lsp-enable-symbol-highlighting t
-            lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
-            lsp-pyls-plugins-flake8-enabled t)
-      (lsp-register-custom-settings
-       '(("pyls.plugins.pyls_mypy.enabled" t t)
-         ("pyls.plugins.pyls_mypy.live_mode" nil t)
-         ("pyls.plugins.pyls_black.enabled" t t)
-         ("pyls.plugins.pyls_isort.enabled" t t)))
-      :hook
-      ((python-mode . lsp)
-       (js-mode . lsp)
-       (css-mode . lsp)
-       (lsp-mode . lsp-enable-which-key-integration))
-      :bind (:map evil-normal-state-map
-                  ("gh" . lsp-describe-thing-at-point)
-                  :map md/leader-map
-                  ("Ff" . lsp-format-buffer)
-                  ("FR" . lsp-rename)))
+  (use-package lsp-mode
+    :config
+    (setq lsp-idle-delay 0.5
+          lsp-enable-symbol-highlighting t
+          lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
+          lsp-pyls-plugins-flake8-enabled t)
+    (lsp-register-custom-settings
+     '(("pyls.plugins.pyls_mypy.enabled" t t)
+       ("pyls.plugins.pyls_mypy.live_mode" nil t)
+       ("pyls.plugins.pyls_black.enabled" t t)
+
+       ;; Disable these as they're duplicated by flake8
+       ("pyls.plugins.pycodestyle.enabled" nil t)
+       ("pyls.plugins.mccabe.enabled" nil t)
+       ("pyls.plugins.pyflakes.enabled" nil t)
+
+       ("pyls.plugins.pyls_isort.enabled" t t)))
+    :hook
+    ((python-mode . lsp)
+     (js-mode . lsp)
+     (css-mode . lsp)
+     (lsp-mode . lsp-enable-which-key-integration))
+    :bind (:map evil-normal-state-map
+                ("gh" . lsp-describe-thing-at-point)
+                :map md/leader-map
+                ("Ff" . lsp-format-buffer)
+                ("FR" . lsp-rename)))
 
 
-    (use-package lsp-ui
-      :config (setq lsp-ui-sideline-show-hover t
-                    lsp-ui-sideline-delay 0.5
-                    lsp-ui-doc-delay 5
-                    lsp-ui-sideline-ignore-duplicates t
-                    ;; Display the popup doc at the bottom of the window
-                    lsp-ui-doc-position 'bottom
-                    lsp-ui-doc-alignment 'frame
-                    lsp-ui-doc-header nil
-                    ;; Include function signature
-                    lsp-ui-doc-include-signature t
-                    lsp-ui-doc-use-childframe t)
-      :commands lsp-ui-mode
-      :bind (:map evil-normal-state-map
-                  ("gd" . lsp-ui-peek-find-definitions)
-                  ("gr" . lsp-ui-peek-find-references)
-                  :map md/leader-map
-                  ("Ni" . lsp-ui-imenu)))
+  (use-package lsp-ui
+    :config (setq lsp-ui-sideline-show-hover t
+                  lsp-ui-sideline-delay 0.5
+                  lsp-ui-doc-delay 5
+                  lsp-ui-sideline-ignore-duplicates t
+                  ;; Display the popup doc at the bottom of the window
+                  lsp-ui-doc-position 'bottom
+                  lsp-ui-doc-alignment 'frame
+                  lsp-ui-doc-header nil
+                  ;; Include function signature
+                  lsp-ui-doc-include-signature t
+                  lsp-ui-doc-use-childframe t)
+    :commands lsp-ui-mode
+    :bind (:map evil-normal-state-map
+                ("gd" . lsp-ui-peek-find-definitions)
+                ("gr" . lsp-ui-peek-find-references)
+                :map md/leader-map
+                ("Ni" . lsp-ui-imenu)))
 #+END_SRC
 
 ** Python
@@ -2425,7 +2424,7 @@ org-mode Python buffers. I prefer this to using the system Python environment.
   (use-package pip-requirements :demand t)
 #+END_SRC
 
-** Javascript
+** Javascript and Typescript
 
 LSP dependencies: ~npm install -g javascript-typescript-langserver~.
 
@@ -2442,6 +2441,29 @@ Add org babel support:
       "process.stdout.write(require('util').inspect(function(){%s}()));")
 #+END_SRC
 
+TODO will be sth like this below? maybe we need to put jsx/tsx files into js or typescript mode
+#+BEGIN_SRC emacs-lisp
+(defun lsp-typescript-javascript-tsx-jsx-activate-p (filename &optional _)
+  "Check if the javascript-typescript language server should be enabled based on FILENAME."
+  (or (string-match-p (rx (one-or-more anything) "." (or "ts" "js") (opt "x") string-end) filename)
+      (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode)
+           (not (derived-mode-p 'json-mode)))))
+
+(lsp-register-client
+ (make-lsp-client :new-connection (lsp-stdio-connection (lambda ()
+                                                          (cons (lsp-package-path 'javascript-typescript-langserver)
+                                                                lsp-clients-typescript-javascript-server-args)))
+                  :activation-fn 'lsp-typescript-javascript-tsx-jsx-activate-p
+                  :priority -3
+                  :completion-in-comments? t
+                  :server-id 'jsts-ls
+                  :download-server-fn (lambda (_client callback error-callback _update?)
+                                        (lsp-package-ensure
+                                         'javascript-typescript-langserver
+                                         callback
+                                         error-callback))))
+
+#+END_SRC
 
 ** COMMENT Python
 
@@ -2788,42 +2810,6 @@ I miss :Gbrowse from fugitive:
   (add-hook 'sql-mode-hook 'sql-highlight-postgres-keywords)
 #+END_SRC
 
-*** COMMENT dumb-sql-font-lock
-
-#+BEGIN_SRC emacs-lisp
-  (defvar dumb-sql-font-lock/keywords nil)
-  (setq dumb-sql-font-lock/keywords
-    `((,(regexp-opt '("SELECT")) 1 'org-warning prepend)
-      (,(regexp-opt '("FOOBAR")) 1 'org-warning prepend)
-      (,(regexp-opt '("BAZ")) . 'org-warning)
-      ))
-
-  (setq dumb-sql-font-lock/keywords
-        (list `(,(regexp-opt '("BAZ")) 1 'org-warning prepend)
-              `(,(regexp-opt '(";; BAZ")) 1 'org-warning prepend)
-                                     ))
-
-
-  (require 'web-mode)
-
-  ;; (font-lock-add-keywords '
-
-  (define-minor-mode dumb-sql-font-lock-mode
-    :init-value nil
-    :lighter "DumbSQL"
-    :group 'dumb-sql-font-lock
-    (if dumb-sql-font-lock-mode
-        (progn
-          (font-lock-add-keywords nil dumb-sql-font-lock/keywords))
-          ;; (when (not (string= major-mode "web-mode"))
-          ;;   (font-lock-add-keywords nil (list web-mode-sql-keywords))))
-      (font-lock-remove-keywords nil dumb-sql-font-lock/keywords))
-      ;; (when (not (string= major-mode "web-mode"))
-      ;;   (font-lock-remove-keywords nil (list web-mode-sql-keywords))))
-    (font-lock-flush)
-    (font-lock-fontify-buffer))
-#+END_SRC
-
 ** PHP
 #+BEGIN_SRC emacs-lisp
   (use-package php-mode
@@ -2944,8 +2930,11 @@ This makes working with HTML/CSS/JS files much nicer. TODO - read documentation
 / configure.
 
 #+BEGIN_SRC emacs-lisp
-(use-package web-mode
-  :defer 1)
+  (use-package web-mode
+    :mode (("\\.tsx\\'" . web-mode)
+           ("\\.jsx\\'" . web-mode))
+    :defer 1)
+
 
 #+END_SRC
 
@@ -5996,10 +5985,10 @@ server/client.
           - leader F R
         - lsp-ui-imenu
           - leader N? contains trees
-      - [ ] project virtualenvs
+      - [X] project virtualenvs
         - the recommended way is to use pyenv.
-          - [ ] get pyvenv working similar to https://blog.allardhendriksen.nl/posts/tracking-project-virtual-environments-with-pyvenv-tracking-mode/
-          - [ ] what about pipenv?
+          - [X] get pyvenv working similar to https://blog.allardhendriksen.nl/posts/tracking-project-virtual-environments-with-pyvenv-tracking-mode/
+          - [X] what about pipenv?
             - pipenv install into the venv is a good workaround.
       - [ ] appropriate faces
       - [ ] lsp supports folding?
@@ -6012,4 +6001,5 @@ server/client.
         - The ~pyls::stderr buffer~ shows "no module named future".
       - https://github.com/tomv564/pyls-mypy/issues/37 <- this slowed me down with mypy.
   - [ ] emacs react/js setup
+    - [ ] does this auto-support multiple environments?
   - [ ] emacs/alfred thing - will require coding
