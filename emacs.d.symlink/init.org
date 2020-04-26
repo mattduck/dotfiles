@@ -2430,11 +2430,24 @@ org-mode Python buffers. I prefer this to using the system Python environment.
 
 
 #+BEGIN_SRC emacs-lisp
-  (use-package pyvenv
-    :demand t
+  (use-package python ;; builtin
     :config
-    (setq pyvenv-workon "emacs")  ; Default venv
-    (pyvenv-tracking-mode 1))  ; Automatically use pyvenv-workon via dir-locals
+    (evil-define-key 'normal python-mode-map
+      "gk" 'python-nav-backward-defun
+      "gj" 'python-nav-forward-defun))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+    (use-package pyvenv
+      :demand t
+      :config
+      (setq pyvenv-workon "emacs")  ; Default venv
+      (pyvenv-tracking-mode 1))  ; Automatically use pyvenv-workon via dir-locals
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  ;; Syntax and completion for pip requirements files.
+  (use-package pip-requirements :demand t)
 #+END_SRC
 
 ** Javascript

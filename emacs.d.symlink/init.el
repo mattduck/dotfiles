@@ -1761,11 +1761,20 @@ represent all current available bindings accurately as a single keymap."
               :map md/leader-map
               ("Ni" . lsp-ui-imenu)))
 
+(use-package python ;; builtin
+  :config
+  (evil-define-key 'normal python-mode-map
+    "gk" 'python-nav-backward-defun
+    "gj" 'python-nav-forward-defun))
+
 (use-package pyvenv
   :demand t
   :config
   (setq pyvenv-workon "emacs")  ; Default venv
   (pyvenv-tracking-mode 1))  ; Automatically use pyvenv-workon via dir-locals
+
+;; Syntax and completion for pip requirements files.
+(use-package pip-requirements :demand t)
 
 (org-babel-do-load-languages
    'org-babel-load-languages
