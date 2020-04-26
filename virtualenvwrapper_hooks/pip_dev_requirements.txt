@@ -1,6 +1,5 @@
 # Packages that I want in all my envs or are expected by Emacs.
 flake8
-jedi
 ipython
 pudb
 pyperclip
@@ -12,3 +11,15 @@ argcomplete
 Fabric3
 mypy
 black
+
+# pyls/emacs dependencies
+rope
+python-language-server
+pyls-mypy
+pyls-isort
+pyls-black
+# pyls requires this
+jedi<0.16,>=0.14.1
+
+# Required for dap-python
+ptvsd>=4.2

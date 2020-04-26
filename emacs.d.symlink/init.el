@@ -48,6 +48,10 @@
 
 (require 'bind-key)  ; Required for :bind in use-package
 
+(add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+(setq frame-resize-pixelwise t)
+(set-frame-parameter nil 'ns-transparent-titlebar t)
+
 (when (file-exists-p "/usr/local/share/emacs/site-lisp")
   (let ((default-directory "/usr/local/share/emacs/site-lisp/"))
     (normal-top-level-add-subdirs-to-load-path)))
@@ -234,25 +238,6 @@
 
 (if (eq window-system 'ns)
   (global-set-key (kbd "M-v") 'evil-paste-after))
-
-(defun copy-from-osx ()
-  "Handle copy/paste intelligently on osx."
-  (let ((pbpaste (purecopy "/usr/bin/pbpaste")))
-    (if (and (eq system-type 'darwin)
-             (file-exists-p pbpaste))
-        (let ((tramp-mode nil)
-              (default-directory "~"))
-          (shell-command-to-string pbpaste)))))
-
-(defun paste-to-osx (text &optional push)
-  (let ((process-connection-type nil))
-    (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
-      (process-send-string proc text)
-      (process-send-eof proc))))
-
-(when (eq system-type 'darwin)
-  (setq interprogram-cut-function 'paste-to-osx
-        interprogram-paste-function 'copy-from-osx))
 
 (setq message-log-max 10000)
 
@@ -701,25 +686,6 @@ All scope layers are stored in md/variable-layers."
  (progn
    (global-evil-surround-mode 1)))
 
-(use-package ace-jump-mode
- :config
- (progn
-   (setq
-    ace-jump-mode-move-keys '(?f ?j ?d ?k ?s ?l ?a ?\; ?g ?h ?r ?u ?e ?i ?w ?o ?t ?y ?b ?v ?n ?c ?m ?x)
-    ace-jump-mode-scope 'window  ; If scope is wider than window performance drops a lot
-    ace-jump-word-mode-use-query-char nil))
-
- :bind (:map evil-normal-state-map
-             ("f" . nil)
-             ("f j" . evil-ace-jump-line-mode)
-             ("f k" . evil-ace-jump-line-mode)
-             ("f w" . evil-ace-jump-word-mode)
-             ("f b" . evil-ace-jump-word-mode)
-             ("f f" . evil-ace-jump-char-mode)
-             ("f F" . evil-ace-jump-char-mode)
-             ("f t" . evil-ace-jump-char-mode)
-             ("f T" . evil-ace-jump-char-mode)))
-
 (use-package key-chord
   :config
   (progn
@@ -1020,35 +986,69 @@ Calling this will delete the file, causing i3 to load next time."
 
 ;; TODO - this is failing to handle kdb values with periods? Eg. "C-a .. C-z"?
 (fmakunbound 'which-key--show-keymap)
-(defun which-key--show-keymap (keymap-name keymap &optional prior-args)
+
+;; (defun which-key--show-keymap (keymap-name keymap &optional prior-args)
+;;   "This is identical to the version shipped with which-key, but it returns the
+;; function captured by user input."
+;;   (setq which-key--current-prefix nil
+;;         which-key--current-show-keymap-name keymap-name
+;;         which-key--using-show-keymap t)
+;;   (when prior-args (push prior-args which-key--prior-show-keymap-args))
+;;   (when (keymapp keymap)
+;;     (let ((formatted-keys (which-key--get-formatted-key-bindings
+;;                            (which-key--get-keymap-bindings keymap))))
+;;       (cond ((= (length formatted-keys) 0)
+;;              (message "which-key: Keymap empty"))
+;;             ((listp which-key-side-window-location)
+;;              (setq which-key--last-try-2-loc
+;;                    (apply #'which-key--try-2-side-windows
+;;                           formatted-keys 0 which-key-side-window-location)))
+;;             (t (setq which-key--pages-plist
+;;                      (which-key--create-pages formatted-keys))
+;;                (which-key--show-page 0)))))
+;;   (let* ((key (key-description (list (read-key))))
+;;          (next-def (lookup-key keymap (kbd key))))
+;;     (cond ((and which-key-use-C-h-commands (string= "C-h" key))
+;;            (which-key-C-h-dispatch))
+;;           ((keymapp next-def)
+;;            (which-key--hide-popup-ignore-command)
+;;            (setq next-def (which-key--show-keymap (concat keymap-name " " key) next-def
+;;                                    (cons keymap-name keymap))))
+;;           (t (which-key--hide-popup)))
+;;     next-def))
+
+
+(defun which-key--show-keymap
+    (keymap-name keymap &optional prior-args all no-paging filter)
   "This is identical to the version shipped with which-key, but it returns the
-function captured by user input."
-  (setq which-key--current-prefix nil
-        which-key--current-show-keymap-name keymap-name
-        which-key--using-show-keymap t)
+  function captured by user input."
   (when prior-args (push prior-args which-key--prior-show-keymap-args))
-  (when (keymapp keymap)
-    (let ((formatted-keys (which-key--get-formatted-key-bindings
-                           (which-key--get-keymap-bindings keymap))))
-      (cond ((= (length formatted-keys) 0)
-             (message "which-key: Keymap empty"))
-            ((listp which-key-side-window-location)
+  (let ((bindings (which-key--get-bindings nil keymap filter all)))
+    (if (= (length bindings) 0)
+        (message "which-key: No bindings found in %s" keymap-name)
+      (cond ((listp which-key-side-window-location)
              (setq which-key--last-try-2-loc
                    (apply #'which-key--try-2-side-windows
-                          formatted-keys 0 which-key-side-window-location)))
-            (t (setq which-key--pages-plist
-                     (which-key--create-pages formatted-keys))
-               (which-key--show-page 0)))))
-  (let* ((key (key-description (list (read-key))))
-         (next-def (lookup-key keymap (kbd key))))
-    (cond ((and which-key-use-C-h-commands (string= "C-h" key))
-           (which-key-C-h-dispatch))
-          ((keymapp next-def)
-           (which-key--hide-popup-ignore-command)
-           (setq next-def (which-key--show-keymap (concat keymap-name " " key) next-def
-                                   (cons keymap-name keymap))))
-          (t (which-key--hide-popup)))
-    next-def))
+                          bindings nil keymap-name
+                          which-key-side-window-location)))
+            (t (setq which-key--pages-obj
+                     (which-key--create-pages bindings nil keymap-name))
+               (which-key--show-page)))
+      (unless no-paging
+        (let* ((key (read-key))
+               (key-desc (key-description (list key)))
+               (next-def (lookup-key keymap (vector key))))
+          (cond ((and which-key-use-C-h-commands
+                      (numberp key) (= key help-char))
+                 (which-key-C-h-dispatch))
+                ((keymapp next-def)
+                 (which-key--hide-popup-ignore-command)
+                 (which-key--show-keymap
+                  (concat keymap-name " " key-desc)
+                  next-def
+                  (cons keymap-name keymap)))
+                (t (which-key--hide-popup)))
+          next-def)))))
 
 ) ; Close md/which-key-patch
 
@@ -1262,18 +1262,24 @@ represent all current available bindings accurately as a single keymap."
   :defer 2
   :config
   (progn
+    (setq company-minimum-prefix-length 2
+          company-idle-delay 0.1)
+
     ;; Bind here rather than in ":bind" to avoid complaints about
     ;; company-mode-map not existing.
     (bind-key "C-n" 'company-select-next company-active-map)
     (bind-key "C-p" 'company-select-previous company-active-map)
 
-    ;; By default this performs company-complete-common, but I don't
-    ;; think I'll want to use that
-    (bind-key "TAB" 'company-complete-selection company-active-map)
+    (bind-key "C-n" 'company-complete evil-insert-state-map))
+  :hook ((emacs-lisp-mode . company-mode)
+         (python-mode . company-mode)
+         (js-mode . company-mode)))
 
-    (bind-key "C-n" 'company-complete evil-insert-state-map)
-
-    (global-company-mode)))
+(use-package company-box
+  :config (setq company-box-enable-icon nil
+                company-box-doc-delay 0.1
+                company-box-max-candidates 50)
+  :hook (company-mode . company-box-mode))
 
 (use-package flycheck
   :demand t
@@ -1628,7 +1634,7 @@ represent all current available bindings accurately as a single keymap."
     (setq neo-theme 'nerd neo-smart-open t neo-show-hidden-files
           t)
 
-    (bind-key "N" 'neotree-toggle md/leader-map)
+    (bind-key "Nn" 'neotree-toggle md/leader-map)
     (evil-define-key 'normal neotree-mode-map (kbd "J") 'neotree-dir)
     (evil-define-key 'normal neotree-mode-map (kbd "q") 'neotree-hide)
     (evil-define-key 'normal neotree-mode-map (kbd "r") 'neotree-refresh)
@@ -1713,155 +1719,62 @@ represent all current available bindings accurately as a single keymap."
 (bind-key "w" 'edebug-where edebug-mode-map)
 (bind-key "SPC" md/leader-map edebug-mode-map)
 
-(defun md/python-pudb-toggle-breakpoint ()
-  (interactive)
-  (let ((trace "breakpoint()  # BREAKPOINT")
-        (line (thing-at-point 'line)))
-    (if (and line (string-match trace line))
-        (kill-whole-line)
-      (progn
-        (back-to-indentation)
-        (insert trace)
-        (python-indent-line)
-        (insert "\n")
-        (python-indent-line)
-        (evil-previous-visual-line)))))
-
-(defun md/python-mode-hook ()
-  (md/hideshow-add-bindings python-mode-map)
-  (setq-local fill-column 90))
-(add-hook 'python-mode-hook 'md/python-mode-hook)
-
-(use-package find-file :demand t) ;; builtin, provides ff-basename
-(defun md/refresh-python-path ()
-  (interactive)
-  (when (f-directory? "/server/apps")
-    (-each (directory-files "/server/apps" t)
-      (lambda (f)
-        (when (and (f-directory? f)
-                   (not (-contains? '("." "..") (ff-basename f))))
-          (add-to-list 'python-shell-extra-pythonpaths f))))))
-
-(use-package python ;; builtin
+(use-package lsp-mode
   :config
-  (progn
-    (evil-define-key 'normal python-mode-map
-      (kbd "SPC") md/python-mode-leader-map
-      "gk" 'python-nav-backward-defun
-      "gj" 'python-nav-forward-defun)
-  (md/refresh-python-path))
-  :bind (:map md/python-mode-leader-map
-              ("SPC b" . md/python-pudb-toggle-breakpoint)))
+  (setq lsp-idle-delay 0.5
+        lsp-enable-symbol-highlighting t
+        lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
+        lsp-pyls-plugins-flake8-enabled t)
+  (lsp-register-custom-settings
+   '(("pyls.plugins.pyls_mypy.enabled" t t)
+     ("pyls.plugins.pyls_mypy.live_mode" nil t)
+     ("pyls.plugins.pyls_black.enabled" t t)
+     ("pyls.plugins.pyls_isort.enabled" t t)))
+  :hook
+  ((python-mode . lsp)
+   (js-mode . lsp)
+   (css-mode . lsp)
+   (lsp-mode . lsp-enable-which-key-integration))
+  :bind (:map evil-normal-state-map
+              ("gh" . lsp-describe-thing-at-point)
+              :map md/leader-map
+              ("Ff" . lsp-format-buffer)
+              ("FR" . lsp-rename)))
 
-;; Provide autocomplete, jump to definition and eldoc integration.
-(use-package anaconda-mode
-  :defer 1
-  :config
-  (progn
-    (defun md/anaconda-set-company-backend ()
-      (interactive)
-      (set (make-local-variable 'company-backends) '(company-anaconda)))
-    (add-hook 'anaconda-mode-hook 'md/anaconda-set-company-backend)
-    (add-hook 'python-mode-hook 'anaconda-mode)
-    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
 
-    ;; TODO make sure this jumps to the current buffer
-    (evil-define-key 'normal python-mode-map
-      "gd" 'anaconda-mode-find-assignments
-      "gD" 'anaconda-mode-find-definitions)
+(use-package lsp-ui
+  :config (setq lsp-ui-sideline-show-hover t
+                lsp-ui-sideline-delay 0.5
+                lsp-ui-doc-delay 5
+                lsp-ui-sideline-ignore-duplicates t
+                ;; Display the popup doc at the bottom of the window
+                lsp-ui-doc-position 'bottom
+                lsp-ui-doc-alignment 'frame
+                lsp-ui-doc-header nil
+                ;; Include function signature
+                lsp-ui-doc-include-signature t
+                lsp-ui-doc-use-childframe t)
+  :commands lsp-ui-mode
+  :bind (:map evil-normal-state-map
+              ("gd" . lsp-ui-peek-find-definitions)
+              ("gr" . lsp-ui-peek-find-references)
+              :map md/leader-map
+              ("Ni" . lsp-ui-imenu)))
 
-    (defun md/anaconda-quit ()
-      (interactive)
-      (quit-window)
-      (shackle--eyebrowse-close-slot-by-tag "anaconda"))
-
-    ;; TODO ideally this would open in a separate eyebrowse slot, and if you
-    ;; press enter would jump to the buffer in your original window, but keep
-    ;; the slot open.
-    ;; q should return to the original position.
-    ;; This behaviour should be consistent with eg. ag and other grep-type buffers.
-    (evil-define-key 'normal anaconda-mode-view-mode-map
-      "q" 'md/anaconda-quit
-      (kbd "C-j") 'next-error-no-select
-      (kbd "C-n") 'next-error-no-select
-      (kbd "C-k") 'previous-error-no-select
-      (kbd "C-p") 'previous-error-no-select))
-  :bind (:map md/python-mode-leader-map
-              ("SPC r" . anaconda-mode-find-references)
-              ("SPC d" . anaconda-mode-show-doc)))
-
-;; TODO pyvenv auto? Might work better to just have one emacs virtualenv.
-;;   https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Blang/python/packages.el#L205
-
-(use-package py-isort
-  :bind (:map md/python-mode-leader-map
-              ("SPC I" . py-isort-buffer)))
-
-;; Provide company completion for anaconda
-(use-package company-anaconda :demand t)
-
-;; Syntax and completion for pip requirements files.
-(use-package pip-requirements :demand t)
-
-(use-package pytest
-  :commands (pytest-all pytest-one pytest-failed pytest-pdb-one pytest-pdb-all)
-  :bind (:map md/python-mode-leader-map
-              ("SPC T T" . pytest-all)
-              ("SPC T t" . pytest-one)
-              ("SPC T p" . pytest-pdb-one)
-              ("SPC T P" . pytest-pdb-all)
-              ("SPC T f" . pytest-failed)))
-
-(defun md/blacken-buffer ()
-  (interactive)
-  (font-lock-mode -1)
-  (blacken-buffer)
-  (font-lock-mode 1))
-
-(use-package blacken
-  :bind (:map md/python-mode-leader-map
-              ("SPC F" . md/blacken-buffer)))
-
-;; Fallback to use if pycheckers doesn't find the right virtualenv.
-(use-package pyvenv :demand t :config (pyvenv-workon "emacs"))
-
-;; This is useful:
-;; - Multiple concurrent python checkers
-;; - Auto-guesses the virtualenv to use for the checks
-(use-package flycheck-pycheckers
+(use-package pyvenv
   :demand t
-  :config (progn
-            (add-hook 'flycheck-mode-hook 'flycheck-pycheckers-setup)
-            (setq flycheck-pycheckers-checkers '(flake8)
-                  flycheck-pycheckers-ignore-codes nil
-
-                  ;; Seems this is required - would prefer to leave it to
-                  ;; pylint/flake8 config though.
-                  flycheck-pycheckers-max-line-length 120)))
-
-(use-package polymode
-  :ensure t
-  :mode ("\.py$" . poly-python-sql-mode)
   :config
-  (setq polymode-prefix-key (kbd "C-c n"))
-  (define-hostmode poly-python-hostmode :mode 'python-mode)
+  (setq pyvenv-workon "emacs")  ; Default venv
+  (pyvenv-tracking-mode 1))  ; Automatically use pyvenv-workon via dir-locals
 
-  (define-innermode poly-sql-expr-python-innermode
-    :mode 'sql-mode
-    :head-matcher (rx "r" (= 3 (char "\"'")) (* (any space)))
-    :tail-matcher (rx (= 3 (char "\"'")))
-    :head-mode 'host
-    :tail-mode 'host)
+(org-babel-do-load-languages
+   'org-babel-load-languages
+   '((js . t)))
 
-  (defun poly-python-sql-eval-chunk (beg end msg)
-    "Calls out to `sql-send-region' with the polymode chunk region"
-    (sql-send-region beg end))
-
-  (define-polymode poly-python-sql-mode
-    :hostmode 'poly-python-hostmode
-    :innermodes '(poly-sql-expr-python-innermode)
-    (setq polymode-eval-region-function #'poly-python-sql-eval-chunk)
-    (define-key poly-python-sql-mode-map (kbd "C-c C-c") 'polymode-eval-chunk)))
+;; Fix - the default one uses `required('sys')` which is not available in
+;; modern node versions.
+  (setq org-babel-js-function-wrapper
+    "process.stdout.write(require('util').inspect(function(){%s}()));")
 
 (use-package git-commit
   :demand t
@@ -2110,15 +2023,6 @@ represent all current available bindings accurately as a single keymap."
          ("\\.*rc\\'" . conf-mode)
          ("\\.ssh/config\\'" . conf-mode)
          ("\\.ini\\'" . conf-mode)))
-
-(org-babel-do-load-languages
-   'org-babel-load-languages
-   '((js . t)))
-
-;; Fix - the default one uses `required('sys')` which is not available in
-;; modern node versions.
-  (setq org-babel-js-function-wrapper
-    "process.stdout.write(require('util').inspect(function(){%s}()));")
 
 (use-package coffee-mode)
 
@@ -2918,7 +2822,7 @@ be quickly copy/pasted into eg. gmail."
 
 (defun md/org-capture-popup-frame (template-shortcut)
   (make-frame '((name . "org-capture")
-                (window-system . x)
+                ;;(window-system . x)
                 (auto-raise . t)
                 (height . 20)
                 (width . 120)
@@ -2991,7 +2895,7 @@ MY-HELM-PREFIX is a prefix that should be typed before any candidates start matc
                           ;; Only make a separate frame when I'm not on exwm
                           (when (not (md/exwm-enabled))
                             (make-frame '((name . "org-popup")
-                                          (window-system . x)
+                                          ;;(window-system . x)
                                           (auto-raise . t)
                                           ;; I'm actually ignoring the size params as it gets
                                           ;; tiled by i3.
@@ -3149,7 +3053,7 @@ are ugly. It works fine though."
                        (md/alfred-source-org-light "Org - BACK" "back" "BACK")
                        (md/alfred-source-org-clock-out)
                        (md/alfred-source-web-bookmarks)
-                       (md/alfred-source-apps)
+                       ;;(md/alfred-source-apps)
                        (md/alfred-source-directories)
                        (md/alfred-source-files)
                        (md/alfred-source-processes))
@@ -3165,9 +3069,9 @@ are ugly. It works fine though."
   (interactive)
   (with-current-buffer (get-buffer-create "*alfred*")
     (let ((frame (make-frame '((name . "alfred")
-                               (window-system . x)
+                               ;;(window-system . x)
                                (auto-raise . t)
-                              (height . 10)
+                               (height . 10)
                                (internal-border-width . 20)
                                (left . 0.33)
                                (left-fringe . 0)
@@ -3177,7 +3081,7 @@ are ugly. It works fine though."
                                (tool-bar-lines . 0)
                                (top . 48)
                                ;; enable this to remove frame border
-                               (undecorated . nil)
+                               (undecorated . t)
                                (unsplittable . t)
                                (vertical-scroll-bars . nil)
                                (width . 120))))
@@ -4171,6 +4075,8 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
             ('magit-diff-mode :eyebrowse "git" :select t :align left :size 0.5 :only t)
             ('magit-log-mode :eyebrowse "git" :select t :align t :size 0.4 :only t)
             ('magit-revision-mode :eyebrowse "git" :select t :align t :size 0.5 :close-on-realign t)
+
+            ("*lsp-help*" :align t :close-on-realign t :size 0.33 :select nil)
 
             ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :same t)
             ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)

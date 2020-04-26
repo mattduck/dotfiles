@@ -81,6 +81,22 @@ a lot of the rest of init.org:
 (require 'bind-key)  ; Required for :bind in use-package
 #+END_SRC
 
+
+** MacOS: window manager
+
+I'm trialling yabai on MacOS. This will make the title bar less transparent and
+ensure frame sizing is correct: Ideally I would be able to use ~emacs-plus~ and
+remove the titlebar entirely, but right now this causes issues due to [[https://github.com/d12frosted/homebrew-emacs-plus/issues/195][#195]]. A
+workaround would be to install ~emacs-plus~ from HEAD, but there are some
+backwards-incompatible changes there that I don't want to fix right now.
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+  (setq frame-resize-pixelwise t)
+  (set-frame-parameter nil 'ns-transparent-titlebar t)
+#+END_SRC
+
+
 ** MacOS: Brew site-lisp
 
 Ensure any brew-installed packages are added to the load path (eg. for mu4e).
@@ -413,26 +429,29 @@ https://stackoverflow.com/questions/13517910/yank-does-not-paste-text-when-using
 pbpaste to work in Mac OS but don't use it if accessing a file via tramp. This
 enables copy/paste to work between local and remote files:
 
-#+BEGIN_SRC emacs-lisp
-  (defun copy-from-osx ()
-    "Handle copy/paste intelligently on osx."
-    (let ((pbpaste (purecopy "/usr/bin/pbpaste")))
-      (if (and (eq system-type 'darwin)
-               (file-exists-p pbpaste))
-          (let ((tramp-mode nil)
-                (default-directory "~"))
-            (shell-command-to-string pbpaste)))))
+[2020-04-25 Sat] Disabling this temporarily - it causes ~yy~ to not copy/paste the
+newline. Need to identify cause.
 
-  (defun paste-to-osx (text &optional push)
-    (let ((process-connection-type nil))
-      (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
-        (process-send-string proc text)
-        (process-send-eof proc))))
+# #+BEGIN_SRC emacs-lisp
+#   (defun copy-from-osx ()
+#     "Handle copy/paste intelligently on osx."
+#     (let ((pbpaste (purecopy "/usr/bin/pbpaste")))
+#       (if (and (eq system-type 'darwin)
+#                (file-exists-p pbpaste))
+#           (let ((tramp-mode nil)
+#                 (default-directory "~"))
+#             (shell-command-to-string pbpaste)))))
 
-  (when (eq system-type 'darwin)
-    (setq interprogram-cut-function 'paste-to-osx
-          interprogram-paste-function 'copy-from-osx))
-#+END_SRC
+#   (defun paste-to-osx (text &optional push)
+#     (let ((process-connection-type nil))
+#       (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
+#         (process-send-string proc text)
+#         (process-send-eof proc))))
+
+#   (when (eq system-type 'darwin)
+#     (setq interprogram-cut-function 'paste-to-osx
+#           interprogram-paste-function 'copy-from-osx))
+# #+END_SRC
 
 ** Message buffer
 
@@ -965,7 +984,10 @@ by using a noop function:
      (global-evil-surround-mode 1)))
 #+END_SRC
 
-** Easymotion
+** COMMENT Easymotion
+
+TODO - remove this, I don't use it anymore.
+
 #+BEGIN_SRC emacs-lisp
 (use-package ace-jump-mode
  :config
@@ -1330,35 +1352,69 @@ easier to discover features / work out where I am:
 #+BEGIN_SRC emacs-lisp
   ;; TODO - this is failing to handle kdb values with periods? Eg. "C-a .. C-z"?
   (fmakunbound 'which-key--show-keymap)
-  (defun which-key--show-keymap (keymap-name keymap &optional prior-args)
+
+  ;; (defun which-key--show-keymap (keymap-name keymap &optional prior-args)
+  ;;   "This is identical to the version shipped with which-key, but it returns the
+  ;; function captured by user input."
+  ;;   (setq which-key--current-prefix nil
+  ;;         which-key--current-show-keymap-name keymap-name
+  ;;         which-key--using-show-keymap t)
+  ;;   (when prior-args (push prior-args which-key--prior-show-keymap-args))
+  ;;   (when (keymapp keymap)
+  ;;     (let ((formatted-keys (which-key--get-formatted-key-bindings
+  ;;                            (which-key--get-keymap-bindings keymap))))
+  ;;       (cond ((= (length formatted-keys) 0)
+  ;;              (message "which-key: Keymap empty"))
+  ;;             ((listp which-key-side-window-location)
+  ;;              (setq which-key--last-try-2-loc
+  ;;                    (apply #'which-key--try-2-side-windows
+  ;;                           formatted-keys 0 which-key-side-window-location)))
+  ;;             (t (setq which-key--pages-plist
+  ;;                      (which-key--create-pages formatted-keys))
+  ;;                (which-key--show-page 0)))))
+  ;;   (let* ((key (key-description (list (read-key))))
+  ;;          (next-def (lookup-key keymap (kbd key))))
+  ;;     (cond ((and which-key-use-C-h-commands (string= "C-h" key))
+  ;;            (which-key-C-h-dispatch))
+  ;;           ((keymapp next-def)
+  ;;            (which-key--hide-popup-ignore-command)
+  ;;            (setq next-def (which-key--show-keymap (concat keymap-name " " key) next-def
+  ;;                                    (cons keymap-name keymap))))
+  ;;           (t (which-key--hide-popup)))
+  ;;     next-def))
+
+
+  (defun which-key--show-keymap
+      (keymap-name keymap &optional prior-args all no-paging filter)
     "This is identical to the version shipped with which-key, but it returns the
-  function captured by user input."
-    (setq which-key--current-prefix nil
-          which-key--current-show-keymap-name keymap-name
-          which-key--using-show-keymap t)
+    function captured by user input."
     (when prior-args (push prior-args which-key--prior-show-keymap-args))
-    (when (keymapp keymap)
-      (let ((formatted-keys (which-key--get-formatted-key-bindings
-                             (which-key--get-keymap-bindings keymap))))
-        (cond ((= (length formatted-keys) 0)
-               (message "which-key: Keymap empty"))
-              ((listp which-key-side-window-location)
+    (let ((bindings (which-key--get-bindings nil keymap filter all)))
+      (if (= (length bindings) 0)
+          (message "which-key: No bindings found in %s" keymap-name)
+        (cond ((listp which-key-side-window-location)
                (setq which-key--last-try-2-loc
                      (apply #'which-key--try-2-side-windows
-                            formatted-keys 0 which-key-side-window-location)))
-              (t (setq which-key--pages-plist
-                       (which-key--create-pages formatted-keys))
-                 (which-key--show-page 0)))))
-    (let* ((key (key-description (list (read-key))))
-           (next-def (lookup-key keymap (kbd key))))
-      (cond ((and which-key-use-C-h-commands (string= "C-h" key))
-             (which-key-C-h-dispatch))
-            ((keymapp next-def)
-             (which-key--hide-popup-ignore-command)
-             (setq next-def (which-key--show-keymap (concat keymap-name " " key) next-def
-                                     (cons keymap-name keymap))))
-            (t (which-key--hide-popup)))
-      next-def))
+                            bindings nil keymap-name
+                            which-key-side-window-location)))
+              (t (setq which-key--pages-obj
+                       (which-key--create-pages bindings nil keymap-name))
+                 (which-key--show-page)))
+        (unless no-paging
+          (let* ((key (read-key))
+                 (key-desc (key-description (list key)))
+                 (next-def (lookup-key keymap (vector key))))
+            (cond ((and which-key-use-C-h-commands
+                        (numberp key) (= key help-char))
+                   (which-key-C-h-dispatch))
+                  ((keymapp next-def)
+                   (which-key--hide-popup-ignore-command)
+                   (which-key--show-keymap
+                    (concat keymap-name " " key-desc)
+                    next-def
+                    (cons keymap-name keymap)))
+                  (t (which-key--hide-popup)))
+            next-def)))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1595,19 +1651,32 @@ Company seems to work nicely without much configuration.
     :defer 2
     :config
     (progn
+      (setq company-minimum-prefix-length 2
+            company-idle-delay 0.1)
+
       ;; Bind here rather than in ":bind" to avoid complaints about
       ;; company-mode-map not existing.
       (bind-key "C-n" 'company-select-next company-active-map)
       (bind-key "C-p" 'company-select-previous company-active-map)
 
-      ;; By default this performs company-complete-common, but I don't
-      ;; think I'll want to use that
-      (bind-key "TAB" 'company-complete-selection company-active-map)
-
-      (bind-key "C-n" 'company-complete evil-insert-state-map)
-
-      (global-company-mode)))
+      (bind-key "C-n" 'company-complete evil-insert-state-map))
+    :hook ((emacs-lisp-mode . company-mode)
+           (python-mode . company-mode)
+           (js-mode . company-mode)))
 #+END_SRC
+
+Company box is a nice extension that can provide icons (although I'm disabling
+them as they're too large by default), but can also popup definitions of the
+things you're completing.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package company-box
+    :config (setq company-box-enable-icon nil
+                  company-box-doc-delay 0.1
+                  company-box-max-candidates 50)
+    :hook (company-mode . company-box-mode))
+#+END_SRC
+
 
 ** Flycheck
 #+BEGIN_SRC emacs-lisp
@@ -2168,7 +2237,7 @@ the underlying terminal (ie. I get the usual readline bindings).
       (setq neo-theme 'nerd neo-smart-open t neo-show-hidden-files
             t)
 
-      (bind-key "N" 'neotree-toggle md/leader-map)
+      (bind-key "Nn" 'neotree-toggle md/leader-map)
       (evil-define-key 'normal neotree-mode-map (kbd "J") 'neotree-dir)
       (evil-define-key 'normal neotree-mode-map (kbd "q") 'neotree-hide)
       (evil-define-key 'normal neotree-mode-map (kbd "r") 'neotree-refresh)
@@ -2223,6 +2292,7 @@ the underlying terminal (ie. I get the usual readline bindings).
   ;;(bind-key "C-w" splitscreen/mode-map debugger-mode-map)
   (bind-key "SPC" md/leader-map debugger-mode-map)
 #+END_SRC
+
 *** Edebug
 #+BEGIN_SRC emacs-lisp
   ;; This can be useful when debugging.
@@ -2273,7 +2343,119 @@ Override the edebug keymap to only contain features/keys that I care about:
   (bind-key "SPC" md/leader-map edebug-mode-map)
 #+END_SRC
 
+
+** LSP base packages
+
+[2020-04-26 Sun] [[https://microsoft.github.io/language-server-protocol/][LSP]] is a JSON-RPC protocol that allows editors and IDEs to
+delegate language-specific features (such as autocomplete, or
+jump-to-definition) to a common server process. It means that developers for a
+particular editor don't have to reinvent the wheel building language-specific
+implementations - they only have to implement an LSP client.
+
+I'm starting to migrate my code-specific features to use LSP. My initial trial
+suggests that it's more effective than my Python setup, and I expect this trend
+to improve over time as the language servers get more community attention than
+individual Emacs packages. It will also be nice to have consistency - I don't
+have to manage vastly different configurations for each language, as functions
+like ~lsp-rename~ are and ~lsp-format-buffer~ generic and can be used everywhere.
+
+There are a few generic LSP packages that provide most of the language-aware
+features:
+
+#+BEGIN_SRC emacs-lisp
+    (use-package lsp-mode
+      :config
+      (setq lsp-idle-delay 0.5
+            lsp-enable-symbol-highlighting t
+            lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
+            lsp-pyls-plugins-flake8-enabled t)
+      (lsp-register-custom-settings
+       '(("pyls.plugins.pyls_mypy.enabled" t t)
+         ("pyls.plugins.pyls_mypy.live_mode" nil t)
+         ("pyls.plugins.pyls_black.enabled" t t)
+         ("pyls.plugins.pyls_isort.enabled" t t)))
+      :hook
+      ((python-mode . lsp)
+       (js-mode . lsp)
+       (css-mode . lsp)
+       (lsp-mode . lsp-enable-which-key-integration))
+      :bind (:map evil-normal-state-map
+                  ("gh" . lsp-describe-thing-at-point)
+                  :map md/leader-map
+                  ("Ff" . lsp-format-buffer)
+                  ("FR" . lsp-rename)))
+
+
+    (use-package lsp-ui
+      :config (setq lsp-ui-sideline-show-hover t
+                    lsp-ui-sideline-delay 0.5
+                    lsp-ui-doc-delay 5
+                    lsp-ui-sideline-ignore-duplicates t
+                    ;; Display the popup doc at the bottom of the window
+                    lsp-ui-doc-position 'bottom
+                    lsp-ui-doc-alignment 'frame
+                    lsp-ui-doc-header nil
+                    ;; Include function signature
+                    lsp-ui-doc-include-signature t
+                    lsp-ui-doc-use-childframe t)
+      :commands lsp-ui-mode
+      :bind (:map evil-normal-state-map
+                  ("gd" . lsp-ui-peek-find-definitions)
+                  ("gr" . lsp-ui-peek-find-references)
+                  :map md/leader-map
+                  ("Ni" . lsp-ui-imenu)))
+#+END_SRC
+
 ** Python
+
+LSP dependencies: ~pip install python-language-server pyls-black pyls-mypy
+pyls-isort~.
+
+[2020-04-26 Sun] Python projects tend to use virtualenvs to manage project
+dependencies. My understanding is that ~pyls~ has to be installed in the project's
+virtualenv, in order to access those dependencies for project-aware features
+like checking symbol references/definitions, or sorting imports.
+
+Neither Emacs' ~lsp-mode~ nor ~pyls~ provide features to manage multiple projects -
+the appropriate virtualenv needs to be managed separately. I've used ~pyvenv~ for
+this in past with some success.
+
+For various reasons pyvenv is only able to set a single global virtualenv at a
+time, but it does have a "tracking" mode, which can automatically change the
+global virtualenv using dir-locals. For other purposes, you can manually invoke
+~pyvenv-workon~ to change the virtualenv.
+
+We use a default "emacs" virtualenv as a fallback for editing things like
+org-mode Python buffers. I prefer this to using the system Python environment.
+
+
+#+BEGIN_SRC emacs-lisp
+  (use-package pyvenv
+    :demand t
+    :config
+    (setq pyvenv-workon "emacs")  ; Default venv
+    (pyvenv-tracking-mode 1))  ; Automatically use pyvenv-workon via dir-locals
+#+END_SRC
+
+** Javascript
+
+LSP dependencies: ~npm install -g javascript-typescript-langserver~.
+
+Add org babel support:
+
+#+BEGIN_SRC emacs-lisp
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((js . t)))
+
+  ;; Fix - the default one uses `required('sys')` which is not available in
+  ;; modern node versions.
+    (setq org-babel-js-function-wrapper
+      "process.stdout.write(require('util').inspect(function(){%s}()));")
+#+END_SRC
+
+
+** COMMENT Python
 
 #+BEGIN_SRC emacs-lisp
   (defun md/python-pudb-toggle-breakpoint ()
@@ -2816,18 +2998,6 @@ NOTE - compiling requires ~markdown~ to be installed.
            ("\\.*rc\\'" . conf-mode)
            ("\\.ssh/config\\'" . conf-mode)
            ("\\.ini\\'" . conf-mode)))
-#+END_SRC
-
-** Javascript
-#+BEGIN_SRC emacs-lisp
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((js . t)))
-
-;; Fix - the default one uses `required('sys')` which is not available in
-;; modern node versions.
-  (setq org-babel-js-function-wrapper
-    "process.stdout.write(require('util').inspect(function(){%s}()));")
 #+END_SRC
 
 ** Coffeescript
@@ -3765,7 +3935,7 @@ somewhere on the web - they just handle automatic deleting of the frame.
 #+BEGIN_SRC emacs-lisp
   (defun md/org-capture-popup-frame (template-shortcut)
     (make-frame '((name . "org-capture")
-                  (window-system . x)
+                  ;;(window-system . x)
                   (auto-raise . t)
                   (height . 20)
                   (width . 120)
@@ -3845,7 +4015,7 @@ indirect buffer. The search is quite naive, but that makes it fast.
                             ;; Only make a separate frame when I'm not on exwm
                             (when (not (md/exwm-enabled))
                               (make-frame '((name . "org-popup")
-                                            (window-system . x)
+                                            ;;(window-system . x)
                                             (auto-raise . t)
                                             ;; I'm actually ignoring the size params as it gets
                                             ;; tiled by i3.
@@ -4032,7 +4202,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
                          (md/alfred-source-org-light "Org - BACK" "back" "BACK")
                          (md/alfred-source-org-clock-out)
                          (md/alfred-source-web-bookmarks)
-                         (md/alfred-source-apps)
+                         ;;(md/alfred-source-apps)
                          (md/alfred-source-directories)
                          (md/alfred-source-files)
                          (md/alfred-source-processes))
@@ -4048,9 +4218,9 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
     (interactive)
     (with-current-buffer (get-buffer-create "*alfred*")
       (let ((frame (make-frame '((name . "alfred")
-                                 (window-system . x)
+                                 ;;(window-system . x)
                                  (auto-raise . t)
-                                (height . 10)
+                                 (height . 10)
                                  (internal-border-width . 20)
                                  (left . 0.33)
                                  (left-fringe . 0)
@@ -4060,7 +4230,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
                                  (tool-bar-lines . 0)
                                  (top . 48)
                                  ;; enable this to remove frame border
-                                 (undecorated . nil)
+                                 (undecorated . t)
                                  (unsplittable . t)
                                  (vertical-scroll-bars . nil)
                                  (width . 120))))
@@ -5522,6 +5692,8 @@ add the ~:close-on-realign~ flag to simulate this behaviour.
               ('magit-log-mode :eyebrowse "git" :select t :align t :size 0.4 :only t)
               ('magit-revision-mode :eyebrowse "git" :select t :align t :size 0.5 :close-on-realign t)
 
+              ("*lsp-help*" :align t :close-on-realign t :size 0.33 :select nil)
+
               ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :same t)
               ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
               ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
@@ -5813,3 +5985,43 @@ server/client.
   - shell command: open emacs buffer with the output
 - [2019-07-04 Thu]
   - [ ] outshine mode - integrate. ensure works with gfm/markdown.
+- [2020-04-26 Sun]
+  - [ ] ensure emacs python setup works OK
+    - LSP:
+      - [X] python extra configuration
+        - [X] mypy
+          - the stderr buffer had the solution: ~future~ was missing. installing it
+            manually fixed it.
+        - [X] black
+        - [X] isort
+      - [X] formatting
+      - [X] bindings for:
+        - lsp-describe-thing-at-point
+          - gh
+        - lsp-ui-peek-find-definitions
+          - gD
+        - lsp-ui-peek-find-references
+          - gr
+        - lsp-format-buffer
+          - leader F f
+        - lsp-rename
+          - leader F R
+        - lsp-ui-imenu
+          - leader N? contains trees
+      - [ ] project virtualenvs
+        - the recommended way is to use pyenv.
+          - [ ] get pyvenv working similar to https://blog.allardhendriksen.nl/posts/tracking-project-virtual-environments-with-pyvenv-tracking-mode/
+          - [ ] what about pipenv?
+            - pipenv install into the venv is a good workaround.
+      - [ ] appropriate faces
+      - [ ] lsp supports folding?
+      - [ ] dap mode - a general debugger would be v useful.
+      - [ ] treemacs? something to try
+      - How to debug lsp issues?
+        - ~lsp-client-settings~ shows your settings.
+        - ~lsp-register-custom-settings~ can be used to add/change settings. There are
+          examples in lsp-pyls.el.
+        - The ~pyls::stderr buffer~ shows "no module named future".
+      - https://github.com/tomv564/pyls-mypy/issues/37 <- this slowed me down with mypy.
+  - [ ] emacs react/js setup
+  - [ ] emacs/alfred thing - will require coding
