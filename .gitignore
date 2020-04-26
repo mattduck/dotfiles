@@ -22,6 +22,7 @@ emacs.d.symlink/bookmarks
 emacs.d.symlink/org-gcal
 emacs.d.symlink/tutorial
 emacs.d.symlink/anaconda-mode
+emacs.d.symlink/transient
 emacs.d.symlink/.lsp-*
 spacemacs
 emacs.d.spacemacs
