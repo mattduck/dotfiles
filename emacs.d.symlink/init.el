@@ -67,10 +67,6 @@
  (progn (exec-path-from-shell-initialize)))
 
 (define-prefix-command 'md/leader-map)
-;; (defvar md/leader-map (make-sparse-keymap))
-
-(defvar md/python-mode-leader-map (make-sparse-keymap))
-(set-keymap-parent md/python-mode-leader-map md/leader-map)
 
 (defvar md/go-mode-leader-map (make-sparse-keymap))
 (set-keymap-parent md/go-mode-leader-map md/leader-map)
@@ -124,9 +120,6 @@
 (use-package linum
   :bind (:map md/leader-map
          ("tn" . linum-mode)))
-
-;; Disable this for a minute
-;;(global-hl-line-mode 1)
 
 (defvar md/font-size 125)
 
@@ -1273,6 +1266,7 @@ represent all current available bindings accurately as a single keymap."
     (bind-key "C-n" 'company-complete evil-insert-state-map))
   :hook ((emacs-lisp-mode . company-mode)
          (python-mode . company-mode)
+         (typescript-mode . company-mode)
          (js-mode . company-mode)))
 
 (use-package company-box
@@ -1729,10 +1723,17 @@ represent all current available bindings accurately as a single keymap."
    '(("pyls.plugins.pyls_mypy.enabled" t t)
      ("pyls.plugins.pyls_mypy.live_mode" nil t)
      ("pyls.plugins.pyls_black.enabled" t t)
+
+     ;; Disable these as they're duplicated by flake8
+     ("pyls.plugins.pycodestyle.enabled" nil t)
+     ("pyls.plugins.mccabe.enabled" nil t)
+     ("pyls.plugins.pyflakes.enabled" nil t)
+
      ("pyls.plugins.pyls_isort.enabled" t t)))
   :hook
   ((python-mode . lsp)
    (js-mode . lsp)
+   (typescript-mode . lsp)
    (css-mode . lsp)
    (lsp-mode . lsp-enable-which-key-integration))
   :bind (:map evil-normal-state-map
@@ -1740,7 +1741,6 @@ represent all current available bindings accurately as a single keymap."
               :map md/leader-map
               ("Ff" . lsp-format-buffer)
               ("FR" . lsp-rename)))
-
 
 (use-package lsp-ui
   :config (setq lsp-ui-sideline-show-hover t
@@ -1784,6 +1784,14 @@ represent all current available bindings accurately as a single keymap."
 ;; modern node versions.
   (setq org-babel-js-function-wrapper
     "process.stdout.write(require('util').inspect(function(){%s}()));")
+
+  (use-package js-mode
+    :mode (("\\.js\\'" . js-mode)
+           ("\\.jsx\\'" . js-mode)))
+
+  (use-package typescript-mode
+    :mode (("\\.ts\\'" . typescript-mode)
+           ("\\.tsx\\'" . typescript-mode)))
 
 (use-package git-commit
   :demand t
@@ -2008,6 +2016,8 @@ represent all current available bindings accurately as a single keymap."
 (use-package terraform-mode)
 
 (use-package web-mode
+  :mode (("\\.tsx\\'" . web-mode)
+         ("\\.jsx\\'" . web-mode))
   :defer 1)
 
 (use-package markdown-mode

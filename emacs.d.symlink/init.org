@@ -1630,6 +1630,7 @@ Company seems to work nicely without much configuration.
       (bind-key "C-n" 'company-complete evil-insert-state-map))
     :hook ((emacs-lisp-mode . company-mode)
            (python-mode . company-mode)
+           (typescript-mode . company-mode)
            (js-mode . company-mode)))
 #+END_SRC
 
@@ -2351,6 +2352,7 @@ features:
     :hook
     ((python-mode . lsp)
      (js-mode . lsp)
+     (typescript-mode . lsp)
      (css-mode . lsp)
      (lsp-mode . lsp-enable-which-key-integration))
     :bind (:map evil-normal-state-map
@@ -2358,7 +2360,6 @@ features:
                 :map md/leader-map
                 ("Ff" . lsp-format-buffer)
                 ("FR" . lsp-rename)))
-
 
   (use-package lsp-ui
     :config (setq lsp-ui-sideline-show-hover t
@@ -2431,6 +2432,7 @@ LSP dependencies: ~npm install -g javascript-typescript-langserver~.
 Add org babel support:
 
 #+BEGIN_SRC emacs-lisp
+
     (org-babel-do-load-languages
      'org-babel-load-languages
      '((js . t)))
@@ -2439,30 +2441,14 @@ Add org babel support:
   ;; modern node versions.
     (setq org-babel-js-function-wrapper
       "process.stdout.write(require('util').inspect(function(){%s}()));")
-#+END_SRC
 
-TODO will be sth like this below? maybe we need to put jsx/tsx files into js or typescript mode
-#+BEGIN_SRC emacs-lisp
-(defun lsp-typescript-javascript-tsx-jsx-activate-p (filename &optional _)
-  "Check if the javascript-typescript language server should be enabled based on FILENAME."
-  (or (string-match-p (rx (one-or-more anything) "." (or "ts" "js") (opt "x") string-end) filename)
-      (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode)
-           (not (derived-mode-p 'json-mode)))))
+    (use-package js-mode
+      :mode (("\\.js\\'" . js-mode)
+             ("\\.jsx\\'" . js-mode)))
 
-(lsp-register-client
- (make-lsp-client :new-connection (lsp-stdio-connection (lambda ()
-                                                          (cons (lsp-package-path 'javascript-typescript-langserver)
-                                                                lsp-clients-typescript-javascript-server-args)))
-                  :activation-fn 'lsp-typescript-javascript-tsx-jsx-activate-p
-                  :priority -3
-                  :completion-in-comments? t
-                  :server-id 'jsts-ls
-                  :download-server-fn (lambda (_client callback error-callback _update?)
-                                        (lsp-package-ensure
-                                         'javascript-typescript-langserver
-                                         callback
-                                         error-callback))))
-
+    (use-package typescript-mode
+      :mode (("\\.ts\\'" . typescript-mode)
+             ("\\.tsx\\'" . typescript-mode)))
 #+END_SRC
 
 ** COMMENT Python
