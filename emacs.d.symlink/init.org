@@ -725,6 +725,9 @@ by using a noop function:
 
   (add-hook 'prog-mode-hook 'md/left-margin)
   (add-hook 'org-mode-hook 'md/left-margin)
+
+  (line-number-mode 0)
+  (column-number-mode 0)
 #+END_SRC
 * Evil
 ** Base evil
@@ -4863,140 +4866,126 @@ Use some persistent scratch files for various modes:
   (bind-key "'o" 'md/scratch-open-file-org md/leader-map)
 #+END_SRC
 * Modeline
-** General modeline
-#+BEGIN_SRC emacs-lisp
-(line-number-mode 0)
-(column-number-mode 0)
-#+END_SRC
-
-** Powerline
 #+BEGIN_SRC emacs-lisp
   (use-package powerline
-   :demand t
-   :defer 1
-   :config
+    :demand t
+    :defer 1
+    :config
 
-   (progn
-     ;; (defadvice vc-mode-line (after strip-backend () activate)
-     ;;   "Strip the Git- prefix from the modeline to just display branch name"
-     ;;   (when (stringp vc-mode)
-     ;;     (let ((gitlogo (replace-regexp-in-string "Git." "" vc-mode)))
-     ;;       (setq vc-mode gitlogo))))
+    (progn
+      (defface md/powerline-inactive '((t (:inherit 'modeline))) "")
+      (defface md/powerline-normal '((t (:inherit 'modeline))) "")
+      (defface md/powerline-insert '((t (:inherit 'modeline))) "")
+      (defface md/powerline-visual '((t (:inherit 'modeline))) "")
+      (defface md/powerline-replace '((t (:inherit 'modeline))) "")
+      (defface md/powerline-emacs '((t (:inherit 'modeline))) "")
+      (defun md/powerline-setup ()
+        (interactive)
+        (require 'flycheck)
+        (setq mode-line-format
+              '("%e"
+                (:eval
+                 (let* ((active (powerline-selected-window-active))
+                        (mode-line (if active 'mode-line 'mode-line-inactive))
+                        (face1 (if active 'powerline-active1 'powerline-inactive1))
+                        (face2 (if active 'powerline-active2 'powerline-inactive2))
 
-     (defface md/powerline-inactive '((t (:inherit 'modeline))) "")
-     (defface md/powerline-normal '((t (:inherit 'modeline))) "")
-     (defface md/powerline-insert '((t (:inherit 'modeline))) "")
-     (defface md/powerline-visual '((t (:inherit 'modeline))) "")
-     (defface md/powerline-replace '((t (:inherit 'modeline))) "")
-     (defface md/powerline-emacs '((t (:inherit 'modeline))) "")
-     (defun md/powerline-setup ()
-       (interactive)
-       (require 'flycheck)
-       (setq mode-line-format
-                     '("%e"
-                       (:eval
-                        (let* ((active (powerline-selected-window-active))
-                               (mode-line (if active 'mode-line 'mode-line-inactive))
-                               (face1 (if active 'powerline-active1 'powerline-inactive1))
-                               (face2 (if active 'powerline-active2 'powerline-inactive2))
+                        ;; Set face3 depending on Evil state
+                        (face3 (if active
+                                   (cond ((evil-normal-state-p) 'md/powerline-normal)
+                                         ((evil-insert-state-p) 'md/powerline-insert)
+                                         ((evil-visual-state-p) 'md/powerline-visual)
+                                         ((evil-replace-state-p) 'md/powerline-replace)
+                                         ((evil-emacs-state-p) 'md/powerline-emacs)
+                                         (t 'md/powerline-normal))
+                                 'md/powerline-inactive))
+                        (separator-left (intern (format "powerline-%s-%s"
+                                                        (powerline-current-separator)
+                                                        (car powerline-default-separator-dir))))
+                        (separator-right (intern (format "powerline-%s-%s"
+                                                         (powerline-current-separator)
+                                                         (cdr powerline-default-separator-dir))))
 
-                               ;; Set face3 depending on Evil state
-                               (face3 (if active
-                                          (cond ((evil-normal-state-p) 'md/powerline-normal)
-                                                ((evil-insert-state-p) 'md/powerline-insert)
-                                                ((evil-visual-state-p) 'md/powerline-visual)
-                                                ((evil-replace-state-p) 'md/powerline-replace)
-                                                ((evil-emacs-state-p) 'md/powerline-emacs)
-                                                (t 'md/powerline-normal))
-                                        'md/powerline-inactive))
-                               (separator-left (intern (format "powerline-%s-%s"
-                                                               (powerline-current-separator)
-                                                               (car powerline-default-separator-dir))))
-                               (separator-right (intern (format "powerline-%s-%s"
-                                                                (powerline-current-separator)
-                                                                (cdr powerline-default-separator-dir))))
+                        (lhs (list
+                              ;; Eyebrowse index/tag
+                              (when eyebrowse-mode
+                                (powerline-raw
+                                 (let* ((window-configs (eyebrowse--get 'window-configs))
+                                        (current-config (assoc (eyebrowse--get 'current-slot) window-configs))
+                                        (current-index (car current-config))
+                                        (current-tag (nth 2 current-config)))
+                                   (format "%s %s" current-index current-tag)) face3 'l ))
 
-                               (lhs (list
-                                     ;; Eyebrowse index/tag
-                                     (when eyebrowse-mode
-                                       (powerline-raw
-                                        (let* ((window-configs (eyebrowse--get 'window-configs))
-                                               (current-config (assoc (eyebrowse--get 'current-slot) window-configs))
-                                               (current-index (car current-config))
-                                               (current-tag (nth 2 current-config)))
-                                              (format "%s %s" current-index current-tag)) face3 'l ))
+                              ;; Line / column numbers
+                              (when (or line-number-mode column-number-mode)
+                                (cond ((and line-number-mode
+                                            column-number-mode)
+                                       (powerline-raw "%4l:%2c " face3 'l))
+                                      (line-number-mode
+                                       (powerline-raw "%4l" face3 'l))
+                                      (column-number-mode
+                                       (powerline-raw ":%2c " face3 'l))))
 
-                                     ;; Line / column numbers
-                                     (when (or line-number-mode column-number-mode)
-                                       (cond ((and line-number-mode
-                                                   column-number-mode)
-                                              (powerline-raw "%4l:%2c " face3 'l))
-                                             (line-number-mode
-                                              (powerline-raw "%4l" face3 'l))
-                                             (column-number-mode
-                                              (powerline-raw ":%2c " face3 'l))))
+                              ;; Dedicated mode indicaitor
+                              (when dedicated-mode
+                                (powerline-raw (format "Ded.") face3 'l))
 
-                                     ;; Dedicated mode indicator
-                                     (when dedicated-mode
-                                       (powerline-raw (format "Ded.") face3 'l))
+                              ;; Modeline
+                              (when (face-foreground 'md/powerline-normal)
+                                (funcall separator-left face3 mode-line))
 
-                                     ;; Modeline
-                                     (funcall separator-left face3 mode-line)
-                                     (powerline-raw "%b" mode-line 'l)
+                              (powerline-raw "%b" mode-line 'l)
 
-                                     ;; File state
-                                     (when (buffer-modified-p)
-                                       (powerline-raw "+ " mode-line 'l))
-                                     (when buffer-read-only
-                                       (powerline-raw "[RO] " mode-line 'l))
-                                     (when (buffer-narrowed-p)
-                                       (powerline-raw "[Narrow] " mode-line 'l))
-                                     (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
-                                       (powerline-raw
-                                        (propertize
-                                         (format "%s "
-                                                 (if (> (length org-mode-line-string) 50)
-                                                     (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
-                                                   org-mode-line-string))
-                                         'face nil)
-                                        face2 'l))))
+                              ;; File state
+                              (when (buffer-modified-p)
+                                (powerline-raw "+ " mode-line 'l))
+                              (when buffer-read-only
+                                (powerline-raw "[RO] " mode-line 'l))
+                              (when (buffer-narrowed-p)
+                                (powerline-raw "[Narrow] " mode-line 'l))
+                              (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
+                                (powerline-raw
+                                 (propertize
+                                  (format "%s "
+                                          (if (> (length org-mode-line-string) 50)
+                                              (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
+                                            org-mode-line-string))
+                                  'face nil)
+                                 face2 'l))))
 
-                               (rhs
-                                     ;;(powerline-raw " " mode-line 'r)
-                                     ;; Flycheck
-                                     (when (and active flycheck-mode flycheck-current-errors)
-                                           (let* ((errors (flycheck-count-errors flycheck-current-errors))
-                                                  (warn-count (cdr (assoc 'warning errors)))
-                                                  (err-count (cdr (assoc 'error errors)))
-                                                  (msg (format " %s %s"
-                                                               (or err-count 0)
-                                                               (or warn-count 0)))
-                                                  (face (if (flycheck-has-current-errors-p 'error)
-                                                            'md/modeline-flycheck-error
-                                                          'md/modeline-flycheck-warning)))
-                                             (list
-                                              ;;(funcall separator-right mode-line face)
-                                              (if err-count
-                                                  (powerline-raw (format "%s" err-count) 'flycheck-error-list-error 'r))
-                                              (if warn-count
-                                                  (powerline-raw (format "%s" warn-count) 'flycheck-error-list-warning 'r)))))
-                                              ;; (powerline-raw msg 'flycheck-warning 'r))))
-                                     ))
-                          (concat (powerline-render lhs)
-                                  (powerline-fill mode-line (powerline-width rhs))
-                                  (powerline-render rhs))))))
-                     (setq-default mode-line-format mode-line-format))
+                        (rhs
+                         ;; Flycheck
+                         (when (and active flycheck-mode flycheck-current-errors)
+                           (let* ((errors (flycheck-count-errors flycheck-current-errors))
+                                  (warn-count (cdr (assoc 'warning errors)))
+                                  (err-count (cdr (assoc 'error errors)))
+                                  (msg (format " %s %s"
+                                               (or err-count 0)
+                                               (or warn-count 0)))
+                                  (face (if (flycheck-has-current-errors-p 'error)
+                                            'md/modeline-flycheck-error
+                                          'md/modeline-flycheck-warning)))
+                             (list
+                              (if err-count
+                                  (powerline-raw (format " %s" err-count) 'flycheck-error-list-error 'r))
+                              (if warn-count
+                                  (powerline-raw (format " %s" warn-count) 'flycheck-error-list-warning 'r)))))
+                         ))
+                   (concat (powerline-render lhs)
+                           (powerline-fill mode-line (powerline-width rhs))
+                           (powerline-render rhs))))))
+        (setq-default mode-line-format mode-line-format))
 
-     (defun md/powerline-reset ()
-       (interactive)
-       (save-window-excursion
-         (mapc (lambda (buffer)
-                 (switch-to-buffer buffer)
-                 (md/powerline-setup)
-                 (powerline-reset))
-               (buffer-list))))
+      (defun md/powerline-reset ()
+        (interactive)
+        (save-window-excursion
+          (mapc (lambda (buffer)
+                  (switch-to-buffer buffer)
+                  (md/powerline-setup)
+                  (powerline-reset))
+                (buffer-list))))
 
-     (md/powerline-reset)))
+      (md/powerline-reset)))
 #+END_SRC
 
 * Diagrams
