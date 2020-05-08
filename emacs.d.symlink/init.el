@@ -141,7 +141,9 @@
   (interactive)
   (set-face-attribute 'default nil
                       :height md/font-size
+                      ;; :family "Inconsolata-dz for Powerline")
                       :family "Inconsolata")
+  (setq-default line-spacing 0.2)
   (run-hooks 'after-setting-font-hook 'after-setting-font-hooks))
 
 
@@ -285,12 +287,13 @@
 (defun md/file-info ()
   (interactive)
   (message
-   "%s | %s lines | line %d:%3d%% | %s"
-           (buffer-file-name)
-           (count-lines (point-min) (point-max))
-           (count-lines (point-min) (point))
-           (/ (window-end) 0.01 (point-max))
-           major-mode))
+   "%s | %s lines | line %d:%3d%% | %s | %s"
+   (buffer-file-name)
+   (count-lines (point-min) (point-max))
+   (count-lines (point-min) (point))
+   (/ (window-end) 0.01 (point-max))
+   (or projectile-project-name "[no project]")
+   major-mode))
 
 (defun md/mode-info ()
   (interactive)
@@ -434,6 +437,12 @@ All scope layers are stored in md/variable-layers."
 ;; This is handy - instead of popping up a separate GPG UI prompt,
 ;; using loopback mode will allow Emacs to prompt in the minibuffer.
 (setq epa-pinentry-mode 'loopback)
+
+(defun md/left-margin ()
+  (setq left-margin-width 4))
+
+(add-hook 'prog-mode-hook 'md/left-margin)
+(add-hook 'org-mode-hook 'md/left-margin)
 
 (use-package evil
  :demand t
@@ -1267,6 +1276,7 @@ represent all current available bindings accurately as a single keymap."
   :hook ((emacs-lisp-mode . company-mode)
          (python-mode . company-mode)
          (typescript-mode . company-mode)
+         (restclient-mode . company-mode)
          (js-mode . company-mode)))
 
 (use-package company-box
@@ -1644,6 +1654,35 @@ represent all current available bindings accurately as a single keymap."
   :bind (:map md/leader-map
               (";d" . neotree-toggle)))
 
+;; TODO: virtualenv support for python
+;; notes on dependencies
+
+;; TEMP loading -> as I redo shackle
+(use-package shackle
+  :load-path "non-elpa/shackle"  ; fork
+  :demand t)
+
+(use-package dap-mode
+  :commands (dap-debug)
+  :config
+  (setq dap-auto-show-output nil)
+  (dap-ui-mode 1)
+  (add-to-list 'shackle-rules '(dap-ui-breakpoints-ui-list-mode :align t :close-on-realign t :size 0.15))
+  (add-to-list 'shackle-rules '(dap-ui-repl-mode :align t :close-on-realign t :size 0.25))
+  (add-to-list 'shackle-rules '(dap-server-log-mode :align t :close-on-realign t :size 0.15))
+  :bind (:map md/leader-map
+              ("d <RET>" . dap-debug)
+              ("d u" . dap-switch-stack-frame)
+              ("d n" . dap-next)
+              ("d i" . dap-step-in)
+              ("d o" . dap-step-out)
+              ("d c" . dap-continue)
+              ("d b" . dap-breakpoint-toggle)
+              ("d l" . dap-ui-breakpoints-list)
+              ("d D" . dap-disconnect)
+              ("d x" . dap-ui-repl)))
+(use-package dap-python)
+
 (defun md/emacs-lisp-hook ()
     (setq fill-column 100))
 (add-hook 'emacs-lisp-mode-hook 'md/emacs-lisp-hook)
@@ -1715,27 +1754,28 @@ represent all current available bindings accurately as a single keymap."
 
 (use-package lsp-mode
   :config
-  (setq lsp-idle-delay 0.5
-        lsp-enable-symbol-highlighting t
-        lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
-        lsp-pyls-plugins-flake8-enabled t)
-  (lsp-register-custom-settings
-   '(("pyls.plugins.pyls_mypy.enabled" t t)
-     ("pyls.plugins.pyls_mypy.live_mode" nil t)
-     ("pyls.plugins.pyls_black.enabled" t t)
+  (defun md/lsp-setup()
+    (setq lsp-idle-delay 0.5
+          lsp-enable-symbol-highlighting nil
+          lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
+          lsp-pyls-plugins-flake8-enabled t)
+    (lsp-register-custom-settings
+     '(("pyls.plugins.pyls_mypy.enabled" t t)
+       ("pyls.plugins.pyls_mypy.live_mode" nil t)
+       ("pyls.plugins.pyls_black.enabled" t t)
+       ("pyls.plugins.pyls_isort.enabled" t t)
 
-     ;; Disable these as they're duplicated by flake8
-     ("pyls.plugins.pycodestyle.enabled" nil t)
-     ("pyls.plugins.mccabe.enabled" nil t)
-     ("pyls.plugins.pyflakes.enabled" nil t)
-
-     ("pyls.plugins.pyls_isort.enabled" t t)))
+       ;; Disable these as they're duplicated by flake8
+       ("pyls.plugins.pycodestyle.enabled" nil t)
+       ("pyls.plugins.mccabe.enabled" nil t)
+       ("pyls.plugins.pyflakes.enabled" nil t))))
   :hook
   ((python-mode . lsp)
    (js-mode . lsp)
    (typescript-mode . lsp)
    (css-mode . lsp)
-   (lsp-mode . lsp-enable-which-key-integration))
+   (lsp-mode . lsp-enable-which-key-integration)
+   (lsp-before-initialize . md/lsp-setup))
   :bind (:map evil-normal-state-map
               ("gh" . lsp-describe-thing-at-point)
               :map md/leader-map
@@ -1743,18 +1783,24 @@ represent all current available bindings accurately as a single keymap."
               ("FR" . lsp-rename)))
 
 (use-package lsp-ui
-  :config (setq lsp-ui-sideline-show-hover t
-                lsp-ui-sideline-delay 0.5
-                lsp-ui-doc-delay 5
-                lsp-ui-sideline-ignore-duplicates t
-                ;; Display the popup doc at the bottom of the window
-                lsp-ui-doc-position 'bottom
-                lsp-ui-doc-alignment 'frame
-                lsp-ui-doc-header nil
-                ;; Include function signature
-                lsp-ui-doc-include-signature t
-                lsp-ui-doc-use-childframe t)
+  :config
+  (defun md/lsp-ui-setup ()
+    (setq lsp-ui-sideline-show-hover nil
+          lsp-ui-sideline-enable nil
+          lsp-ui-sideline-delay 0.5
+          lsp-ui-sideline-ignore-duplicate t
+          lsp-ui-flycheck-live-reporting nil
+          lsp-ui-doc-delay 5
+          lsp-eldoc-enable-hover t
+          lsp-signature-doc-lines 2
+          lsp-signature-auto-activate t
+          lsp-ui-doc-position 'bottom
+          lsp-ui-doc-alignment 'frame
+          lsp-ui-doc-header nil
+          lsp-ui-doc-include-signature t
+          lsp-ui-doc-use-childframe nil))
   :commands lsp-ui-mode
+  :hook ((lsp-before-initialize . md/lsp-ui-setup))
   :bind (:map evil-normal-state-map
               ("gd" . lsp-ui-peek-find-definitions)
               ("gr" . lsp-ui-peek-find-references)
@@ -3173,9 +3219,7 @@ are ugly. It works fine though."
       "R" 'dired-do-rename
       "C" 'dired-do-copy
       "i" 'dired-maybe-insert-subdir
-      "+" 'dired-create-directory))
-  :bind (:map md/leader-map
-                  ("d" . dired)))
+      "+" 'dired-create-directory)))
 
 (use-package restclient
   :defer 1
@@ -3503,8 +3547,8 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (bind-key "'g" 'md/scratch-open-file-gfm md/leader-map)
 (bind-key "'o" 'md/scratch-open-file-org md/leader-map)
 
-(line-number-mode 1)
-(column-number-mode 1)
+(line-number-mode 0)
+(column-number-mode 0)
 
 (use-package powerline
  :demand t
@@ -3512,11 +3556,11 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
  :config
 
  (progn
-   (defadvice vc-mode-line (after strip-backend () activate)
-     "Strip the Git- prefix from the modeline to just display branch name"
-     (when (stringp vc-mode)
-       (let ((gitlogo (replace-regexp-in-string "Git." "" vc-mode)))
-         (setq vc-mode gitlogo))))
+   ;; (defadvice vc-mode-line (after strip-backend () activate)
+   ;;   "Strip the Git- prefix from the modeline to just display branch name"
+   ;;   (when (stringp vc-mode)
+   ;;     (let ((gitlogo (replace-regexp-in-string "Git." "" vc-mode)))
+   ;;       (setq vc-mode gitlogo))))
 
    (defface md/powerline-inactive '((t (:inherit 'modeline))) "")
    (defface md/powerline-normal '((t (:inherit 'modeline))) "")
@@ -3552,13 +3596,14 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                                                               (cdr powerline-default-separator-dir))))
 
                              (lhs (list
+                                   ;; Eyebrowse index/tag
                                    (when eyebrowse-mode
                                      (powerline-raw
                                       (let* ((window-configs (eyebrowse--get 'window-configs))
                                              (current-config (assoc (eyebrowse--get 'current-slot) window-configs))
                                              (current-index (car current-config))
                                              (current-tag (nth 2 current-config)))
-                                        (format "%s:%s" current-index current-tag)) face3 'l ))
+                                            (format "%s %s" current-index current-tag)) face3 'l ))
 
                                    ;; Line / column numbers
                                    (when (or line-number-mode column-number-mode)
@@ -3574,63 +3619,48 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                                    (when dedicated-mode
                                      (powerline-raw (format "Ded.") face3 'l))
 
-                                   ;; Evil status
-                                   (powerline-raw evil-mode-line-tag face3 'l)
-
-                                   ;; Major mode
-                                   (funcall separator-left face3 face1)
-                                   (powerline-raw (format "%s " (powerline-major-mode)) face1 'l)
-
                                    ;; Modeline
-                                   (funcall separator-left face1 mode-line)
+                                   (funcall separator-left face3 mode-line)
                                    (powerline-raw "%b" mode-line 'l)
-
-                                   ;; Projectile
-                                   ;; (when (and (boundp 'projectile-mode) projectile-mode)
-                                   ;;   (powerline-raw (format "%s" (projectile-project-name)) face2 'l))
 
                                    ;; File state
                                    (when (buffer-modified-p)
-                                     (powerline-raw "+" mode-line 'l))
+                                     (powerline-raw "+ " mode-line 'l))
                                    (when buffer-read-only
-                                     (powerline-raw "[RO]" mode-line 'l))
+                                     (powerline-raw "[RO] " mode-line 'l))
                                    (when (buffer-narrowed-p)
-                                     (powerline-raw "  Narrow" mode-line 'l))
+                                     (powerline-raw "[Narrow] " mode-line 'l))
                                    (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
                                      (powerline-raw
                                       (propertize
-                                       (format "  %s "
+                                       (format "%s "
                                                (if (> (length org-mode-line-string) 50)
                                                    (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
                                                  org-mode-line-string))
                                        'face nil)
                                       face2 'l))))
 
-                             (rhs (list
-                                   ;; Git
-                                   (funcall separator-right mode-line mode-line)
-                                   (or (powerline-vc mode-line 'r)
-                                       (powerline-raw "-" mode-line 'r))
-
-                                   ;; Projectile
-                                   (funcall separator-right mode-line face1)
-                                   (if (and (boundp 'projectile-mode) projectile-mode)
-                                     (powerline-raw (format " %s " (projectile-project-name)) face1 'r)
-                                     (powerline-raw "-" face1 'r))
-
+                             (rhs
+                                   ;;(powerline-raw " " mode-line 'r)
                                    ;; Flycheck
-                                   (cond ((and active flycheck-mode (flycheck-has-current-errors-p
-                                                                     'error))
-                                          (funcall separator-right face1 'md/modeline-flycheck-error)
-                                          (powerline-raw " E " 'md/modeline-flycheck-error 'r))
-                                         ((and active flycheck-mode (flycheck-has-current-errors-p
-                                                                     'warning))
-                                          (funcall separator-right face1 'md/modeline-flycheck-warning)
-                                          (powerline-raw " W " 'md/modeline-flycheck-warning 'r))
-                                         (t
-                                          (funcall separator-right face1 face3)
-                                          (powerline-raw " - " face3 'r)))
-                                   )))
+                                   (when (and active flycheck-mode flycheck-current-errors)
+                                         (let* ((errors (flycheck-count-errors flycheck-current-errors))
+                                                (warn-count (cdr (assoc 'warning errors)))
+                                                (err-count (cdr (assoc 'error errors)))
+                                                (msg (format " %s %s"
+                                                             (or err-count 0)
+                                                             (or warn-count 0)))
+                                                (face (if (flycheck-has-current-errors-p 'error)
+                                                          'md/modeline-flycheck-error
+                                                        'md/modeline-flycheck-warning)))
+                                           (list
+                                            ;;(funcall separator-right mode-line face)
+                                            (if err-count
+                                                (powerline-raw (format "%s" err-count) 'flycheck-error-list-error 'r))
+                                            (if warn-count
+                                                (powerline-raw (format "%s" warn-count) 'flycheck-error-list-warning 'r)))))
+                                            ;; (powerline-raw msg 'flycheck-warning 'r))))
+                                   ))
                         (concat (powerline-render lhs)
                                 (powerline-fill mode-line (powerline-width rhs))
                                 (powerline-render rhs))))))
@@ -4062,7 +4092,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
       (message (format "%s" edebug-mode)))
 
     ;; TODO ediff
-    (setq shackle-rules
+    (dolist (rule
           `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
             ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select t)
             ('helpful-mode :align t :close-on-realign t :size 0.33 :select t)
@@ -4110,6 +4140,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
             ;;(,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
             ;;('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
             (dired-mode :align nil :select t)))
+          (add-to-list 'shackle-rules rule))
 
     (defmacro shackle-with-temp (rules body)
       "Execute body with temporary shackle rules"
