@@ -3235,15 +3235,6 @@ are ugly. It works fine though."
   (progn
       (add-to-list 'company-backends 'company-restclient)))
 
-(use-package atomic-chrome
-  :demand t
-  :config
-  (atomic-chrome-start-server)
-  (setq atomic-chrome-extension-type-list '(ghost-text)
-        atomic-chrome-buffer-open-style 'frame
-        atomic-chrome-default-major-mode 'markdown-mode
-        atomic-chrome-url-major-mode-alist '(("github\\.com" . gfm-mode))))
-
 (use-package elfeed
   :demand t
   :config
@@ -3748,8 +3739,6 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
  'org-babel-load-languages
  '((shell . t)))
 
-(bind-key (kbd "\\") 'diagram-mode md/leader-map)
-
 (use-package color-theme-solarized
  :demand nil
  :ensure nil
@@ -3772,20 +3761,8 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
         ("cs" . solarized-toggle-comment-visibility)))
 
 (add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-gruvbox"))
-  ;; (use-package gruvbox
-  ;;   :demand nil
-  ;;   :load-path "non-elpa/emacs-theme-gruvbox"
-  ;;   :config
-  ;;   (progn
-  ;;     (add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-gruvbox"))))
 
 (add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-md-wiki"))
-  ;; (use-package md-wiki-theme
-  ;;   :demand nil
-  ;;   :load-path "non-elpa/emacs-theme-md-wiki"
-  ;;   :config
-  ;;   (progn
-  ;;     (add-to-list 'custom-theme-load-path (md/dotfiles-get-path "emacs.d.symlink/non-elpa/emacs-theme-md-wiki"))))
 
 (defun md/disable-all-themes ()
   (interactive)
@@ -3809,54 +3786,10 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 ;; Initial setup
 (md/disable-all-themes)
-(if (display-graphic-p)
-    (load-theme 'gruvbox-dark-medium t)
-  (load-theme 'solarized t)
-  (solarized-enable-theme 'dark))
+(load-theme 'gruvbox-dark-medium t)
 
 (bind-key "tt" 'md/load-theme md/leader-map)
 (md/set-default-font)
-
-(use-package writeroom-mode
- :demand t
- :config
- (progn
-   ;; Ensure font resets as writeroom mode as I'm setting writeroom to use a separate font.
-   ;;(add-hook 'writeroom-mode-hook 'md/set-default-font)
-
-   (defun md/writeroom-mode (&rest force)
-     "Handle clash with git-gutter mode as both use fringes"
-     ;; TODO: why doesn't this work using writeroom-mode-hook?
-     (interactive)
-     (if (not writeroom-mode)
-         (progn
-           (md/org-list-utf-enable) ; Prettify list bullets
-           (git-gutter-mode 0)
-           (redraw-frame)
-           (writeroom-mode 1)
-           (setq header-line-format " " ; Add header space
-                 line-spacing 0.1)  ; Decrease spacing
-           (redraw-frame))
-       (when (not force)  ;; Normally we toggle, but allow override by flag.
-         (setq header-line-format nil  ; Revert
-               line-spacing 0.2) ; Revert
-         (md/org-list-utf-disable) ; Revert
-         (writeroom-mode 0))))
-
-   (setq writeroom-width 79
-         writeroom-mode-line nil  ; Keep modeline
-         writeroom-maximize-window nil  ; Don't delete other windows
-         writeroom-fullscreen-effect nil
-         writeroom-fringes-outside-margins nil
-         writeroom-major-modes nil
-         writeroom-restore-window-config nil)
-
-   (defvar md/wiki-view-enabled nil)
-
-   )
-
-   :bind (:map md/leader-map
-               ("tW" . md/toggle-org-pretty)))
 
 ;; TODO a way to revert all these changes to their original setting.
 ;; maybe a macro where that idea can be reapplied - after something is disabled, all the original values get restored.
