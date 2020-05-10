@@ -81,7 +81,6 @@ a lot of the rest of init.org:
 (require 'bind-key)  ; Required for :bind in use-package
 #+END_SRC
 
-
 ** MacOS: window manager
 
 I'm trialling yabai on MacOS. This will make the title bar less transparent and
@@ -95,7 +94,6 @@ backwards-incompatible changes there that I don't want to fix right now.
   (setq frame-resize-pixelwise t)
   (set-frame-parameter nil 'ns-transparent-titlebar t)
 #+END_SRC
-
 
 ** MacOS: Brew site-lisp
 
@@ -135,7 +133,7 @@ Initialise environment from shell:
    (progn (exec-path-from-shell-initialize)))
 #+END_SRC
 
-* Sane Emacs behaviour
+* Basic behaviour and settings
 
 These are mostly to get the base appearance / behaviour of Emacs close to
 what I'm used to from vim.
@@ -150,12 +148,6 @@ inherit from the ~md/leader-map~.
 #+BEGIN_SRC emacs-lisp
   (define-prefix-command 'md/leader-map)
 
-  (defvar md/go-mode-leader-map (make-sparse-keymap))
-  (set-keymap-parent md/go-mode-leader-map md/leader-map)
-
-  (defvar md/scheme-mode-leader-map (make-sparse-keymap))
-  (set-keymap-parent md/scheme-mode-leader-map md/leader-map)
-
   (defvar md/org-mode-leader-map (make-sparse-keymap))
   (set-keymap-parent md/org-mode-leader-map md/leader-map)
 #+END_SRC
@@ -167,13 +159,6 @@ inherit from the ~md/leader-map~.
 ** Fill column
 #+BEGIN_SRC emacs-lisp
 (setq-default fill-column 80)
-
-(use-package fill-column-indicator
- :defer 1
- :config
- (progn
-   ;; Width of the fill column rule
-   (setq fci-rule-width 5)))
 #+END_SRC
 
 ** Menu bar
@@ -193,19 +178,10 @@ appears as any other app toolbar at the top of the screen, which is fine:
     (menu-bar-mode -1))
 #+END_SRC
 
-** COMMENT Frame size
-
-Automatically resize new frames to be fullscreen.
-
-#+BEGIN_SRC emacs-lisp
-  (when (not (string= system-name "arch"))
-    (add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
-    (add-to-list 'default-frame-alist '(fullscreen . fullscreen)))
-#+END_SRC
-
 ** Fontify
-Some things don't fontify quick enough (eg. fic-mode). This helps to contain
-that issue:
+
+Some packages will take a while to propagate font changes (eg. fic-mode can be
+slow at this). This helps to ensure fonts are updated:
 
 #+BEGIN_SRC emacs-lisp
   (defun md/fontify-if-font-lock-mode ()
@@ -225,29 +201,6 @@ Auto-wrap text.
   (add-hook 'text-mode-hook 'turn-on-auto-fill)
   (add-hook 'prog-mode-hook 'turn-on-auto-fill)
   (add-hook 'org-mode-hook 'turn-on-auto-fill)
-#+END_SRC
-
-** Linum / line numbers in left margin
-
-By default, in terminal Emacs the linum margin terminates right against the
-first column of the buffer. This copies the code from linum's =dynamic=
-linum-format, but adds a space so there is some separation:
-
-#+BEGIN_SRC emacs-lisp
-  (setq linum-format
-        (lambda (line-number)
-          (let ((w (length (number-to-string
-                            (count-lines (point-min) (point-max))))))
-            (propertize
-             (format
-              (concat "%" (number-to-string w) "d ")
-              line-number) 'face 'linum))))
-
-  ;; TODO - I thought use-package would defer the loading of this until I do "ln",
-  ;; but "ln" doesn't work.
-  (use-package linum
-    :bind (:map md/leader-map
-           ("tn" . linum-mode)))
 #+END_SRC
 
 ** Default font
@@ -307,11 +260,11 @@ show their terminal/GUI-specific default fonts:
   (md/set-default-font)
 #+END_SRC
 
-** Scroll behaviour
+** Scroll and margins
 #+BEGIN_SRC emacs-lisp
   (setq
     ;; Start scrolling when the cursor is one line away from the top/bottom.
-    scroll-margin 5
+    scroll-margin 1
 
     ;; If at the bottom of the file, don't allow scroll beyond that (because
     ;; there's no use in having half a screen of empty space
@@ -328,13 +281,12 @@ show their terminal/GUI-specific default fonts:
     :if (display-graphic-p)
     :demand t
     :config (scroll-bar-mode -1))
-#+END_SRC
 
-** Cursor blinking
+  (defun md/left-margin ()
+    (setq left-margin-width 4))
 
-Ensure cursor isn't blinking:
-#+BEGIN_SRC emacs-lisp
-(blink-cursor-mode 0)
+  (add-hook 'prog-mode-hook 'md/left-margin)
+  (add-hook 'org-mode-hook 'md/left-margin)
 #+END_SRC
 
 ** Fringe
@@ -366,6 +318,13 @@ NOTE: The Fringe only displays in GUI Emacs.
 
 	;; Emable on-the-fly indenting. TODO - read docs for this
 	(electric-indent-mode 1)
+#+END_SRC
+
+** Cursor blinking
+
+Ensure cursor isn't blinking:
+#+BEGIN_SRC emacs-lisp
+(blink-cursor-mode 0)
 #+END_SRC
 ** Disable the bell
 #+BEGIN_SRC emacs-lisp
@@ -407,6 +366,7 @@ if on GUI as might connect as client to terminal.
     (progn
       (xclip-mode 1)))
 #+END_SRC
+
 ** Paste
 
 If this isn't set then pasting via Alfred doesnt work:
@@ -525,7 +485,6 @@ investigate this.
 [2020-04-26 Sun] The ~lsp-mode~ docs also suggest you should increase the
 threshold for performance reasons.
 
-* Misc utils
 ** Odd functions
 
 #+BEGIN_SRC emacs-lisp
@@ -710,7 +669,7 @@ by using a noop function:
           '("SPC" "TAB")))
 #+END_SRC
 
-** Settings
+** Other settings
 #+BEGIN_SRC emacs-lisp
   (setq delete-by-moving-to-trash t)
   (setq recentf-max-saved-items 200)
@@ -719,12 +678,6 @@ by using a noop function:
   ;; This is handy - instead of popping up a separate GPG UI prompt,
   ;; using loopback mode will allow Emacs to prompt in the minibuffer.
   (setq epa-pinentry-mode 'loopback)
-
-  (defun md/left-margin ()
-    (setq left-margin-width 4))
-
-  (add-hook 'prog-mode-hook 'md/left-margin)
-  (add-hook 'org-mode-hook 'md/left-margin)
 
   (line-number-mode 0)
   (column-number-mode 0)
@@ -839,7 +792,6 @@ by using a noop function:
      (bind-key "M-h" 'evil-shift-left-line evil-normal-state-map)
      (bind-key "M-l" 'evil-shift-right-line evil-normal-state-map)
 
-
      ;; evil-paste-pop is handy, but I don't like the C-n/C-p default bindings,
      ;; because those are common bindings everywhere else in Emacs. Use C-S
      ;; instead.
@@ -934,8 +886,6 @@ by using a noop function:
           ("cc" . comment-or-uncomment-region)
 
           ;; Buffers
-          ("bh" . previous-buffer)
-          ("bl" . next-buffer)
           ("k" . kill-buffer)
           ("K" . md/kill-buffer-and-frame)
           ("bK" . md/remove-file-and-buffer)
@@ -1558,7 +1508,7 @@ This is handy sometimes - it provides ~free-keys~, which lists unbound keys.
       (progn
         (bind-key "@" 'free-keys help-map)))
 #+END_SRC
-* General IDE features
+* IDE features
 ** Grep/ag
 #+BEGIN_SRC emacs-lisp
   (use-package ag
@@ -2691,7 +2641,6 @@ I sometimes see issues where git opens emacsclient in Fundamental mode. Making
        "Unless file is too big, either git-gutter mode (when in git dir)"
        (interactive)
        (when (and (< (count-lines (point-min) (point-max)) 1500)
-                  (not (and (boundp 'writeroom-mode) writeroom-mode))
                   (not (eq major-mode 'org-mode)))
          (if (string= "git" (downcase (format "%s" (vc-backend
                                                     (buffer-file-name
@@ -2733,7 +2682,6 @@ I sometimes see issues where git opens emacsclient in Fundamental mode. Making
   ;;        "Unless file is too big, either git-gutter mode (when in git dir)"
   ;;        (interactive)
   ;;        (when (and (< (count-lines (point-min) (point-max)) 1500)
-  ;;                   (not writeroom-mode)
   ;;                   (not (eq major-mode 'org-mode)))
   ;;          (if (string= "git" (downcase (format "%s" (vc-backend
   ;;                                                     (buffer-file-name
@@ -2882,10 +2830,7 @@ I miss :Gbrowse from fugitive:
       (evil-define-key 'normal go-mode-map
         (kbd "SPC") md/go-mode-leader-map
         "gd" 'go-goto-function
-        "gD" 'go-goto-function))
-
-    :bind (:map md/go-mode-leader-map
-                ("SPC =" . gofmt)))
+        "gD" 'go-goto-function)))
 
   (use-package company-go
     :demand t
@@ -2896,7 +2841,7 @@ I miss :Gbrowse from fugitive:
                   (set (make-local-variable 'company-backends) '(company-go))))))
 #+END_SRC
 
-** MIT Scheme
+** COMMENT MIT Scheme
 
 - [ ] mit-scheme leader map
 - [ ] ef / ee / er bindings
@@ -3480,19 +3425,6 @@ bindings copied directly from emacs-mode.
 
   (bind-key "C-j" 'md/org-narrow-next md/evil-org-mode-map)
   (bind-key "C-k" 'md/org-narrow-prev md/evil-org-mode-map)
-#+END_SRC
-
-** TODO Presentations
-
-#+BEGIN_SRC emacs-lisp
-  (defun md/org-presentation ()
-    (interactive)
-    (setq mode-line-format nil)
-    (md/writeroom-mode)
-    (call-interactively 'text-scale-adjust)
-    (setq org-image-actual-width (/ (car (window-text-pixel-size)) 4))
-    (org-display-inline-images)
-    (org-redisplay-inline-images))
 #+END_SRC
 
 ** helm-org
@@ -5129,8 +5061,7 @@ with ~load-theme~.
                         :background ,(face-attribute 'default :background))))
     (md/powerline-reset)
     (md/fontify-buffer)
-    (set-window-buffer nil (current-buffer)) ;; temp?
-    (when (and (boundp writeroom-mode) writeroom-mode) (md/writeroom-mode)))
+    (set-window-buffer nil (current-buffer))) ;; temp?
 
   ;; Initial setup
   (md/disable-all-themes)
@@ -5535,6 +5466,26 @@ another buffer in the window.
 #+BEGIN_SRC emacs-lisp
   (bind-key "bd" 'dedicated-mode md/leader-map)
   (bind-key "tD" 'dedicated-mode md/leader-map)
+#+END_SRC
+
+
+* Disable
+
+Various minor modes that that I don't use:
+
+#+BEGIN_SRC emacs-lisp
+  (dolist (this-minor-mode
+           '(csv-field-index-mode
+             diff-auto-refine-mode
+             file-name-shadow-mode
+             global-magit-file-mode
+             mouse-wheel-mode
+             treemacs-filewatch-mode
+             treemacs-follow-mode
+             treemacs-git-mode
+             treemacs-fringe-indicator-mode))
+    (when (fboundp this-minor-mode)
+      (funcall this-minor-mode 0)))
 #+END_SRC
 
 * Dotfiles

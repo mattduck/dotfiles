@@ -68,25 +68,12 @@
 
 (define-prefix-command 'md/leader-map)
 
-(defvar md/go-mode-leader-map (make-sparse-keymap))
-(set-keymap-parent md/go-mode-leader-map md/leader-map)
-
-(defvar md/scheme-mode-leader-map (make-sparse-keymap))
-(set-keymap-parent md/scheme-mode-leader-map md/leader-map)
-
 (defvar md/org-mode-leader-map (make-sparse-keymap))
 (set-keymap-parent md/org-mode-leader-map md/leader-map)
 
 (setq inhibit-splash-screen t)
 
 (setq-default fill-column 80)
-
-(use-package fill-column-indicator
- :defer 1
- :config
- (progn
-   ;; Width of the fill column rule
-   (setq fci-rule-width 5)))
 
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 
@@ -105,21 +92,6 @@
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'prog-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
-
-(setq linum-format
-      (lambda (line-number)
-        (let ((w (length (number-to-string
-                          (count-lines (point-min) (point-max))))))
-          (propertize
-           (format
-            (concat "%" (number-to-string w) "d ")
-            line-number) 'face 'linum))))
-
-;; TODO - I thought use-package would defer the loading of this until I do "ln",
-;; but "ln" doesn't work.
-(use-package linum
-  :bind (:map md/leader-map
-         ("tn" . linum-mode)))
 
 (defvar md/font-size 125)
 
@@ -171,7 +143,7 @@
 
 (setq
   ;; Start scrolling when the cursor is one line away from the top/bottom.
-  scroll-margin 5
+  scroll-margin 1
 
   ;; If at the bottom of the file, don't allow scroll beyond that (because
   ;; there's no use in having half a screen of empty space
@@ -189,7 +161,11 @@
   :demand t
   :config (scroll-bar-mode -1))
 
-(blink-cursor-mode 0)
+(defun md/left-margin ()
+  (setq left-margin-width 4))
+
+(add-hook 'prog-mode-hook 'md/left-margin)
+(add-hook 'org-mode-hook 'md/left-margin)
 
 (defun md/fringe-mode ()
   (interactive)
@@ -212,6 +188,8 @@
 
 ;; Emable on-the-fly indenting. TODO - read docs for this
 (electric-indent-mode 1)
+
+(blink-cursor-mode 0)
 
 (setq visible-bell nil
       ring-bell-function 'ignore)
@@ -438,12 +416,6 @@ All scope layers are stored in md/variable-layers."
 ;; using loopback mode will allow Emacs to prompt in the minibuffer.
 (setq epa-pinentry-mode 'loopback)
 
-(defun md/left-margin ()
-  (setq left-margin-width 4))
-
-(add-hook 'prog-mode-hook 'md/left-margin)
-(add-hook 'org-mode-hook 'md/left-margin)
-
 (line-number-mode 0)
 (column-number-mode 0)
 
@@ -545,7 +517,6 @@ All scope layers are stored in md/variable-layers."
    (bind-key "M-h" 'evil-shift-left-line evil-normal-state-map)
    (bind-key "M-l" 'evil-shift-right-line evil-normal-state-map)
 
-
    ;; evil-paste-pop is handy, but I don't like the C-n/C-p default bindings,
    ;; because those are common bindings everywhere else in Emacs. Use C-S
    ;; instead.
@@ -640,8 +611,6 @@ All scope layers are stored in md/variable-layers."
         ("cc" . comment-or-uncomment-region)
 
         ;; Buffers
-        ("bh" . previous-buffer)
-        ("bl" . next-buffer)
         ("k" . kill-buffer)
         ("K" . md/kill-buffer-and-frame)
         ("bK" . md/remove-file-and-buffer)
@@ -1861,7 +1830,6 @@ represent all current available bindings accurately as a single keymap."
      "Unless file is too big, either git-gutter mode (when in git dir)"
      (interactive)
      (when (and (< (count-lines (point-min) (point-max)) 1500)
-                (not (and (boundp 'writeroom-mode) writeroom-mode))
                 (not (eq major-mode 'org-mode)))
        (if (string= "git" (downcase (format "%s" (vc-backend
                                                   (buffer-file-name
@@ -2007,10 +1975,7 @@ represent all current available bindings accurately as a single keymap."
     (evil-define-key 'normal go-mode-map
       (kbd "SPC") md/go-mode-leader-map
       "gd" 'go-goto-function
-      "gD" 'go-goto-function))
-
-  :bind (:map md/go-mode-leader-map
-              ("SPC =" . gofmt)))
+      "gD" 'go-goto-function)))
 
 (use-package company-go
   :demand t
@@ -2019,44 +1984,6 @@ represent all current available bindings accurately as a single keymap."
     (add-hook 'go-mode-hook
               (lambda ()
                 (set (make-local-variable 'company-backends) '(company-go))))))
-
-(use-package scheme
-  :demand t
-  :config
-  (progn
-    ;; For SICP
-    (setq scheme-program-name "/usr/local/bin/mit-scheme")
-
-    ;; Setup leader map for this major mode
-    (evil-define-key 'normal scheme-mode-map
-      (kbd "SPC") md/scheme-mode-leader-map)
-    (evil-define-key 'visual scheme-mode-map
-      (kbd "SPC") md/scheme-mode-leader-map)
-
-    ;; When I run the "send-to" functions I want to see the results
-    ;; in the popwin window
-    (defun md/scheme--eval (fn)
-      (save-window-excursion
-        (call-interactively 'run-scheme))
-        (call-interactively fn)
-      (popwin:display-buffer (get-buffer "*scheme*")))
-
-    (defun md/scheme-send-last-sexp ()
-      (interactive)
-      (md/scheme--eval 'scheme-send-last-sexp))
-
-    (defun md/scheme-send-region ()
-      (interactive)
-      (md/scheme--eval 'scheme-send-region))
-
-    (defun md/scheme-send-defun ()
-      (interactive)
-      (md/scheme--eval 'scheme-send-definition)))
-
-  :bind (:map md/scheme-mode-leader-map
-              ("SPC ee" . md/scheme-send-last-sexp)
-              ("SPC ef" . md/scheme-send-defun)
-              ("SPC er" . md/scheme-send-region)))
 
 (use-package yaml-mode :demand t)
 
@@ -2507,15 +2434,6 @@ represent all current available bindings accurately as a single keymap."
 
 (bind-key "C-j" 'md/org-narrow-next md/evil-org-mode-map)
 (bind-key "C-k" 'md/org-narrow-prev md/evil-org-mode-map)
-
-(defun md/org-presentation ()
-  (interactive)
-  (setq mode-line-format nil)
-  (md/writeroom-mode)
-  (call-interactively 'text-scale-adjust)
-  (setq org-image-actual-width (/ (car (window-text-pixel-size)) 4))
-  (org-display-inline-images)
-  (org-redisplay-inline-images))
 
 (require 'helm-org)  ; this is part of the helm source but not loaded by default
 
@@ -3781,8 +3699,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                       :background ,(face-attribute 'default :background))))
   (md/powerline-reset)
   (md/fontify-buffer)
-  (set-window-buffer nil (current-buffer)) ;; temp?
-  (when (and (boundp writeroom-mode) writeroom-mode) (md/writeroom-mode)))
+  (set-window-buffer nil (current-buffer))) ;; temp?
 
 ;; Initial setup
 (md/disable-all-themes)
@@ -4138,6 +4055,19 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 (bind-key "bd" 'dedicated-mode md/leader-map)
 (bind-key "tD" 'dedicated-mode md/leader-map)
+
+(dolist (this-minor-mode
+         '(csv-field-index-mode
+           diff-auto-refine-mode
+           file-name-shadow-mode
+           global-magit-file-mode
+           mouse-wheel-mode
+           treemacs-filewatch-mode
+           treemacs-follow-mode
+           treemacs-git-mode
+           treemacs-fringe-indicator-mode))
+  (when (fboundp this-minor-mode)
+    (funcall this-minor-mode 0)))
 
 (defun md/dotfiles-edit-init ()
   (interactive)
