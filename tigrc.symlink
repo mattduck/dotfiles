@@ -87,39 +87,39 @@ bind refs C <?git checkout %(commit)
 # green     #859900  2/2 green     64 #5f8700 60 -20  65 133 153   0  68 100  60
 
 # Override the silly default matching
-color "---"			default	default
-color "diff --"			7	default
-color "--- "			7	default
-color "+++ "			7	default
-color "@@"			default	default
-color "+"			default	default
-color " +"			default	default
-color "-"			default	default
-color " -"			default	default
-color "index "			7	default
-color "old file mode "		7	default
-color "new file mode "		7	default
-color "deleted file mode "	9	default
-color "copy from "		7	default
-color "copy to "		7	default
-color "rename from "		7	default
-color "rename to "		7	default
-color "similarity "		7	default
-color "dissimilarity "		default	default
+#color "---"			default	default
+#color "diff --"			7	default
+#color "--- "			7	default
+#color "+++ "			7	default
+#color "@@"			default	default
+#color "+"			default	default
+#color " +"			default	default
+#color "-"			default	default
+#color " -"			default	default
+#color "index "			7	default
+#color "old file mode "		7	default
+#color "new file mode "		7	default
+#color "deleted file mode "	9	default
+#color "copy from "		7	default
+#color "copy to "		7	default
+#color "rename from "		7	default
+#color "rename to "		7	default
+#color "similarity "		7	default
+#color "dissimilarity "		default	default
 color "diff-tree "		default	default
 color "Author: "		default	default
-color "Commit: "		3	default
+#color "Commit: "		3	default
 color "Tagger: "		default	default
 color "Merge: "			default	default
 color "Date: "			default	default
 color "AuthorDate: "		default	default
 color "CommitDate: "		default	default
 color "TaggerDate: "		default	default
-color "Refs: "			5	default
+color "Refs: "			6	default
 color "Reflog: "		default	default
 color "Reflog message: "	default	default
 color "stash@{"			default	default
-color "commit "			3	default
+#color "commit "			3	default
 color "parent "			default	default
 color "tree "			default	default
 color "author "			default	default
@@ -128,54 +128,54 @@ color "    Signed-off-by"	default	default
 color "    Acked-by"		default	default
 color "    Tested-by"		default	default
 color "    Reviewed-by"		default	default
-
-color cursor			default 0
-color title-focus 7 0
-color title-blur 12 14
-
-color default			default	default	normal
-color status			green	default
-color delimiter			magenta	default
-color date			10	default
-color mode			cyan	default
-color id			magenta	default
-color overflow			red	default
-color header			6	default
-color section			cyan	default
-color directory			yellow	default
-color file			default	default
-color grep.file			blue	default
-color file-size			default	default
-color line-number		cyan	default
-color main-commit		3	default reverse
-color main-tag			5	default
-color main-local-tag		5	default
-color main-remote		9	default
-color main-replace		1	default
-color main-tracked		9	default
-color main-ref			6	default
-color main-head			1	default
-color stat-none			default	default
-color stat-staged		default	default
-color stat-unstaged		default	default
-color stat-untracked		default	default
-color help-group		3	default
-color help-action		4	default
-color diff-stat			4	default
-color palette-0			0	default
-color palette-1			1	default
-color palette-2			2	default
-color palette-3			3	default
-color palette-4			4	default
-color palette-5			5	default
-color palette-6			6	default
-color palette-7			7	default
-color palette-8			8	default
-color palette-9			9	default
-color palette-10		10	default
-color palette-11		11	default
-color palette-12		12	default
-color palette-13		13	default
-color graph-commit		blue	default
-color search-result		black	yellow
-color author 3 default
+#
+color cursor			0 7
+color title-focus 0 8
+color title-blur 0 8
+#
+#color default			default	default	normal
+#color status			green	default
+#color delimiter			magenta	default
+#color date			10	default
+#color mode			cyan	default
+#color id			magenta	default
+#color overflow			red	default
+#color header			6	default
+#color section			cyan	default
+#color directory			yellow	default
+#color file			default	default
+#color grep.file			blue	default
+#color file-size			default	default
+#color line-number		cyan	default
+#color main-commit		3	default reverse
+#color main-tag			5	default
+#color main-local-tag		5	default
+#color main-remote		9	default
+#color main-replace		1	default
+#color main-tracked		9	default
+#color main-ref			6	default
+#color main-head			1	default
+#color stat-none			default	default
+#color stat-staged		default	default
+#color stat-unstaged		default	default
+#color stat-untracked		default	default
+#color help-group		3	default
+#color help-action		4	default
+#color diff-stat			4	default
+#color palette-0			0	default
+#color palette-1			1	default
+#color palette-2			2	default
+#color palette-3			3	default
+#color palette-4			4	default
+#color palette-5			5	default
+#color palette-6			6	default
+#color palette-7			7	default
+#color palette-8			8	default
+#color palette-9			9	default
+#color palette-10		10	default
+#color palette-11		11	default
+#color palette-12		12	default
+#color palette-13		13	default
+#color graph-commit		blue	default
+#color search-result		black	yellow
+#color author 3 default
