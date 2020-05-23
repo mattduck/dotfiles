@@ -850,64 +850,26 @@ Calling this will delete the file, causing i3 to load next time."
 
   ;; ---------------
 
-  (defvar md/status-mode-display-timer nil)
-  (defvar md/status-mode-idle-timer nil)
-
-  (defun md/status-mode-post-command-hook ()
-    ;; stop the timer that was run
-    (when md/status-mode-display-timer
-      (cancel-timer md/status-mode-display-timer)
-      (setq md/status-mode-display-timer nil)
-      (message "")))
-
-  (defun md/status-mode-enable ()
-    "Set up the idle timer and hooks to show the status"
+  (defun md/status-message ()
     (interactive)
+    (let* ((message-log-max nil) ; ensure not logged in message buffer
+           (output (s-trim-right
+                    (shell-command-to-string "/f/users/matt/.config/i3-status-bash-once.sh")))
+           (output-as-list (car (read-from-string output)))
+           (propertized-string (mapconcat
+                                (lambda (item)
+                                  (concat
+                                   ;; (propertize " " 'face `(:family "Noto sans" :height 0.8))
+                                   (propertize (nth 0 item)
+                                               'face
+                                               `(:foreground ,(nth 2 item) :family "Font Awesome 5 Free" :height 0.6))
+                                   (propertize (nth 1 item)
+                                               'face
+                                               `(:foreground ,(nth 2 item) :family "Noto sans" :height 0.7))))
+                                output-as-list "")))
 
-    (when (not md/status-mode-idle-timer)
-      ;; after idle, start the display loop
-      (setq md/status-mode-idle-timer
-            (run-with-idle-timer
-             2 t '(lambda ()
-                    ;; every n seconds, display the message
-                    (when md/status-mode-display-timer
-                      (cancel-timer md/status-mode-display-timer))
-                    (setq md/status-mode-display-timer
-                          (run-with-timer
-                           0 2 '(lambda ()
-                                  ;; TODO for another time: use fonts rather than colours for cross-theme.
-                                  ;; TODO: make more appropriate for dotfiles?
-                                  (let* ((message-log-max nil) ; ensure not logged in message buffer
-                                         (output (s-trim-right
-                                                  (shell-command-to-string "/f/users/matt/.config/i3-status-bash-once.sh")))
-                                         (output-as-list (car (read-from-string output)))
-                                         (propertized-string (mapconcat
-                                                              (lambda (item)
-                                                                (concat
-                                                                 ;; (propertize " " 'face `(:family "Noto sans" :height 0.8))
-                                                                 (propertize (nth 0 item)
-                                                                             'face
-                                                                             `(:foreground ,(nth 2 item) :family "Font Awesome 5 Free" :height 0.6))
-                                                                 (propertize (nth 1 item)
-                                                                             'face
-                                                                             `(:foreground ,(nth 2 item) :family "Noto sans" :height 0.7))))
-                                                               output-as-list "")))
-
-                                    (message propertized-string))))))))
-
-      ;; this should stop the loop
-      (add-hook 'post-command-hook 'md/status-mode-post-command-hook)))
-
-  (defun md/status-mode-disable ()
-    "Remove the idle timer and hooks"
-    (interactive)
-    (when md/status-mode-idle-timer
-      (cancel-timer md/status-mode-idle-timer)
-      (setq md/status-mode-idle-timer nil))
-    (md/status-mode-post-command-hook)
-    (remove-hook 'post-command-hook 'md/status-mode-post-command-hook))
-
-  (md/status-mode-enable)
+      (message propertized-string)))
+  (bind-key "SPC" 'md/status-message md/leader-map)
 
   (exwm-randr-enable))
 
@@ -1637,6 +1599,7 @@ represent all current available bindings accurately as a single keymap."
 (use-package dap-mode
   :commands (dap-debug)
   :config
+  (use-package dap-python)
   (setq dap-auto-show-output nil)
   (dap-ui-mode 1)
   (add-to-list 'shackle-rules '(dap-ui-breakpoints-ui-list-mode :align t :close-on-realign t :size 0.15))
@@ -1653,7 +1616,6 @@ represent all current available bindings accurately as a single keymap."
               ("d l" . dap-ui-breakpoints-list)
               ("d D" . dap-disconnect)
               ("d x" . dap-ui-repl)))
-(use-package dap-python)
 
 (defun md/emacs-lisp-hook ()
     (setq fill-column 100))
@@ -3039,7 +3001,8 @@ are ugly. It works fine though."
                        (md/alfred-source-org-light "Org - BACK" "back" "BACK")
                        (md/alfred-source-org-clock-out)
                        (md/alfred-source-web-bookmarks)
-                       ;;(md/alfred-source-apps)
+                       (when (string= (system-name) "arch")
+                         (md/alfred-source-apps))
                        (md/alfred-source-directories)
                        (md/alfred-source-files)
                        (md/alfred-source-processes))
