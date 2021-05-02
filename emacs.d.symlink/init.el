@@ -2179,6 +2179,9 @@ lsp can properly jump to definitions."
 (add-hook 'org-mode-hook 'md/org-hook)
 
 (setq
+     ;; [2021-05-02] Don't expand org buffers on open.
+     org-startup-folded t
+
       ;; Whether to let org-agenda permanently mess with window layout
       org-agenda-restore-windows-after-quit nil
 
