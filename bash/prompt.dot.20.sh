@@ -20,7 +20,8 @@ else
         _git_info="$ANSIbase01\$(__git_ps1)"
     fi
 
-    PS1="\n$_hostname: $_pwd$_git_info\n$ANSIbase1$ "
+    # PS1="\n$_hostname: $_pwd$_git_info\n$ANSIbase1$ "
+    PS1="\n$_pwd$_git_info\n$ANSIbase1$ "
 fi
 
 # Reset prompt, so first line of output doesn't appear in weird colours (eg. git
