@@ -20,7 +20,7 @@ multi_line = True
 # If multi_line_mode is set to "safe", in multi-line mode, [Enter] will always
 # insert a newline, and [Esc] [Enter] or [Alt]-[Enter] must be used to execute
 # a command.
-multi_line_mode = safe
+multi_line_mode = psql
 
 # Enables expand mode, which is similar to `\x` in psql.
 expand = False
@@ -143,31 +143,31 @@ multiline_continuation_char = '.'
 # violet    #6c71c4 13/5 #5f5faf #ansifuchsia
 # blue      #268bd2  4/4 #0087ff #ansidarkblue
 # cyan      #2aa198  6/6 #00afaf #ansiteal
-# green     #859900  2/2 #5f8700 #ansidarkgreen
+# green     #859900  2/2 #5f8700 ansigreen
 
-Keyword = '#ansidarkgreen noinherit'  # eg. select, from
-Name = '#ansiblue noinherit'  # non-keywords
-Name.Builtin = '#ansidarkblue noinherit' # uuid, text, interval
-String = '#ansiteal noinherit'  # 'foo'
-Number = '#ansiteal noinherit'
-Comment = '#ansigreen noinherit'
-Punctuation = '#ansiwhite noinherit'  # ;
-Operator = '#ansiwhite noinherit'  # *
-Token.Toolbar.Transaction.Valid = '#ansiteal noinherit'
-Token.Toolbar.Transaction.Failed = '#ansidarkred noinherit'
-Token.Menu.Completions.Completion = 'bg:#ansiblack #ansiturquoise noinherit'
-Token.Menu.Completions.Completion.Current = 'bg:#ansidarkgray #ansiwhite noinherit'
-Token.Menu.Completions.Meta = 'bg:#ansiblack #ansigreen noinherit'
-Token.Menu.Completions.Meta.Current = 'bg:#ansidarkgray #ansipurple noinherit'
-Token.Toolbar = 'bg:#ansiblack #ansiblue noinherit'
-Token.Toolbar.Off = 'bg:#ansiblack #ansidarkgray noinherit'
-Token.Toolbar.On = 'bg:#ansiblack #ansiwhite noinherit'
-Token.SearchMatch = '#ansidarkgray bg:#ansibrown noinherit'
-Token.SearchMatch.Current = '#ansidarkgray bg:#ansired noinherit'
+# Keyword = 'ansigreen noinherit'  # eg. select, from
+# Name = '#ansiblue noinherit'  # non-keywords
+# Name.Builtin = '#ansidarkblue noinherit' # uuid, text, interval
+# String = '#ansiteal noinherit'  # 'foo'
+# Number = '#ansiteal noinherit'
+# Comment = '#ansigreen noinherit'
+# Punctuation = '#ansiwhite noinherit'  # ;
+# Operator = '#ansiwhite noinherit'  # *
+# Token.Toolbar.Transaction.Valid = '#ansiteal noinherit'
+# Token.Toolbar.Transaction.Failed = '#ansidarkred noinherit'
+# Token.Menu.Completions.Completion = 'bg:#ansiblack #ansiturquoise noinherit'
+# Token.Menu.Completions.Completion.Current = 'bg:#ansidarkgray #ansiwhite noinherit'
+# Token.Menu.Completions.Meta = 'bg:#ansiblack #ansigreen noinherit'
+# Token.Menu.Completions.Meta.Current = 'bg:#ansidarkgray #ansipurple noinherit'
+# Token.Toolbar = 'bg:#ansiblack #ansiblue noinherit'
+# Token.Toolbar.Off = 'bg:#ansiblack #ansidarkgray noinherit'
+# Token.Toolbar.On = 'bg:#ansiblack #ansiwhite noinherit'
+# Token.SearchMatch = '#ansidarkgray bg:#ansibrown noinherit'
+# Token.SearchMatch.Current = '#ansidarkgray bg:#ansired noinherit'
 
-Token.Output.Header = "#ansiwhite noinherit"
-Token.Output.OddRow = "#ansiyellow noinherit"
-Token.Output.EvenRow = "#ansiwhite noinherit"
+# Token.Output.Header = "#ansiwhite noinherit"
+# Token.Output.OddRow = "#ansiyellow noinherit"
+# Token.Output.EvenRow = "#ansiwhite noinherit"
 
 # --- copypaste
 # Text = '#ansipurple'
