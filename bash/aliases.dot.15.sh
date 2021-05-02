@@ -44,3 +44,5 @@ export BAT_THEME="zenburn"
 if command -v bat >/dev/null; then
     alias cat="bat"
 fi
+
+alias yd="ydiff -s --wrap -w 120"
