@@ -92,14 +92,10 @@ function ,github-switch-url {
 # TODO: remove? This is provided by fzf bash completion.
 function ,kill {
     pids=$(ps -ef | sed 1d | fzf-tmux --exact -m --header ",kill" | awk '{print $2}')
-
     for pid in ${pids}; do
-
         python -c "int('$pid')" 2>/dev/null || exit  # Exit if we didn't get a PID
-
         ps -ef | grep "$pid"
         echo
-
         # -15 is the default signal
         read -p "Enter kill signal for $pid if required (defaults to 15 SIGTERM): " -r
         if [ -z $REPLY ]; then
@@ -107,14 +103,6 @@ function ,kill {
         else
             cmd="kill -$REPLY $pid"
         fi
-
-        read -p "Are you sure you want to run command: $cmd (y/n) " -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            echo "Exiting."
-            exit
-        fi
-
         echo "Sending signal..."
         $cmd
         echo "...done"
