@@ -297,33 +297,33 @@ c.TerminalInteractiveShell.extra_open_editor_shortcuts = True
 #c.TerminalInteractiveShell.handle_return = None
 
 ## Highlight matching brackets.
-#c.TerminalInteractiveShell.highlight_matching_brackets = True
+c.TerminalInteractiveShell.highlight_matching_brackets = True
 
 ## The name or class of a Pygments style to use for syntax
 #         highlighting:
 #  default, emacs, friendly, colorful, autumn, murphy, manni, monokai, perldoc, pastie, borland, trac, native, fruity, bw, vim, vs, tango, rrt, xcode, igor, paraiso-light, paraiso-dark, lovelace, algol, algol_nu, arduino, rainbow_dash, abap
-#c.TerminalInteractiveShell.highlighting_style = "default"
+# c.TerminalInteractiveShell.highlighting_style = "emacs"
 
 from pygments.style import Style
 from pygments.token import Token, Comment, Name, Keyword, Generic, Number, \
     Operator, String
 
-BASE03  = "#ansidarkgray"
-BASE02  = "#ansiblack"
-BASE01  = "#ansigreen"
-BASE00  = "#ansiyellow"
-BASE0   = "#ansiblue"
-BASE1   = "#ansiturquoise"
-BASE2   = "#ansilightgray"
-BASE3   = "#ansiwhite"
-YELLOW  = "#ansibrown"
-ORANGE  = "#ansired"
-RED     = "#ansidarkred"
-MAGENTA = "#ansipurple"
-VIOLET  = "#ansifuchsia"
-BLUE    = "#ansidarkblue"
-CYAN    = "#ansiteal"
-GREEN   = "#ansidarkgreen"
+BASE03  = "ansibrightblack"
+BASE02  = "ansiblack"
+BASE01  = "ansibrightgreen"
+BASE00  = "ansibrightyellow"
+BASE0   = "ansibrightblue"
+BASE1   = "ansibrightcyan"
+BASE2   = "ansigray"
+BASE3   = "ansiwhite"
+YELLOW  = "ansiyellow"
+ORANGE  = "ansibrightred"
+RED     = "ansired"
+MAGENTA = "ansimagenta"
+VIOLET  = "ansibrightmagenta"
+BLUE    = "ansiblue"
+CYAN    = "ansicyan"
+GREEN   = "ansigreen"
 
 class Solarized256Style(Style):
     background_color = BASE03
