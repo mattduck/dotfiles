@@ -1,6 +1,6 @@
-
 # NOTE: mypy will ignore this if the working directory contains
 # a setup.cfg file, even if that setup.cfg file does not have a
 # [mypy] section.
+
 [mypy]
-ignore_missing_imports = true
+#ignore_missing_imports = true

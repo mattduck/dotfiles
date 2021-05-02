@@ -1,3 +1,5 @@
+(message "start of init.el")
+
 (defun md/dotfiles-get-path (path)
   "Lookup files that are in my dotfiles directory"
   (concat
@@ -12,7 +14,9 @@
   (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
   (setq-local org-confirm-babel-evaluate nil)
   (org-babel-tangle nil "init.el")
-  (byte-compile-file (md/dotfiles-get-path "emacs.d.symlink/init.el")))
+  (byte-compile-file (md/dotfiles-get-path "emacs.d.symlink/init.el"))
+  (when (fboundp 'native-compile-async)
+    (native-compile-async (md/dotfiles-get-path "emacs.d.symlink/init.el"))))
 
 ;; Load packages. It's necessary to call this early.
 (package-initialize)
@@ -22,13 +26,25 @@
 ;; come from MELPA.
 (setq package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
-        ("marmalade" . "https://marmalade-repo.org/packages/")
-        ("melpa" . "https://melpa.milkbox.net/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("melpa" . "https://melpa.org/packages/")
         ("org" . "https://orgmode.org/elpa/")))
 
 ;; If there are multiple versions of a file, prefer the newer one. The default
 ;; is to use the first one found.
 (setq load-prefer-newer t)
+
+(when (boundp 'comp-deferred-compilation-deny-list)
+  (setq comp-deferred-compilation-deny-list '("powerline")))
+
+(defun md/maybe-native-compile-and-load (path loadp)
+  (if (and path (file-exists-p path))
+      (progn
+        (when loadp
+          (load-file path))
+        (when (fboundp 'native-compile-async)
+          (native-compile-async path t)))
+    (message "Cannot load-file, doesn't exist: %s" path)))
 
 ;; This is the custom file I used to use. I'm keeping the same path.
 (setq custom-file (md/dotfiles-get-path "emacs.d.symlink/custom.el"))
@@ -41,10 +57,13 @@
 
 (setq use-package-always-ensure nil
       use-package-verbose t
-      use-package-minimum-reported-time 0.01)
+      use-package-minimum-reported-time 0.0001)
 
+
+;; [2021-05-02] requiring this on load rather than compile due to https://github.com/jwiegley/use-package/issues/737
 (eval-when-compile
-    (require 'use-package))
+  (require 'use-package))
+(require 'use-package)
 
 (require 'bind-key)  ; Required for :bind in use-package
 
@@ -64,6 +83,7 @@
  :if (memq window-system '(mac ns))
  :demand t
  :config
+ (message "in use-package config for exec-path-from-shell")
  (progn (exec-path-from-shell-initialize)))
 
 (define-prefix-command 'md/leader-map)
@@ -295,7 +315,9 @@
   "Kill the current buffer and deletes the file it is visiting."
   (interactive)
   (let ((filename (buffer-file-name)))
-    (when filename
+    (when
+        (and filename
+             (string= (read-string (format "Delete %s? (y/n) " filename)) "y"))
       (if (vc-backend filename)
           (vc-delete-file filename)
         (progn
@@ -324,6 +346,11 @@
   (interactive)
   (funcall-interactively 'replace-string "\\n" "
 " nil (region-beginning) (region-end)))
+
+
+(defun md/align-two-spaces ()
+  (interactive)
+  (align-regexp (region-beginning) (region-end) "\\(\\s-*\\)  " 1 1 t))
 
 (defun md/unfill-paragraph ()
   "Because I can't always wrap to 80 characters :("
@@ -911,8 +938,6 @@ Calling this will delete the file, causing i3 to load next time."
 
   (exwm-randr-enable))
 
-(use-package help-fns+ :defer 1 :demand t)
-
 (evil-set-initial-state 'help-mode 'normal)
 (evil-define-key 'normal help-mode-map
   "q" 'quit-window
@@ -942,7 +967,7 @@ Calling this will delete the file, causing i3 to load next time."
 
 (use-package helpful
   :demand t
-  :defer 1
+  ;;:defer 1
   :config
   (progn
     (unbind-key "h" help-map)  ;; view-hello-file by default
@@ -1052,121 +1077,122 @@ represent all current available bindings accurately as a single keymap."
    (not (equal definition 'digit-argument))))
 
 (use-package which-key
-  :demand t
-  :defer 2
-  :load-path "non-elpa/emacs-which-key"
-  :config (progn
-            ;; Patch with my functions
-            (md/which-key-patch)
+    :demand t
+    ;;:defer 2
+    :config (progn
+              ;; Patch with my functions
+              (md/which-key-patch)
 
-            (setq which-key-idle-delay 1
-                  which-key-max-description-length 30
-                  which-key-allow-evil-operators nil
-                  which-key-inhibit-regexps '("C-w" "s-w")
-                  which-key-show-operator-state-maps nil
-                  which-key-sort-order 'which-key-key-order-alpha
-                  which-key-highlighted-command-list '("md/"))
+              (setq which-key-idle-delay 1
+                    which-key-max-description-length 30
+                    which-key-allow-evil-operators nil
+                    which-key-inhibit-regexps '("C-w" "s-w")
+                    which-key-show-operator-state-maps nil
+                    which-key-sort-order 'which-key-key-order-alpha
+                    which-key-highlighted-command-list '("md/"))
 
-            ;; Use ESC/C-g to quit which-key. Not sure why the default key is 'a'.
-            (bind-key "ESC" 'which-key-abort which-key-C-h-map)
-            (bind-key "C-g" 'which-key-abort which-key-C-h-map)
+              ;; Use ESC/C-g to quit which-key. Not sure why the default key is 'a'.
+              (bind-key "ESC" 'which-key-abort which-key-C-h-map)
+              (bind-key "C-g" 'which-key-abort which-key-C-h-map)
 
-            ;; This is the default for description-replacement-alist:
-            (setq which-key-replacement-alist
-                  '(((nil . "Prefix Command") nil . "prefix")
-                    ((nil . "\\`\\?\\?\\'") nil . "lambda")
-                    ((nil . "which-key-show-next-page-no-cycle") nil . "wk next pg")
-                    (("<\\([[:alnum:]-]+\\)>") "\\1")
-                    (("left") "←")
-                    (("right") "→")))
+              ;; This is the default for description-replacement-alist:
+              (setq which-key-replacement-alist
+                    '(((nil . "Prefix Command") nil . "prefix")
+                      ((nil . "\\`\\?\\?\\'") nil . "lambda")
+                      ((nil . "which-key-show-next-page-no-cycle") nil . "wk next pg")
+                      (("<\\([[:alnum:]-]+\\)>") "\\1")
+                      (("left") "←")
+                      (("right") "→")))
 
-            ;; Add scratch bindings:
-            (dolist (mode '("elisp" "python" "restclient" "markdown" "gfm" "org"))
-              (add-to-list 'which-key-replacement-alist
-                           `((nil . ,(format "md/scratch-open-file-%s" mode)) nil . ,mode)))
+              ;; Add scratch bindings:
+              (dolist (mode '("elisp" "python" "restclient" "markdown" "gfm" "org"))
+                (add-to-list 'which-key-replacement-alist
+                             `((nil . ,(format "md/scratch-open-file-%s" mode)) nil . ,mode)))
 
-            (which-key-add-key-based-replacements
-              "SPC SPC" "major-mode"
-              "SPC SPC e" "major-mode-eval"
-              "SPC a" "org"
-              "SPC A" "ag"
-              "SPC b" "buffers"
-              "SPC c" "comments"
-              "SPC C" "compile"
-              "SPC e" "eval"
-              "SPC E" "Emacs"
-              "SPC F" "Format"
-              "SPC g" "git"
-              "SPC h" "help"
-              "SPC h k" "keys"
-              "C-h k" "keys"
-              "SPC h h" "helpful"
-              "C-h h" "helpful"
-              "SPC j" "project"
-              "SPC j ;" "project-popwin"
-              "SPC j a" "project-ag"
-              "SPC l" "bookmarks"
-              "SPC n" "narrow"
-              "SPC P" "Packages"
-              "SPC s" "flycheck"
-              "SPC S" "flyspell"
-              "SPC t" "display-options"
-              "SPC v" "dotfiles"
-              "SPC ;" "popwin"
-              "SPC '" "scratch")
-            (which-key-mode)
+              (which-key-add-key-based-replacements
+                "SPC SPC" "major-mode"
+                "SPC SPC e" "major-mode-eval"
+                "SPC a" "org"
+                "SPC A" "ag"
+                "SPC b" "buffers"
+                "SPC c" "comments"
+                "SPC C" "compile"
+                "SPC e" "eval"
+                "SPC E" "Emacs"
+                "SPC F" "Format"
+                "SPC g" "git"
+                "SPC h" "help"
+                "SPC h k" "keys"
+                "C-h k" "keys"
+                "SPC h h" "helpful"
+                "C-h h" "helpful"
+                "SPC j" "project"
+                "SPC j ;" "project-popwin"
+                "SPC j a" "project-ag"
+                "SPC l" "bookmarks"
+                "SPC n" "narrow"
+                "SPC P" "Packages"
+                "SPC s" "flycheck"
+                "SPC S" "flyspell"
+                "SPC t" "display-options"
+                "SPC v" "dotfiles"
+                "SPC ;" "popwin"
+                "SPC '" "scratch")
+              (which-key-mode)
 
-            (defun md/which-key ()
-              "Use the which-key interface to list all active bindings and execute the
-    current one. One prefix arg will pre-select the current evil-state in which-key,
-    and two prefix args will let you choose an evil state to pre-select."
-              (interactive)
-              (catch 'no-evil-state-map
-                (let* ((md-evil-state (cond ((equal current-prefix-arg '(4))
-                                             (md/which-key--evil-state-current))
-                                            ((equal current-prefix-arg '(16))
-                                             (md/which-key--evil-state-select))))
-                       (evil-keymap nil)
-                       (base-keymap (md/get-all-active-bindings-as-keymap))
-                       (final-keymap
-                        (if md-evil-state
-                            (progn
-                              (message "evil state!")
-                              (setq evil-keymap (lookup-key base-keymap md-evil-state))
-                              (if (keymapp evil-keymap)
-                                  evil-keymap
-                                (throw 'no-evil-state-map
-                                       (format "No available bindings for evil state %s" md-evil-state))))
-                          base-keymap))
-                       (chosen-func (which-key--show-keymap "All active bindings" final-keymap)))
-                  (when (commandp chosen-func)
-                    (message (format "calling interactively: %s" chosen-func))
-                    (call-interactively chosen-func)))))
+              (defun md/which-key ()
+                "Use the which-key interface to list all active bindings and execute the
+      current one. One prefix arg will pre-select the current evil-state in which-key,
+      and two prefix args will let you choose an evil state to pre-select."
+                (interactive)
+                (catch 'no-evil-state-map
+                  (let* ((md-evil-state (cond ((equal current-prefix-arg '(4))
+                                               (md/which-key--evil-state-current))
+                                              ((equal current-prefix-arg '(16))
+                                               (md/which-key--evil-state-select))))
+                         (evil-keymap nil)
+                         (base-keymap (md/get-all-active-bindings-as-keymap))
+                         (final-keymap
+                          (if md-evil-state
+                              (progn
+                                (message "evil state!")
+                                (setq evil-keymap (lookup-key base-keymap md-evil-state))
+                                (if (keymapp evil-keymap)
+                                    evil-keymap
+                                  (throw 'no-evil-state-map
+                                         (format "No available bindings for evil state %s" md-evil-state))))
+                            base-keymap))
+                         (chosen-func (which-key--show-keymap "All active bindings" final-keymap)))
+                    (when (commandp chosen-func)
+                      (message (format "calling interactively: %s" chosen-func))
+                      (call-interactively chosen-func)))))
 
 
-            (defconst md/which-key--evil-states '(normal-state
-                                                  insert-state
-                                                  visual-state
-                                                  motion-state
-                                                  replace-state
-                                                  emacs-state))
+              (defconst md/which-key--evil-states '(normal-state
+                                                    insert-state
+                                                    visual-state
+                                                    motion-state
+                                                    replace-state
+                                                    emacs-state))
 
-            (defun md/which-key--evil-state-select ()
-              "Return (kbd-for-state . local-keymap) for chosen Evil state"
-              (kbd (format "<%s>" (completing-read "Evil state: " md/which-key--evil-states nil
-                                                   t))))
+              (defun md/which-key--evil-state-select ()
+                "Return (kbd-for-state . local-keymap) for chosen Evil state"
+                (kbd (format "<%s>" (completing-read "Evil state: " md/which-key--evil-states nil
+                                                     t))))
 
-            (defun md/which-key--evil-state-current ()
-              "Return (kbd-for-state . local-keymap) for current Evil state"
-              (kbd (format "<%s-state>" evil-state)))
+              (defun md/which-key--evil-state-current ()
+                "Return (kbd-for-state . local-keymap) for current Evil state"
+                (kbd (format "<%s-state>" evil-state)))
 
-            )
-  :bind (:map md/leader-map
-              ("t <SPC>" . which-key-mode)))
+              )
+    :bind (:map md/leader-map
+                ("t <SPC>" . which-key-mode)))
+
+(which-key-mode 0)
 
 (use-package free-keys
   :demand t
-  :defer 10
+  ;;:defer 10
   :config
     (progn
       (bind-key "@" 'free-keys help-map)))
@@ -1233,7 +1259,7 @@ represent all current available bindings accurately as a single keymap."
 
 (use-package company
   :demand t
-  :defer 2
+  ;;:defer 2
   :config
   (progn
     (setq company-minimum-prefix-length 2
@@ -1253,6 +1279,7 @@ represent all current available bindings accurately as a single keymap."
 
 (use-package company-box
   :config (setq company-box-enable-icon nil
+                company-box-doc-enable t
                 company-box-doc-delay 0.1
                 company-box-max-candidates 50)
   :hook (company-mode . company-box-mode))
@@ -1414,7 +1441,7 @@ represent all current available bindings accurately as a single keymap."
   (bind-key "gd" 'dumb-jump-go evil-normal-state-map))
 
 (use-package ediff
- :defer 1
+ ;;:defer 1
  :config
  (progn
 
@@ -1499,7 +1526,7 @@ represent all current available bindings accurately as a single keymap."
 
 (use-package fic-mode
  :demand t
- :defer 1
+ ;;:defer 1
  :init
  (progn
    (add-hook 'prog-mode-hook 'fic-mode))
@@ -1527,7 +1554,7 @@ represent all current available bindings accurately as a single keymap."
 (bind-key "tu" 'unhighlight-regexp md/leader-map)
 
 (use-package paren
- :defer 1
+ ;;:defer 1
  :init (progn
         (add-hook 'prog-mode-hook 'show-paren-mode))
  :config
@@ -1548,7 +1575,7 @@ represent all current available bindings accurately as a single keymap."
               ("t(" . md/toggle-rainbow-delimiters)))
 
 (use-package rainbow-mode
-  :defer 1
+  ;;:defer 1
   :config
   (progn
      (add-hook 'css-mode-hook 'rainbow-mode)
@@ -1559,10 +1586,9 @@ represent all current available bindings accurately as a single keymap."
 
 (use-package eldoc ;; builtin
   :config
-  (setq eldoc-echo-area-use-multiline-p 'always
-        eldoc-idle-delay 0.25
-        ;; Makes much more usable imo
-        eldoc-print-after-edit t))
+  (setq eldoc-echo-area-use-multiline-p nil
+        eldoc-idle-delay 0.5
+        eldoc-print-after-edit nil))
 
 (use-package hideshow
   :config (progn
@@ -1636,12 +1662,26 @@ represent all current available bindings accurately as a single keymap."
 
 (use-package dap-mode
   :commands (dap-debug)
+  :demand t
   :config
-  (setq dap-auto-show-output nil)
+  (defun md/dap-session-created-hook (session)
+    (setq dap-ui-buffer-configurations
+          `((,dap-ui--locals-buffer . ((side . right) (slot . 1) (window-width . 0.20)))
+            (,dap-ui--expressions-buffer . ((side . right) (slot . 2) (window-width . 0.20)))
+            (,dap-ui--sessions-buffer . ((side . right) (slot . 3) (window-width . 0.20)))
+            (,dap-ui--breakpoints-buffer . ((side . right) (slot . 4) (window-width . ,treemacs-width)))
+            (,dap-ui--debug-window-buffer . ((side . top) (slot . 1) (window-width . 0.15)))))
+    (dap-ui-repl)
+    (dap-ui-locals)
+    (dap-go-to-output-buffer))
+  (setq dap-auto-show-output t)
   (dap-ui-mode 1)
-  (add-to-list 'shackle-rules '(dap-ui-breakpoints-ui-list-mode :align t :close-on-realign t :size 0.15))
-  (add-to-list 'shackle-rules '(dap-ui-repl-mode :align t :close-on-realign t :size 0.25))
-  (add-to-list 'shackle-rules '(dap-server-log-mode :align t :close-on-realign t :size 0.15))
+  (evil-set-initial-state 'dap-ui-repl-mode 'emacs)
+  (add-to-list 'shackle-rules '(dap-ui-breakpoints-ui-list-mode :align above :close-on-realign t :size 0.15))
+  (add-to-list 'shackle-rules '(dap-ui-repl-mode :align t :size 0.15))
+  (add-to-list 'shackle-rules '(dap-server-log-mode :align t :close-on-realign t :size 0.20))
+  :hook
+  ((dap-session-created . md/dap-session-created-hook))
   :bind (:map md/leader-map
               ("d <RET>" . dap-debug)
               ("d u" . dap-switch-stack-frame)
@@ -1653,7 +1693,30 @@ represent all current available bindings accurately as a single keymap."
               ("d l" . dap-ui-breakpoints-list)
               ("d D" . dap-disconnect)
               ("d x" . dap-ui-repl)))
-(use-package dap-python)
+
+(use-package dap-python :after dap-mode)
+(use-package dap-node :after dap-mode)
+
+(defun md/ide ()
+  (interactive)
+  (helm :sources
+        (list
+         (helm-build-sync-source "System"
+           :multimatch nil
+           :requires-pattern nil
+           :candidates '(("Show docs" . lsp-describe-thing-at-point)
+                         ;;("Show buffer symbols" . lsp-treemacs-symbols)
+                         ("Find references" . lsp-find-references)
+                         ;;("Find project symbol" . helm-lsp-workspace-symbol)
+                         ;;("Goto defintion" . lsp-ui-peek-find-definitions)
+                         ("Apropos" . xref-find-apropos)
+                         ("Goto defintion" . lsp-find-definition)
+                         ("Format buffer" . lsp-format-buffer)
+                         ("Rename symbol" . lsp-rename)
+                         ("Run debugger" . dap-debug))
+           :action '(("Execute" . (lambda (candidate)
+                                    (call-interactively candidate))))))
+        :prompt ""))
 
 (defun md/emacs-lisp-hook ()
     (setq fill-column 100))
@@ -1724,13 +1787,40 @@ represent all current available bindings accurately as a single keymap."
 (bind-key "w" 'edebug-where edebug-mode-map)
 (bind-key "SPC" md/leader-map edebug-mode-map)
 
+;; [2020-05-17 Sun] Disabling to prevent (lsp--auto-configure) from calling (lsp-ui-mode)
+(use-package lsp-ui
+  :disabled)
+
 (use-package lsp-mode
   :config
+  (add-to-list 'shackle-rules
+              '("\\`\\*lsp-help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 10 :select t))
   (defun md/lsp-setup()
-    (setq lsp-idle-delay 0.5
-          lsp-enable-symbol-highlighting nil
+    (lsp-enable-imenu)
+    (setq
+          lsp-auto-configure t
+          lsp-before-save-edits t
+          lsp-eldoc-enable-hover t
+          lsp-eldoc-render-all nil
+          lsp-enable-completion-at-point nil
+          lsp-enable-file-watchers t
+          lsp-enable-folding t
+          lsp-enable-imenu t
+          lsp-enable-indentation t
+          lsp-enable-links t
+          lsp-enable-on-type-formatting nil
           lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
-          lsp-pyls-plugins-flake8-enabled t)
+          lsp-enable-symbol-highlighting nil
+          lsp-enable-text-document-color nil
+          lsp-enable-xref t
+          lsp-flycheck-live-reporting nil
+          lsp-idle-delay 0.5
+          lsp-imenu-show-container-name t
+          lsp-imenu-sort-methods '(position kind name)
+          lsp-pyls-plugins-flake8-enabled t
+          lsp-signature-auto-activate t
+          lsp-signature-render-documentation t
+          lsp-signature-doc-lines 1)
     (lsp-register-custom-settings
      '(("pyls.plugins.pyls_mypy.enabled" t t)
        ("pyls.plugins.pyls_mypy.live_mode" nil t)
@@ -1745,39 +1835,64 @@ represent all current available bindings accurately as a single keymap."
   ((python-mode . lsp)
    (js-mode . lsp)
    (typescript-mode . lsp)
+   (web-mode . lsp)
    (css-mode . lsp)
    (lsp-mode . lsp-enable-which-key-integration)
    (lsp-before-initialize . md/lsp-setup))
   :bind (:map evil-normal-state-map
               ("gh" . lsp-describe-thing-at-point)
+              ("gr" . lsp-find-references)
+              ("gD" . xref-find-apropos)
+              ("gd" . lsp-find-definition)
               :map md/leader-map
+              ("Ni" . imenu)
               ("Ff" . lsp-format-buffer)
               ("FR" . lsp-rename)))
 
-(use-package lsp-ui
-  :config
-  (defun md/lsp-ui-setup ()
-    (setq lsp-ui-sideline-show-hover nil
-          lsp-ui-sideline-enable nil
-          lsp-ui-sideline-delay 0.5
-          lsp-ui-sideline-ignore-duplicate t
-          lsp-ui-flycheck-live-reporting nil
-          lsp-ui-doc-delay 5
-          lsp-eldoc-enable-hover t
-          lsp-signature-doc-lines 2
-          lsp-signature-auto-activate t
-          lsp-ui-doc-position 'bottom
-          lsp-ui-doc-alignment 'frame
-          lsp-ui-doc-header nil
-          lsp-ui-doc-include-signature t
-          lsp-ui-doc-use-childframe nil))
-  :commands lsp-ui-mode
-  :hook ((lsp-before-initialize . md/lsp-ui-setup))
-  :bind (:map evil-normal-state-map
-              ("gd" . lsp-ui-peek-find-definitions)
-              ("gr" . lsp-ui-peek-find-references)
-              :map md/leader-map
-              ("Ni" . lsp-ui-imenu)))
+;; (use-package lsp-ui
+;;   :after lsp-mode
+;;   :config
+;;   (lsp-ui-mode nil))
+
+
+;; (use-package lsp-ui
+;;   :after flycheck
+;;   :config
+;;   (defun md/lsp-ui-setup ()
+;;     (setq lsp-ui-sideline-show-hover nil
+;;           lsp-ui-sideline-enable nil
+;;           lsp-ui-sideline-delay 0.5
+;;           lsp-ui-sideline-ignore-duplicate t
+;;           lsp-ui-doc-delay 0.2
+;;           lsp-ui-doc-position 'bottom
+;;           lsp-ui-doc-alignment 'frame
+;;           lsp-ui-doc-header nil
+;;           lsp-ui-doc-include-signature t
+;;           lsp-ui-doc-use-childframe nil))
+;;   :commands lsp-ui-mode
+;;   :hook ((lsp-before-initialize . md/lsp-ui-setup))
+;;   :bind (:map evil-normal-state-map
+;;               ("gd" . lsp-ui-peek-find-definitions)))
+
+;; (use-package lsp-treemacs
+;;   :after lsp-mode
+;;   :config
+;;   (setq treemacs-no-png-images t
+;;         lsp-treemacs-symbols-position-params '((side . left)
+;;                                                (slot . 1)
+;;                                                (window-width . 30)))
+;;   (add-to-list 'shackle-rules
+;;               '("\\`\\*LSP Lookup.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t))
+;;   :bind (:map evil-normal-state-map
+;;               ("gr" . lsp-treemacs-references)
+;;          :map md/leader-map
+;;               ("Ni" . lsp-treemacs-symbols)))
+
+;; (use-package helm-lsp
+;;   :after lsp-mode
+;;   :config (setq helm-lsp-treemacs-icons nil)
+;;   :bind (:map evil-normal-state-map
+;;             ("gD" . helm-lsp-workspace-symbol)))
 
 (use-package python ;; builtin
   :config
@@ -1789,6 +1904,32 @@ represent all current available bindings accurately as a single keymap."
   :demand t
   :config
   (setq pyvenv-workon "emacs")  ; Default venv
+
+  (when (fboundp 'pyvenv-track-virtualenv)
+    (fmakunbound 'pyvenv-track-virtualenv))
+
+(defun pyvenv-track-virtualenv ()
+  "Set a virtualenv as specified for the current buffer.
+
+If either `pyvenv-activate' or `pyvenv-workon' are specified, and
+they specify a virtualenv different from the current one, switch
+to that virtualenv."
+  (when (string= major-mode "python-mode")
+    (cond
+     (pyvenv-activate
+      (when (and (not (equal (file-name-as-directory pyvenv-activate)
+                             pyvenv-virtual-env))
+                 (or (not pyvenv-tracking-ask-before-change)
+                     (y-or-n-p (format "Switch to virtualenv %s (currently %s)"
+                                       pyvenv-activate pyvenv-virtual-env))))
+        (pyvenv-activate pyvenv-activate)))
+     (pyvenv-workon
+      (when (and (not (equal pyvenv-workon pyvenv-virtual-env-name))
+                 (or (not pyvenv-tracking-ask-before-change)
+                     (y-or-n-p (format "Switch to virtualenv %s (currently %s)"
+                                       pyvenv-workon pyvenv-virtual-env-name))))
+        (pyvenv-workon pyvenv-workon))))))
+
   (pyvenv-tracking-mode 1))  ; Automatically use pyvenv-workon via dir-locals
 
 ;; Syntax and completion for pip requirements files.
@@ -1807,9 +1948,19 @@ represent all current available bindings accurately as a single keymap."
     :mode (("\\.js\\'" . js-mode)
            ("\\.jsx\\'" . js-mode)))
 
+  ;; TODO: not detecting?
   (use-package typescript-mode
     :mode (("\\.ts\\'" . typescript-mode)
            ("\\.tsx\\'" . typescript-mode)))
+
+(when (fboundp 'lsp-typescript-javascript-tsx-jsx-activate-p)
+  (fmakunbound 'lsp-typescript-javascript-tsx-jsx-activate-p)
+
+  (defun lsp-typescript-javascript-tsx-jsx-activate-p (filename &optional _)
+    "Check if the javascript-typescript language server should be enabled based on FILENAME."
+    (or (string-match-p (rx (one-or-more anything) "." (or "ts" "js") (opt "x") string-end) filename)
+        (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode 'web-mode)
+             (not (derived-mode-p 'json-mode))))))
 
 (use-package git-commit
   :demand t
@@ -1973,7 +2124,6 @@ represent all current available bindings accurately as a single keymap."
     ;; Make sure SPC uses the go-mode leader map rather than my default leader
     ;; map
     (evil-define-key 'normal go-mode-map
-      (kbd "SPC") md/go-mode-leader-map
       "gd" 'go-goto-function
       "gD" 'go-goto-function)))
 
@@ -1990,11 +2140,6 @@ represent all current available bindings accurately as a single keymap."
 (use-package lua-mode :demand t)
 
 (use-package terraform-mode)
-
-(use-package web-mode
-  :mode (("\\.tsx\\'" . web-mode)
-         ("\\.jsx\\'" . web-mode))
-  :defer 1)
 
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
@@ -2030,16 +2175,14 @@ represent all current available bindings accurately as a single keymap."
             (setq feature-indent-offset 4
                   feature-indent-level 4)))
 
+(message "calling use-package for org")
 (use-package org
-  :pin org
-  :defer 5
+  ;;:pin org
+  :demand t
   :config
   (progn
 
-(use-package org-download :demand t
-  :config (progn
-            (org-download-enable)))
-
+(message "running org general setup")
 (defun md/org-hook ()
   ;; Change tab widths to fit headline indents
   (setq tab-width 2
@@ -2157,7 +2300,6 @@ represent all current available bindings accurately as a single keymap."
 (bind-key "C-c D" 'md/org-timestamp-date-clipboard evil-insert-state-map)
 
 (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
-(bind-key "C-c L" 'org-download-yank org-mode-map)
 
 (evil-define-key 'normal org-mode-map (kbd "SPC") md/org-mode-leader-map)
 
@@ -2177,13 +2319,15 @@ represent all current available bindings accurately as a single keymap."
 (bind-key "SPC t" 'org-todo md/org-mode-leader-map)
 (bind-key "SPC c" 'org-ctrl-c-ctrl-c md/org-mode-leader-map)
 (bind-key "SPC l" 'md/org-insert-link-from-paste md/org-mode-leader-map)
-(bind-key "SPC L" 'org-download-yank md/org-mode-leader-map)
 (bind-key "SPC O" 'org-open-at-point md/org-mode-leader-map)
 (bind-key "SPC u" 'org-priority-up md/org-mode-leader-map)
+
+(evil-add-command-properties 'org-clock-goto :jump t)
 
 ;; Global org leader bindings
 (bind-key "a a" 'org-agenda md/leader-map)
 (bind-key "a c" 'helm-org-capture-templates md/leader-map)
+(bind-key "a j" 'org-clock-goto md/leader-map)
 (bind-key "RET" 'helm-org-capture-templates md/leader-map)
 (bind-key "TAB" 'org-agenda md/leader-map)
 
@@ -2748,11 +2892,18 @@ be quickly copy/pasted into eg. gmail."
                  (setq buffer-offset (+ buffer-offset elem-offset)))))
          (org-mind-map-write-named (concat base-filename ".mind-map") nil t)))))
 
-))
+(message "use-package for org finished")
+  ))
+
+(use-package org-download :demand t
+  :config (progn
+            (org-download-enable)
+            (bind-key "SPC L" 'org-download-yank md/org-mode-leader-map)
+            (bind-key "C-c L" 'org-download-yank org-mode-map)))
 
 (use-package helm
   :demand t
-  :defer 5
+  ;;:defer 5
   :config
   (progn
     ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
@@ -3098,6 +3249,8 @@ are ugly. It works fine though."
     (setq annotate-use-messages nil)
     (defun md/annotate ()
       (interactive)
+      (when (not annotate-mode)
+        (annotate-mode))
       (call-interactively 'annotate-annotate)
       (md/save-if-not-remote)))
 
@@ -3143,10 +3296,12 @@ are ugly. It works fine though."
       "+" 'dired-create-directory)))
 
 (use-package restclient
-  :defer 1
+  ;;:defer 1
   :mode (("\\.http\\'" . restclient-mode)))
 
-(use-package restclient-helm :defer 5)
+(use-package restclient-helm 
+  ;;:defer 5
+)
 
 (use-package company-restclient
   :config
@@ -3461,7 +3616,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 (use-package powerline
   :demand t
-  :defer 1
+  ;;:defer 1
   :config
 
   (progn
@@ -3506,7 +3661,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                                       (current-config (assoc (eyebrowse--get 'current-slot) window-configs))
                                       (current-index (car current-config))
                                       (current-tag (nth 2 current-config)))
-                                 (format "%s %s" current-index current-tag)) face3 'l ))
+                                 (format "%s %s " current-index current-tag)) face3 'l ))
 
                             ;; Line / column numbers
                             (when (or line-number-mode column-number-mode)
@@ -3519,7 +3674,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                                      (powerline-raw ":%2c " face3 'l))))
 
                             ;; Dedicated mode indicaitor
-                            (when dedicated-mode
+                            (when (and (boundp 'dedicated-mode) dedicated-mode)
                               (powerline-raw (format "Ded.") face3 'l))
 
                             ;; Modeline
@@ -3753,19 +3908,124 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 (bind-key "tW" 'md/toggle-org-pretty md/leader-map)
 
-(setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
+(use-package eyebrowse
+  :demand t
+  :config
+  (progn
+    (setq eyebrowse-wrap-around t
+          eyebrowse-mode-line-separator " "
+          eyebrowse-mode-line-left-delimiter ""
+          eyebrowse-mode-line-right-delimiter ""
+          eyebrowse-mode-line-style t
+          eyebrowse-new-workspace t)
+    (eyebrowse-mode 1)))
 
-;; NOTE - for some reason this doesn't seem to load with "defer"
-(use-package splitscreen
- :load-path md/splitscreen-path
- :demand t
- :ensure nil
- :config
- (progn
-   (if (md/exwm-enabled)
-       (splitscreen-mode 0) ;; If exwm is on, this is provided by s-w
-     (splitscreen-mode 1)
-     (bind-key "C-w" splitscreen/mode-map edebug-mode-map))))
+(defvar splitscreen/zoomed-p nil)
+(defun splitscreen/toggle-zoom ()
+  "Toggle buffer maximising within this eyebrowse tab. Replicates the
+   tmux zoom feature."
+  (interactive)
+  (if (= 1 (length (window-list)))
+      (when (and (get-register (eyebrowse--get 'current-slot))
+                 splitscreen/zoomed-p)
+        (progn
+          (setq-local splitscreen/zoomed-p nil)
+          (jump-to-register (eyebrowse--get 'current-slot))))
+    (progn
+      (window-configuration-to-register (eyebrowse--get 'current-slot))
+      (setq-local splitscreen/zoomed-p t)
+      (delete-other-windows))))
+
+(defun splitscreen/reset-zoom (fn &rest args)
+  (apply fn args)
+  (set-register (eyebrowse--get 'current-slot) nil))
+
+(advice-add 'eyebrowse-close-window-config :around 'splitscreen/reset-zoom '((name . "splitscreen")))
+
+(defun splitscreen/window-left ()
+  (interactive)
+  (evil-window-left 1))
+
+(defun splitscreen/window-right ()
+  (interactive)
+  (evil-window-right 1))
+
+(defun splitscreen/window-up ()
+  (interactive)
+  (evil-window-up 1))
+
+(defun splitscreen/window-down ()
+  (interactive)
+  (evil-window-down 1))
+
+(defun splitscreen/increase-width () (interactive) (evil-window-increase-width 10))
+(defun splitscreen/decrease-width () (interactive) (evil-window-decrease-width 10))
+(defun splitscreen/increase-height () (interactive) (evil-window-increase-height 10))
+(defun splitscreen/decrease-height () (interactive) (evil-window-decrease-height 10))
+
+(defvar splitscreen/mode-map (make-sparse-keymap))
+(define-prefix-command 'splitscreen/prefix)
+(define-key splitscreen/mode-map (kbd "C-w") 'splitscreen/prefix)
+
+;; We override these. Just declare them as part of the splitscreen map, not
+;; evil-window-map.
+(define-key evil-window-map (kbd "h") nil)
+(define-key evil-window-map (kbd "j") nil)
+(define-key evil-window-map (kbd "k") nil)
+(define-key evil-window-map (kbd "l") nil)
+(define-key evil-window-map (kbd "n") nil)
+(define-key evil-window-map (kbd "p") nil)
+(define-key evil-window-map (kbd "c") nil)
+(define-key evil-window-map (kbd "C-h") nil)
+(define-key evil-window-map (kbd "C-j") nil)
+(define-key evil-window-map (kbd "C-k") nil)
+(define-key evil-window-map (kbd "C-l") nil)
+(define-key evil-window-map (kbd "C-l") nil)
+(define-key evil-window-map (kbd "o") nil)
+
+(define-key splitscreen/prefix (kbd "h") 'splitscreen/window-left)
+(define-key splitscreen/prefix (kbd "j") 'splitscreen/window-down)
+(define-key splitscreen/prefix (kbd "k") 'splitscreen/window-up)
+(define-key splitscreen/prefix (kbd "l") 'splitscreen/window-right)
+
+(define-key splitscreen/prefix (kbd "c") 'eyebrowse-create-window-config)
+(define-key splitscreen/prefix (kbd "n") 'eyebrowse-next-window-config)
+(define-key splitscreen/prefix (kbd "p") 'eyebrowse-prev-window-config)
+(define-key splitscreen/prefix (kbd "X") 'eyebrowse-close-window-config)
+(define-key splitscreen/prefix (kbd "!") 'eyebrowse-switch-to-window-config)
+(define-key splitscreen/prefix (kbd "%") 'split-window-right)
+(define-key splitscreen/prefix (kbd "\"") 'split-window-below)
+(define-key splitscreen/prefix (kbd "x") 'delete-window)
+(define-key splitscreen/prefix (kbd "z") 'splitscreen/toggle-zoom)
+(define-key splitscreen/prefix (kbd "o") 'splitscreen/toggle-zoom)  ;; This is easier to reach than z
+(define-key splitscreen/prefix (kbd "C-h") 'splitscreen/decrease-width)
+(define-key splitscreen/prefix (kbd "C-j") 'splitscreen/decrease-height)
+(define-key splitscreen/prefix (kbd "C-k") 'splitscreen/increase-height)
+(define-key splitscreen/prefix (kbd "C-l") 'splitscreen/increase-width)
+(define-key splitscreen/prefix (kbd "SPC") 'balance-windows)
+(define-key splitscreen/prefix (kbd "0") 'eyebrowse-switch-to-window-config-0)
+(define-key splitscreen/prefix (kbd "1") 'eyebrowse-switch-to-window-config-1)
+(define-key splitscreen/prefix (kbd "2") 'eyebrowse-switch-to-window-config-2)
+(define-key splitscreen/prefix (kbd "3") 'eyebrowse-switch-to-window-config-3)
+(define-key splitscreen/prefix (kbd "4") 'eyebrowse-switch-to-window-config-4)
+(define-key splitscreen/prefix (kbd "5") 'eyebrowse-switch-to-window-config-5)
+(define-key splitscreen/prefix (kbd "6") 'eyebrowse-switch-to-window-config-6)
+(define-key splitscreen/prefix (kbd "7") 'eyebrowse-switch-to-window-config-7)
+(define-key splitscreen/prefix (kbd "8") 'eyebrowse-switch-to-window-config-8)
+(define-key splitscreen/prefix (kbd "9") 'eyebrowse-switch-to-window-config-9)
+
+(define-minor-mode splitscreen-mode
+    "Provides tmux-like bindings for managing windows and buffers.
+     See https://github.com/mattduck/splitscreen"
+    1 ; enable by default
+    :lighter " Split"
+    :global 1
+    :keymap splitscreen/mode-map)
+
+(if (md/exwm-enabled)
+    (splitscreen-mode 0) ;; If exwm is on, this is provided by s-w
+  (splitscreen-mode 1)
+  (bind-key "C-w" splitscreen/mode-map edebug-mode-map))
 
 (use-package edit-indirect
   :config
@@ -3839,20 +4099,6 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
               ("u" . winner-undo)
               ("U" . winner-redo)))
 
-(use-package eyebrowse
-  :demand t
-  :config
-  (progn
-    (setq eyebrowse-wrap-around t
-          eyebrowse-mode-line-separator " "
-          eyebrowse-mode-line-left-delimiter ""
-          eyebrowse-mode-line-right-delimiter ""
-          eyebrowse-mode-line-style t
-          eyebrowse-new-workspace t)
-    (eyebrowse-mode 1))
-  :bind (:map splitscreen/prefix
-              ("!" . eyebrowse-switch-to-window-config)))
-
 (defun md/use-display-buffer-alist (fn &rest args)
   "Wrap a function that displays a buffer. Save window excursion, and
   re-display the new buffer using `display-buffer`, which allows Shackle to
@@ -3888,13 +4134,19 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
           (md/shackle-down)
         (md/shackle-up)))
 
-    (defmacro md/shackle-advise (fn)
-      "Add advise to given function to wrap with md/shackle-wrapper."
-      `(advice-add ,fn :around 'md/use-display-buffer-alist
-                   '((name . "md/shackle"))))
+    ;;(defmacro md/shackle-advise (fn)
+    ;;  "Add advise to given function to wrap with md/shackle-wrapper."
+    ;;  `(advice-add ,fn :around 'md/use-display-buffer-alist
+    ;;               '((name . "md/shackle"))))
 
-    (defmacro md/shackle-unadvise (fn)
-      `(advice-remove ,fn 'md/use-display-buffer-alist))
+    ;;(defmacro md/shackle-unadvise (fn)
+    ;;  `(advice-remove ,fn 'md/use-display-buffer-alist))
+    (defun md/shackle-advise (fn)
+      (advice-add fn :around 'md/use-display-buffer-alist
+                  '((name . "md/shackle"))))
+
+    (defun md/shackle-unadvise (fn)
+      (advice-remove fn 'md/use-display-buffer-alist))
 
     ;; Add advice for functions that display a new buffer but usually escape
     ;; Shackle (eg. due to not calling display-buffer).
@@ -3954,6 +4206,8 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
             ("*Anaconda*" :eyebrowse "anaconda" :align left :close-on-realign t :size 0.5 :select t)
             ("\\*Agenda Commands\\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select t)
 
+            ("\\`\\*xref.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
+
             ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
             ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
             ('grep-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
@@ -3967,8 +4221,6 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
             ('magit-diff-mode :eyebrowse "git" :select t :align left :size 0.5 :only t)
             ('magit-log-mode :eyebrowse "git" :select t :align t :size 0.4 :only t)
             ('magit-revision-mode :eyebrowse "git" :select t :align t :size 0.5 :close-on-realign t)
-
-            ("*lsp-help*" :align t :close-on-realign t :size 0.33 :select nil)
 
             ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :same t)
             ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
@@ -4078,8 +4330,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 (defconst md/dotfiles-init-local-path "~/.local.el")
 
-(when (file-exists-p md/dotfiles-init-local-path)
-      (load-file md/dotfiles-init-local-path))
+(md/maybe-native-compile-and-load md/dotfiles-init-local-path t)
 
 (defun md/dotfiles-edit-init-local ()
   (interactive)
@@ -4119,9 +4370,11 @@ This is the same as the keychain setup used for new shell logins."
                   (format-seconds "%.2h:%.2m" (org-time-convert-to-integer (org-time-since org-clock-start-time)))
                   (s-truncate 60 (substring-no-properties (org-get-heading)))))))))
 
-(use-package esup
-  :defer 5)
+(use-package esup)
+  ;;:defer 5)
 
 (require 'server)
 (when (not (server-running-p))
    (server-start))
+
+(message "end of init.el")

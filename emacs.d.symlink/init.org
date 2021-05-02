@@ -5,6 +5,8 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
 [[https://github.com/eschulte/emacs24-starter-kit/][Emacs Starter Kit]].
 
 #+BEGIN_SRC emacs-lisp
+  (message "start of init.el")
+
   (defun md/dotfiles-get-path (path)
     "Lookup files that are in my dotfiles directory"
     (concat
@@ -19,7 +21,9 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
     (find-file (md/dotfiles-get-path "emacs.d.symlink/init.org"))
     (setq-local org-confirm-babel-evaluate nil)
     (org-babel-tangle nil "init.el")
-    (byte-compile-file (md/dotfiles-get-path "emacs.d.symlink/init.el")))
+    (byte-compile-file (md/dotfiles-get-path "emacs.d.symlink/init.el"))
+    (when (fboundp 'native-compile-async)
+      (native-compile-async (md/dotfiles-get-path "emacs.d.symlink/init.el"))))
 #+END_SRC
 
 * Initialise
@@ -33,13 +37,33 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
   ;; come from MELPA.
   (setq package-archives
         '(("gnu" . "https://elpa.gnu.org/packages/")
-          ("marmalade" . "https://marmalade-repo.org/packages/")
-          ("melpa" . "https://melpa.milkbox.net/packages/")
+          ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+          ("melpa" . "https://melpa.org/packages/")
           ("org" . "https://orgmode.org/elpa/")))
 
   ;; If there are multiple versions of a file, prefer the newer one. The default
   ;; is to use the first one found.
   (setq load-prefer-newer t)
+#+END_SRC
+
+
+** Native compilation
+
+[2021-05-01] There's an issue with powerline and native-comp - see
+https://github.com/milkypostman/powerline/issues/187.
+
+#+BEGIN_SRC emacs-lisp
+  (when (boundp 'comp-deferred-compilation-deny-list)
+    (setq comp-deferred-compilation-deny-list '("powerline")))
+
+  (defun md/maybe-native-compile-and-load (path loadp)
+    (if (and path (file-exists-p path))
+        (progn
+          (when loadp
+            (load-file path))
+          (when (fboundp 'native-compile-async)
+            (native-compile-async path t)))
+      (message "Cannot load-file, doesn't exist: %s" path)))
 #+END_SRC
 
 ** Custom file
@@ -71,14 +95,17 @@ These are just a few configuration options for ~use-package~, as it's required f
 a lot of the rest of init.org:
 
 #+BEGIN_SRC emacs-lisp
-(setq use-package-always-ensure nil
-      use-package-verbose t
-      use-package-minimum-reported-time 0.01)
+  (setq use-package-always-ensure nil
+        use-package-verbose t
+        use-package-minimum-reported-time 0.0001)
 
-(eval-when-compile
+
+  ;; [2021-05-02] requiring this on load rather than compile due to https://github.com/jwiegley/use-package/issues/737
+  (eval-when-compile
     (require 'use-package))
+  (require 'use-package)
 
-(require 'bind-key)  ; Required for :bind in use-package
+  (require 'bind-key)  ; Required for :bind in use-package
 #+END_SRC
 
 ** MacOS: window manager
@@ -130,6 +157,7 @@ Initialise environment from shell:
    :if (memq window-system '(mac ns))
    :demand t
    :config
+   (message "in use-package config for exec-path-from-shell")
    (progn (exec-path-from-shell-initialize)))
 #+END_SRC
 
@@ -537,7 +565,9 @@ threshold for performance reasons.
     "Kill the current buffer and deletes the file it is visiting."
     (interactive)
     (let ((filename (buffer-file-name)))
-      (when filename
+      (when
+          (and filename
+               (string= (read-string (format "Delete %s? (y/n) " filename)) "y"))
         (if (vc-backend filename)
             (vc-delete-file filename)
           (progn
@@ -566,6 +596,11 @@ threshold for performance reasons.
     (interactive)
     (funcall-interactively 'replace-string "\\n" "
   " nil (region-beginning) (region-end)))
+
+
+  (defun md/align-two-spaces ()
+    (interactive)
+    (align-regexp (region-beginning) (region-end) "\\(\\s-*\\)  " 1 1 t))
 #+END_SRC
 
 It's a shame that "unfill" functions aren't included by default, but they're
@@ -1202,12 +1237,12 @@ actually use it to insert anything in insert mode.
 #+END_SRC
 
 * Help
-** help-fns+
+** COMMENT help-fns+
 This package provides ~describe-keymap~ to M-k in the help-map, which is
 handy. It does some other things too (TODO - read docs).
 
 #+BEGIN_SRC emacs-lisp
-  (use-package help-fns+ :defer 1 :demand t)
+  (use-package help-fns+ :demand t)
 #+END_SRC
 
 ** Help mode
@@ -1253,7 +1288,7 @@ it's nicer than the default.
 
   (use-package helpful
     :demand t
-    :defer 1
+    ;;:defer 1
     :config
     (progn
       (unbind-key "h" help-map)  ;; view-hello-file by default
@@ -1384,8 +1419,7 @@ easier to discover features / work out where I am:
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
     :demand t
-    :defer 2
-    :load-path "non-elpa/emacs-which-key"
+    ;;:defer 2
     :config (progn
               ;; Patch with my functions
               (md/which-key-patch)
@@ -1494,6 +1528,8 @@ easier to discover features / work out where I am:
               )
     :bind (:map md/leader-map
                 ("t <SPC>" . which-key-mode)))
+
+(which-key-mode 0)
 #+END_SRC
 
 ** List unbound keys
@@ -1503,7 +1539,7 @@ This is handy sometimes - it provides ~free-keys~, which lists unbound keys.
 #+BEGIN_SRC emacs-lisp
   (use-package free-keys
     :demand t
-    :defer 10
+    ;;:defer 10
     :config
       (progn
         (bind-key "@" 'free-keys help-map)))
@@ -1578,7 +1614,7 @@ Company seems to work nicely without much configuration.
 #+BEGIN_SRC emacs-lisp
   (use-package company
     :demand t
-    :defer 2
+    ;;:defer 2
     :config
     (progn
       (setq company-minimum-prefix-length 2
@@ -1604,11 +1640,11 @@ things you're completing.
 #+BEGIN_SRC emacs-lisp
   (use-package company-box
     :config (setq company-box-enable-icon nil
+                  company-box-doc-enable t
                   company-box-doc-delay 0.1
                   company-box-max-candidates 50)
     :hook (company-mode . company-box-mode))
 #+END_SRC
-
 
 ** Flycheck
 #+BEGIN_SRC emacs-lisp
@@ -1838,7 +1874,7 @@ eg. one terminal popwin per project.
 
 #+BEGIN_SRC emacs-lisp
   (use-package ediff
-   :defer 1
+   ;;:defer 1
    :config
    (progn
 
@@ -1926,7 +1962,7 @@ eg. one terminal popwin per project.
 #+BEGIN_SRC emacs-lisp
   (use-package fic-mode
    :demand t
-   :defer 1
+   ;;:defer 1
    :init
    (progn
      (add-hook 'prog-mode-hook 'fic-mode))
@@ -1959,7 +1995,7 @@ I can use this with grep/ag to quickly find the todo comments:
 
 #+BEGIN_SRC emacs-lisp
   (use-package highlight-thing
-    :defer 5
+    ;;:defer 5
     :config
     (progn
       (setq highlight-thing-delay-seconds 0.2
@@ -1980,7 +2016,7 @@ I can use this with grep/ag to quickly find the todo comments:
 
 #+BEGIN_SRC emacs-lisp
   (use-package paren
-   :defer 1
+   ;;:defer 1
    :init (progn
           (add-hook 'prog-mode-hook 'show-paren-mode))
    :config
@@ -2004,7 +2040,7 @@ I can use this with grep/ag to quickly find the todo comments:
 ** Colour hex values
 #+BEGIN_SRC emacs-lisp
   (use-package rainbow-mode
-    :defer 1
+    ;;:defer 1
     :config
     (progn
        (add-hook 'css-mode-hook 'rainbow-mode)
@@ -2018,10 +2054,9 @@ I can use this with grep/ag to quickly find the todo comments:
 #+BEGIN_SRC emacs-lisp
   (use-package eldoc ;; builtin
     :config
-    (setq eldoc-echo-area-use-multiline-p 'always
-          eldoc-idle-delay 0.25
-          ;; Makes much more usable imo
-          eldoc-print-after-edit t))
+    (setq eldoc-echo-area-use-multiline-p nil
+          eldoc-idle-delay 0.5
+          eldoc-print-after-edit nil))
 #+END_SRC
 ** Folding
 
@@ -2197,12 +2232,26 @@ the underlying terminal (ie. I get the usual readline bindings).
 
   (use-package dap-mode
     :commands (dap-debug)
+    :demand t
     :config
-    (setq dap-auto-show-output nil)
+    (defun md/dap-session-created-hook (session)
+      (setq dap-ui-buffer-configurations
+            `((,dap-ui--locals-buffer . ((side . right) (slot . 1) (window-width . 0.20)))
+              (,dap-ui--expressions-buffer . ((side . right) (slot . 2) (window-width . 0.20)))
+              (,dap-ui--sessions-buffer . ((side . right) (slot . 3) (window-width . 0.20)))
+              (,dap-ui--breakpoints-buffer . ((side . right) (slot . 4) (window-width . ,treemacs-width)))
+              (,dap-ui--debug-window-buffer . ((side . top) (slot . 1) (window-width . 0.15)))))
+      (dap-ui-repl)
+      (dap-ui-locals)
+      (dap-go-to-output-buffer))
+    (setq dap-auto-show-output t)
     (dap-ui-mode 1)
-    (add-to-list 'shackle-rules '(dap-ui-breakpoints-ui-list-mode :align t :close-on-realign t :size 0.15))
-    (add-to-list 'shackle-rules '(dap-ui-repl-mode :align t :close-on-realign t :size 0.25))
-    (add-to-list 'shackle-rules '(dap-server-log-mode :align t :close-on-realign t :size 0.15))
+    (evil-set-initial-state 'dap-ui-repl-mode 'emacs)
+    (add-to-list 'shackle-rules '(dap-ui-breakpoints-ui-list-mode :align above :close-on-realign t :size 0.15))
+    (add-to-list 'shackle-rules '(dap-ui-repl-mode :align t :size 0.15))
+    (add-to-list 'shackle-rules '(dap-server-log-mode :align t :close-on-realign t :size 0.20))
+    :hook
+    ((dap-session-created . md/dap-session-created-hook))
     :bind (:map md/leader-map
                 ("d <RET>" . dap-debug)
                 ("d u" . dap-switch-stack-frame)
@@ -2214,8 +2263,36 @@ the underlying terminal (ie. I get the usual readline bindings).
                 ("d l" . dap-ui-breakpoints-list)
                 ("d D" . dap-disconnect)
                 ("d x" . dap-ui-repl)))
-  (use-package dap-python)
+
+  (use-package dap-python :after dap-mode)
+  (use-package dap-node :after dap-mode)
 #+END_SRC
+
+** Wrappers
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/ide ()
+    (interactive)
+    (helm :sources
+          (list
+           (helm-build-sync-source "System"
+             :multimatch nil
+             :requires-pattern nil
+             :candidates '(("Show docs" . lsp-describe-thing-at-point)
+                           ;;("Show buffer symbols" . lsp-treemacs-symbols)
+                           ("Find references" . lsp-find-references)
+                           ;;("Find project symbol" . helm-lsp-workspace-symbol)
+                           ;;("Goto defintion" . lsp-ui-peek-find-definitions)
+                           ("Apropos" . xref-find-apropos)
+                           ("Goto defintion" . lsp-find-definition)
+                           ("Format buffer" . lsp-format-buffer)
+                           ("Rename symbol" . lsp-rename)
+                           ("Run debugger" . dap-debug))
+             :action '(("Execute" . (lambda (candidate)
+                                      (call-interactively candidate))))))
+          :prompt ""))
+#+END_SRC
+
 * Language support
 ** Emacs-lisp
 
@@ -2326,13 +2403,40 @@ There are a few generic LSP packages that provide most of the language-aware
 features:
 
 #+BEGIN_SRC emacs-lisp
+  ;; [2020-05-17 Sun] Disabling to prevent (lsp--auto-configure) from calling (lsp-ui-mode)
+  (use-package lsp-ui
+    :disabled)
+
   (use-package lsp-mode
     :config
+    (add-to-list 'shackle-rules
+                '("\\`\\*lsp-help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 10 :select t))
     (defun md/lsp-setup()
-      (setq lsp-idle-delay 0.5
-            lsp-enable-symbol-highlighting nil
+      (lsp-enable-imenu)
+      (setq
+            lsp-auto-configure t
+            lsp-before-save-edits t
+            lsp-eldoc-enable-hover t
+            lsp-eldoc-render-all nil
+            lsp-enable-completion-at-point nil
+            lsp-enable-file-watchers t
+            lsp-enable-folding t
+            lsp-enable-imenu t
+            lsp-enable-indentation t
+            lsp-enable-links t
+            lsp-enable-on-type-formatting nil
             lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
-            lsp-pyls-plugins-flake8-enabled t)
+            lsp-enable-symbol-highlighting nil
+            lsp-enable-text-document-color nil
+            lsp-enable-xref t
+            lsp-flycheck-live-reporting nil
+            lsp-idle-delay 0.5
+            lsp-imenu-show-container-name t
+            lsp-imenu-sort-methods '(position kind name)
+            lsp-pyls-plugins-flake8-enabled t
+            lsp-signature-auto-activate t
+            lsp-signature-render-documentation t
+            lsp-signature-doc-lines 1)
       (lsp-register-custom-settings
        '(("pyls.plugins.pyls_mypy.enabled" t t)
          ("pyls.plugins.pyls_mypy.live_mode" nil t)
@@ -2347,39 +2451,64 @@ features:
     ((python-mode . lsp)
      (js-mode . lsp)
      (typescript-mode . lsp)
+     (web-mode . lsp)
      (css-mode . lsp)
      (lsp-mode . lsp-enable-which-key-integration)
      (lsp-before-initialize . md/lsp-setup))
     :bind (:map evil-normal-state-map
                 ("gh" . lsp-describe-thing-at-point)
+                ("gr" . lsp-find-references)
+                ("gD" . xref-find-apropos)
+                ("gd" . lsp-find-definition)
                 :map md/leader-map
+                ("Ni" . imenu)
                 ("Ff" . lsp-format-buffer)
                 ("FR" . lsp-rename)))
 
-  (use-package lsp-ui
-    :config
-    (defun md/lsp-ui-setup ()
-      (setq lsp-ui-sideline-show-hover nil
-            lsp-ui-sideline-enable nil
-            lsp-ui-sideline-delay 0.5
-            lsp-ui-sideline-ignore-duplicate t
-            lsp-ui-flycheck-live-reporting nil
-            lsp-ui-doc-delay 5
-            lsp-eldoc-enable-hover t
-            lsp-signature-doc-lines 2
-            lsp-signature-auto-activate t
-            lsp-ui-doc-position 'bottom
-            lsp-ui-doc-alignment 'frame
-            lsp-ui-doc-header nil
-            lsp-ui-doc-include-signature t
-            lsp-ui-doc-use-childframe nil))
-    :commands lsp-ui-mode
-    :hook ((lsp-before-initialize . md/lsp-ui-setup))
-    :bind (:map evil-normal-state-map
-                ("gd" . lsp-ui-peek-find-definitions)
-                ("gr" . lsp-ui-peek-find-references)
-                :map md/leader-map
-                ("Ni" . lsp-ui-imenu)))
+  ;; (use-package lsp-ui
+  ;;   :after lsp-mode
+  ;;   :config
+  ;;   (lsp-ui-mode nil))
+
+
+  ;; (use-package lsp-ui
+  ;;   :after flycheck
+  ;;   :config
+  ;;   (defun md/lsp-ui-setup ()
+  ;;     (setq lsp-ui-sideline-show-hover nil
+  ;;           lsp-ui-sideline-enable nil
+  ;;           lsp-ui-sideline-delay 0.5
+  ;;           lsp-ui-sideline-ignore-duplicate t
+  ;;           lsp-ui-doc-delay 0.2
+  ;;           lsp-ui-doc-position 'bottom
+  ;;           lsp-ui-doc-alignment 'frame
+  ;;           lsp-ui-doc-header nil
+  ;;           lsp-ui-doc-include-signature t
+  ;;           lsp-ui-doc-use-childframe nil))
+  ;;   :commands lsp-ui-mode
+  ;;   :hook ((lsp-before-initialize . md/lsp-ui-setup))
+  ;;   :bind (:map evil-normal-state-map
+  ;;               ("gd" . lsp-ui-peek-find-definitions)))
+
+  ;; (use-package lsp-treemacs
+  ;;   :after lsp-mode
+  ;;   :config
+  ;;   (setq treemacs-no-png-images t
+  ;;         lsp-treemacs-symbols-position-params '((side . left)
+  ;;                                                (slot . 1)
+  ;;                                                (window-width . 30)))
+  ;;   (add-to-list 'shackle-rules
+  ;;               '("\\`\\*LSP Lookup.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t))
+  ;;   :bind (:map evil-normal-state-map
+  ;;               ("gr" . lsp-treemacs-references)
+  ;;          :map md/leader-map
+  ;;               ("Ni" . lsp-treemacs-symbols)))
+
+  ;; (use-package helm-lsp
+  ;;   :after lsp-mode
+  ;;   :config (setq helm-lsp-treemacs-icons nil)
+  ;;   :bind (:map evil-normal-state-map
+  ;;             ("gD" . helm-lsp-workspace-symbol)))
 #+END_SRC
 
 ** Python
@@ -2413,12 +2542,45 @@ org-mode Python buffers. I prefer this to using the system Python environment.
       "gj" 'python-nav-forward-defun))
 #+END_SRC
 
+[2021-05-01] ~(pyvenv-track-virtualenv)~ can take a second to switch
+environments. I like to use a default global virtualenv to fallback to when I
+don't have a project-specific env, but this approach can add a lot of delays
+when switching between buffers because it can mean the virtualenv gets switched
+regularly. To mitigate this, I've redefined ~(pyvenv-track-virtualenv)~ to only
+execute in python-mode.
+
 #+BEGIN_SRC emacs-lisp
-    (use-package pyvenv
-      :demand t
-      :config
-      (setq pyvenv-workon "emacs")  ; Default venv
-      (pyvenv-tracking-mode 1))  ; Automatically use pyvenv-workon via dir-locals
+  (use-package pyvenv
+    :demand t
+    :config
+    (setq pyvenv-workon "emacs")  ; Default venv
+
+    (when (fboundp 'pyvenv-track-virtualenv)
+      (fmakunbound 'pyvenv-track-virtualenv))
+
+  (defun pyvenv-track-virtualenv ()
+    "Set a virtualenv as specified for the current buffer.
+
+  If either `pyvenv-activate' or `pyvenv-workon' are specified, and
+  they specify a virtualenv different from the current one, switch
+  to that virtualenv."
+    (when (string= major-mode "python-mode")
+      (cond
+       (pyvenv-activate
+        (when (and (not (equal (file-name-as-directory pyvenv-activate)
+                               pyvenv-virtual-env))
+                   (or (not pyvenv-tracking-ask-before-change)
+                       (y-or-n-p (format "Switch to virtualenv %s (currently %s)"
+                                         pyvenv-activate pyvenv-virtual-env))))
+          (pyvenv-activate pyvenv-activate)))
+       (pyvenv-workon
+        (when (and (not (equal pyvenv-workon pyvenv-virtual-env-name))
+                   (or (not pyvenv-tracking-ask-before-change)
+                       (y-or-n-p (format "Switch to virtualenv %s (currently %s)"
+                                         pyvenv-workon pyvenv-virtual-env-name))))
+          (pyvenv-workon pyvenv-workon))))))
+
+    (pyvenv-tracking-mode 1))  ; Automatically use pyvenv-workon via dir-locals
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -2433,7 +2595,6 @@ LSP dependencies: ~npm install -g javascript-typescript-langserver~.
 Add org babel support:
 
 #+BEGIN_SRC emacs-lisp
-
     (org-babel-do-load-languages
      'org-babel-load-languages
      '((js . t)))
@@ -2447,9 +2608,24 @@ Add org babel support:
       :mode (("\\.js\\'" . js-mode)
              ("\\.jsx\\'" . js-mode)))
 
+    ;; TODO: not detecting?
     (use-package typescript-mode
       :mode (("\\.ts\\'" . typescript-mode)
              ("\\.tsx\\'" . typescript-mode)))
+#+END_SRC
+
+Enable the typescript language server in web mode. This overrides the original
+lsp definition to also support web mode.
+
+#+BEGIN_SRC emacs-lisp
+  (when (fboundp 'lsp-typescript-javascript-tsx-jsx-activate-p)
+    (fmakunbound 'lsp-typescript-javascript-tsx-jsx-activate-p)
+
+    (defun lsp-typescript-javascript-tsx-jsx-activate-p (filename &optional _)
+      "Check if the javascript-typescript language server should be enabled based on FILENAME."
+      (or (string-match-p (rx (one-or-more anything) "." (or "ts" "js") (opt "x") string-end) filename)
+          (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode 'web-mode)
+               (not (derived-mode-p 'json-mode))))))
 #+END_SRC
 
 ** COMMENT Python
@@ -2497,7 +2673,7 @@ Add org babel support:
 
   ;; Provide autocomplete, jump to definition and eldoc integration.
   (use-package anaconda-mode
-    :defer 1
+    ;;:defer 1
     :config
     (progn
       (defun md/anaconda-set-company-backend ()
@@ -2610,6 +2786,62 @@ This is taken straight from [[https://www.masteringemacs.org/article/polymode-mu
       :innermodes '(poly-sql-expr-python-innermode)
       (setq polymode-eval-region-function #'poly-python-sql-eval-chunk)
       (define-key poly-python-sql-mode-map (kbd "C-c C-c") 'polymode-eval-chunk)))
+#+END_SRC
+
+** COMMENT Web mode
+This makes working with HTML/CSS/JS files much nicer. TODO - read documentation
+/ configure.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package web-mode
+    :mode (("\\.tsx\\'" . web-mode)
+           ("\\.jsx\\'" . web-mode)))
+    ;;:defer 1)
+#+END_SRC
+
+** COMMENT MIT Scheme
+
+- [ ] mit-scheme leader map
+- [ ] ef / ee / er bindings
+#+BEGIN_SRC emacs-lisp
+
+  (use-package scheme
+    :demand t
+    :config
+    (progn
+      ;; For SICP
+      (setq scheme-program-name "/usr/local/bin/mit-scheme")
+
+      ;; Setup leader map for this major mode
+      (evil-define-key 'normal scheme-mode-map
+        (kbd "SPC") md/scheme-mode-leader-map)
+      (evil-define-key 'visual scheme-mode-map
+        (kbd "SPC") md/scheme-mode-leader-map)
+
+      ;; When I run the "send-to" functions I want to see the results
+      ;; in the popwin window
+      (defun md/scheme--eval (fn)
+        (save-window-excursion
+          (call-interactively 'run-scheme))
+          (call-interactively fn)
+        (popwin:display-buffer (get-buffer "*scheme*")))
+
+      (defun md/scheme-send-last-sexp ()
+        (interactive)
+        (md/scheme--eval 'scheme-send-last-sexp))
+
+      (defun md/scheme-send-region ()
+        (interactive)
+        (md/scheme--eval 'scheme-send-region))
+
+      (defun md/scheme-send-defun ()
+        (interactive)
+        (md/scheme--eval 'scheme-send-definition)))
+
+    :bind (:map md/scheme-mode-leader-map
+                ("SPC ee" . md/scheme-send-last-sexp)
+                ("SPC ef" . md/scheme-send-defun)
+                ("SPC er" . md/scheme-send-region)))
 #+END_SRC
 
 ** Git
@@ -2828,7 +3060,6 @@ I miss :Gbrowse from fugitive:
       ;; Make sure SPC uses the go-mode leader map rather than my default leader
       ;; map
       (evil-define-key 'normal go-mode-map
-        (kbd "SPC") md/go-mode-leader-map
         "gd" 'go-goto-function
         "gD" 'go-goto-function)))
 
@@ -2839,51 +3070,6 @@ I miss :Gbrowse from fugitive:
       (add-hook 'go-mode-hook
                 (lambda ()
                   (set (make-local-variable 'company-backends) '(company-go))))))
-#+END_SRC
-
-** COMMENT MIT Scheme
-
-- [ ] mit-scheme leader map
-- [ ] ef / ee / er bindings
-#+BEGIN_SRC emacs-lisp
-
-  (use-package scheme
-    :demand t
-    :config
-    (progn
-      ;; For SICP
-      (setq scheme-program-name "/usr/local/bin/mit-scheme")
-
-      ;; Setup leader map for this major mode
-      (evil-define-key 'normal scheme-mode-map
-        (kbd "SPC") md/scheme-mode-leader-map)
-      (evil-define-key 'visual scheme-mode-map
-        (kbd "SPC") md/scheme-mode-leader-map)
-
-      ;; When I run the "send-to" functions I want to see the results
-      ;; in the popwin window
-      (defun md/scheme--eval (fn)
-        (save-window-excursion
-          (call-interactively 'run-scheme))
-          (call-interactively fn)
-        (popwin:display-buffer (get-buffer "*scheme*")))
-
-      (defun md/scheme-send-last-sexp ()
-        (interactive)
-        (md/scheme--eval 'scheme-send-last-sexp))
-
-      (defun md/scheme-send-region ()
-        (interactive)
-        (md/scheme--eval 'scheme-send-region))
-
-      (defun md/scheme-send-defun ()
-        (interactive)
-        (md/scheme--eval 'scheme-send-definition)))
-
-    :bind (:map md/scheme-mode-leader-map
-                ("SPC ee" . md/scheme-send-last-sexp)
-                ("SPC ef" . md/scheme-send-defun)
-                ("SPC er" . md/scheme-send-region)))
 #+END_SRC
 ** Yaml
 Not sure if this provides anything beyond syntax highlighting, but that's enough
@@ -2905,19 +3091,6 @@ for now:
 
 #+BEGIN_SRC emacs-lisp
   (use-package terraform-mode)
-#+END_SRC
-
-** Web mode
-This makes working with HTML/CSS/JS files much nicer. TODO - read documentation
-/ configure.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package web-mode
-    :mode (("\\.tsx\\'" . web-mode)
-           ("\\.jsx\\'" . web-mode))
-    :defer 1)
-
-
 #+END_SRC
 
 ** Markdown
@@ -2989,24 +3162,18 @@ I'm putting all this setup in use-package, but still want to split into separate
 org headings:
 
 #+BEGIN_SRC emacs-lisp
+  (message "calling use-package for org")
   (use-package org
-    :pin org
-    :defer 5
+    ;;:pin org
+    :demand t
     :config
     (progn
-#+END_SRC
-
-** org-download
-
-#+BEGIN_SRC emacs-lisp
-  (use-package org-download :demand t
-    :config (progn
-              (org-download-enable)))
 #+END_SRC
 
 ** General setup
 
 #+BEGIN_SRC emacs-lisp
+  (message "running org general setup")
   (defun md/org-hook ()
     ;; Change tab widths to fit headline indents
     (setq tab-width 2
@@ -3124,38 +3291,39 @@ org headings:
   (bind-key "C-c D" 'md/org-timestamp-date-clipboard evil-insert-state-map)
 
   (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
-  (bind-key "C-c L" 'org-download-yank org-mode-map)
 #+END_SRC
 
 ** Leader
 #+BEGIN_SRC emacs-lisp
-  (evil-define-key 'normal org-mode-map (kbd "SPC") md/org-mode-leader-map)
+    (evil-define-key 'normal org-mode-map (kbd "SPC") md/org-mode-leader-map)
 
-  ;; TODO - make closer to the C-c map / confirm my bindings
-  ;; TODO - for all relevant evil modes
-  ;; TODO - do i need to do this for org-agenda map too??
-  ;; TODO - make macro to run sth with given evil modes??
-  (bind-key "SPC j" 'md/helm-org md/org-mode-leader-map)
-  (bind-key "SPC J" 'org-goto md/org-mode-leader-map)
-  (bind-key "SPC R" 'org-refile md/org-mode-leader-map)
-  (bind-key "SPC r" 'org-review md/org-mode-leader-map)
-  (bind-key "SPC A" 'org-archive-to-archive-sibling md/org-mode-leader-map)
-  (bind-key "SPC i" 'org-clock-in md/org-mode-leader-map)
-  (bind-key "SPC o" 'org-clock-out md/org-mode-leader-map)
-  (bind-key "SPC E" 'org-export-dispatch md/org-mode-leader-map)
-  (bind-key "SPC I" 'org-tree-to-indirect-buffer md/org-mode-leader-map)
-  (bind-key "SPC t" 'org-todo md/org-mode-leader-map)
-  (bind-key "SPC c" 'org-ctrl-c-ctrl-c md/org-mode-leader-map)
-  (bind-key "SPC l" 'md/org-insert-link-from-paste md/org-mode-leader-map)
-  (bind-key "SPC L" 'org-download-yank md/org-mode-leader-map)
-  (bind-key "SPC O" 'org-open-at-point md/org-mode-leader-map)
-  (bind-key "SPC u" 'org-priority-up md/org-mode-leader-map)
+    ;; TODO - make closer to the C-c map / confirm my bindings
+    ;; TODO - for all relevant evil modes
+    ;; TODO - do i need to do this for org-agenda map too??
+    ;; TODO - make macro to run sth with given evil modes??
+    (bind-key "SPC j" 'md/helm-org md/org-mode-leader-map)
+    (bind-key "SPC J" 'org-goto md/org-mode-leader-map)
+    (bind-key "SPC R" 'org-refile md/org-mode-leader-map)
+    (bind-key "SPC r" 'org-review md/org-mode-leader-map)
+    (bind-key "SPC A" 'org-archive-to-archive-sibling md/org-mode-leader-map)
+    (bind-key "SPC i" 'org-clock-in md/org-mode-leader-map)
+    (bind-key "SPC o" 'org-clock-out md/org-mode-leader-map)
+    (bind-key "SPC E" 'org-export-dispatch md/org-mode-leader-map)
+    (bind-key "SPC I" 'org-tree-to-indirect-buffer md/org-mode-leader-map)
+    (bind-key "SPC t" 'org-todo md/org-mode-leader-map)
+    (bind-key "SPC c" 'org-ctrl-c-ctrl-c md/org-mode-leader-map)
+    (bind-key "SPC l" 'md/org-insert-link-from-paste md/org-mode-leader-map)
+    (bind-key "SPC O" 'org-open-at-point md/org-mode-leader-map)
+    (bind-key "SPC u" 'org-priority-up md/org-mode-leader-map)
 
-  ;; Global org leader bindings
-  (bind-key "a a" 'org-agenda md/leader-map)
-  (bind-key "a c" 'helm-org-capture-templates md/leader-map)
-  (bind-key "RET" 'helm-org-capture-templates md/leader-map)
-  (bind-key "TAB" 'org-agenda md/leader-map)
+    (evil-add-command-properties 'org-clock-goto :jump t)
+
+    ;; Global org leader bindings
+    (bind-key "a a" 'org-agenda md/leader-map)
+    (bind-key "a c" 'helm-org-capture-templates md/leader-map)
+    (bind-key "a j" 'org-clock-goto md/leader-map)
+    (bind-key "RET" 'helm-org-capture-templates md/leader-map)
+    (bind-key "TAB" 'org-agenda md/leader-map)
 #+END_SRC
 ** Utility functions
 
@@ -3722,6 +3890,15 @@ Set Latex options to colour the links to blue by default:
   (bind-key "Th" 'md/org-html-export md/leader-map)
 #+END_SRC
 
+
+** org-tempo
+
+This re-instates the ~<s <TAB>~ behaviour for insert src blocks, etc.
+
+#+begin_src
+(use-package org-tempo :demand t)
+#+end_src
+
 ** [[https://github.com/theodorewiles/org-mind-map/][org-mind-map]]
 
 #+BEGIN_SRC emacs-lisp
@@ -3789,8 +3966,19 @@ Set Latex options to colour the links to blue by default:
 Close the use-package wrapper:
 
 #+BEGIN_SRC emacs-lisp
-))
+(message "use-package for org finished")
+  ))
 #+END_SRC
+** org-download
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-download :demand t
+    :config (progn
+              (org-download-enable)
+              (bind-key "SPC L" 'org-download-yank md/org-mode-leader-map)
+              (bind-key "C-c L" 'org-download-yank org-mode-map)))
+#+END_SRC
+
 * Helm
 ** Base helm
 - [ ] NOTE - describe-function and describe-variable don't use helm until helm
@@ -3799,7 +3987,7 @@ Close the use-package wrapper:
 #+BEGIN_SRC emacs-lisp
   (use-package helm
     :demand t
-    :defer 5
+    ;;:defer 5
     :config
     (progn
       ;; Putting these bindings here to avoid byte-compiled issue where helm-map isn't defined.
@@ -4200,7 +4388,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
 ** COMMENT helm-ag (not using anymore)
 #+BEGIN_SRC emacs-lisp
   (use-package helm-ag
-    :defer 5
+    ;;:defer 5
     :config
     (defun md/ag ()
       "Run helm-do-ag on the default-directory"
@@ -4224,6 +4412,8 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
       (setq annotate-use-messages nil)
       (defun md/annotate ()
         (interactive)
+        (when (not annotate-mode)
+          (annotate-mode))
         (call-interactively 'annotate-annotate)
         (md/save-if-not-remote)))
 
@@ -4298,10 +4488,12 @@ For 80% of use-cases, I think [[https://github.com/pashky/restclient.el][restcli
 
 #+BEGIN_SRC emacs-lisp
   (use-package restclient
-    :defer 1
+    ;;:defer 1
     :mode (("\\.http\\'" . restclient-mode)))
 
-  (use-package restclient-helm :defer 5)
+  (use-package restclient-helm 
+    ;;:defer 5
+  )
 #+END_SRC
 
 Add company completion for restclient:
@@ -4786,7 +4978,7 @@ Use some persistent scratch files for various modes:
 #+BEGIN_SRC emacs-lisp
   (use-package powerline
     :demand t
-    :defer 1
+    ;;:defer 1
     :config
 
     (progn
@@ -4831,7 +5023,7 @@ Use some persistent scratch files for various modes:
                                         (current-config (assoc (eyebrowse--get 'current-slot) window-configs))
                                         (current-index (car current-config))
                                         (current-tag (nth 2 current-config)))
-                                   (format "%s %s" current-index current-tag)) face3 'l ))
+                                   (format "%s %s " current-index current-tag)) face3 'l ))
 
                               ;; Line / column numbers
                               (when (or line-number-mode column-number-mode)
@@ -4844,7 +5036,7 @@ Use some persistent scratch files for various modes:
                                        (powerline-raw ":%2c " face3 'l))))
 
                               ;; Dedicated mode indicaitor
-                              (when dedicated-mode
+                              (when (and (boundp 'dedicated-mode) dedicated-mode)
                                 (powerline-raw (format "Ded.") face3 'l))
 
                               ;; Modeline
@@ -5120,13 +5312,34 @@ with ~load-theme~.
   (bind-key "tW" 'md/toggle-org-pretty md/leader-map)
 #+END_SRC
 * Window manager
+** Eyebrowse
+#+BEGIN_SRC emacs-lisp
+  (use-package eyebrowse
+    :demand t
+    :config
+    (progn
+      (setq eyebrowse-wrap-around t
+            eyebrowse-mode-line-separator " "
+            eyebrowse-mode-line-left-delimiter ""
+            eyebrowse-mode-line-right-delimiter ""
+            eyebrowse-mode-line-style t
+            eyebrowse-new-workspace t)
+      (eyebrowse-mode 1)))
+#+END_SRC
+
 ** Splitscreen
+
+[2021-05-02] A long time back I had a separate repo called "splitscreen" which I
+used to configure consistent window-splitting bindings between emacs, vim and
+tmux. I've copied it inline now because (1) it's more convenient to edit, and
+(2) I'm seeing some errors related to native compilation that I want to fix.
+
+*** COMMENT Old loaded external version
 #+BEGIN_SRC emacs-lisp
   (setq md/splitscreen-path (md/dotfiles-get-path "splitscreen/"))
+  (add-to-list 'load-path md/splitscreen-path)
 
-  ;; NOTE - for some reason this doesn't seem to load with "defer"
   (use-package splitscreen
-   :load-path md/splitscreen-path
    :demand t
    :ensure nil
    :config
@@ -5136,6 +5349,118 @@ with ~load-theme~.
        (splitscreen-mode 1)
        (bind-key "C-w" splitscreen/mode-map edebug-mode-map))))
 #+END_SRC
+
+*** Inline version
+
+#+BEGIN_SRC emacs-lisp
+  (defvar splitscreen/zoomed-p nil)
+  (defun splitscreen/toggle-zoom ()
+    "Toggle buffer maximising within this eyebrowse tab. Replicates the
+     tmux zoom feature."
+    (interactive)
+    (if (= 1 (length (window-list)))
+        (when (and (get-register (eyebrowse--get 'current-slot))
+                   splitscreen/zoomed-p)
+          (progn
+            (setq-local splitscreen/zoomed-p nil)
+            (jump-to-register (eyebrowse--get 'current-slot))))
+      (progn
+        (window-configuration-to-register (eyebrowse--get 'current-slot))
+        (setq-local splitscreen/zoomed-p t)
+        (delete-other-windows))))
+
+  (defun splitscreen/reset-zoom (fn &rest args)
+    (apply fn args)
+    (set-register (eyebrowse--get 'current-slot) nil))
+
+  (advice-add 'eyebrowse-close-window-config :around 'splitscreen/reset-zoom '((name . "splitscreen")))
+
+  (defun splitscreen/window-left ()
+    (interactive)
+    (evil-window-left 1))
+
+  (defun splitscreen/window-right ()
+    (interactive)
+    (evil-window-right 1))
+
+  (defun splitscreen/window-up ()
+    (interactive)
+    (evil-window-up 1))
+
+  (defun splitscreen/window-down ()
+    (interactive)
+    (evil-window-down 1))
+
+  (defun splitscreen/increase-width () (interactive) (evil-window-increase-width 10))
+  (defun splitscreen/decrease-width () (interactive) (evil-window-decrease-width 10))
+  (defun splitscreen/increase-height () (interactive) (evil-window-increase-height 10))
+  (defun splitscreen/decrease-height () (interactive) (evil-window-decrease-height 10))
+
+  (defvar splitscreen/mode-map (make-sparse-keymap))
+  (define-prefix-command 'splitscreen/prefix)
+  (define-key splitscreen/mode-map (kbd "C-w") 'splitscreen/prefix)
+
+  ;; We override these. Just declare them as part of the splitscreen map, not
+  ;; evil-window-map.
+  (define-key evil-window-map (kbd "h") nil)
+  (define-key evil-window-map (kbd "j") nil)
+  (define-key evil-window-map (kbd "k") nil)
+  (define-key evil-window-map (kbd "l") nil)
+  (define-key evil-window-map (kbd "n") nil)
+  (define-key evil-window-map (kbd "p") nil)
+  (define-key evil-window-map (kbd "c") nil)
+  (define-key evil-window-map (kbd "C-h") nil)
+  (define-key evil-window-map (kbd "C-j") nil)
+  (define-key evil-window-map (kbd "C-k") nil)
+  (define-key evil-window-map (kbd "C-l") nil)
+  (define-key evil-window-map (kbd "C-l") nil)
+  (define-key evil-window-map (kbd "o") nil)
+
+  (define-key splitscreen/prefix (kbd "h") 'splitscreen/window-left)
+  (define-key splitscreen/prefix (kbd "j") 'splitscreen/window-down)
+  (define-key splitscreen/prefix (kbd "k") 'splitscreen/window-up)
+  (define-key splitscreen/prefix (kbd "l") 'splitscreen/window-right)
+
+  (define-key splitscreen/prefix (kbd "c") 'eyebrowse-create-window-config)
+  (define-key splitscreen/prefix (kbd "n") 'eyebrowse-next-window-config)
+  (define-key splitscreen/prefix (kbd "p") 'eyebrowse-prev-window-config)
+  (define-key splitscreen/prefix (kbd "X") 'eyebrowse-close-window-config)
+  (define-key splitscreen/prefix (kbd "!") 'eyebrowse-switch-to-window-config)
+  (define-key splitscreen/prefix (kbd "%") 'split-window-right)
+  (define-key splitscreen/prefix (kbd "\"") 'split-window-below)
+  (define-key splitscreen/prefix (kbd "x") 'delete-window)
+  (define-key splitscreen/prefix (kbd "z") 'splitscreen/toggle-zoom)
+  (define-key splitscreen/prefix (kbd "o") 'splitscreen/toggle-zoom)  ;; This is easier to reach than z
+  (define-key splitscreen/prefix (kbd "C-h") 'splitscreen/decrease-width)
+  (define-key splitscreen/prefix (kbd "C-j") 'splitscreen/decrease-height)
+  (define-key splitscreen/prefix (kbd "C-k") 'splitscreen/increase-height)
+  (define-key splitscreen/prefix (kbd "C-l") 'splitscreen/increase-width)
+  (define-key splitscreen/prefix (kbd "SPC") 'balance-windows)
+  (define-key splitscreen/prefix (kbd "0") 'eyebrowse-switch-to-window-config-0)
+  (define-key splitscreen/prefix (kbd "1") 'eyebrowse-switch-to-window-config-1)
+  (define-key splitscreen/prefix (kbd "2") 'eyebrowse-switch-to-window-config-2)
+  (define-key splitscreen/prefix (kbd "3") 'eyebrowse-switch-to-window-config-3)
+  (define-key splitscreen/prefix (kbd "4") 'eyebrowse-switch-to-window-config-4)
+  (define-key splitscreen/prefix (kbd "5") 'eyebrowse-switch-to-window-config-5)
+  (define-key splitscreen/prefix (kbd "6") 'eyebrowse-switch-to-window-config-6)
+  (define-key splitscreen/prefix (kbd "7") 'eyebrowse-switch-to-window-config-7)
+  (define-key splitscreen/prefix (kbd "8") 'eyebrowse-switch-to-window-config-8)
+  (define-key splitscreen/prefix (kbd "9") 'eyebrowse-switch-to-window-config-9)
+
+  (define-minor-mode splitscreen-mode
+      "Provides tmux-like bindings for managing windows and buffers.
+       See https://github.com/mattduck/splitscreen"
+      1 ; enable by default
+      :lighter " Split"
+      :global 1
+      :keymap splitscreen/mode-map)
+
+  (if (md/exwm-enabled)
+      (splitscreen-mode 0) ;; If exwm is on, this is provided by s-w
+    (splitscreen-mode 1)
+    (bind-key "C-w" splitscreen/mode-map edebug-mode-map))
+#+END_SRC
+
 ** Narrowing
 *** edit-indirect
 #+BEGIN_SRC emacs-lisp
@@ -5219,23 +5544,6 @@ Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs
                 ("u" . winner-undo)
                 ("U" . winner-redo)))
 #+END_SRC
-** Eyebrowse
-#+BEGIN_SRC emacs-lisp
-  (use-package eyebrowse
-    :demand t
-    :config
-    (progn
-      (setq eyebrowse-wrap-around t
-            eyebrowse-mode-line-separator " "
-            eyebrowse-mode-line-left-delimiter ""
-            eyebrowse-mode-line-right-delimiter ""
-            eyebrowse-mode-line-style t
-            eyebrowse-new-workspace t)
-      (eyebrowse-mode 1))
-    :bind (:map splitscreen/prefix
-                ("!" . eyebrowse-switch-to-window-config)))
-#+END_SRC
-
 ** Shackle (https://github.com/mattduck/shackle)
 
 Shackle has a lot of overlap with Popwin, ie. I can force certain applications
@@ -5254,187 +5562,193 @@ Shackle didn't support "sticky" type windows out of the box, but it was easy to
 add the ~:close-on-realign~ flag to simulate this behaviour.
 
 #+BEGIN_SRC emacs-lisp
-  (defun md/use-display-buffer-alist (fn &rest args)
-    "Wrap a function that displays a buffer. Save window excursion, and
-    re-display the new buffer using `display-buffer`, which allows Shackle to
-    detect and process it. "
-    (let ((buffer-to-display nil)
-          (res nil))
-      (save-window-excursion
-        (setq res (apply fn args))
-        (setq buffer-to-display (current-buffer)))
-      (display-buffer buffer-to-display)
-      res))
+    (defun md/use-display-buffer-alist (fn &rest args)
+      "Wrap a function that displays a buffer. Save window excursion, and
+      re-display the new buffer using `display-buffer`, which allows Shackle to
+      detect and process it. "
+      (let ((buffer-to-display nil)
+            (res nil))
+        (save-window-excursion
+          (setq res (apply fn args))
+          (setq buffer-to-display (current-buffer)))
+        (display-buffer buffer-to-display)
+        res))
 
-  (use-package shackle
-    :load-path "non-elpa/shackle"  ; fork
-    :demand t
-    :config
-    (progn
+    (use-package shackle
+      :load-path "non-elpa/shackle"  ; fork
+      :demand t
+      :config
+      (progn
 
-      (defun md/shackle-down ()
-        (interactive)
-        (delete-window shackle-last-window))
+        (defun md/shackle-down ()
+          (interactive)
+          (delete-window shackle-last-window))
 
-      (defun md/shackle-up ()
-        (interactive)
-        (if shackle-last-buffer
-            (display-buffer shackle-last-buffer)
-          (message "No previous shackle buffer found")))
+        (defun md/shackle-up ()
+          (interactive)
+          (if shackle-last-buffer
+              (display-buffer shackle-last-buffer)
+            (message "No previous shackle buffer found")))
 
-      ;; TODO - check len is > 1
-      (defun md/shackle-toggle ()
-        (interactive)
-        (if (and (window-live-p shackle-last-window) (> (length (window-list)) 1))
-            (md/shackle-down)
-          (md/shackle-up)))
+        ;; TODO - check len is > 1
+        (defun md/shackle-toggle ()
+          (interactive)
+          (if (and (window-live-p shackle-last-window) (> (length (window-list)) 1))
+              (md/shackle-down)
+            (md/shackle-up)))
 
-      (defmacro md/shackle-advise (fn)
-        "Add advise to given function to wrap with md/shackle-wrapper."
-        `(advice-add ,fn :around 'md/use-display-buffer-alist
-                     '((name . "md/shackle"))))
+        ;;(defmacro md/shackle-advise (fn)
+        ;;  "Add advise to given function to wrap with md/shackle-wrapper."
+        ;;  `(advice-add ,fn :around 'md/use-display-buffer-alist
+        ;;               '((name . "md/shackle"))))
 
-      (defmacro md/shackle-unadvise (fn)
-        `(advice-remove ,fn 'md/use-display-buffer-alist))
+        ;;(defmacro md/shackle-unadvise (fn)
+        ;;  `(advice-remove ,fn 'md/use-display-buffer-alist))
+        (defun md/shackle-advise (fn)
+          (advice-add fn :around 'md/use-display-buffer-alist
+                      '((name . "md/shackle"))))
 
-      ;; Add advice for functions that display a new buffer but usually escape
-      ;; Shackle (eg. due to not calling display-buffer).
-      (md/shackle-advise 'helpful-function)
-      (md/shackle-advise 'helpful-command)
-      (md/shackle-advise 'helpful-macro)
-      (md/shackle-advise 'helpful-variable)
-      (md/shackle-advise 'helpful-callable)
-      (md/shackle-advise 'helpful-command)
-      (md/shackle-advise 'helpful-at-point)
-      (md/shackle-advise 'ansi-term)
-      (md/shackle-advise 'term)
-      (md/shackle-advise 'eshell)
-      (md/shackle-advise 'shell)
-      (md/shackle-advise 'dired)
-      (md/shackle-advise 'dired-jump)
-      (md/shackle-advise 'dired-single-buffer)
-      (md/shackle-advise 'projectile-run-term)
-      (md/shackle-advise 'undo-tree-visualize)
-      (md/shackle-advise 'run-scheme)
-      ;;(md/shackle-advise 'mu4e~main-view)
-      ;;(md/shackle-advise 'mu4e-compose)
-      ;;(md/shackle-advise 'mu4e-headers-search)
-      (md/shackle-advise 'magit-dispatch-popup)
-      (md/shackle-advise 'magit-display-buffer)
-      ;;(md/shackle-advise 'edebug-pop-to-buffer)
-      ;; (md/shackle-unadvise 'edebug-debugger)
-      ;; (md/shackle-unadvise 'edebug)
-      ;; (md/shackle-unadvise 'edebug-enter)
+        (defun md/shackle-unadvise (fn)
+          (advice-remove fn 'md/use-display-buffer-alist))
 
-      ;;(defun md/mu4e-eyebrowse-quit (fn &rest args)
-      ;;  (apply fn args)
-      ;;  (shackle--eyebrowse-close-slot-by-tag "mail"))
-      ;;(advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
+        ;; Add advice for functions that display a new buffer but usually escape
+        ;; Shackle (eg. due to not calling display-buffer).
+        (md/shackle-advise 'helpful-function)
+        (md/shackle-advise 'helpful-command)
+        (md/shackle-advise 'helpful-macro)
+        (md/shackle-advise 'helpful-variable)
+        (md/shackle-advise 'helpful-callable)
+        (md/shackle-advise 'helpful-command)
+        (md/shackle-advise 'helpful-at-point)
+        (md/shackle-advise 'ansi-term)
+        (md/shackle-advise 'term)
+        (md/shackle-advise 'eshell)
+        (md/shackle-advise 'shell)
+        (md/shackle-advise 'dired)
+        (md/shackle-advise 'dired-jump)
+        (md/shackle-advise 'dired-single-buffer)
+        (md/shackle-advise 'projectile-run-term)
+        (md/shackle-advise 'undo-tree-visualize)
+        (md/shackle-advise 'run-scheme)
+        ;;(md/shackle-advise 'mu4e~main-view)
+        ;;(md/shackle-advise 'mu4e-compose)
+        ;;(md/shackle-advise 'mu4e-headers-search)
+        (md/shackle-advise 'magit-dispatch-popup)
+        (md/shackle-advise 'magit-display-buffer)
+        ;;(md/shackle-advise 'edebug-pop-to-buffer)
+        ;; (md/shackle-unadvise 'edebug-debugger)
+        ;; (md/shackle-unadvise 'edebug)
+        ;; (md/shackle-unadvise 'edebug-enter)
 
-      (defun md/is-edebug? (buffer)
-        (interactive)
-        (message (format "%s" edebug-mode)))
+        ;;(defun md/mu4e-eyebrowse-quit (fn &rest args)
+        ;;  (apply fn args)
+        ;;  (shackle--eyebrowse-close-slot-by-tag "mail"))
+        ;;(advice-add 'mu4e-quit :around 'md/mu4e-eyebrowse-quit '((name . "md/eyebrowse")))
 
-      ;; TODO ediff
-      (dolist (rule
-            `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
-              ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select t)
-              ('helpful-mode :align t :close-on-realign t :size 0.33 :select t)
-              ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-              ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-              ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
-              ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
-              ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
-              ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
+        (defun md/is-edebug? (buffer)
+          (interactive)
+          (message (format "%s" edebug-mode)))
 
-              ;; TODO
-              ;;('(:custom md/is-edebug?) :eyebrowse "debug" :align t :close-on-realign nil :only t :select t)
-              ;;("\\`\\*edebug-trace.*?\\*\\'" :eyebrowse "debug" :regexp t :align right :size 0.5 :select nil)
+        ;; TODO ediff
+        (dolist (rule
+              `(("\\`\\*helm.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
+                ("\\`\\*help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select t)
+                ('helpful-mode :align t :close-on-realign t :size 0.33 :select t)
+                ("\\`\\*Flycheck.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+                ("\\`\\*Shell Command Output.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+                ("\\`\\*Async Shell Command.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select nil)
+                ('undo-tree-visualizer-mode :align right :close-on-realign t :size 30 :select t)
+                ("\\`\\*Directory.*?\\*\\'" :regexp t :align t :close-on-realign t :size 12 :select t)
+                ("\\`\\*vc-change-log.*?\\*\\'" :regexp t :align t :close-on-realign t :size 0.33 :select nil)
 
-              ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
-              ("*Anaconda*" :eyebrowse "anaconda" :align left :close-on-realign t :size 0.5 :select t)
-              ("\\*Agenda Commands\\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select t)
+                ;; TODO
+                ;;('(:custom md/is-edebug?) :eyebrowse "debug" :align t :close-on-realign nil :only t :select t)
+                ;;("\\`\\*edebug-trace.*?\\*\\'" :eyebrowse "debug" :regexp t :align right :size 0.5 :select nil)
 
-              ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
-              ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
-              ('grep-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
-              ('ag-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
-              ('term-mode :align t :close-on-realign t :size 0.4 :select t)
-              ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
-              ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
+                ("\\`\\*HTTP Response.*?\\*\\'" :regexp t :align t :close-on-realign t :size 20 :select nil)
+                ("*Anaconda*" :eyebrowse "anaconda" :align left :close-on-realign t :size 0.5 :select t)
+                ("\\*Agenda Commands\\*" :regexp t :eyebrowse "agenda" :align t :close-on-realign t :size 20 :select t)
 
-              ('magit-status-mode :eyebrowse "git" :align t :select t :size 0.33 :only t)
-              ('magit-popup-mode :align t :select t :size 0.33 :close-on-realign t)
-              ('magit-diff-mode :eyebrowse "git" :select t :align left :size 0.5 :only t)
-              ('magit-log-mode :eyebrowse "git" :select t :align t :size 0.4 :only t)
-              ('magit-revision-mode :eyebrowse "git" :select t :align t :size 0.5 :close-on-realign t)
+                ("\\`\\*xref.*?\\*\\'" :regexp t :align t :close-on-realign t :size 15 :select t)
 
-              ("*lsp-help*" :align t :close-on-realign t :size 0.33 :select nil)
+                ('ansi-term-mode :align t :close-on-realign t :size 0.4 :select t)
+                ('occur-mode :align t :close-on-realign t :size 0.4 :select nil)
+                ('grep-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
+                ('ag-mode :eyebrowse "grep" :align left :close-on-realign t :size 0.5 :select t)
+                ('term-mode :align t :close-on-realign t :size 0.4 :select t)
+                ('shell-mode :align t :close-on-realign t :size 0.4 :select t)
+                ('eshell-mode :align t :close-on-realign t :size 0.4 :select t)
 
-              ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :same t)
-              ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
-              ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
-              ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
-              ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
-              ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
-              (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t) ;; TODO regex
-              (".*init.org" :regexp t :same t :select t)
-              (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
-              ;;(,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
-              ;;(,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
-              ;;('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
-              (dired-mode :align nil :select t)))
-            (add-to-list 'shackle-rules rule))
+                ('magit-status-mode :eyebrowse "git" :align t :select t :size 0.33 :only t)
+                ('magit-popup-mode :align t :select t :size 0.33 :close-on-realign t)
+                ('magit-diff-mode :eyebrowse "git" :select t :align left :size 0.5 :only t)
+                ('magit-log-mode :eyebrowse "git" :select t :align t :size 0.4 :only t)
+                ('magit-revision-mode :eyebrowse "git" :select t :align t :size 0.5 :close-on-realign t)
 
-      (defmacro shackle-with-temp (rules body)
-        "Execute body with temporary shackle rules"
-        `(let ((shackle-rules (append ,rules shackle-rules)))
-           ,body))
+                ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :same t)
+                ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
+                ('compilation-mode :align t :close-on-realign t :size 0.33 :select t)
+                ('inferior-scheme-mode :align t :close-on-realign t :size 0.33 :select t)
+                ("*Warnings*" :align t :close-on-realign t :size 0.33 :select nil)
+                ("*Messages*" :align t :close-on-realign t :size 0.33 :select nil)
+                (".*emacs-scratch.*" :regexp t :align t :close-on-realign t :size 30 :select t) ;; TODO regex
+                (".*init.org" :regexp t :same t :select t)
+                (,neo-buffer-name :align left :close-on-realign t :size 25 :select t)
+                ;;(,mu4e~main-buffer-name :eyebrowse "mail" :size 40 :select t :align left :close-on-realign t)
+                ;;(,mu4e~headers-buffer-name :eyebrowse "mail" :select t :other t)
+                ;;('mu4e-compose-mode :eyebrowse "mail" :select t :other t)
+                (dired-mode :align nil :select t)))
+              (add-to-list 'shackle-rules rule))
 
-      ;; This is deprecated but works for now - need to figure out how to implement it
-      ;; with display-buffer-alist. It prevents us from opening a new frame every
-      ;; time I use mu4e.
-      (setq-default display-buffer-reuse-frames t)
+        (defmacro shackle-with-temp (rules body)
+          "Execute body with temporary shackle rules"
+          `(let ((shackle-rules (append ,rules shackle-rules)))
+             ,body))
 
-      ;; Ensure Helm doesn't interfere with Shackle buffers too much.
-      ;; - Use Shackle to control and position Helm buffers.
-      ;; - But ensure that shackle-last-buffer is not set to any Helm buffer.
-      ;;
-      ;; TODO - ideally Helm would cleanup buffers immediately to avoid
-      ;; interfering with other buffer display commands.
-      (setq helm-display-function 'pop-to-buffer) ; make sure helm popups are detected.
-      (defvar md/shackle-buffer-store nil)
-      (defvar md/shackle-window-store nil)
-      (defun md/helm-shackle-setup ()
-        (setq md/shackle-buffer-store shackle-last-buffer
-              md/shackle-window-store shackle-last-window))
-      (defun md/helm-shackle-teardown ()
-        (when md/shackle-buffer-store
-          (setq shackle-last-buffer md/shackle-buffer-store
-                shackle-last-window md/shackle-window-store)))
-      (add-hook 'helm-before-initialize-hook 'md/helm-shackle-setup)
-      (add-hook 'helm-cleanup-hook 'md/helm-shackle-teardown)
+        ;; This is deprecated but works for now - need to figure out how to implement it
+        ;; with display-buffer-alist. It prevents us from opening a new frame every
+        ;; time I use mu4e.
+        (setq-default display-buffer-reuse-frames t)
 
-      ;; NOTE: In order to get Shackle working with some org-mode commands, we
-      ;; have to override an internal function. Org is quite opinionated about
-      ;; window display, and usually this function will unset various buffer
-      ;; display variables before calling switch-to-buffer-other-window.
-      ;; I'd rather just control those buffers with Shackle.
-      (require 'org)
-      (fmakunbound 'org-switch-to-buffer-other-window)
-      (defun org-switch-to-buffer-other-window (&rest args)
-        (apply 'switch-to-buffer-other-window args))
-      (setq org-agenda-window-setup 'only-window)
+        ;; Ensure Helm doesn't interfere with Shackle buffers too much.
+        ;; - Use Shackle to control and position Helm buffers.
+        ;; - But ensure that shackle-last-buffer is not set to any Helm buffer.
+        ;;
+        ;; TODO - ideally Helm would cleanup buffers immediately to avoid
+        ;; interfering with other buffer display commands.
+        (setq helm-display-function 'pop-to-buffer) ; make sure helm popups are detected.
+        (defvar md/shackle-buffer-store nil)
+        (defvar md/shackle-window-store nil)
+        (defun md/helm-shackle-setup ()
+          (setq md/shackle-buffer-store shackle-last-buffer
+                md/shackle-window-store shackle-last-window))
+        (defun md/helm-shackle-teardown ()
+          (when md/shackle-buffer-store
+            (setq shackle-last-buffer md/shackle-buffer-store
+                  shackle-last-window md/shackle-window-store)))
+        (add-hook 'helm-before-initialize-hook 'md/helm-shackle-setup)
+        (add-hook 'helm-cleanup-hook 'md/helm-shackle-teardown)
 
-      (defun md/shackle-match ()
-        (interactive)
-        (message (format "%s" (shackle-match (current-buffer)))))
+        ;; NOTE: In order to get Shackle working with some org-mode commands, we
+        ;; have to override an internal function. Org is quite opinionated about
+        ;; window display, and usually this function will unset various buffer
+        ;; display variables before calling switch-to-buffer-other-window.
+        ;; I'd rather just control those buffers with Shackle.
+        (require 'org)
+        (fmakunbound 'org-switch-to-buffer-other-window)
+        (defun org-switch-to-buffer-other-window (&rest args)
+          (apply 'switch-to-buffer-other-window args))
+        (setq org-agenda-window-setup 'only-window)
 
-      (shackle-mode 1))
+        (defun md/shackle-match ()
+          (interactive)
+          (message (format "%s" (shackle-match (current-buffer)))))
 
-    :bind (:map md/leader-map
-                ("; ;" . display-buffer)  ;; Uses display-buffer-alist, so Shackle rules will apply.
-                (";a" . md/shackle-toggle)))
+        (shackle-mode 1))
+
+      :bind (:map md/leader-map
+                  ("; ;" . display-buffer)  ;; Uses display-buffer-alist, so Shackle rules will apply.
+                  (";a" . md/shackle-toggle)))
 #+END_SRC
 
 ** Dedicated
@@ -5505,8 +5819,7 @@ Sometimes I want machine-specific setup:
 #+BEGIN_SRC emacs-lisp
   (defconst md/dotfiles-init-local-path "~/.local.el")
 
-  (when (file-exists-p md/dotfiles-init-local-path)
-        (load-file md/dotfiles-init-local-path))
+  (md/maybe-native-compile-and-load md/dotfiles-init-local-path t)
 
   (defun md/dotfiles-edit-init-local ()
     (interactive)
@@ -5568,8 +5881,8 @@ Running ~esup~ will start Emacs and profile the startup time. To get GUI on par
 w/terminal, I can disable exec-path-from-shell.
 
 #+BEGIN_SRC emacs-lisp
-(use-package esup
-  :defer 5)
+(use-package esup)
+  ;;:defer 5)
 #+END_SRC
 
 * Emacs server
@@ -5586,6 +5899,10 @@ slightly different to ~(emacs-init-time)~. As of 2020 I no longer care enough to
 have the extra code in my init file - it was more relevant when I used to
 regularly start a new Emacs instance in the terminal. Nowadays I just use the
 server/client.
+
+#+BEGIN_SRC emacs-lisp
+(message "end of init.el")
+#+END_SRC
 
 * COMMENT TODO
 # - [ ] getting slowdowns where python3 uses 99% cpu. Seems to occcur sometimes
