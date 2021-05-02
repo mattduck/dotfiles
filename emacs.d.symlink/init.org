@@ -2374,9 +2374,13 @@ features:
     (add-to-list 'shackle-rules
                 '("\\`\\*lsp-help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 10 :select t))
     (defun md/lsp-setup()
+      ;; recommended by LSP docs for performance
+      (setq read-process-output-max (* 1024 1024)) ;; 1mb
+
       (lsp-enable-imenu)
       (setq
             lsp-auto-configure t
+            lsp-auto-guess-root t ; Uses projectile to guess the project root.
             lsp-before-save-edits t
             lsp-eldoc-enable-hover t
             lsp-eldoc-render-all nil
@@ -2386,6 +2390,7 @@ features:
             lsp-enable-imenu t
             lsp-enable-indentation t
             lsp-enable-links t
+            lsp-clients-python-library-directories `("/usr/" ,(expand-file-name "~/.virtualenvs")) ; This seems appropriate
             lsp-enable-on-type-formatting nil
             lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
             lsp-enable-symbol-highlighting nil
@@ -2410,8 +2415,8 @@ features:
          ("pyls.plugins.mccabe.enabled" nil t)
          ("pyls.plugins.pyflakes.enabled" nil t))))
     :hook
-    ((python-mode . lsp)
-     (js-mode . lsp)
+     ;; NOTE: we don't have a python-mode hook - it gets handled by pyvenv-track-virtualenv
+    ((js-mode . lsp)
      (typescript-mode . lsp)
      (web-mode . lsp)
      (css-mode . lsp)
@@ -2492,9 +2497,23 @@ time, but it does have a "tracking" mode, which can automatically change the
 global virtualenv using dir-locals. For other purposes, you can manually invoke
 ~pyvenv-workon~ to change the virtualenv.
 
-We use a default "emacs" virtualenv as a fallback for editing things like
+I use a default "emacs" virtualenv as a fallback for editing things like
 org-mode Python buffers. I prefer this to using the system Python environment.
 
+[2021-05-01] ~(pyvenv-track-virtualenv)~ can take a second to switch
+environments. I like to use a default global virtualenv to fallback to when I
+don't have a project-specific env, but this approach can add a lot of delays
+when switching between buffers because it can mean the virtualenv gets switched
+regularly. To mitigate this, I've redefined ~pyvenv-track-virtualenv~ to only
+execute in python-mode.
+
+I've also added the ~(lsp)~ call to ~pyvenv-track-virtualenv~, instead of having lsp
+run in python-mode-hook. I originally had lsp called in python-mode-hook, but
+this led to issues where jumping to libraries in my virtualenvs didn't work -
+I'd have to run ~lsp-restart-workspace~ after pyvenv had setup the virtualenv. I
+don't know what the exact state/operations are that make jumping to libraries
+work, but it seems more reliable to have lsp run after pyvenv activates, rather
+than in python-mode-hook.
 
 #+BEGIN_SRC emacs-lisp
   (use-package python ;; builtin
@@ -2504,18 +2523,13 @@ org-mode Python buffers. I prefer this to using the system Python environment.
       "gj" 'python-nav-forward-defun))
 #+END_SRC
 
-[2021-05-01] ~(pyvenv-track-virtualenv)~ can take a second to switch
-environments. I like to use a default global virtualenv to fallback to when I
-don't have a project-specific env, but this approach can add a lot of delays
-when switching between buffers because it can mean the virtualenv gets switched
-regularly. To mitigate this, I've redefined ~(pyvenv-track-virtualenv)~ to only
-execute in python-mode.
 
 #+BEGIN_SRC emacs-lisp
   (use-package pyvenv
     :demand t
     :config
     (setq pyvenv-workon "emacs")  ; Default venv
+    (pyvenv-workon pyvenv-workon)
 
     (when (fboundp 'pyvenv-track-virtualenv)
       (fmakunbound 'pyvenv-track-virtualenv))
@@ -2523,9 +2537,10 @@ execute in python-mode.
   (defun pyvenv-track-virtualenv ()
     "Set a virtualenv as specified for the current buffer.
 
-  If either `pyvenv-activate' or `pyvenv-workon' are specified, and
-  they specify a virtualenv different from the current one, switch
-  to that virtualenv."
+  This is originally provided by pyvenv, but I've added a couple
+  of features. The most important one is that this invokes lsp
+  /after/ all the pyvenv activate logic has been done, which means
+  lsp can properly jump to definitions."
     (when (string= major-mode "python-mode")
       (cond
        (pyvenv-activate
@@ -2540,7 +2555,12 @@ execute in python-mode.
                    (or (not pyvenv-tracking-ask-before-change)
                        (y-or-n-p (format "Switch to virtualenv %s (currently %s)"
                                          pyvenv-workon pyvenv-virtual-env-name))))
-          (pyvenv-workon pyvenv-workon))))))
+          (message "pyvenv switching from %s to %s" pyvenv-virtual-env-name pyvenv-workon)
+          (pyvenv-workon pyvenv-workon))
+        ;; lsp needs to run after pyvenv-workon, so we make sure it's running here rather than
+        ;; in the python-mode-hook.
+        (when (not lsp-mode)
+          (lsp))))))
 
     (pyvenv-tracking-mode 1))  ; Automatically use pyvenv-workon via dir-locals
 #+END_SRC
@@ -4454,7 +4474,7 @@ For 80% of use-cases, I think [[https://github.com/pashky/restclient.el][restcli
     ;;:defer 1
     :mode (("\\.http\\'" . restclient-mode)))
 
-  (use-package restclient-helm 
+  (use-package restclient-helm
     ;;:defer 5
   )
 #+END_SRC
@@ -5015,6 +5035,8 @@ Use some persistent scratch files for various modes:
                                 (powerline-raw "[RO] " mode-line 'l))
                               (when (buffer-narrowed-p)
                                 (powerline-raw "[Narrow] " mode-line 'l))
+                              (when (string= major-mode "python-mode")
+                                (powerline-raw (format "[venv:%s] " pyvenv-virtual-env-name) mode-line 'l))
                               (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
                                 (powerline-raw
                                  (propertize

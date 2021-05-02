@@ -1758,9 +1758,13 @@ represent all current available bindings accurately as a single keymap."
   (add-to-list 'shackle-rules
               '("\\`\\*lsp-help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 10 :select t))
   (defun md/lsp-setup()
+    ;; recommended by LSP docs for performance
+    (setq read-process-output-max (* 1024 1024)) ;; 1mb
+
     (lsp-enable-imenu)
     (setq
           lsp-auto-configure t
+          lsp-auto-guess-root t ; Uses projectile to guess the project root.
           lsp-before-save-edits t
           lsp-eldoc-enable-hover t
           lsp-eldoc-render-all nil
@@ -1770,6 +1774,7 @@ represent all current available bindings accurately as a single keymap."
           lsp-enable-imenu t
           lsp-enable-indentation t
           lsp-enable-links t
+          lsp-clients-python-library-directories `("/usr/" ,(expand-file-name "~/.virtualenvs")) ; This seems appropriate
           lsp-enable-on-type-formatting nil
           lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
           lsp-enable-symbol-highlighting nil
@@ -1794,8 +1799,8 @@ represent all current available bindings accurately as a single keymap."
        ("pyls.plugins.mccabe.enabled" nil t)
        ("pyls.plugins.pyflakes.enabled" nil t))))
   :hook
-  ((python-mode . lsp)
-   (js-mode . lsp)
+   ;; NOTE: we don't have a python-mode hook - it gets handled by pyvenv-track-virtualenv
+  ((js-mode . lsp)
    (typescript-mode . lsp)
    (web-mode . lsp)
    (css-mode . lsp)
@@ -1866,6 +1871,7 @@ represent all current available bindings accurately as a single keymap."
   :demand t
   :config
   (setq pyvenv-workon "emacs")  ; Default venv
+  (pyvenv-workon pyvenv-workon)
 
   (when (fboundp 'pyvenv-track-virtualenv)
     (fmakunbound 'pyvenv-track-virtualenv))
@@ -1873,9 +1879,10 @@ represent all current available bindings accurately as a single keymap."
 (defun pyvenv-track-virtualenv ()
   "Set a virtualenv as specified for the current buffer.
 
-If either `pyvenv-activate' or `pyvenv-workon' are specified, and
-they specify a virtualenv different from the current one, switch
-to that virtualenv."
+This is originally provided by pyvenv, but I've added a couple
+of features. The most important one is that this invokes lsp
+/after/ all the pyvenv activate logic has been done, which means
+lsp can properly jump to definitions."
   (when (string= major-mode "python-mode")
     (cond
      (pyvenv-activate
@@ -1890,7 +1897,12 @@ to that virtualenv."
                  (or (not pyvenv-tracking-ask-before-change)
                      (y-or-n-p (format "Switch to virtualenv %s (currently %s)"
                                        pyvenv-workon pyvenv-virtual-env-name))))
-        (pyvenv-workon pyvenv-workon))))))
+        (message "pyvenv switching from %s to %s" pyvenv-virtual-env-name pyvenv-workon)
+        (pyvenv-workon pyvenv-workon))
+      ;; lsp needs to run after pyvenv-workon, so we make sure it's running here rather than
+      ;; in the python-mode-hook.
+      (when (not lsp-mode)
+        (lsp))))))
 
   (pyvenv-tracking-mode 1))  ; Automatically use pyvenv-workon via dir-locals
 
@@ -3262,7 +3274,7 @@ are ugly. It works fine though."
   ;;:defer 1
   :mode (("\\.http\\'" . restclient-mode)))
 
-(use-package restclient-helm 
+(use-package restclient-helm
   ;;:defer 5
 )
 
@@ -3653,6 +3665,8 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                               (powerline-raw "[RO] " mode-line 'l))
                             (when (buffer-narrowed-p)
                               (powerline-raw "[Narrow] " mode-line 'l))
+                            (when (string= major-mode "python-mode")
+                              (powerline-raw (format "[venv:%s] " pyvenv-virtual-env-name) mode-line 'l))
                             (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
                               (powerline-raw
                                (propertize
