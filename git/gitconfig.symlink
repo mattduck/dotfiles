@@ -1,5 +1,5 @@
 [user]
-name = Matthew Duck
+name = Matt Duck
 email = matt@mattduck.com
 editor = vim
 
@@ -19,8 +19,8 @@ b = branch -av
 
 d = diff
 dc = diff --cached
-dw = diff --color-words
-dwc = diff --color-words --cached
+dd = "!git diff | ydiff -s -w 120 -l --wrap -- " 
+ddc = "!git diff --cached | ydiff -s -w 120 -l --wrap -- "
 
 t = !tig
 refs = !tig refs
@@ -51,6 +51,7 @@ assumed=!git ls-files -v | grep '^[[:lower:]]'
 
 # List recent branches
 recent = "for-each-ref --sort='-authordate:iso8601' --format='%(authordate:relative) %09%09 %(refname:short)' refs/heads"
+cor = "!f() { git checkout "$(git for-each-ref --sort='-authordate:iso8601' --count 20 --format '%(refname:short)' refs/heads" | fzf); }; f"
 
 # %h   short hash
 # %s   subject
@@ -74,13 +75,20 @@ interactive = auto
 status = auto
 
 [color.diff]
-old = 9
-new = 2
-context = 10
-whitespace = 5
-meta = 7
-frag = 6
-commit = 3
+new = green
+old = brightred
+context = normal
+meta = white
+frag = white
+
+# commit = white
+# old = 9
+# new = 2
+# context = 10
+# whitespace = 5
+# meta = 7
+# frag = 6
+# commit = 3
 
 [color.decorate]
 branch = 6 ul
@@ -90,8 +98,9 @@ stash = 13 ul
 HEAD = 1 ul
 
 [color.status]
+changed = yellow
 added = 2
-changed = 9
+#changed = 9
 untracked = 10
 branch = 5 ul
 nobranch = 1
@@ -101,5 +110,4 @@ unmerged = 9
 [include]
 path = "~/.gitconfig-local"
 [github]
-	user = mattduck
-
+user = mattduck
