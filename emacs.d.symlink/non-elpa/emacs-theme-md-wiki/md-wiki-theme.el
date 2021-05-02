@@ -43,14 +43,14 @@
                       ;; (md/red "#df0413")
                       ;; (md/blue   "#80a2db")
 
-                      (md/serif "ETBookOT")
+                      (md/serif "ETBembo")
                       (md/sans "MerriweatherSans") ;; TODO: change to something variable width sans
-                      (md/fixed "Inconsolata")
+                      (md/fixed "Jetbrains Mono")
                       )
 
                      (
                       ;; basics
-                      (default (:foreground md/default :background md/bg :family md/serif :weight 'normal))
+                      (default (:foreground md/default :background md/bg :family md/fixed :weight 'normal))
                       (bold (:foreground md/hl :weight 'bold))
                       (fringe                                    (:background md/bg))
                       (hl-line                                   (:background md/blue))
@@ -73,11 +73,11 @@
 
                       (font-lock-keyword-face                            (:foreground md/hl :bold t))
                       (font-lock-builtin-face                            (:foreground md/hl :bold t))
-                      (font-lock-constant-face                           (:foreground md/blue :bold t))
-                      (font-lock-type-face                               (:foreground md/blue :bold t))
-                      (font-lock-string-face                             (:foreground md/red :bold t))
-                      (font-lock-function-name-face                      (:foreground md/hl :italic t :bold nil))
-                      (font-lock-variable-name-face                      (:foreground md/hl :italic t :bold t))
+                      (font-lock-constant-face                           (:foreground md/hl :bold t))
+                      (font-lock-type-face                               (:foreground md/hl :bold t))
+                      (font-lock-string-face                             (:foreground md/hl :italic t :bold nil))
+                      (font-lock-function-name-face                      (:foreground md/hl :italic nil :bold nil))
+                      (font-lock-variable-name-face                      (:foreground md/default :italic nil :bold nil))
                       (font-lock-comment-face                            (:foreground md/hide))
                       (font-lock-warning-face                            (:foreground md/hl :bold t :italic t))
 
