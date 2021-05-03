@@ -752,16 +752,19 @@ by using a noop function:
 
 ** Other settings
 #+BEGIN_SRC emacs-lisp
-  (setq delete-by-moving-to-trash t)
-  (setq recentf-max-saved-items 200)
-  (setq compilation-read-command nil) ; Don't prompt me to run make
+    (setq delete-by-moving-to-trash t)
+    (setq recentf-max-saved-items 200)
+    (setq compilation-read-command nil) ; Don't prompt me to run make
 
-  ;; This is handy - instead of popping up a separate GPG UI prompt,
-  ;; using loopback mode will allow Emacs to prompt in the minibuffer.
-  (setq epa-pinentry-mode 'loopback)
+    ;; This is handy - instead of popping up a separate GPG UI prompt,
+    ;; using loopback mode will allow Emacs to prompt in the minibuffer.
+    (setq epa-pinentry-mode 'loopback)
 
-  (line-number-mode 0)
-  (column-number-mode 0)
+    (line-number-mode 0)
+    (column-number-mode 0)
+
+  (when (memq window-system '(mac ns))
+    (add-to-list 'initial-frame-alist '(fullscreen . maximized)))
 #+END_SRC
 * Evil
 ** Base evil
