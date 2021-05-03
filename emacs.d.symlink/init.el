@@ -286,11 +286,12 @@
 (defun md/file-info ()
   (interactive)
   (message
-   "%s | %s lines | line %d:%3d%% | %s | %s"
+   "%s | %s lines | line %d:%d %3d%% | %s | %s"
    (buffer-file-name)
-   (count-lines (point-min) (point-max))
-   (count-lines (point-min) (point))
-   (/ (window-end) 0.01 (point-max))
+   (count-lines (point-min) (point-max)) ; total
+   (count-lines (point-min) (point)) ; current
+   (current-column) ; column
+   (/ (window-end) 0.01 (point-max)) ; line %
    (or projectile-project-name "[no project]")
    major-mode))
 
