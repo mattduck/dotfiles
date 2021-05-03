@@ -29,6 +29,7 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
 * Initialise
 ** Packages
 #+BEGIN_SRC emacs-lisp
+  (require 'package)
   ;; Load packages. It's necessary to call this early.
   (package-initialize)
 
@@ -41,8 +42,24 @@ I'm using org-mode to structure my configuration. Inspired by [[https://github.c
           ("melpa" . "https://melpa.org/packages/")
           ("org" . "https://orgmode.org/elpa/")))
 
-  ;; If there are multiple versions of a file, prefer the newer one. The default
-  ;; is to use the first one found.
+#+END_SRC
+
+
+If there are multiple versions of a file, prefer the newer one. The default
+is to use the first one found.
+
+[2021-05-03 Mon] if there are multiple versions of a file (eg. .el, .elc, .so),
+setting ~load-prefer-newer~ to ~t~ means emacs will load the most recent. The
+default is to use the first file found. I ran into an issue loading ~jka-compr~ on
+MacOS (using https://github.com/jimeh/build-emacs-for-macos) - on startup emacs
+would recursively load jka-compr. To get around this we set ~load-prefer-newer~ to
+nil just to load jka-compr. This is a workaround suggested in many different
+threads online (eg. https://github.com/bbatsov/prelude/issues/938).
+
+
+#+BEGIN_SRC emacs-lisp
+  (setq load-prefer-newer nil)
+  (require 'jka-compr)
   (setq load-prefer-newer t)
 #+END_SRC
 
@@ -3180,7 +3197,7 @@ org headings:
   (setq
        ;; [2021-05-02] Don't expand org buffers on open.
        org-startup-folded t
- 
+
         ;; Whether to let org-agenda permanently mess with window layout
         org-agenda-restore-windows-after-quit nil
 

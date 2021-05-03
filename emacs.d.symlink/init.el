@@ -18,6 +18,7 @@
   (when (fboundp 'native-compile-async)
     (native-compile-async (md/dotfiles-get-path "emacs.d.symlink/init.el"))))
 
+(require 'package)
 ;; Load packages. It's necessary to call this early.
 (package-initialize)
 
@@ -30,8 +31,8 @@
         ("melpa" . "https://melpa.org/packages/")
         ("org" . "https://orgmode.org/elpa/")))
 
-;; If there are multiple versions of a file, prefer the newer one. The default
-;; is to use the first one found.
+(setq load-prefer-newer nil)
+(require 'jka-compr)
 (setq load-prefer-newer t)
 
 (when (boundp 'comp-deferred-compilation-deny-list)
