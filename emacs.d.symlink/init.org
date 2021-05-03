@@ -317,6 +317,11 @@ Auto-wrap text.
 
   ;; Fix for issue where italic fonts don't actually use the italic property.
   (set-face-attribute 'italic nil :slant 'italic :underline nil)
+
+
+  ;; Try to use Apple Color Emoji to display emojis
+  (when (memq window-system '(mac ns))
+    (set-fontset-font "fontset-default" 'symbol "Apple Color Emoji" nil 'prepend))
 #+END_SRC
 
 When using a server with both GUI and terminal clients attached, I want them to

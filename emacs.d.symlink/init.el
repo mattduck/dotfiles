@@ -180,6 +180,11 @@
 ;; Fix for issue where italic fonts don't actually use the italic property.
 (set-face-attribute 'italic nil :slant 'italic :underline nil)
 
+
+;; Try to use Apple Color Emoji to display emojis
+(when (memq window-system '(mac ns))
+  (set-fontset-font "fontset-default" 'symbol "Apple Color Emoji" nil 'prepend))
+
 (use-package s :demand t)
 ;; (add-hook 'focus-in-hook 'md/set-default-font)
 (md/set-default-font)
