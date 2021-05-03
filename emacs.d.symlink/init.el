@@ -1616,51 +1616,6 @@ represent all current available bindings accurately as a single keymap."
   :bind (:map md/leader-map
               (";d" . neotree-toggle)))
 
-;; TODO: virtualenv support for python
-;; notes on dependencies
-
-;; TEMP loading -> as I redo shackle
-(use-package shackle
-  :load-path "non-elpa/shackle"  ; fork
-  :demand t)
-
-(use-package dap-mode
-  :commands (dap-debug)
-  :demand t
-  :config
-  (defun md/dap-session-created-hook (session)
-    (setq dap-ui-buffer-configurations
-          `((,dap-ui--locals-buffer . ((side . right) (slot . 1) (window-width . 0.20)))
-            (,dap-ui--expressions-buffer . ((side . right) (slot . 2) (window-width . 0.20)))
-            (,dap-ui--sessions-buffer . ((side . right) (slot . 3) (window-width . 0.20)))
-            (,dap-ui--breakpoints-buffer . ((side . right) (slot . 4) (window-width . ,treemacs-width)))
-            (,dap-ui--debug-window-buffer . ((side . top) (slot . 1) (window-width . 0.15)))))
-    (dap-ui-repl)
-    (dap-ui-locals)
-    (dap-go-to-output-buffer))
-  (setq dap-auto-show-output t)
-  (use-package dap-python)
-  (use-package dap-node)
-  (setq dap-auto-show-output nil)
-  (dap-ui-mode 1)
-  (evil-set-initial-state 'dap-ui-repl-mode 'emacs)
-  (add-to-list 'shackle-rules '(dap-ui-breakpoints-ui-list-mode :align above :close-on-realign t :size 0.15))
-  (add-to-list 'shackle-rules '(dap-ui-repl-mode :align t :size 0.15))
-  (add-to-list 'shackle-rules '(dap-server-log-mode :align t :close-on-realign t :size 0.20))
-  :hook
-  ((dap-session-created . md/dap-session-created-hook))
-  :bind (:map md/leader-map
-              ("d <RET>" . dap-debug)
-              ("d u" . dap-switch-stack-frame)
-              ("d n" . dap-next)
-              ("d i" . dap-step-in)
-              ("d o" . dap-step-out)
-              ("d c" . dap-continue)
-              ("d b" . dap-breakpoint-toggle)
-              ("d l" . dap-ui-breakpoints-list)
-              ("d D" . dap-disconnect)
-              ("d x" . dap-ui-repl)))
-
 (defun md/ide ()
   (interactive)
   (helm :sources
@@ -1756,9 +1711,8 @@ represent all current available bindings accurately as a single keymap."
   :disabled)
 
 (use-package lsp-mode
+  :demand t
   :config
-  (add-to-list 'shackle-rules
-              '("\\`\\*lsp-help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 10 :select t))
   (defun md/lsp-setup()
     ;; recommended by LSP docs for performance
     (setq read-process-output-max (* 1024 1024)) ;; 1mb
@@ -1766,6 +1720,7 @@ represent all current available bindings accurately as a single keymap."
     (lsp-enable-imenu)
     (setq
           lsp-auto-configure t
+          lsp-enable-dap-auto-configure nil ; Don't try to auto-enable dap: this creates a lot of binding clashes
           lsp-auto-guess-root t ; Uses projectile to guess the project root.
           lsp-before-save-edits t
           lsp-eldoc-enable-hover t
@@ -1802,7 +1757,7 @@ represent all current available bindings accurately as a single keymap."
        ("pyls.plugins.pyflakes.enabled" nil t))))
   :hook
    ;; NOTE: we don't have a python-mode hook - it gets handled by pyvenv-track-virtualenv
-  ((js-mode . lsp)
+  (;;(js-mode . lsp)
    (typescript-mode . lsp)
    (web-mode . lsp)
    (css-mode . lsp)
@@ -4203,6 +4158,9 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
             ('magit-diff-mode :eyebrowse "git" :select t :align left :size 0.5 :only t)
             ('magit-log-mode :eyebrowse "git" :select t :align t :size 0.4 :only t)
             ('magit-revision-mode :eyebrowse "git" :select t :align t :size 0.5 :close-on-realign t)
+
+            ;; lsp
+            ("\\`\\*lsp-help.*?\\*\\'" :regexp t :align t :close-on-realign t :size 10 :select t)
 
             ("\\`\\*edit-indirect .*?\\*\\'" :regexp t :select t :same t)
             ('completion-list-mode :align t :close-on-realign t :size 0.33 :select t)
