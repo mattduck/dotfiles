@@ -84,8 +84,30 @@
  :if (memq window-system '(mac ns))
  :demand t
  :config
- (message "in use-package config for exec-path-from-shell")
- (progn (exec-path-from-shell-initialize)))
+ (setq exec-path-from-shell-variables
+       '("BROWSER"
+         "CI"
+         "DB_HOST"
+         "DB_NAME"
+         "DB_PASSWORD"
+         "DB_PORT"
+         "DB_USER"
+         "DDT"
+         "DJANGO_SETTINGS_MODULE"
+         "GO15VENDOREXPERIMENT"
+         "GOPATH"
+         "LANG"
+         "LAUNCH_DARKLY_SDK_KEY"
+         "LOGFORMAT"
+         "LOGLEVEL"
+         "MANPATH"
+         "PATH"
+         "PGPASSWORD"
+         "PYTHONPATH"
+         "REDIS_URI"
+         "SILK"
+         "TMUX"))
+ (exec-path-from-shell-initialize))
 
 (define-prefix-command 'md/leader-map)
 
