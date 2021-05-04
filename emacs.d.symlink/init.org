@@ -1625,18 +1625,23 @@ Company seems to work nicely without much configuration.
 #+BEGIN_SRC emacs-lisp
   (use-package company
     :demand t
-    ;;:defer 2
     :config
-    (progn
-      (setq company-minimum-prefix-length 2
-            company-idle-delay 0.1)
+    (setq company-minimum-prefix-length 1
+          company-idle-delay 0.2
+          company-tooltip-align-annotations t
+          company-begin-commands '(self-insert-command org-self-insert-command)
+          company-transformers '(company-sort-by-backend-importance)
+          company-backends '((company-capf company-files company-keywords company-dabbrev-code))
+          company-tooltip-minimum-width 40
+          company-tooltip-width-grow-only t
+          company-tooltip-offset-display 'scroll)
 
-      ;; Bind here rather than in ":bind" to avoid complaints about
-      ;; company-mode-map not existing.
-      (bind-key "C-n" 'company-select-next company-active-map)
-      (bind-key "C-p" 'company-select-previous company-active-map)
+    ;; Bind here rather than in ":bind" to avoid complaints about
+    ;; company-mode-map not existing.
+    (bind-key "C-n" 'company-select-next company-active-map)
+    (bind-key "C-p" 'company-select-previous company-active-map)
 
-      (bind-key "C-n" 'company-complete evil-insert-state-map))
+    (bind-key "C-n" 'company-complete evil-insert-state-map)
     :hook ((emacs-lisp-mode . company-mode)
            (python-mode . company-mode)
            (web-mode . company-mode)
@@ -1649,12 +1654,47 @@ Company box is a nice extension that can provide icons (although I'm disabling
 them as they're too large by default), but can also popup definitions of the
 things you're completing.
 
+There isn't an all-the-icons list included by default, so I've taken
+KaratasFurkan's version from https://github.com/sebastiencs/company-box/issues/139#issuecomment-724774599.
+
 #+BEGIN_SRC emacs-lisp
   (use-package company-box
-    :config (setq company-box-enable-icon nil
+    :config (setq company-box-enable-icon t
+                  company-box-icon-right-margin 1
+                  company-box-color-icon t
                   company-box-doc-enable t
                   company-box-doc-delay 0.1
-                  company-box-max-candidates 50)
+                  company-box-icons-alist 'company-box-icons-all-the-icons
+                  company-box-icons-all-the-icons
+                  (let ((all-the-icons-scale-factor 1)
+                        (all-the-icons-default-adjust 0))
+                    `((Unknown       . ,(all-the-icons-faicon "question" :face 'all-the-icons-purple)) ;;question-circle is also good
+                      (Text          . ,(all-the-icons-faicon "file-text-o" :face 'all-the-icons-green))
+                      (Method        . ,(all-the-icons-faicon "cube" :face 'all-the-icons-dcyan))
+                      (Function      . ,(all-the-icons-faicon "cube" :face 'all-the-icons-dcyan))
+                      (Constructor   . ,(all-the-icons-faicon "cube" :face 'all-the-icons-dcyan))
+                      (Field         . ,(all-the-icons-faicon "tag" :face 'all-the-icons-red))
+                      (Variable      . ,(all-the-icons-faicon "tag" :face 'all-the-icons-dpurple))
+                      (Class         . ,(all-the-icons-faicon "cog" :face 'all-the-icons-red))
+                      (Interface     . ,(all-the-icons-faicon "cogs" :face 'all-the-icons-red))
+                      (Module        . ,(all-the-icons-alltheicon "less" :face 'all-the-icons-red))
+                      (Property      . ,(all-the-icons-faicon "wrench" :face 'all-the-icons-red))
+                      (Unit          . ,(all-the-icons-faicon "tag" :face 'all-the-icons-red))
+                      (Value         . ,(all-the-icons-faicon "tag" :face 'all-the-icons-red))
+                      (Enum          . ,(all-the-icons-faicon "file-text-o" :face 'all-the-icons-red))
+                      (Keyword       . ,(all-the-icons-material "format_align_center" :face 'all-the-icons-red))
+                      (Snippet       . ,(all-the-icons-material "content_paste" :face 'all-the-icons-red))
+                      (Color         . ,(all-the-icons-material "palette" :face 'all-the-icons-red))
+                      (File          . ,(all-the-icons-faicon "file" :face 'all-the-icons-red))
+                      (Reference     . ,(all-the-icons-faicon "tag" :face 'all-the-icons-red))
+                      (Folder        . ,(all-the-icons-faicon "folder" :face 'all-the-icons-red))
+                      (EnumMember    . ,(all-the-icons-faicon "tag" :face 'all-the-icons-red))
+                      (Constant      . ,(all-the-icons-faicon "tag" :face 'all-the-icons-red))
+                      (Struct        . ,(all-the-icons-faicon "cog" :face 'all-the-icons-red))
+                      (Event         . ,(all-the-icons-faicon "bolt" :face 'all-the-icons-red))
+                      (Operator      . ,(all-the-icons-faicon "tag" :face 'all-the-icons-red))
+                      (TypeParameter . ,(all-the-icons-faicon "cog" :face 'all-the-icons-red))
+                      (Template      . ,(all-the-icons-faicon "bookmark" :face 'all-the-icons-dgreen)))))
     :hook (company-mode . company-box-mode))
 #+END_SRC
 
@@ -2434,7 +2474,9 @@ features:
             lsp-before-save-edits t
             lsp-eldoc-enable-hover t
             lsp-eldoc-render-all nil
-            lsp-enable-completion-at-point nil
+            lsp-completion-enable t
+            lsp-completion-show-detail t
+            lsp-completion-show-kind t
             lsp-enable-file-watchers t
             lsp-enable-folding t
             lsp-enable-imenu t
@@ -2453,7 +2495,7 @@ features:
             lsp-pyls-plugins-flake8-enabled t
             lsp-signature-auto-activate t
             lsp-signature-render-documentation t
-            lsp-signature-doc-lines 1)
+            lsp-signature-doc-lines 10)
       (lsp-register-custom-settings
        '(("pyls.plugins.pyls_mypy.enabled" t t)
          ("pyls.plugins.pyls_mypy.live_mode" nil t)
