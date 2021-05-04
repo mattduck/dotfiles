@@ -124,6 +124,12 @@
           (string= (system-name) "arch"))
   (menu-bar-mode -1))
 
+(defun contextual-menubar (&optional frame)
+    (set-frame-parameter frame 'menu-bar-lines (if (display-graphic-p frame) 1 0)))
+
+(add-hook 'after-make-frame-functions 'contextual-menubar)
+(add-hook 'after-init-hook 'contextual-menubar)
+
 (defun md/fontify-if-font-lock-mode ()
   (when font-lock-mode
     (font-lock-ensure)))
@@ -1961,12 +1967,21 @@ lsp can properly jump to definitions."
   :demand t
   :config
   (progn
-    (defun md/git-commit-set-fill-column ()
+    (defun md/git-commit-setup ()
       (interactive)
-      (setq fill-column 70))
-    (add-hook 'git-commit-setup-hook 'md/git-commit-set-fill-column)
-    (add-hook 'git-commit-setup-hook 'evil-insert-state)
-    (global-git-commit-mode t)))
+      (setq fill-column 70)
+      (when (not (display-graphic-p))
+        (font-lock-mode -1))  ;; Terminal colours are often bad
+      (display-fill-column-indicator-mode)
+      (evil-normal-state))
+    (add-hook 'git-commit-setup-hook 'md/git-commit-setup)
+    (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell)
+
+    ;; Remove some default hooks that I don't use
+    (remove-hook 'git-commit-setup-hook 'git-commit-save-message)
+    (remove-hook 'git-commit-setup-hook 'git-commit-setup-changelog-support)
+    (remove-hook 'git-commit-setup-hook 'git-commit-turn-on-auto-fill)
+    (remove-hook 'git-commit-setup-hook 'git-commit-propertize-diff)))
 
 (use-package git-gutter
  :demand t
@@ -3870,7 +3885,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (defun md/toggle-org-pretty ()
   (interactive)
   (require 'org-indent)
-  (make-local-variable 'org-hide-leading-stars-before-indent-mode)
+  (make-local-variable 'org-hide-leading-stars)
   (make-local-variable 'org-indent-indentation-per-level)
   (make-local-variable 'org-cycle-separator-lines)
   (make-local-variable 'org-bullets-bullet-list)
@@ -3881,7 +3896,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
      (right-margin-width . 5)
      (header-line-format . " ")
      (mode-line-format . " ")
-     (org-hide-leading-stars-before-indent-mode . nil)
+     (org-hide-leading-stars . t)
      (org-indent-indentation-per-level . 2)
      (org-cycle-separator-lines . 1)
      (org-bullets-bullet-list . ("▷"
@@ -3898,14 +3913,12 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
      (set-window-buffer nil (current-buffer))
      (font-lock-fontify-buffer)
      (org-indent-mode 1)
-     (md/org-list-utf-enable)
-     )
+     (md/org-list-utf-enable))
    (lambda () ;; Disable fn
      (set-window-buffer nil (current-buffer))
      (font-lock-fontify-buffer)
      (org-indent-mode 0)
-     (md/org-list-utf-disable)
-     )))
+     (md/org-list-utf-disable))))
 
 (bind-key "tW" 'md/toggle-org-pretty md/leader-map)
 
