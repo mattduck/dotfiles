@@ -1267,6 +1267,7 @@ represent all current available bindings accurately as a single keymap."
     (bind-key "C-n" 'company-complete evil-insert-state-map))
   :hook ((emacs-lisp-mode . company-mode)
          (python-mode . company-mode)
+         (web-mode . company-mode)
          (typescript-mode . company-mode)
          (restclient-mode . company-mode)
          (js-mode . company-mode)))
@@ -1788,9 +1789,7 @@ represent all current available bindings accurately as a single keymap."
   :hook
    ;; NOTE: we don't have a python-mode hook - it gets handled by pyvenv-track-virtualenv
   (;;(js-mode . lsp)
-   (typescript-mode . lsp)
    (web-mode . lsp)
-   (css-mode . lsp)
    (lsp-mode . lsp-enable-which-key-integration)
    (lsp-before-initialize . md/lsp-setup))
   :bind (:map evil-normal-state-map
@@ -1896,6 +1895,20 @@ lsp can properly jump to definitions."
 ;; Syntax and completion for pip requirements files.
 (use-package pip-requirements :demand t)
 
+(use-package web-mode
+:demand t
+:mode (("\\.tsx\\'" . web-mode)
+        ("\\.jsx\\'" . web-mode)))
+
+(when (fboundp 'lsp-typescript-javascript-tsx-jsx-activate-p)
+  (fmakunbound 'lsp-typescript-javascript-tsx-jsx-activate-p))
+
+  (defun lsp-typescript-javascript-tsx-jsx-activate-p (filename &optional _)
+    "Check if the javascript-typescript language server should be enabled based on FILENAME."
+    (or (string-match-p (rx (one-or-more anything) "." (or "ts" "js") (opt "x") string-end) filename)
+        (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode 'web-mode)
+             (not (derived-mode-p 'json-mode)))))
+
 (org-babel-do-load-languages
    'org-babel-load-languages
    '((js . t)))
@@ -1904,24 +1917,6 @@ lsp can properly jump to definitions."
 ;; modern node versions.
   (setq org-babel-js-function-wrapper
     "process.stdout.write(require('util').inspect(function(){%s}()));")
-
-  (use-package js-mode
-    :mode (("\\.js\\'" . js-mode)
-           ("\\.jsx\\'" . js-mode)))
-
-  ;; TODO: not detecting?
-  (use-package typescript-mode
-    :mode (("\\.ts\\'" . typescript-mode)
-           ("\\.tsx\\'" . typescript-mode)))
-
-(when (fboundp 'lsp-typescript-javascript-tsx-jsx-activate-p)
-  (fmakunbound 'lsp-typescript-javascript-tsx-jsx-activate-p)
-
-  (defun lsp-typescript-javascript-tsx-jsx-activate-p (filename &optional _)
-    "Check if the javascript-typescript language server should be enabled based on FILENAME."
-    (or (string-match-p (rx (one-or-more anything) "." (or "ts" "js") (opt "x") string-end) filename)
-        (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode 'web-mode)
-             (not (derived-mode-p 'json-mode))))))
 
 (use-package git-commit
   :demand t

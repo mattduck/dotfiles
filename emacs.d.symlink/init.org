@@ -1639,6 +1639,7 @@ Company seems to work nicely without much configuration.
       (bind-key "C-n" 'company-complete evil-insert-state-map))
     :hook ((emacs-lisp-mode . company-mode)
            (python-mode . company-mode)
+           (web-mode . company-mode)
            (typescript-mode . company-mode)
            (restclient-mode . company-mode)
            (js-mode . company-mode)))
@@ -2466,9 +2467,7 @@ features:
     :hook
      ;; NOTE: we don't have a python-mode hook - it gets handled by pyvenv-track-virtualenv
     (;;(js-mode . lsp)
-     (typescript-mode . lsp)
      (web-mode . lsp)
-     (css-mode . lsp)
      (lsp-mode . lsp-enable-which-key-integration)
      (lsp-before-initialize . md/lsp-setup))
     :bind (:map evil-normal-state-map
@@ -2619,9 +2618,42 @@ than in python-mode-hook.
   (use-package pip-requirements :demand t)
 #+END_SRC
 
-** Javascript and Typescript
+** Frontend (JS/Typescript/React/HTML etc.)
+
+[2021-05-04] LSP is now providing a lot of the language-aware features for
+autocomplete, formatting buffers, linting, jump-to-definition etc. That means we
+don't really need much from Emacs - the biggest thing is syntax
+highlighting. Unfortunately, the Emacs ecosystem for web frontend packages
+seems to be in a pretty bad state. Although there are a lot of packages
+(js-mode, js2-mode, js-jsx-mode, rjsx-mode, typescript-mode, tide etc.), none
+of them can actually support all of Typescript/Javascript/JSX/TSX.
+
+One exception to this seems to be web-mode. It /looks/ like we could have some
+success by just having web-mode provide syntax support for the various
+languages/markups, and delegating everything else to LSP.
+
+#+BEGIN_SRC emacs-lisp
+      (use-package web-mode
+      :demand t
+      :mode (("\\.tsx\\'" . web-mode)
+              ("\\.jsx\\'" . web-mode)))
+#+END_SRC
 
 LSP dependencies: ~npm install -g javascript-typescript-langserver~.
+
+Enable the typescript language server in web mode. This overrides the original
+lsp definition to also support web mode.
+
+#+BEGIN_SRC emacs-lisp
+  (when (fboundp 'lsp-typescript-javascript-tsx-jsx-activate-p)
+    (fmakunbound 'lsp-typescript-javascript-tsx-jsx-activate-p))
+
+    (defun lsp-typescript-javascript-tsx-jsx-activate-p (filename &optional _)
+      "Check if the javascript-typescript language server should be enabled based on FILENAME."
+      (or (string-match-p (rx (one-or-more anything) "." (or "ts" "js") (opt "x") string-end) filename)
+          (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode 'web-mode)
+               (not (derived-mode-p 'json-mode)))))
+#+END_SRC
 
 Add org babel support:
 
@@ -2634,30 +2666,8 @@ Add org babel support:
   ;; modern node versions.
     (setq org-babel-js-function-wrapper
       "process.stdout.write(require('util').inspect(function(){%s}()));")
-
-    (use-package js-mode
-      :mode (("\\.js\\'" . js-mode)
-             ("\\.jsx\\'" . js-mode)))
-
-    ;; TODO: not detecting?
-    (use-package typescript-mode
-      :mode (("\\.ts\\'" . typescript-mode)
-             ("\\.tsx\\'" . typescript-mode)))
 #+END_SRC
 
-Enable the typescript language server in web mode. This overrides the original
-lsp definition to also support web mode.
-
-#+BEGIN_SRC emacs-lisp
-  (when (fboundp 'lsp-typescript-javascript-tsx-jsx-activate-p)
-    (fmakunbound 'lsp-typescript-javascript-tsx-jsx-activate-p)
-
-    (defun lsp-typescript-javascript-tsx-jsx-activate-p (filename &optional _)
-      "Check if the javascript-typescript language server should be enabled based on FILENAME."
-      (or (string-match-p (rx (one-or-more anything) "." (or "ts" "js") (opt "x") string-end) filename)
-          (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode 'web-mode)
-               (not (derived-mode-p 'json-mode))))))
-#+END_SRC
 
 ** COMMENT Python
 
@@ -2817,17 +2827,6 @@ This is taken straight from [[https://www.masteringemacs.org/article/polymode-mu
       :innermodes '(poly-sql-expr-python-innermode)
       (setq polymode-eval-region-function #'poly-python-sql-eval-chunk)
       (define-key poly-python-sql-mode-map (kbd "C-c C-c") 'polymode-eval-chunk)))
-#+END_SRC
-
-** COMMENT Web mode
-This makes working with HTML/CSS/JS files much nicer. TODO - read documentation
-/ configure.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package web-mode
-    :mode (("\\.tsx\\'" . web-mode)
-           ("\\.jsx\\'" . web-mode)))
-    ;;:defer 1)
 #+END_SRC
 
 ** COMMENT MIT Scheme
