@@ -2250,7 +2250,7 @@ lsp can properly jump to definitions."
 
       ;; Use UTF-8 ellipsis character
       ;; org-ellipsis "…"
-      org-ellipsis "  "
+      org-ellipsis " …"
 
       ;; Don't display the bold/underline/emphasis markup
       org-hide-emphasis-markers t
