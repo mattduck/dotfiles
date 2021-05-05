@@ -1690,6 +1690,10 @@ represent all current available bindings accurately as a single keymap."
   :bind (:map md/leader-map
               (";d" . neotree-toggle)))
 
+(use-package bug-reference
+  :hook ((prog-mod . bug-reference-prog-mode)
+         (git-commit-mode . bug-reference-mode)))
+
 (defun md/ide ()
   (interactive)
   (helm :sources

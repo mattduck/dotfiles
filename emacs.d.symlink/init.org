@@ -2285,6 +2285,16 @@ the underlying terminal (ie. I get the usual readline bindings).
     :bind (:map md/leader-map
                 (";d" . neotree-toggle)))
 #+END_SRC
+
+** Bug reference
+
+#+BEGIN_SRC emacs-lisp
+    (use-package bug-reference
+      :hook ((prog-mod . bug-reference-prog-mode)
+             (git-commit-mode . bug-reference-mode)))
+#+END_SRC
+
+
 ** COMMENT DAP
 #+BEGIN_SRC emacs-lisp
   ;; TODO: virtualenv support for python
