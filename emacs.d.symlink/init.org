@@ -6016,139 +6016,50 @@ server/client.
 #+END_SRC
 
 * COMMENT TODO
-# - [ ] getting slowdowns where python3 uses 99% cpu. Seems to occcur sometimes
-#   when killing buffers. Only python processes running are doing ~elpy.__main__~.
-#   - This process is started in elpy-rpc--open.
-#   - https://github.com/jorgenschaefer/elpy/issues/724
-#   - Next time this happens use strace and try to report bug.
-#   - https://github.com/jorgenschaefer/elpy/issues/96
 
-- [ ] info / other help modes - use vi keys to navigate?
-- [ ] how to preserve binding in map?
-  - Eg. I want to use normal mode for some magit modes, but I generally want to retain
-    the behaviour of RET. This is true for help modes too.
-- [ ] debugger - get similar bindings to pudb
-- [ ] edebug - similar to pudb, fix window issues
-- [ ] jumping forward/back to markers including between files
-- [ ] open shell with /server/apps/* on path? Will allow for pytest
-- [ ] compile
-  - bindings
-- [ ] fix init warnings
-- [ ] mark ring - helm-all-mark-rings
-- [ ] dash interface?
-- [ ] more reliable way to jump forward/back between markers.
-- [ ] how to profile cpu issues
-- [ ] org links
-- [ ] [2017-03-23 Thu] list functions/classes in project?
-- [ ] [2017-03-25 Sat] https://github.com/redguardtoo/evil-matchit.
-- [ ] [2017-05-06 Sat] org - get babel working for scheme
-- [ ] [2017-07-04 Tue] Way to output org-babel results to buffer?
-- [ ] [2017-07-15 Sat 18:12] fix this "attempt to delete minibuffer" shackle
-  issue.
-  - think it's a bug in the shackle fork - if there is only one window open, we
-    can't delete it before displaying the new one. Can solve by either not
-    deleting it in this circumstance, or moving the deletion to happen after the
-    new one has been displayed.
-- [ ] put evil bindings properly in compilation mode, fix this =g= thing.
-- [ ] helm mini - group buffers better.
-  - and better searching by the whole path/mode rather than the buffer name.
-  - add projectile name
-- [ ] [2017-08-20 Sun 23:28] sqlclient feature?
-  - basically just send region or buffer to psql and write to result buffer.
-- [ ] own logging/messages buffer? To avoid the noise.
-- [ ] [2017-11-05 Sun] Make magit bindings similar to tig.
-  - generally magit bindings need updating.
-- [ ] [2018-05-11 Fri] inline sql syntax highlighting if possible
-- [ ] [2018-05-11 Fri] evil-collection
-- [2018-06-17 Sun]
-  - [ ] anaconda: use RET and TAB to display buffers like grep.
-  - [ ] [2018-05-16 Wed] ctags for python?
-- [ ] bindings to start terminals
-- [2018-06-26 Tue]
-  - [ ] Change font size for specific windows
-  - [ ] ansi term - doesn't correctly show the "bright" ansi colours?
-- [2018-06-29 Fri]
-  - [ ] Folding - should work when at start of line
-  - [ ] highlight/unhighlight region?
-- [2018-07-15 Sun]
-  - [ ] Package list bindings
-  - [ ] list upgradeable packages
-  - [ ] org-table-edit-field
-    - org-table-create-or-convert-from-region
-    - org-table-next-row
-    - org-table-next-field
-  - [ ] git-gutter: use another package for fringe? Margin update is
-    unreliable, clashes w/writeroom.
-- [2018-08-06 Mon]
-  - Minor mode: highlight sql keywords
-- [2018-08-11 Sat]
-  - [ ] 26.1
-- [2018-10-05 Fri]
-  - [ ] git-gutter responsible for freeze?
-  - [ ] ag buffer - resume after quit
-  - [ ] vi refresh
-- [2018-11-05 Mon]
-  - [ ] do something with text-scale-decrease/increase
-- [2018-12-19 Wed]
-  - [ ] stripe buffer
+Odd todos, fixes, links I want to explore etc.
 
-#+BEGIN_SRC emacs-lisp
-  ;; issue: projectile-project-buffer-p returns true for buffers that
-  ;; aren't visiting a file
-  (helm :sources
-        (map 'list
-             (lambda (project-dir)
-               (let ((default-directory project-dir))
-                 (message (projectile-project-p))
-                 (when (projectile-project-p)
-                   (message (format "%s" (projectile-project-buffers)))
-                   (helm-build-sync-source default-directory
-                     :action  '(("Switch to buffer" . switch-to-buffer))
-                     :candidates (projectile-project-buffer-names)))))
-             (projectile-open-projects)))
-#+END_SRC
-- [2018-09-22 Sat]
-  - shell command: open emacs buffer with the output
-- [2019-07-04 Thu]
-  - [ ] outshine mode - integrate. ensure works with gfm/markdown.
-- [2020-04-26 Sun]
-  - [ ] ensure emacs python setup works OK
-    - LSP:
-      - [X] python extra configuration
-        - [X] mypy
-          - the stderr buffer had the solution: ~future~ was missing. installing it
-            manually fixed it.
-        - [X] black
-        - [X] isort
-      - [X] formatting
-      - [X] bindings for:
-        - lsp-describe-thing-at-point
-          - gh
-        - lsp-ui-peek-find-definitions
-          - gD
-        - lsp-ui-peek-find-references
-          - gr
-        - lsp-format-buffer
-          - leader F f
-        - lsp-rename
-          - leader F R
-        - lsp-ui-imenu
-          - leader N? contains trees
-      - [X] project virtualenvs
-        - the recommended way is to use pyenv.
-          - [X] get pyvenv working similar to https://blog.allardhendriksen.nl/posts/tracking-project-virtual-environments-with-pyvenv-tracking-mode/
-          - [X] what about pipenv?
-            - pipenv install into the venv is a good workaround.
-      - [ ] appropriate faces
-      - [ ] lsp supports folding?
-      - [ ] dap mode - a general debugger would be v useful.
-      - [ ] treemacs? something to try
-      - How to debug lsp issues?
-        - ~lsp-client-settings~ shows your settings.
-        - ~lsp-register-custom-settings~ can be used to add/change settings. There are
-          examples in lsp-pyls.el.
-        - The ~pyls::stderr buffer~ shows "no module named future".
-      - https://github.com/tomv564/pyls-mypy/issues/37 <- this slowed me down with mypy.
-  - [ ] emacs react/js setup
-    - [ ] does this auto-support multiple environments?
-  - [ ] emacs/alfred thing - will require coding
+** [2021-05-05]
+
+- links
+  - [ ] https://github.com/rougier/svg-tag-mode
+  - [ ] https://karthinks.com/software/batteries-included-with-emacs/
+  - [ ] https://github.com/ubolonton/emacs-tree-sitter (when there are usable implementations)
+  - [ ] https://github.com/rougier/nano-emacs?
+  - [ ] https://github.com/legalnonsense/elgantt/?
+  - [ ] https://old.reddit.com/r/emacs/comments/jdmeyv/smooth_scrolling_over_images/
+  - [ ] https://www.masteringemacs.org/article/the-emacs-27-edition-of-mastering-emacs-out-now
+- lsp/ide stuff
+  - [ ] why does format buffer seem to switch between the eslint server and the
+    typescript server?
+  - [ ] look through latest lsp settings
+  - [ ] set a binding for black? Or a dirs-local to do it on save?
+  - [ ] company-box - sometimes has visual issues
+    - can the doc popup be wider?
+  - [ ] add css-mode hook for prettier? Or use web-mode for css?
+  - [ ] https://github.com/codesuki/add-node-modules-path
+  - [ ] get typescript type errors in flycheck?
+  - [ ] proper debugger/dap setup
+- [ ] run individual python/ui test
+- [ ] revisit folding
+- [ ] better highlighting of sql keywords in python strings. web-mode seems to
+  do this so there could be something there.
+- [ ] hideshow is trying to start folded for html files - why?
+- [ ] get svg working - building with ~--rsvg~ didn't work.
+- [ ] upgrade all my packages
+- [ ] better emoji support?
+- [ ] can helm m-x show the description of the command? seems to be something
+  like that here: https://www.youtube.com/watch?v=E-NAM9U5JYE
+- [ ] use bug-reference mode to support github + gitlab + jira.
+  - Emacs 28 will have auto-detect for github/gitlab:
+    https://lists.gnu.org/archive/html/emacs-devel/2020-06/msg00581.html
+  - Might be a starting point here:
+    https://emacs.stackexchange.com/questions/35878/multiple-url-formats-for-bug-reference-mode
+- [ ] more reliable git-gutter?
+- [ ] highlight region with a binding, similar to sdwh
+- [ ] a magit log view like tig
+- [ ] elisp debug function that logs stack of how something was called?
+- [ ] a way to send sql to a DB and see the result
+- [ ] my own version of helm-mini
+- [ ] fix all the init warnings
+- [ ] outshine mode?
