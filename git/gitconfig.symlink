@@ -51,7 +51,7 @@ assumed=!git ls-files -v | grep '^[[:lower:]]'
 
 # List recent branches
 recent = "for-each-ref --sort='-authordate:iso8601' --format='%(authordate:relative) %09%09 %(refname:short)' refs/heads"
-cor = "!f() { git checkout "$(git for-each-ref --sort='-authordate:iso8601' --count 20 --format '%(refname:short)' refs/heads" | fzf); }; f"
+cor = "!f() { git checkout "$(git for-each-ref --sort='-authordate:iso8601' --count 20 --format '%(refname:short)' refs/heads" | fzf --preview='git log {}'); }; f"
 
 # %h   short hash
 # %s   subject
