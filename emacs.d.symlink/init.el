@@ -1630,7 +1630,6 @@ represent all current available bindings accurately as a single keymap."
 
 (use-package hideshow
   :config (progn
-            (add-hook 'hs-minor-mode-hook 'hs-hide-all)
             (add-hook 'prog-mode-hook 'hs-minor-mode)
 
             ;; Open all folds when searching

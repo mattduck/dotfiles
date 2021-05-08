@@ -2133,7 +2133,6 @@ I can use this with grep/ag to quickly find the todo comments:
 #+BEGIN_SRC emacs-lisp
   (use-package hideshow
     :config (progn
-              (add-hook 'hs-minor-mode-hook 'hs-hide-all)
               (add-hook 'prog-mode-hook 'hs-minor-mode)
 
               ;; Open all folds when searching
