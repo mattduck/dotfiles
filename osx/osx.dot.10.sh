@@ -51,15 +51,6 @@ export EDITOR="/Applications/Emacs.app/Contents/MacOS/bin/emacsclient -t"
 # New emacs in terminal
 alias en="emacs-app -nw"
 
-# New emacs in terminal, read-only
-function eview() {
-    if [ $# -eq 0 ]; then
-        emacs-app -nw "." --eval '(setq buffer-read-only t)'
-    else
-        emacs-app -nw "$1" --eval '(setq buffer-read-only t)'
-    fi
-}
-
 # Emacs gui client.
 function egui () {
     if [ $# -eq 0 ]; then
