@@ -129,7 +129,7 @@ set incsearch   " Show search matches as type
 " Use unamed clipboard, this should help doing copy / paste on OS X,
 " for some reason.
 "
-set clipboard=unnamedplus
+set clipboard=unnamed
 
 " Delete comment character when joining commented lines
 if v:version > 703 || v:version == 703 && has("patch541")
