@@ -22,6 +22,7 @@ fi
 
 alias k="kubectl"
 alias f="ranger"
+alias r="rg"
 
 alias ..="cd .."
 alias ...="cd ../.."
