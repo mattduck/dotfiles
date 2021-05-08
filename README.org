@@ -39,7 +39,7 @@ at https://www.mattduck.com.
    right now, so certain scripts/functions/aliases could fail. These will have
    to be installed manually.
 
-5. In Emacs you just have to ~M-x install-package~ on anything that's missing
+5. In emacs you just have to ~M-x install-package~ on anything that's missing
    and not automatically installed by ~use-package~.
 
 6. In vim, do ~:BundleInstall~ to install packages.
@@ -68,7 +68,7 @@ for more info.
 * Thanks
 
 This takes inspiration from (and outright copies) ideas and configuration that
-I've seen from friends colleagues, [[https://emacs.london][emacs.london]], and
+I've seen from friends and colleagues, [[https://emacs.london][emacs.london]], and
 various blogs/websites/videos/conferences etc.
 
 Special mention to [[https://github.com/holman/dotfiles][Zach Holman]] (where I copied the symlink and sourcing
