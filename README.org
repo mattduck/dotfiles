@@ -1,0 +1,77 @@
+* Dotfiles
+
+My personal config files and utils.
+
+I've been using (and changing) these since about 2012-13. It's unlikely that
+anyone can fork this and find it useful, but there might be odd things here that
+you can copy out into your setup.
+
+The most interesting thing is probably [[./emacs.d.symlink/init.org][init.org]], which contains my emacs config.
+
+If you're interested in emacs / linux / dotfiles etc. I occasionally share stuff
+at https://www.mattduck.com.
+
+* How to install
+
+1. Clone and update the submodules:
+
+   #+BEGIN_SRC sh
+   $ git clone https://github.com/mattduck/dotfiles.git ~/dotfiles
+   $ cd ~/dotfiles
+   $ git submodule update --init --recursive
+   #+END_SRC
+
+2. Do a one-off run of ~bin/,dotfiles-install~. This creates symlinks from
+   ~~/.FILENAME~ to ~$DOTFILES/FILENAME.symlink~. Any existing files or
+   directories are backed up to ~~/dotfiles_backup/$(date)~.
+
+3. Source ~activate.sh~ in your bashrc. This script will:
+
+   - Add ~$DOTFILES~ to your env: this is a path to the dotfiles directory.
+
+   - Add ~$DOTFILES/**/bin~ to your ~$PATH~.
+
+   - Source ~$DOTFILES/**.dot.xx.sh~ in numeric order - eg. ~foo.dot.10.sh~ would be
+     sourced before ~bar.dot.20.sh~. Anything without a number
+     (eg. ~baz.dot.sh~) will be sourced last.
+
+4. I don't have a graceful/up-to-date way to install all the packages I use
+   right now, so certain scripts/functions/aliases could fail. These will have
+   to be installed manually.
+
+5. In Emacs you just have to ~M-x install-package~ on anything that's missing
+   and not automatically installed by ~use-package~.
+
+6. In vim, do ~:BundleInstall~ to install packages.
+
+** MacOS - $PATH issues
+
+Tmux always runs as a login shell, which means /etc/profile gets read. On some
+OS X releases, this will run a utility called ~path_helper~, which will always
+prepend a set of directories to your $PATH /after/ ~.bashrc~ has run.
+
+To disable this, you can reset your $PATH as part of ~.bashrc~, and run the
+dotfiles setup afterwards:
+
+#+BEGIN_SRC sh
+# .bashrc
+if [ -f /etc/profile ]; then
+    PATH=""
+    source /etc/profile
+fi
+source ~/dotfiles/activate.sh
+#+END_SRC
+
+See https://superuser.com/questions/544989/does-tmux-sort-the-path-variable/583502#583502
+for more info.
+
+* Thanks
+
+This takes inspiration from (and outright copies) ideas and configuration that
+I've seen from friends colleagues, [[https://emacs.london][emacs.london]], and
+various blogs/websites/videos/conferences etc.
+
+Special mention to [[https://github.com/holman/dotfiles][Zach Holman]] (where I copied the symlink and sourcing
+structure), [[https://github.com/brandon-rhodes/homedir][Brandon Rhodes]] (for the idea of prefixing your scripts and commands
+with a comma), and [[https://github.com/sachac/.emacs.d/][Sacha Chua]] (for the idea of compiling ~init.el~ with org-mode,
+and aggregating a ton of useful emacs content).
