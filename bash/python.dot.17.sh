@@ -1,11 +1,6 @@
 # Create neither *.pyc files nor __pycache__ directories.
 export PYTHONDONTWRITEBYTECODE=1
 
-# Automatic fab completion
-# shellcheck source=/dev/null
-. "$DOTFILES/bash/fabric-completion/fabric-completion.bash"
-export FAB_COMPLETION_CACHE_TASKS=false
-
 which pip >/dev/null && eval "$(pip completion --bash)"
 
 # By default, Python's virtualenv will modify the prompt when a virtualenv is
@@ -25,12 +20,9 @@ source $(which virtualenvwrapper.sh)
 
 alias ,pyworkon="workon"
 alias ,pydeactivate="deactivate"
-alias ,pywipe="wipeenv"
 alias ,pycdsite="cdsitepackages"
-alias ,pycd="cdvirtualenv"
 alias ,pywhich="python --version; which python; which pip"
 alias ,pyrm="rmvirtualen"
-alias ,pylssite="lssitepackages"
 if [ $(command -v pyenv) ]; then
     alias ,pymk2="mkvirtualenv -p $(pyenv which python2)"
     alias ,pymk3="mkvirtualenv -p $(pyenv which python3)"

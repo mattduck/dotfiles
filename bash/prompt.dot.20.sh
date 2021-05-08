@@ -1,8 +1,5 @@
 # Root prompt
-if [[ $DOTFILES_LITE ]]; then
-    PS1="\n$ "
-
-elif [[ $EUID == 0 ]]; then
+if [[ $EUID == 0 ]]; then
     _user="$ANSIred$debian_chroot\u"
     _hostname="$HOST_COLOUR_ANSI\h"
     _pwd="$ANSIbase1\w"

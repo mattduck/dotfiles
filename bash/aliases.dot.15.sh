@@ -21,11 +21,10 @@ if [[ $(type -t __git_complete) == *function* ]]; then
 fi
 
 alias k="kubectl"
+alias f="ranger"
 
 alias ..="cd .."
 alias ...="cd ../.."
-
-alias f=",cd"
 
 alias dockerc="docker-compose"
 
