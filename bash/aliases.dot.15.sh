@@ -8,12 +8,9 @@ fi
 alias ls="ls ${lscolorflag}"
 alias l="ls -hlF"
 alias ll="ls -halF"
-alias lt="ls -halFt"
-alias lsd="ls -hlF ${colorflag} | grep --color=never '^d'" # List only directories
 
 alias sudo="sudo " # Enable aliases to be sudo'ed
 
-alias ag="ag --color-line-number=36 --color-path=32 --color-match=1\;4\;31"
 alias grep="grep --color=auto"
 
 # Setup autocompletion for git alias
@@ -28,13 +25,7 @@ alias k="kubectl"
 alias ..="cd .."
 alias ...="cd ../.."
 
-# Resolve symlinks
-alias cdp="cd -P"
-
-alias v="vim"
 alias f=",cd"
-
-alias vssh="vagrant ssh || vagrant up && vagrant ssh"
 
 alias dockerc="docker-compose"
 
