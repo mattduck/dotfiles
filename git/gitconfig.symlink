@@ -23,7 +23,6 @@ dd = "!git diff | ydiff -s -w 120 -l --wrap -- "
 ddc = "!git diff --cached | ydiff -s -w 120 -l --wrap -- "
 
 t = !tig
-refs = !tig refs
 
 save =!git stash --all --keep-index && git stash apply
 stashq = stash --all --keep-index
@@ -60,8 +59,6 @@ cor = "!f() { git checkout "$(git for-each-ref --sort='-authordate:iso8601' --co
 # %d   branch
 l = "!f() { tig $@ || git log --pretty=format:'%C(10)%h %C(12)%ad %C(blue)%an %C(3)%s%C(auto)%d' --date=relative $@; }; f"
 ll = "!git l --all"
-lo = "!tig log"
-gl=log --pretty=format:'%ai\t%h\t%an\t%s\t%d'
 
 [diff]
 # I find this easier to read
