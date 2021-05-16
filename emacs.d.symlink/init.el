@@ -2908,6 +2908,78 @@ be quickly copy/pasted into eg. gmail."
                  (setq buffer-offset (+ buffer-offset elem-offset)))))
          (org-mind-map-write-named (concat base-filename ".mind-map") nil t)))))
 
+(defun md/slack-parse-archive-url (archive-url)
+  "Given ARCHIVE-URL in the format
+https://{team}.slack.com/archive/{channel}/p{timestamp}
+use the Slack API to fetch a summary of the message and the sender."
+  (when (not (and (boundp 'md/slack-token) md/slack-token))
+    (error "Cannot lookup Slack url without setting md/slack-token"))
+  (let* ((result nil)
+         (message-text nil)
+         (sender-id nil)
+         (sender-name nil)
+         (channel (nth 4 (s-split "/" archive-url)))
+         (last-url-slug (s-chop-prefix "p" (nth 5 (s-split "/" archive-url))))
+         (latest-timestamp
+          (concat
+           (s-left 10 last-url-slug)
+           "."
+           (s-chop-prefix (s-left 10 last-url-slug) last-url-slug))))
+    (request
+      "https://slack.com/api/conversations.history"
+      :type "POST"
+      :headers `(("Content-Type" . "application/x-www-form-urlencoded")
+                 ("Authorization" . ,(format "Bearer %s" md/slack-token)))
+      :data (url-build-query-string `(("channel" ,channel)
+                                      ("latest" ,latest-timestamp)
+                                      ("limit" 1)
+                                      ("inclusive" true)))
+      :sync t
+      :complete
+      (cl-function
+       (lambda (&key response &allow-other-keys)
+         (let* ((data (json-parse-string (request-response-data response)))
+                (message-data (elt (ht-get data "messages") 0)))
+           (setq message-text (ht-get message-data "text"))
+           (setq sender-id (ht-get message-data "user"))))))
+    (when (not sender-id)
+      (error "Couldn't parse the user from the slack message response"))
+    (request
+      "https://slack.com/api/users.info"
+      :type "GET"
+      :headers `(("Content-Type" . "application/x-www-form-urlencoded")
+                 ("Authorization" . ,(format "Bearer %s" md/slack-token)))
+      :params `(("user" . ,sender-id))
+      :sync t
+      :complete
+      (cl-function
+       (lambda (&key response &allow-other-keys)
+         (let* ((data (json-parse-string (request-response-data response)))
+                (user-data (ht-get data "user")))
+           (setq sender-name (ht-get user-data "real_name"))))))
+    (list archive-url sender-name message-text)))
+
+(defun md/format-slack-for-org-capture (slack-result)
+  "Format SLACK-RESULT (as returned by md/slack-parse-archive-url) into
+a string suitable for an org-capture template."
+  (format "[[%s][Slack from %s]]\n\n%s"
+          (nth 0 slack-result)
+          (nth 1 slack-result)
+          (nth 2 slack-result)))
+
+(defun md/parse-slack-to-org-capture-from-clipboard ()
+  "If the clipboard contains a slack archive URL, use the Slack API
+to retrieve the message text and return it as a string, in a format suitable
+for including at the end of an org heading.
+
+This is intended to be used in an org-capture template.
+"
+  (let ((pasted (substring-no-properties (x-get-clipboard))))
+    (when (not (s-matches? "^https://.*\.slack\.com/archives/.+" pasted))
+      (error "Clipboard doesn't contain a Slack archive link"))
+    (md/format-slack-for-org-capture
+     (md/slack-parse-archive-url pasted))))
+
 (message "use-package for org finished")
   ))
 
