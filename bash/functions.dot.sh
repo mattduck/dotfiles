@@ -45,6 +45,15 @@ function ,date {
     date -u +"%Y-%m-%dT%H:%M:%S"
 }
 
+function ,env {
+    env | sort | fzf --exact
+}
+
+function ,history {
+    # show history without numbers
+    history | awk '{$1="";print substr($0,2)}' | fzf --exact
+}
+
 function ,k-secret-decode {
     kubectl get secret $@ -o go-template='{{range $k,$v := .data}}{{printf "%s: " $k}}{{if not $v}}{{$v}}{{else}}{{$v | base64decode}}{{end}}{{"\n"}}{{end}}'
 }
