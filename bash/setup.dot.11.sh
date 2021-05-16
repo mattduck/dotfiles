@@ -61,3 +61,8 @@ function ,which-function {
 
 # Ranger shouldn't use any default config - only want my own bindings
 export RANGER_LOAD_DEFAULT_RC=FALSE
+
+# [2021-05-16] Some better bind settings
+bind 'set colored-stats on'
+bind 'set colored-completion-prefix on'
+
