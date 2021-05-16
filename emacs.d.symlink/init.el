@@ -2600,6 +2600,11 @@ lsp can properly jump to definitions."
 (setq helm-org-format-outline-path nil)
 (setq helm-org-headings-fontify t)
 
+;; [2021-05-16] see https://github.com/emacs-helm/helm/issues/2063#issuecomment-647092801 - this
+;; allows for selecting multiple tags
+(add-to-list 'helm-completing-read-handlers-alist '(org-capture . helm-org-completing-read-tags))
+(add-to-list 'helm-completing-read-handlers-alist '(org-set-tags . helm-org-completing-read-tags))
+
 (defun md/helm-org ()
   "Open org headlines in helm."
   (interactive)
@@ -2974,6 +2979,7 @@ for including at the end of an org heading.
 
 This is intended to be used in an org-capture template.
 "
+  (interactive)
   (let ((pasted (substring-no-properties (x-get-clipboard))))
     (when (not (s-matches? "^https://.*\.slack\.com/archives/.+" pasted))
       (error "Clipboard doesn't contain a Slack archive link"))

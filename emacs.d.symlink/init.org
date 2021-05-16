@@ -3713,6 +3713,11 @@ adhere to ~helm-org-format-outline-path~.
   (setq helm-org-format-outline-path nil)
   (setq helm-org-headings-fontify t)
 
+  ;; [2021-05-16] see https://github.com/emacs-helm/helm/issues/2063#issuecomment-647092801 - this
+  ;; allows for selecting multiple tags
+  (add-to-list 'helm-completing-read-handlers-alist '(org-capture . helm-org-completing-read-tags))
+  (add-to-list 'helm-completing-read-handlers-alist '(org-set-tags . helm-org-completing-read-tags))
+
   (defun md/helm-org ()
     "Open org headlines in helm."
     (interactive)
@@ -4151,6 +4156,7 @@ This requires ~md/slack-token~ to be set.
 
   This is intended to be used in an org-capture template.
   "
+    (interactive)
     (let ((pasted (substring-no-properties (x-get-clipboard))))
       (when (not (s-matches? "^https://.*\.slack\.com/archives/.+" pasted))
         (error "Clipboard doesn't contain a Slack archive link"))
@@ -6156,3 +6162,4 @@ Odd todos, fixes, links I want to explore etc.
 - not emacs
   - [ ] rg options
   - [ ] fzf tab completion
+- [ ] hyperbole??
