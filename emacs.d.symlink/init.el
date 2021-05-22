@@ -3068,13 +3068,20 @@ This is intended to be used in an org-capture template.
   (string-remove-prefix (format "%s " (car (split-string s))) s))
 
 (defun md/org-capture-popup-frame (template-shortcut)
-  (make-frame '((name . "org-capture")
-                ;;(window-system . x)
-                (auto-raise . t)
-                (height . 20)
-                (width . 120)
-                (left . 0.3)
-                (top . 0.2)))
+  (if (string= (system-name) "arch")
+      (make-frame '((name . "org-capture")
+                    (window-system . x)
+                    (auto-raise . t)
+                    (height . 20)
+                    (width . 120)
+                    (left . 0.3)
+                    (top . 0.2)))
+    (make-frame '((name . "org-capture")
+                  (auto-raise . t)
+                  (height . 20)
+                  (width . 120)
+                  (left . 0.45)
+                  (top . 0.1))))
   (select-frame-by-name "org-capture")
   (org-capture nil template-shortcut)
   (delete-other-windows))
@@ -3113,7 +3120,7 @@ popup version of org-capture instead of using the usual org-capture."
 MY-ORG-KEYWORD is the org keyword to search for.
 MY-HELM-PREFIX is a prefix that should be typed before any candidates start matching."
   (helm-build-sync-source my-helm-title
-    :requires-pattern t
+    :requires-pattern 1
     :multimatch nil
     :candidates
     ;; Loop over my agenda files. For each one, use a regex to match all the headlines starting with
@@ -3176,7 +3183,7 @@ MY-HELM-PREFIX is a prefix that should be typed before any candidates start matc
     :nohighlight t
     :nomark t
     :multimatch nil
-    :requires-pattern t
+    :requires-pattern 1
     :candidates md/alfred-source-search-candidates
     :match '((lambda (candidate)
                (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern)))))
@@ -3233,7 +3240,7 @@ are ugly. It works fine though."
   "Start a webserver process in a particular directory."
   (helm-build-sync-source "Webserver"
     :multimatch nil
-    :requires-pattern t
+    :requires-pattern 1
     :candidates '(("mattduck.com" . "/f/www.mattduck.com/build")
                   ("shonamcgovern.com" . "/f/clients/shona-mcgovern/shonamcgovern.com/site")
                   ("emacs.london" . "/f/emacs.london/london-emacs-hacking.github.io")
@@ -3248,26 +3255,44 @@ are ugly. It works fine though."
 
 (defun md/alfred-source-processes ()
   "Source which uses `ps` to list processes, and then offer options to interact with them."
-  (helm-build-async-source "Processes"
-    :nohighlight t  ;; Because grep is doing the matching, not helm
-    :multimatch nil
-    :requires-pattern t
-    :candidates-process (lambda ()
-                          (if (s-starts-with? "p " helm-pattern)
-                              (let ((pat (s-chop-prefix "p " helm-pattern)))
-                                (start-process-shell-command
-                                 ;; The weird grep -v at the end is a silly quick way to strip the grep
-                                 ;; itself from showing in the results.
-                                 "helm-source-ps" nil (format "ps axh -o pid,group,args --cols 90 -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args --cols 90'" pat)))
-                            (start-process "helm-source-noop" nil "true")))
-    :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
-              ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand))))))))
+  (if (string= (system-name) "arch")
+      (helm-build-async-source "Processes"
+        :nohighlight t  ;; Because grep is doing the matching, not helm
+        :multimatch nil
+        :requires-pattern 1
+        :candidates-process (lambda ()
+                              (if (s-starts-with? "p " helm-pattern)
+                                  (let ((pat (s-chop-prefix "p " helm-pattern)))
+                                    (start-process-shell-command
+                                     ;; The weird grep -v at the end is a silly quick way to strip the grep
+                                     ;; itself from showing in the results.
+                                     "helm-source-ps" nil (format "ps axh -o pid,group,args --cols 90 -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args --cols 90'" pat)))
+                                (start-process "helm-source-noop" nil "true")))
+        :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
+                  ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand)))))))
+
+    ;; MacOS version. uses BSD versions of ps/pgrep
+    ;; TODO - need to parse output?
+    (helm-build-async-source "Processes"
+      :nohighlight t  ;; Because grep is doing the matching, not helm
+      :multimatch nil
+      :requires-pattern 1
+      :candidates-process (lambda ()
+                            (if (s-starts-with? "p " helm-pattern)
+                                (let ((pat (s-chop-prefix "p " helm-pattern)))
+                                  (start-process-shell-command
+                                   ;; The weird grep -v at the end is a silly quick way to strip the grep
+                                   ;; itself from showing in the results.
+                                   "helm-source-ps" nil (format "ps axh -o pid,group,args -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args'" pat)))
+                              (start-process "helm-source-noop" nil "true")))
+      :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
+                ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand)))))))))
 
 (defun md/alfred-source-directories ()
   "Open a directory."
   (helm-build-async-source "Directories"
     :multimatch nil
-    :requires-pattern t
+    :requires-pattern 1
     :candidates-process (lambda ()
                           (if (and (s-starts-with? "fd " helm-pattern) (> (length helm-pattern) 4))
                               (let ((pat (s-chop-prefix "fd " helm-pattern)))
@@ -3282,7 +3307,7 @@ are ugly. It works fine though."
   "Open a file with its default program."
   (helm-build-async-source "Files"
     :multimatch nil
-    :requires-pattern t
+    :requires-pattern 1
     :candidates-process (lambda ()
                           (if (and (s-starts-with? "f " helm-pattern) (> (length helm-pattern) 4))
                               (let ((pat (s-chop-prefix "f " helm-pattern)))
@@ -3291,20 +3316,39 @@ are ugly. It works fine though."
                             (start-process "helm-source-noop" nil "true")))
     :action '(("Open" . (lambda (cand) (call-process "sh" nil nil nil "-c" (format "xdg-open '%s' & disown" cand)))))))
 
+(defun md/ns-raise-emacs ()
+  (when (featurep 'ns)
+    (ns-do-applescript "tell application \"Emacs\" to activate")))
+
+(defun md/ns-raise-emacs-with-frame (frame)
+  (with-selected-frame frame
+    (when (display-graphic-p)
+      (md/ns-raise-emacs))))
+
 (defun md/alfred--helm (buffer)
-  (helm :sources (list (md/alfred-source-system)
-                       (md/alfred-source-search)
-                       (md/alfred-source-webserver)
-                       (md/alfred-source-org-capture-templates)
-                       (md/alfred-source-org-light "Org - NOW" "now" "NOW")
-                       (md/alfred-source-org-light "Org - BACK" "back" "BACK")
-                       (md/alfred-source-org-clock-out)
-                       (md/alfred-source-web-bookmarks)
-                       (when (string= (system-name) "arch")
-                         (md/alfred-source-apps))
-                       (md/alfred-source-directories)
-                       (md/alfred-source-files)
-                       (md/alfred-source-processes))
+  (helm :sources
+        (if (string= (system-name) "arch")
+            (list (md/alfred-source-system)
+                  (md/alfred-source-search)
+                  (md/alfred-source-webserver)
+                  (md/alfred-source-org-capture-templates)
+                  (md/alfred-source-org-light "Org - NOW" "now" "NOW")
+                  (md/alfred-source-org-light "Org - BACK" "back" "BACK")
+                  (md/alfred-source-org-clock-out)
+                  (md/alfred-source-web-bookmarks)
+                  (md/alfred-source-apps)
+                  (md/alfred-source-directories)
+                  (md/alfred-source-files)
+                  (md/alfred-source-processes))
+          (list
+           (md/alfred-source-search)
+           (md/alfred-source-org-capture-templates)
+           (md/alfred-source-org-light "Org - URGENT" "urgent" "NOW \\[#A\\]")
+           (md/alfred-source-org-light "Org - NOW" "now" "NOW")
+           (md/alfred-source-org-light "Org - BACK" "back" "BACK")
+           (md/alfred-source-org-clock-out)
+           (md/alfred-source-processes)
+           ))
         :prompt ""
         :buffer buffer))
 
@@ -3316,23 +3360,39 @@ are ugly. It works fine though."
   "Entry point to create the 'alfred' frame and run helm."
   (interactive)
   (with-current-buffer (get-buffer-create "*alfred*")
-    (let ((frame (make-frame '((name . "alfred")
-                               ;;(window-system . x)
-                               (auto-raise . t)
-                               (height . 10)
-                               (internal-border-width . 20)
-                               (left . 0.33)
-                               (left-fringe . 0)
-                               (line-spacing . 3)
-                               (menu-bar-lines . 0)
-                               (right-fringe . 0)
-                               (tool-bar-lines . 0)
-                               (top . 48)
-                               ;; enable this to remove frame border
-                               (undecorated . t)
-                               (unsplittable . t)
-                               (vertical-scroll-bars . nil)
-                               (width . 120))))
+    (let ((frame (if (string= (system-name) "arch")
+                     (make-frame '((name . "alfred")
+                                   (window-system . x)
+                                   (auto-raise . t)
+                                   (height . 10)
+                                   (internal-border-width . 20)
+                                   (left . 0.33)
+                                   (left-fringe . 0)
+                                   (line-spacing . 3)
+                                   (menu-bar-lines . 0)
+                                   (right-fringe . 0)
+                                   (tool-bar-lines . 0)
+                                   (top . 48)
+                                   ;; enable this to remove frame border
+                                   (undecorated . t)
+                                   (unsplittable . t)
+                                   (vertical-scroll-bars . nil)
+                                   (width . 120)))
+                   (make-frame '((name . "alfred")
+                                 (auto-raise . t)
+                                 (height . 20)
+                                 (internal-border-width . 10)
+                                 (left . 0.45)
+                                 (left-fringe . 0)
+                                 (line-spacing . 3)
+                                 (menu-bar-lines . 0)
+                                 (right-fringe . 0)
+                                 (tool-bar-lines . 0)
+                                 (top . 0.1)
+                                 (undecorated . nil)
+                                 (unsplittable . t)
+                                 (vertical-scroll-bars . nil)
+                                 (width . 120)))))
           (alert-hide-all-notifications t)
           (inhibit-message t)
           (mode-line-format nil)
@@ -3342,12 +3402,15 @@ are ugly. It works fine though."
           (helm-use-undecorated-frame-option nil)
           ;; If we run an async shell, don't show us anything
           (async-shell-command-display-buffer nil))
+      (when (not (string= (system-name) "arch"))
+        (md/ns-raise-emacs-with-frame frame))
       (md/alfred--helm "*alfred*")
       (delete-frame frame)
       ;; For some reason without killing the buffer it messes up future state.
       (kill-buffer "*alfred*")
       ;; I don't want this to cause the main frame to flash
-      (x-urgency-hint (selected-frame) nil))))
+      (when (string= (system-name) "arch")
+        (x-urgency-hint (selected-frame) nil)))))
 
 (use-package annotate
   :demand t
@@ -4162,6 +4225,9 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
                                         ; better than "n" for narrow-to-region
 
+(defvar md/narrow-dwim-enable-org-clock nil
+  "When true, md/narrow-dwim will start/stop the clock for narrowed org subtrees")
+
 (defun md/narrow-dwim (p)
   "Widen if buffer is narrowed, narrow-dwim otherwise.
   Dwim means: region, org-src-block, org-subtree, or
@@ -4172,7 +4238,13 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
   is already narrowed."
   (interactive "P")
   (declare (interactive-only))
-  (cond ((and (buffer-narrowed-p) (not p)) (widen))
+  (cond ((and (buffer-narrowed-p) (not p))
+         (progn
+           (when (and md/narrow-dwim-enable-org-clock
+                      (string= major-mode "org-mode")
+                      (org-clock-is-active))
+             (org-clock-out nil t))
+           (widen)))
         ((region-active-p)
          (edit-indirect-region (region-beginning)
                                (region-end)
@@ -4182,12 +4254,13 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
         (org-src-mode
          (org-edit-src-exit))
         ((derived-mode-p 'org-mode)
-         ;; `org-edit-src-code' is not a real narrowing
-         ;; command. Remove this first conditional if
-         ;; you don't want it.
          (cond ((ignore-errors (org-edit-src-code) t))
                ((ignore-errors (org-narrow-to-block) t))
-               (t (org-narrow-to-subtree))))
+               (t (progn
+                    (org-narrow-to-subtree)
+                    (when (and md/narrow-dwim-enable-org-clock
+                               (not (org-clock-is-active)))
+                      (org-clock-in))))))
         ((derived-mode-p 'latex-mode)
          (LaTeX-narrow-to-environment))
         ((derived-mode-p 'restclient-mode)

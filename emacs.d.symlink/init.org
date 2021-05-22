@@ -4284,46 +4284,53 @@ This allows me to capture in a popup frame. The ~defadvice~ parts were taken fro
 somewhere on the web - they just handle automatic deleting of the frame.
 
 #+BEGIN_SRC emacs-lisp
-  (defun md/org-capture-popup-frame (template-shortcut)
-    (make-frame '((name . "org-capture")
-                  ;;(window-system . x)
-                  (auto-raise . t)
-                  (height . 20)
-                  (width . 120)
-                  (left . 0.3)
-                  (top . 0.2)))
-    (select-frame-by-name "org-capture")
-    (org-capture nil template-shortcut)
-    (delete-other-windows))
+    (defun md/org-capture-popup-frame (template-shortcut)
+      (if (string= (system-name) "arch")
+          (make-frame '((name . "org-capture")
+                        (window-system . x)
+                        (auto-raise . t)
+                        (height . 20)
+                        (width . 120)
+                        (left . 0.3)
+                        (top . 0.2)))
+        (make-frame '((name . "org-capture")
+                      (auto-raise . t)
+                      (height . 20)
+                      (width . 120)
+                      (left . 0.45)
+                      (top . 0.1))))
+      (select-frame-by-name "org-capture")
+      (org-capture nil template-shortcut)
+      (delete-other-windows))
 
-  (defadvice org-capture-finalize
-      (after delete-capture-frame activate)
-    "Advise capture-finalize to close the frame"
-    (if (equal "org-capture" (frame-parameter nil 'name))
-        (delete-frame)))
+    (defadvice org-capture-finalize
+        (after delete-capture-frame activate)
+      "Advise capture-finalize to close the frame"
+      (if (equal "org-capture" (frame-parameter nil 'name))
+          (delete-frame)))
 
-  (defadvice org-capture-destroy
-      (after delete-capture-frame activate)
-    "Advise capture-destroy to close the frame"
-    (if (equal "org-capture" (frame-parameter nil 'name))
-        (delete-frame)))
+    (defadvice org-capture-destroy
+        (after delete-capture-frame activate)
+      "Advise capture-destroy to close the frame"
+      (if (equal "org-capture" (frame-parameter nil 'name))
+          (delete-frame)))
 
-  (defun md/org-capture-no-popup-frame (template-shortcut)
-    "A version that doesn't open a new frame, for use with exwm"
-    (org-capture nil template-shortcut))
+    (defun md/org-capture-no-popup-frame (template-shortcut)
+      "A version that doesn't open a new frame, for use with exwm"
+      (org-capture nil template-shortcut))
 
-  (defun md/alfred-source-org-capture-templates ()
-    "Run org-capture in a popup window. Copied from helm-org.el, but plugs in my
-  popup version of org-capture instead of using the usual org-capture."
-    (helm-build-sync-source "Org Capture"
-      :fuzzy-match nil
-      :multimatch nil
-      :candidates (cl-loop for template in org-capture-templates
-                           collect (cons (nth 1 template) (nth 0 template)))
-      :action '(("Capture" . (lambda (template-shortcut)
-                               (if (md/exwm-enabled)
-                                   (md/org-capture-no-popup-frame template-shortcut)
-                                 (md/org-capture-popup-frame template-shortcut)))))))
+    (defun md/alfred-source-org-capture-templates ()
+      "Run org-capture in a popup window. Copied from helm-org.el, but plugs in my
+    popup version of org-capture instead of using the usual org-capture."
+      (helm-build-sync-source "Org Capture"
+        :fuzzy-match nil
+        :multimatch nil
+        :candidates (cl-loop for template in org-capture-templates
+                             collect (cons (nth 1 template) (nth 0 template)))
+        :action '(("Capture" . (lambda (template-shortcut)
+                                 (if (md/exwm-enabled)
+                                     (md/org-capture-no-popup-frame template-shortcut)
+                                   (md/org-capture-popup-frame template-shortcut)))))))
 #+END_SRC
 
 *** Lightweight org searching
@@ -4337,7 +4344,7 @@ indirect buffer. The search is quite naive, but that makes it fast.
   MY-ORG-KEYWORD is the org keyword to search for.
   MY-HELM-PREFIX is a prefix that should be typed before any candidates start matching."
     (helm-build-sync-source my-helm-title
-      :requires-pattern t
+      :requires-pattern 1
       :multimatch nil
       :candidates
       ;; Loop over my agenda files. For each one, use a regex to match all the headlines starting with
@@ -4381,7 +4388,6 @@ indirect buffer. The search is quite naive, but that makes it fast.
                                 (org-tree-to-indirect-buffer))))))))
 #+END_SRC
 
-
 *** Org stop clock
 
 Easy way to stop the clock without having to open an emacs frame or an org-mode buffer.
@@ -4411,7 +4417,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
       :nohighlight t
       :nomark t
       :multimatch nil
-      :requires-pattern t
+      :requires-pattern 1
       :candidates md/alfred-source-search-candidates
       :match '((lambda (candidate)
                  (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern)))))
@@ -4439,6 +4445,10 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
                     ("Github" . "https://github.com/"))
       :action '(("Open" . (lambda (candidate) (browse-url candidate))))))
 #+END_SRC
+
+#+RESULTS:
+: md/alfred-source-web-bookmarks
+
 *** System commands
 #+BEGIN_SRC emacs-lisp
   (defun md/alfred-source-system ()
@@ -4478,7 +4488,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
     "Start a webserver process in a particular directory."
     (helm-build-sync-source "Webserver"
       :multimatch nil
-      :requires-pattern t
+      :requires-pattern 1
       :candidates '(("mattduck.com" . "/f/www.mattduck.com/build")
                     ("shonamcgovern.com" . "/f/clients/shona-mcgovern/shonamcgovern.com/site")
                     ("emacs.london" . "/f/emacs.london/london-emacs-hacking.github.io")
@@ -4495,20 +4505,38 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
 #+BEGIN_SRC emacs-lisp
   (defun md/alfred-source-processes ()
     "Source which uses `ps` to list processes, and then offer options to interact with them."
-    (helm-build-async-source "Processes"
-      :nohighlight t  ;; Because grep is doing the matching, not helm
-      :multimatch nil
-      :requires-pattern t
-      :candidates-process (lambda ()
-                            (if (s-starts-with? "p " helm-pattern)
-                                (let ((pat (s-chop-prefix "p " helm-pattern)))
-                                  (start-process-shell-command
-                                   ;; The weird grep -v at the end is a silly quick way to strip the grep
-                                   ;; itself from showing in the results.
-                                   "helm-source-ps" nil (format "ps axh -o pid,group,args --cols 90 -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args --cols 90'" pat)))
-                              (start-process "helm-source-noop" nil "true")))
-      :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
-                ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand))))))))
+    (if (string= (system-name) "arch")
+        (helm-build-async-source "Processes"
+          :nohighlight t  ;; Because grep is doing the matching, not helm
+          :multimatch nil
+          :requires-pattern 1
+          :candidates-process (lambda ()
+                                (if (s-starts-with? "p " helm-pattern)
+                                    (let ((pat (s-chop-prefix "p " helm-pattern)))
+                                      (start-process-shell-command
+                                       ;; The weird grep -v at the end is a silly quick way to strip the grep
+                                       ;; itself from showing in the results.
+                                       "helm-source-ps" nil (format "ps axh -o pid,group,args --cols 90 -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args --cols 90'" pat)))
+                                  (start-process "helm-source-noop" nil "true")))
+          :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
+                    ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand)))))))
+
+      ;; MacOS version. uses BSD versions of ps/pgrep
+      ;; TODO - need to parse output?
+      (helm-build-async-source "Processes"
+        :nohighlight t  ;; Because grep is doing the matching, not helm
+        :multimatch nil
+        :requires-pattern 1
+        :candidates-process (lambda ()
+                              (if (s-starts-with? "p " helm-pattern)
+                                  (let ((pat (s-chop-prefix "p " helm-pattern)))
+                                    (start-process-shell-command
+                                     ;; The weird grep -v at the end is a silly quick way to strip the grep
+                                     ;; itself from showing in the results.
+                                     "helm-source-ps" nil (format "ps axh -o pid,group,args -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args'" pat)))
+                                (start-process "helm-source-noop" nil "true")))
+        :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
+                  ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand)))))))))
 #+END_SRC
 *** Open directories
 #+BEGIN_SRC emacs-lisp
@@ -4516,7 +4544,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
     "Open a directory."
     (helm-build-async-source "Directories"
       :multimatch nil
-      :requires-pattern t
+      :requires-pattern 1
       :candidates-process (lambda ()
                             (if (and (s-starts-with? "fd " helm-pattern) (> (length helm-pattern) 4))
                                 (let ((pat (s-chop-prefix "fd " helm-pattern)))
@@ -4533,7 +4561,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
     "Open a file with its default program."
     (helm-build-async-source "Files"
       :multimatch nil
-      :requires-pattern t
+      :requires-pattern 1
       :candidates-process (lambda ()
                             (if (and (s-starts-with? "f " helm-pattern) (> (length helm-pattern) 4))
                                 (let ((pat (s-chop-prefix "f " helm-pattern)))
@@ -4544,20 +4572,39 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
 #+END_SRC
 *** Main Alfred command
 #+BEGIN_SRC emacs-lisp
+  (defun md/ns-raise-emacs ()
+    (when (featurep 'ns)
+      (ns-do-applescript "tell application \"Emacs\" to activate")))
+
+  (defun md/ns-raise-emacs-with-frame (frame)
+    (with-selected-frame frame
+      (when (display-graphic-p)
+        (md/ns-raise-emacs))))
+
   (defun md/alfred--helm (buffer)
-    (helm :sources (list (md/alfred-source-system)
-                         (md/alfred-source-search)
-                         (md/alfred-source-webserver)
-                         (md/alfred-source-org-capture-templates)
-                         (md/alfred-source-org-light "Org - NOW" "now" "NOW")
-                         (md/alfred-source-org-light "Org - BACK" "back" "BACK")
-                         (md/alfred-source-org-clock-out)
-                         (md/alfred-source-web-bookmarks)
-                         (when (string= (system-name) "arch")
-                           (md/alfred-source-apps))
-                         (md/alfred-source-directories)
-                         (md/alfred-source-files)
-                         (md/alfred-source-processes))
+    (helm :sources
+          (if (string= (system-name) "arch")
+              (list (md/alfred-source-system)
+                    (md/alfred-source-search)
+                    (md/alfred-source-webserver)
+                    (md/alfred-source-org-capture-templates)
+                    (md/alfred-source-org-light "Org - NOW" "now" "NOW")
+                    (md/alfred-source-org-light "Org - BACK" "back" "BACK")
+                    (md/alfred-source-org-clock-out)
+                    (md/alfred-source-web-bookmarks)
+                    (md/alfred-source-apps)
+                    (md/alfred-source-directories)
+                    (md/alfred-source-files)
+                    (md/alfred-source-processes))
+            (list
+             (md/alfred-source-search)
+             (md/alfred-source-org-capture-templates)
+             (md/alfred-source-org-light "Org - URGENT" "urgent" "NOW \\[#A\\]")
+             (md/alfred-source-org-light "Org - NOW" "now" "NOW")
+             (md/alfred-source-org-light "Org - BACK" "back" "BACK")
+             (md/alfred-source-org-clock-out)
+             (md/alfred-source-processes)
+             ))
           :prompt ""
           :buffer buffer))
 
@@ -4569,23 +4616,39 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
     "Entry point to create the 'alfred' frame and run helm."
     (interactive)
     (with-current-buffer (get-buffer-create "*alfred*")
-      (let ((frame (make-frame '((name . "alfred")
-                                 ;;(window-system . x)
-                                 (auto-raise . t)
-                                 (height . 10)
-                                 (internal-border-width . 20)
-                                 (left . 0.33)
-                                 (left-fringe . 0)
-                                 (line-spacing . 3)
-                                 (menu-bar-lines . 0)
-                                 (right-fringe . 0)
-                                 (tool-bar-lines . 0)
-                                 (top . 48)
-                                 ;; enable this to remove frame border
-                                 (undecorated . t)
-                                 (unsplittable . t)
-                                 (vertical-scroll-bars . nil)
-                                 (width . 120))))
+      (let ((frame (if (string= (system-name) "arch")
+                       (make-frame '((name . "alfred")
+                                     (window-system . x)
+                                     (auto-raise . t)
+                                     (height . 10)
+                                     (internal-border-width . 20)
+                                     (left . 0.33)
+                                     (left-fringe . 0)
+                                     (line-spacing . 3)
+                                     (menu-bar-lines . 0)
+                                     (right-fringe . 0)
+                                     (tool-bar-lines . 0)
+                                     (top . 48)
+                                     ;; enable this to remove frame border
+                                     (undecorated . t)
+                                     (unsplittable . t)
+                                     (vertical-scroll-bars . nil)
+                                     (width . 120)))
+                     (make-frame '((name . "alfred")
+                                   (auto-raise . t)
+                                   (height . 20)
+                                   (internal-border-width . 10)
+                                   (left . 0.45)
+                                   (left-fringe . 0)
+                                   (line-spacing . 3)
+                                   (menu-bar-lines . 0)
+                                   (right-fringe . 0)
+                                   (tool-bar-lines . 0)
+                                   (top . 0.1)
+                                   (undecorated . nil)
+                                   (unsplittable . t)
+                                   (vertical-scroll-bars . nil)
+                                   (width . 120)))))
             (alert-hide-all-notifications t)
             (inhibit-message t)
             (mode-line-format nil)
@@ -4595,12 +4658,15 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
             (helm-use-undecorated-frame-option nil)
             ;; If we run an async shell, don't show us anything
             (async-shell-command-display-buffer nil))
+        (when (not (string= (system-name) "arch"))
+          (md/ns-raise-emacs-with-frame frame))
         (md/alfred--helm "*alfred*")
         (delete-frame frame)
         ;; For some reason without killing the buffer it messes up future state.
         (kill-buffer "*alfred*")
         ;; I don't want this to cause the main frame to flash
-        (x-urgency-hint (selected-frame) nil))))
+        (when (string= (system-name) "arch")
+          (x-urgency-hint (selected-frame) nil)))))
 #+END_SRC
 
 ** COMMENT helm-ag (not using anymore)
@@ -5711,6 +5777,9 @@ Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs
   (bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
                                           ; better than "n" for narrow-to-region
 
+  (defvar md/narrow-dwim-enable-org-clock nil
+    "When true, md/narrow-dwim will start/stop the clock for narrowed org subtrees")
+
   (defun md/narrow-dwim (p)
     "Widen if buffer is narrowed, narrow-dwim otherwise.
     Dwim means: region, org-src-block, org-subtree, or
@@ -5721,7 +5790,13 @@ Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs
     is already narrowed."
     (interactive "P")
     (declare (interactive-only))
-    (cond ((and (buffer-narrowed-p) (not p)) (widen))
+    (cond ((and (buffer-narrowed-p) (not p))
+           (progn
+             (when (and md/narrow-dwim-enable-org-clock
+                        (string= major-mode "org-mode")
+                        (org-clock-is-active))
+               (org-clock-out nil t))
+             (widen)))
           ((region-active-p)
            (edit-indirect-region (region-beginning)
                                  (region-end)
@@ -5731,12 +5806,13 @@ Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs
           (org-src-mode
            (org-edit-src-exit))
           ((derived-mode-p 'org-mode)
-           ;; `org-edit-src-code' is not a real narrowing
-           ;; command. Remove this first conditional if
-           ;; you don't want it.
            (cond ((ignore-errors (org-edit-src-code) t))
                  ((ignore-errors (org-narrow-to-block) t))
-                 (t (org-narrow-to-subtree))))
+                 (t (progn
+                      (org-narrow-to-subtree)
+                      (when (and md/narrow-dwim-enable-org-clock
+                                 (not (org-clock-is-active)))
+                        (org-clock-in))))))
           ((derived-mode-p 'latex-mode)
            (LaTeX-narrow-to-environment))
           ((derived-mode-p 'restclient-mode)
