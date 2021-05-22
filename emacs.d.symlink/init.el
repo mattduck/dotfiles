@@ -1979,8 +1979,14 @@ lsp can properly jump to definitions."
         (font-lock-mode -1))  ;; Terminal colours are often bad
       (display-fill-column-indicator-mode)
       (evil-normal-state))
+
     (add-hook 'git-commit-setup-hook 'md/git-commit-setup)
     (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell)
+
+    ;; [2021-05-22] For some reason magit runs magit-commit-diff, which started causing my git
+    ;; commit edit frame in the terminal to get split into two windows. I don't think I'm actually
+    ;; using any features from magit-commit-diff, so disable it.
+    (setq magit-commit-show-diff nil)
 
     ;; Remove some default hooks that I don't use
     (remove-hook 'git-commit-setup-hook 'git-commit-save-message)
