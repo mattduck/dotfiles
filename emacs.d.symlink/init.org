@@ -257,8 +257,6 @@ https://stackoverflow.com/questions/24956521/how-can-i-hide-the-menu-bar-from-a-
   (add-hook 'after-init-hook 'contextual-menubar)
 #+END_SRC
 
-
-
 ** Fontify
 
 Some packages will take a while to propagate font changes (eg. fic-mode can be
@@ -2293,6 +2291,11 @@ the underlying terminal (ie. I get the usual readline bindings).
              (git-commit-mode . bug-reference-mode)))
 #+END_SRC
 
+** Request
+
+#+BEGIN_SRC emacs-lisp
+  (use-package request)
+#+END_SRC
 
 ** COMMENT DAP
 #+BEGIN_SRC emacs-lisp
@@ -3257,8 +3260,6 @@ NOTE - compiling requires ~markdown~ to be installed.
 #+END_SRC
 
 * Org mode
-
-
 ** use-package wrapper *START*
 
 I'm putting all this setup in use-package, but still want to split into separate
@@ -3701,35 +3702,6 @@ bindings copied directly from emacs-mode.
   (bind-key "C-k" 'md/org-narrow-prev md/evil-org-mode-map)
 #+END_SRC
 
-** helm-org
-
-General Helm command to work on headlines. This is similar to
-~helm-org-in-buffer-headings~, but I'm having trouble getting that function to
-adhere to ~helm-org-format-outline-path~.
-
-#+BEGIN_SRC emacs-lisp
-  (require 'helm-org)  ; this is part of the helm source but not loaded by default
-
-  (setq helm-org-format-outline-path nil)
-  (setq helm-org-headings-fontify t)
-
-  ;; [2021-05-16] see https://github.com/emacs-helm/helm/issues/2063#issuecomment-647092801 - this
-  ;; allows for selecting multiple tags
-  (add-to-list 'helm-completing-read-handlers-alist '(org-capture . helm-org-completing-read-tags))
-  (add-to-list 'helm-completing-read-handlers-alist '(org-set-tags . helm-org-completing-read-tags))
-
-  (defun md/helm-org ()
-    "Open org headlines in helm."
-    (interactive)
-    (let* ((src (helm-build-sync-source "Org headings"
-                  :candidates (helm-org-get-candidates (file-expand-wildcards buffer-file-name))
-                  :action '(("Go to heading" . helm-org-goto-marker)
-                            ("Open in indirect buffer" . helm-org--open-heading-in-indirect-buffer)
-                            ("Refile to this heading" . helm-org-heading-refile)
-                            ("Insert link to this heading" . helm-org-insert-link-to-heading-at-marker))))
-           (cmd (helm :sources '(src))))))
-#+END_SRC
-
 ** Babel / code
 #+BEGIN_SRC emacs-lisp
     ;; Load some language support
@@ -4001,7 +3973,6 @@ Set Latex options to colour the links to blue by default:
   (bind-key "Th" 'md/org-html-export md/leader-map)
 #+END_SRC
 
-
 ** org-tempo
 
 This re-instates the ~<s <TAB>~ behaviour for insert src blocks, etc.
@@ -4079,7 +4050,8 @@ This re-instates the ~<s <TAB>~ behaviour for insert src blocks, etc.
 These functions allow you to bring a Slack message into org-capture. You can
 click "copy link" in Slack, and then put
 ~%(md/parse-slack-to-org-capture-from-clipboard)~ in your org-capture-template,
-which will use the Slack API to lookup message data, eg:
+which will use the Slack API to lookup message data, eg. you can capture an org
+headline like:
 
 #+BEGIN_EXAMPLE
   * TODO [2021-05-15 Sat 12:52] [[https://{team}.slack.com/archives/{channel}/p{timestamp}][Slack from {sender_name}]]
@@ -4092,7 +4064,7 @@ This requires ~md/slack-token~ to be set.
 #+BEGIN_SRC emacs-lisp
   (defun md/slack-parse-archive-url (archive-url)
     "Given ARCHIVE-URL in the format
-  https://{team}.slack.com/archive/{channel}/p{timestamp}
+  https://{team}.slack.com/archive/{channel}/p{timestamp}?{optional_thread_ts}
   use the Slack API to fetch a summary of the message and the sender."
     (when (not (and (boundp 'md/slack-token) md/slack-token))
       (error "Cannot lookup Slack url without setting md/slack-token"))
@@ -4100,20 +4072,25 @@ This requires ~md/slack-token~ to be set.
            (message-text nil)
            (sender-id nil)
            (sender-name nil)
-           (channel (nth 4 (s-split "/" archive-url)))
-           (last-url-slug (s-chop-prefix "p" (nth 5 (s-split "/" archive-url))))
-           (latest-timestamp
+           (url-without-qs (car (s-split "?" archive-url)))
+           (url-qs (s-chop-prefix (concat "?" url-without-qs) archive-url))
+           (slack-channel (nth 4 (s-split "/" archive-url)))
+           (slack-thread-ts (cdr (assoc "thread_ts" (url-parse-query-string url-qs))))
+           (slack-message-slug (s-chop-prefix "p" (car (s-split "?" (nth 5 (s-split "/" url-without-qs))))))
+           (slack-message-ts
             (concat
-             (s-left 10 last-url-slug)
+             (s-left 10 slack-message-slug)
              "."
-             (s-chop-prefix (s-left 10 last-url-slug) last-url-slug))))
+             (s-chop-prefix (s-left 10 slack-message-slug) slack-message-slug))))
       (request
-        "https://slack.com/api/conversations.history"
+        "https://slack.com/api/conversations.replies"
         :type "POST"
         :headers `(("Content-Type" . "application/x-www-form-urlencoded")
                    ("Authorization" . ,(format "Bearer %s" md/slack-token)))
-        :data (url-build-query-string `(("channel" ,channel)
-                                        ("latest" ,latest-timestamp)
+        :data (url-build-query-string `(("channel" ,slack-channel)
+                                        ("ts" ,(or slack-thread-ts slack-message-ts))
+                                        ("latest" ,slack-message-ts)
+                                        ("oldest" ,slack-message-ts)
                                         ("limit" 1)
                                         ("inclusive" true)))
         :sync t
@@ -4121,7 +4098,10 @@ This requires ~md/slack-token~ to be set.
         (cl-function
          (lambda (&key response &allow-other-keys)
            (let* ((data (json-parse-string (request-response-data response)))
-                  (message-data (elt (ht-get data "messages") 0)))
+                  (messages-data (ht-get data "messages"))
+                  ;; Get the last message. If there is a thread, 2 messages are in the response - the
+                  ;; one we ask for and the OP of the thread
+                  (message-data (aref messages-data (- (length messages-data) 1))))
              (setq message-text (ht-get message-data "text"))
              (setq sender-id (ht-get message-data "user"))))))
       (when (not sender-id)
@@ -4239,6 +4219,35 @@ Close the use-package wrapper:
            :map help-map
            ("X" . helm-colors)))
 
+#+END_SRC
+
+** helm-org
+
+General Helm command to work on headlines. This is similar to
+~helm-org-in-buffer-headings~, but I'm having trouble getting that function to
+adhere to ~helm-org-format-outline-path~.
+
+#+BEGIN_SRC emacs-lisp
+  (require 'helm-org)  ; this is part of the helm source but not loaded by default
+
+  (setq helm-org-format-outline-path nil)
+  (setq helm-org-headings-fontify t)
+
+  ;; [2021-05-16] see https://github.com/emacs-helm/helm/issues/2063#issuecomment-647092801 - this
+  ;; allows for selecting multiple tags
+  (add-to-list 'helm-completing-read-handlers-alist '(org-capture . helm-org-completing-read-tags))
+  (add-to-list 'helm-completing-read-handlers-alist '(org-set-tags . helm-org-completing-read-tags))
+
+  (defun md/helm-org ()
+    "Open org headlines in helm."
+    (interactive)
+    (let* ((src (helm-build-sync-source "Org headings"
+                  :candidates (helm-org-get-candidates (file-expand-wildcards buffer-file-name))
+                  :action '(("Go to heading" . helm-org-goto-marker)
+                            ("Open in indirect buffer" . helm-org--open-heading-in-indirect-buffer)
+                            ("Refile to this heading" . helm-org-heading-refile)
+                            ("Insert link to this heading" . helm-org-insert-link-to-heading-at-marker))))
+           (cmd (helm :sources '(src))))))
 #+END_SRC
 
 ** Alfred
@@ -5988,7 +5997,6 @@ another buffer in the window.
   (bind-key "tD" 'dedicated-mode md/leader-map)
 #+END_SRC
 
-
 * Disable
 
 Various minor modes that that I don't use:
@@ -6139,7 +6147,6 @@ Odd todos, fixes, links I want to explore etc.
 - [ ] revisit folding
 - [ ] better highlighting of sql keywords in python strings. web-mode seems to
   do this so there could be something there.
-- [ ] hideshow is trying to start folded for html files - why?
 - [ ] get svg working - building with ~--rsvg~ didn't work.
 - [ ] upgrade all my packages
 - [ ] better emoji support?
@@ -6161,5 +6168,4 @@ Odd todos, fixes, links I want to explore etc.
 - [ ] slack - parse attachment data
 - not emacs
   - [ ] rg options
-  - [ ] fzf tab completion
 - [ ] hyperbole??

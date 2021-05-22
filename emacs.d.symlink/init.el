@@ -1693,6 +1693,8 @@ represent all current available bindings accurately as a single keymap."
   :hook ((prog-mod . bug-reference-prog-mode)
          (git-commit-mode . bug-reference-mode)))
 
+(use-package request)
+
 (defun md/ide ()
   (interactive)
   (helm :sources
@@ -2595,27 +2597,6 @@ lsp can properly jump to definitions."
 (bind-key "C-j" 'md/org-narrow-next md/evil-org-mode-map)
 (bind-key "C-k" 'md/org-narrow-prev md/evil-org-mode-map)
 
-(require 'helm-org)  ; this is part of the helm source but not loaded by default
-
-(setq helm-org-format-outline-path nil)
-(setq helm-org-headings-fontify t)
-
-;; [2021-05-16] see https://github.com/emacs-helm/helm/issues/2063#issuecomment-647092801 - this
-;; allows for selecting multiple tags
-(add-to-list 'helm-completing-read-handlers-alist '(org-capture . helm-org-completing-read-tags))
-(add-to-list 'helm-completing-read-handlers-alist '(org-set-tags . helm-org-completing-read-tags))
-
-(defun md/helm-org ()
-  "Open org headlines in helm."
-  (interactive)
-  (let* ((src (helm-build-sync-source "Org headings"
-                :candidates (helm-org-get-candidates (file-expand-wildcards buffer-file-name))
-                :action '(("Go to heading" . helm-org-goto-marker)
-                          ("Open in indirect buffer" . helm-org--open-heading-in-indirect-buffer)
-                          ("Refile to this heading" . helm-org-heading-refile)
-                          ("Insert link to this heading" . helm-org-insert-link-to-heading-at-marker))))
-         (cmd (helm :sources '(src))))))
-
 ;; Load some language support
   (require 'ob-restclient)
   (require 'ob-python)
@@ -2915,7 +2896,7 @@ be quickly copy/pasted into eg. gmail."
 
 (defun md/slack-parse-archive-url (archive-url)
   "Given ARCHIVE-URL in the format
-https://{team}.slack.com/archive/{channel}/p{timestamp}
+https://{team}.slack.com/archive/{channel}/p{timestamp}?{optional_thread_ts}
 use the Slack API to fetch a summary of the message and the sender."
   (when (not (and (boundp 'md/slack-token) md/slack-token))
     (error "Cannot lookup Slack url without setting md/slack-token"))
@@ -2923,20 +2904,25 @@ use the Slack API to fetch a summary of the message and the sender."
          (message-text nil)
          (sender-id nil)
          (sender-name nil)
-         (channel (nth 4 (s-split "/" archive-url)))
-         (last-url-slug (s-chop-prefix "p" (nth 5 (s-split "/" archive-url))))
-         (latest-timestamp
+         (url-without-qs (car (s-split "?" archive-url)))
+         (url-qs (s-chop-prefix (concat "?" url-without-qs) archive-url))
+         (slack-channel (nth 4 (s-split "/" archive-url)))
+         (slack-thread-ts (cdr (assoc "thread_ts" (url-parse-query-string url-qs))))
+         (slack-message-slug (s-chop-prefix "p" (car (s-split "?" (nth 5 (s-split "/" url-without-qs))))))
+         (slack-message-ts
           (concat
-           (s-left 10 last-url-slug)
+           (s-left 10 slack-message-slug)
            "."
-           (s-chop-prefix (s-left 10 last-url-slug) last-url-slug))))
+           (s-chop-prefix (s-left 10 slack-message-slug) slack-message-slug))))
     (request
-      "https://slack.com/api/conversations.history"
+      "https://slack.com/api/conversations.replies"
       :type "POST"
       :headers `(("Content-Type" . "application/x-www-form-urlencoded")
                  ("Authorization" . ,(format "Bearer %s" md/slack-token)))
-      :data (url-build-query-string `(("channel" ,channel)
-                                      ("latest" ,latest-timestamp)
+      :data (url-build-query-string `(("channel" ,slack-channel)
+                                      ("ts" ,(or slack-thread-ts slack-message-ts))
+                                      ("latest" ,slack-message-ts)
+                                      ("oldest" ,slack-message-ts)
                                       ("limit" 1)
                                       ("inclusive" true)))
       :sync t
@@ -2944,7 +2930,10 @@ use the Slack API to fetch a summary of the message and the sender."
       (cl-function
        (lambda (&key response &allow-other-keys)
          (let* ((data (json-parse-string (request-response-data response)))
-                (message-data (elt (ht-get data "messages") 0)))
+                (messages-data (ht-get data "messages"))
+                ;; Get the last message. If there is a thread, 2 messages are in the response - the
+                ;; one we ask for and the OP of the thread
+                (message-data (aref messages-data (- (length messages-data) 1))))
            (setq message-text (ht-get message-data "text"))
            (setq sender-id (ht-get message-data "user"))))))
     (when (not sender-id)
@@ -3046,6 +3035,27 @@ This is intended to be used in an org-capture template.
 
          :map help-map
          ("X" . helm-colors)))
+
+(require 'helm-org)  ; this is part of the helm source but not loaded by default
+
+(setq helm-org-format-outline-path nil)
+(setq helm-org-headings-fontify t)
+
+;; [2021-05-16] see https://github.com/emacs-helm/helm/issues/2063#issuecomment-647092801 - this
+;; allows for selecting multiple tags
+(add-to-list 'helm-completing-read-handlers-alist '(org-capture . helm-org-completing-read-tags))
+(add-to-list 'helm-completing-read-handlers-alist '(org-set-tags . helm-org-completing-read-tags))
+
+(defun md/helm-org ()
+  "Open org headlines in helm."
+  (interactive)
+  (let* ((src (helm-build-sync-source "Org headings"
+                :candidates (helm-org-get-candidates (file-expand-wildcards buffer-file-name))
+                :action '(("Go to heading" . helm-org-goto-marker)
+                          ("Open in indirect buffer" . helm-org--open-heading-in-indirect-buffer)
+                          ("Refile to this heading" . helm-org-heading-refile)
+                          ("Insert link to this heading" . helm-org-insert-link-to-heading-at-marker))))
+         (cmd (helm :sources '(src))))))
 
 (defun md/strip-first-word (s)
   "Remove the first word from a string. This function just exists for readability."
