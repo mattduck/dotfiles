@@ -2226,19 +2226,26 @@ I can use this with grep/ag to quickly find the todo comments:
 ** Shells
 
 Start terminal processes in Emacs state so that movement commands are passed to
-the underlying terminal (ie. I get the usual readline bindings).
+the shell (ie. I get the usual readline bindings).
 
 #+BEGIN_SRC emacs-lisp
   (add-hook 'ansi-term-mode-hook 'evil-emacs-state)
   (add-hook 'term-mode-hook 'evil-emacs-state)
   (evil-set-initial-state 'ansi-term-mode 'emacs)
   (evil-set-initial-state 'term-mode 'emacs)
-
+  
   (use-package vterm
     :demand t
     :config
     (evil-set-initial-state 'vterm-mode 'emacs)
-    (add-hook 'vterm-mode-hook 'evil-emacs-state))
+    (add-hook 'vterm-mode-hook 'evil-emacs-state)
+    ;; Ensure leader is accessible
+    (bind-key "C-<SPC>" 'md/leader-map vterm-mode-map)
+    (bind-key "C-w" 'splitscreen/prefix vterm-mode-map)
+    (evil-define-key 'normal vterm-mode-map
+      "gk" 'vterm-previous-prompt
+      "gj" 'vterm-next-prompt)
+    (setq vterm-max-scrollback 10000))
 #+END_SRC
 
 ** Neotree

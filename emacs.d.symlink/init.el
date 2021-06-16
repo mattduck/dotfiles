@@ -1650,7 +1650,14 @@ represent all current available bindings accurately as a single keymap."
   :demand t
   :config
   (evil-set-initial-state 'vterm-mode 'emacs)
-  (add-hook 'vterm-mode-hook 'evil-emacs-state))
+  (add-hook 'vterm-mode-hook 'evil-emacs-state)
+  ;; Ensure leader is accessible
+  (bind-key "C-<SPC>" 'md/leader-map vterm-mode-map)
+  (bind-key "C-w" 'splitscreen/prefix vterm-mode-map)
+  (evil-define-key 'normal vterm-mode-map
+    "gk" 'vterm-previous-prompt
+    "gj" 'vterm-next-prompt)
+  (setq vterm-max-scrollback 10000))
 
 (use-package neotree
   :demand t
