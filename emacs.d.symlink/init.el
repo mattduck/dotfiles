@@ -2158,8 +2158,6 @@ lsp can properly jump to definitions."
 
 (use-package yaml-mode :demand t)
 
-(use-package lua-mode :demand t)
-
 (use-package terraform-mode)
 
 (use-package markdown-mode
@@ -2981,6 +2979,17 @@ This is intended to be used in an org-capture template.
     (md/format-slack-for-org-capture
      (md/slack-parse-archive-url pasted))))
 
+(require 'ox-rss)
+(when (fboundp 'org-rss-final-function)
+  (fmakunbound 'org-rss-final-function)
+  (defun org-rss-final-function (contents backend info)
+    "Prettify the RSS output. Copied from ox-rss, but doesn't call indent-region"
+    (with-temp-buffer
+      (xml-mode)
+      (insert contents)
+      ;;(indent-region (point-min) (point-max))
+      (buffer-substring-no-properties (point-min) (point-max)))))
+
 (message "use-package for org finished")
   ))
 
@@ -3113,7 +3122,7 @@ popup version of org-capture instead of using the usual org-capture."
 MY-ORG-KEYWORD is the org keyword to search for.
 MY-HELM-PREFIX is a prefix that should be typed before any candidates start matching."
   (helm-build-sync-source my-helm-title
-    :requires-pattern t
+    :requires-pattern 1
     :multimatch nil
     :candidates
     ;; Loop over my agenda files. For each one, use a regex to match all the headlines starting with
@@ -3176,7 +3185,7 @@ MY-HELM-PREFIX is a prefix that should be typed before any candidates start matc
     :nohighlight t
     :nomark t
     :multimatch nil
-    :requires-pattern t
+    :requires-pattern 1
     :candidates md/alfred-source-search-candidates
     :match '((lambda (candidate)
                (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern)))))
@@ -3233,7 +3242,7 @@ are ugly. It works fine though."
   "Start a webserver process in a particular directory."
   (helm-build-sync-source "Webserver"
     :multimatch nil
-    :requires-pattern t
+    :requires-pattern 1
     :candidates '(("mattduck.com" . "/f/www.mattduck.com/build")
                   ("shonamcgovern.com" . "/f/clients/shona-mcgovern/shonamcgovern.com/site")
                   ("emacs.london" . "/f/emacs.london/london-emacs-hacking.github.io")
@@ -3251,7 +3260,7 @@ are ugly. It works fine though."
   (helm-build-async-source "Processes"
     :nohighlight t  ;; Because grep is doing the matching, not helm
     :multimatch nil
-    :requires-pattern t
+    :requires-pattern 1
     :candidates-process (lambda ()
                           (if (s-starts-with? "p " helm-pattern)
                               (let ((pat (s-chop-prefix "p " helm-pattern)))
@@ -3267,7 +3276,7 @@ are ugly. It works fine though."
   "Open a directory."
   (helm-build-async-source "Directories"
     :multimatch nil
-    :requires-pattern t
+    :requires-pattern 1
     :candidates-process (lambda ()
                           (if (and (s-starts-with? "fd " helm-pattern) (> (length helm-pattern) 4))
                               (let ((pat (s-chop-prefix "fd " helm-pattern)))
@@ -3282,7 +3291,7 @@ are ugly. It works fine though."
   "Open a file with its default program."
   (helm-build-async-source "Files"
     :multimatch nil
-    :requires-pattern t
+    :requires-pattern 1
     :candidates-process (lambda ()
                           (if (and (s-starts-with? "f " helm-pattern) (> (length helm-pattern) 4))
                               (let ((pat (s-chop-prefix "f " helm-pattern)))
@@ -3653,16 +3662,18 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
         bookmark-automatically-show-annotations nil
         bookmark-completion-ignore-case t))
 
-(use-package bookmark+
-    :demand t
-    :load-path "non-elpa/bookmark-plus"
-    :bind (:map md/leader-map
-                ("ll" . md/helm-bookmarks)
-                ("jl" . md/helm-bookmarks-project)
-                ("lf" . md/helm-bookmarks-temp)
-                ("ls" . md/bookmark-temp-set)
-                ("lj" . md/bookmark-jump-to-last-temp)
-                ("ld" . md/bookmark-temp-delete-all)))
+;; [2021-06-15] Commenting out because I'm hitting error after upgradE:
+;; Error (use-package): bookmark+/:catch: Wrong number of arguments: make-obsolete, 2
+;; (use-package bookmark+
+;;     :demand t
+;;     :load-path "non-elpa/bookmark-plus"
+;;     :bind (:map md/leader-map
+;;                 ("ll" . md/helm-bookmarks)
+;;                 ("jl" . md/helm-bookmarks-project)
+;;                 ("lf" . md/helm-bookmarks-temp)
+;;                 ("ls" . md/bookmark-temp-set)
+;;                 ("lj" . md/bookmark-jump-to-last-temp)
+;;                 ("ld" . md/bookmark-temp-delete-all)))
 
 (defvar md/anchored-buffer nil "Current anchored buffer")
 (defvar md/anchored-return-buffer nil "Current return buffer")
@@ -4421,6 +4432,10 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 (bind-key "bd" 'dedicated-mode md/leader-map)
 (bind-key "tD" 'dedicated-mode md/leader-map)
+
+(defun md/screenshot ()
+  (interactive)
+  (shell-command "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg" nil nil))
 
 (dolist (this-minor-mode
          '(csv-field-index-mode

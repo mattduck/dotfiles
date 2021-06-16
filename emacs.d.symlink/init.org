@@ -3191,7 +3191,7 @@ for now:
   (use-package yaml-mode :demand t)
 #+END_SRC
 
-** Lua
+** COMMENT Lua
 
 #+BEGIN_SRC emacs-lisp
   (use-package lua-mode :demand t)
@@ -4150,6 +4150,29 @@ This requires ~md/slack-token~ to be set.
        (md/slack-parse-archive-url pasted))))
 #+END_SRC
 
+** Publish
+
+[2021-06-16] Ox-rss allows for publishing of a feed.xml RSS file. This is
+useful, but has a big performance issue: it hangs for 30s+ running
+~(indent-region)~ as part of prettifying the XML file.
+
+To get around this, we redefine ~org-rss-final-function~ and skip the indenting
+part. The resulting file still has appropriate newlines everywhere, they're just
+not indented with leading whitespace, which is fine.
+
+#+BEGIN_SRC emacs-lisp
+  (require 'ox-rss)
+  (when (fboundp 'org-rss-final-function)
+    (fmakunbound 'org-rss-final-function)
+    (defun org-rss-final-function (contents backend info)
+      "Prettify the RSS output. Copied from ox-rss, but doesn't call indent-region"
+      (with-temp-buffer
+        (xml-mode)
+        (insert contents)
+        ;;(indent-region (point-min) (point-max))
+        (buffer-substring-no-properties (point-min) (point-max)))))
+#+END_SRC
+
 ** use-package wrapper *END*
 Close the use-package wrapper:
 
@@ -4337,7 +4360,7 @@ indirect buffer. The search is quite naive, but that makes it fast.
   MY-ORG-KEYWORD is the org keyword to search for.
   MY-HELM-PREFIX is a prefix that should be typed before any candidates start matching."
     (helm-build-sync-source my-helm-title
-      :requires-pattern t
+      :requires-pattern 1
       :multimatch nil
       :candidates
       ;; Loop over my agenda files. For each one, use a regex to match all the headlines starting with
@@ -4411,7 +4434,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
       :nohighlight t
       :nomark t
       :multimatch nil
-      :requires-pattern t
+      :requires-pattern 1
       :candidates md/alfred-source-search-candidates
       :match '((lambda (candidate)
                  (string= (car (cdr (assoc candidate md/alfred-source-search-candidates))) (car (split-string helm-pattern)))))
@@ -4478,7 +4501,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
     "Start a webserver process in a particular directory."
     (helm-build-sync-source "Webserver"
       :multimatch nil
-      :requires-pattern t
+      :requires-pattern 1
       :candidates '(("mattduck.com" . "/f/www.mattduck.com/build")
                     ("shonamcgovern.com" . "/f/clients/shona-mcgovern/shonamcgovern.com/site")
                     ("emacs.london" . "/f/emacs.london/london-emacs-hacking.github.io")
@@ -4498,7 +4521,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
     (helm-build-async-source "Processes"
       :nohighlight t  ;; Because grep is doing the matching, not helm
       :multimatch nil
-      :requires-pattern t
+      :requires-pattern 1
       :candidates-process (lambda ()
                             (if (s-starts-with? "p " helm-pattern)
                                 (let ((pat (s-chop-prefix "p " helm-pattern)))
@@ -4516,7 +4539,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
     "Open a directory."
     (helm-build-async-source "Directories"
       :multimatch nil
-      :requires-pattern t
+      :requires-pattern 1
       :candidates-process (lambda ()
                             (if (and (s-starts-with? "fd " helm-pattern) (> (length helm-pattern) 4))
                                 (let ((pat (s-chop-prefix "fd " helm-pattern)))
@@ -4533,7 +4556,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
     "Open a file with its default program."
     (helm-build-async-source "Files"
       :multimatch nil
-      :requires-pattern t
+      :requires-pattern 1
       :candidates-process (lambda ()
                             (if (and (s-starts-with? "f " helm-pattern) (> (length helm-pattern) 4))
                                 (let ((pat (s-chop-prefix "f " helm-pattern)))
@@ -5108,16 +5131,18 @@ Bookmark package configuration and bindings:
           bookmark-automatically-show-annotations nil
           bookmark-completion-ignore-case t))
 
-  (use-package bookmark+
-      :demand t
-      :load-path "non-elpa/bookmark-plus"
-      :bind (:map md/leader-map
-                  ("ll" . md/helm-bookmarks)
-                  ("jl" . md/helm-bookmarks-project)
-                  ("lf" . md/helm-bookmarks-temp)
-                  ("ls" . md/bookmark-temp-set)
-                  ("lj" . md/bookmark-jump-to-last-temp)
-                  ("ld" . md/bookmark-temp-delete-all)))
+  ;; [2021-06-15] Commenting out because I'm hitting error after upgradE:
+  ;; Error (use-package): bookmark+/:catch: Wrong number of arguments: make-obsolete, 2
+  ;; (use-package bookmark+
+  ;;     :demand t
+  ;;     :load-path "non-elpa/bookmark-plus"
+  ;;     :bind (:map md/leader-map
+  ;;                 ("ll" . md/helm-bookmarks)
+  ;;                 ("jl" . md/helm-bookmarks-project)
+  ;;                 ("lf" . md/helm-bookmarks-temp)
+  ;;                 ("ls" . md/bookmark-temp-set)
+  ;;                 ("lj" . md/bookmark-jump-to-last-temp)
+  ;;                 ("ld" . md/bookmark-temp-delete-all)))
 
 
 #+END_SRC
@@ -6001,6 +6026,14 @@ another buffer in the window.
 #+BEGIN_SRC emacs-lisp
   (bind-key "bd" 'dedicated-mode md/leader-map)
   (bind-key "tD" 'dedicated-mode md/leader-map)
+#+END_SRC
+
+** Screenshot
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/screenshot ()
+    (interactive)
+    (shell-command "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg" nil nil))
 #+END_SRC
 
 * Disable
