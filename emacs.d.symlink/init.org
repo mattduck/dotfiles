@@ -1056,45 +1056,45 @@ actually use it to insert anything in insert mode.
 
 #+BEGIN_SRC emacs-lisp
   ;;;; Below are configurations for EXWM.
-
+  
   (defun md/exwm-file-enable ()
     "If this file exists, my .xinitrc will load exwm instead of i3."
     (interactive)
     (f-touch "~/.exwm-enabled")
     (message "exwm file touched"))
-
+  
   (defun md/exwm-file-disable ()
     "If this file exists, my .xinitrc will load exwm instead of i3.
   Calling this will delete the file, causing i3 to load next time."
     (interactive)
     (delete-file "~/.exwm-enabled")
     (message "exwm file deleted"))
-
+  
   (defun md/exwm-enabled ()
     (file-exists-p "~/.exwm-enabled"))
-
+  
   (when (file-exists-p "~/.exwm-enabled")
     ;; Required for sane bindings
     (evil-set-initial-state 'exwm-mode 'emacs)
-
+  
     ;; Load EXWM.
     (require 'exwm)
-
+  
     ;; Fix problems with Ido (if you use it).
     ;; (require 'exwm-config)
     ;; (exwm-config-ido)
-
+  
     ;; Set the initial number of workspaces (they can also be created later).
     (setq exwm-workspace-number 1)
-
+  
     (setq exwm-workspace-show-all-buffers t
           exwm-layout-show-all-buffers t)
-
+  
     ;; Hide modeline for exwm buffers
     (add-hook 'exwm-manage-finish-hook 'exwm-layout-hide-mode-line)
-
+  
     (setq exwm-workspace-minibuffer-position nil)
-
+  
     ;; All buffers created in EXWM mode are named "*EXWM*". You may want to
     ;; change it in `exwm-update-class-hook' and `exwm-update-title-hook', which
     ;; are run when a new X window class name or title is available.  Here's
@@ -1116,49 +1116,46 @@ actually use it to insert anything in insert mode.
                           (string-prefix-p "sun-awt-X11-" exwm-instance-name)
                           (string= "gimp" exwm-instance-name))
                   (exwm-workspace-rename-buffer exwm-title))))
-
-
-    (defun md/exwm-cycle ()
-      (interactive)
-      (exwm-workspace-switch
-       (if (= exwm-workspace-current-index (- (exwm-workspace--count) 1))
-           0
-         (+ exwm-workspace-current-index 1))))
-
+  
+  
     (defun md/exwm-input-toggle-keyboard ()
       (interactive)
       (call-interactively 'exwm-input-toggle-keyboard)
       (message "exwm: %s" exwm--input-mode))
-
-
+  
     ;; Global keybindings can be defined with `exwm-input-global-keys'.
     ;; Here are a few examples:
     (setq exwm-input-global-keys
           `(;; Bind "s-r" to exit char-mode and fullscreen mode.
             ([?\s-r] . exwm-reset)
-
+  
             ;; TODO: helm-mini and helm-m-x don't cause screen issues, which is interesting.
             ;; There are particular alfred sources that cause the frame problems.
             (,(kbd "s-<SPC>") . md/alfred-no-frame)
             (,(kbd "s-t") . md/alfred)
             (,(kbd "C-<SPC>") . md/leader-map)
-
+  
+            ([?\C-w] . splitscreen/prefix)
             ([?\s-w] . splitscreen/prefix)
+  
             (,(kbd "s-<tab>") . eyebrowse-next-window-config)
             ([?\s-f] . exwm-layout-toggle-fullscreen)
             ([?\s-z] . md/exwm-input-toggle-keyboard)))
-
+  
     ;; To add a key binding only available in line-mode, simply define it in
     ;; `exwm-mode-map'.  The following example shortens 'C-c q' to 'C-q'.
+  
     (define-key exwm-mode-map [?\C-q] #'exwm-input-send-next-key)
-
+  
     ;; The following example demonstrates how to use simulation keys to mimic
     ;; the behavior of Emacs.  The value of `exwm-input-simulation-keys` is a
     ;; list of cons cells (SRC . DEST), where SRC is the key sequence you press
     ;; and DEST is what EXWM actually sends to application.  Note that both SRC
     ;; and DEST should be key sequences (vector or string).
     (setq exwm-input-simulation-keys
-          '(
+          `(
+            (,(kbd "C-w C-w") . [?\C-w])
+  
             ;; movement
             ([?\C-b] . [left])
             ;; ([?\M-b] . [C-left])
@@ -1178,23 +1175,14 @@ actually use it to insert anything in insert mode.
             ;; ([?\C-y] . [?\C-v])
             ;; search
             ;; ([?\C-s] . [?\C-f])))
-
-
+  
+  
     ;; Do not forget to enable EXWM. It will start by itself when things are
     ;; ready.  You can put it _anywhere_ in your configuration.
     (exwm-enable)
-
-    ;; You can hide the minibuffer and echo area when they're not used, by
-    ;; uncommenting the following line.
-                                          ;(setq exwm-workspace-minibuffer-position 'bottom)
+  
     (require 'exwm-randr)
-    ;; (setq exwm-randr-workspace-output-plist '(0 "VGA1"))
-    ;; (add-hook 'exwm-randr-screen-change-hook
-    ;;           (lambda ()
-    ;;             (start-process-shell-command
-    ;;              "xrandr" nil "xrandr --output VGA1 --left-of LVDS1 --auto")))
-
-
+  
     (defun md/exwm-display-one ()
       "If monitor is connected, only use that. Otherwise, only use the main display."
       (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
@@ -1212,7 +1200,7 @@ actually use it to insert anything in insert mode.
              "--output" (match-string 1) "--primary" "--auto" "--same-as" default-output
              "--output" default-output "--off")
             (setq exwm-randr-workspace-output-plist (list 0 (match-string 1)))))))
-
+  
     (defun md/exwm-display-mirror ()
       "Mirror display"
       (interactive)
@@ -1231,9 +1219,9 @@ actually use it to insert anything in insert mode.
              "--output" default-output "--auto" "--primary"
              "--output" (match-string 1) "--auto" "--same-as" default-output)
             (setq exwm-randr-workspace-output-plist (list 0 default-output))))))
-
+  
     ;; ---------------
-
+  
     (defun md/status-message ()
       (interactive)
       (let* ((message-log-max nil) ; ensure not logged in message buffer
@@ -1243,7 +1231,6 @@ actually use it to insert anything in insert mode.
              (propertized-string (mapconcat
                                   (lambda (item)
                                     (concat
-                                     ;; (propertize " " 'face `(:family "Noto sans" :height 0.8))
                                      (propertize (nth 0 item)
                                                  'face
                                                  `(:foreground ,(nth 2 item) :family "Font Awesome 5 Free" :height 0.6))
@@ -1251,10 +1238,10 @@ actually use it to insert anything in insert mode.
                                                  'face
                                                  `(:foreground ,(nth 2 item) :family "Noto sans" :height 0.7))))
                                   output-as-list "")))
-
+  
         (message propertized-string)))
     (bind-key "SPC" 'md/status-message md/leader-map)
-
+  
     (exwm-randr-enable))
 #+END_SRC
 
@@ -5611,38 +5598,27 @@ tmux. I've copied it inline now because (1) it's more convenient to edit, and
         (window-configuration-to-register (eyebrowse--get 'current-slot))
         (setq-local splitscreen/zoomed-p t)
         (delete-other-windows))))
-
+  
   (defun splitscreen/reset-zoom (fn &rest args)
     (apply fn args)
     (set-register (eyebrowse--get 'current-slot) nil))
-
+  
   (advice-add 'eyebrowse-close-window-config :around 'splitscreen/reset-zoom '((name . "splitscreen")))
-
-  (defun splitscreen/window-left ()
-    (interactive)
-    (evil-window-left 1))
-
-  (defun splitscreen/window-right ()
-    (interactive)
-    (evil-window-right 1))
-
-  (defun splitscreen/window-up ()
-    (interactive)
-    (evil-window-up 1))
-
-  (defun splitscreen/window-down ()
-    (interactive)
-    (evil-window-down 1))
-
+  
+  (defun splitscreen/window-left () (interactive) (evil-window-left 1))
+  (defun splitscreen/window-right () (interactive) (evil-window-right 1))
+  (defun splitscreen/window-up () (interactive) (evil-window-up 1))
+  (defun splitscreen/window-down () (interactive) (evil-window-down 1))
+  
   (defun splitscreen/increase-width () (interactive) (evil-window-increase-width 10))
   (defun splitscreen/decrease-width () (interactive) (evil-window-decrease-width 10))
   (defun splitscreen/increase-height () (interactive) (evil-window-increase-height 10))
   (defun splitscreen/decrease-height () (interactive) (evil-window-decrease-height 10))
-
+  
   (defvar splitscreen/mode-map (make-sparse-keymap))
   (define-prefix-command 'splitscreen/prefix)
   (define-key splitscreen/mode-map (kbd "C-w") 'splitscreen/prefix)
-
+  
   ;; We override these. Just declare them as part of the splitscreen map, not
   ;; evil-window-map.
   (define-key evil-window-map (kbd "h") nil)
@@ -5658,12 +5634,12 @@ tmux. I've copied it inline now because (1) it's more convenient to edit, and
   (define-key evil-window-map (kbd "C-l") nil)
   (define-key evil-window-map (kbd "C-l") nil)
   (define-key evil-window-map (kbd "o") nil)
-
+  
   (define-key splitscreen/prefix (kbd "h") 'splitscreen/window-left)
   (define-key splitscreen/prefix (kbd "j") 'splitscreen/window-down)
   (define-key splitscreen/prefix (kbd "k") 'splitscreen/window-up)
   (define-key splitscreen/prefix (kbd "l") 'splitscreen/window-right)
-
+  
   (define-key splitscreen/prefix (kbd "c") 'eyebrowse-create-window-config)
   (define-key splitscreen/prefix (kbd "n") 'eyebrowse-next-window-config)
   (define-key splitscreen/prefix (kbd "p") 'eyebrowse-prev-window-config)
@@ -5678,6 +5654,10 @@ tmux. I've copied it inline now because (1) it's more convenient to edit, and
   (define-key splitscreen/prefix (kbd "C-j") 'splitscreen/decrease-height)
   (define-key splitscreen/prefix (kbd "C-k") 'splitscreen/increase-height)
   (define-key splitscreen/prefix (kbd "C-l") 'splitscreen/increase-width)
+  (define-key splitscreen/prefix (kbd "s-h") 'splitscreen/decrease-width)
+  (define-key splitscreen/prefix (kbd "s-j") 'splitscreen/decrease-height)
+  (define-key splitscreen/prefix (kbd "s-k") 'splitscreen/increase-height)
+  (define-key splitscreen/prefix (kbd "s-l") 'splitscreen/increase-width)
   (define-key splitscreen/prefix (kbd "SPC") 'balance-windows)
   (define-key splitscreen/prefix (kbd "0") 'eyebrowse-switch-to-window-config-0)
   (define-key splitscreen/prefix (kbd "1") 'eyebrowse-switch-to-window-config-1)
@@ -5689,7 +5669,7 @@ tmux. I've copied it inline now because (1) it's more convenient to edit, and
   (define-key splitscreen/prefix (kbd "7") 'eyebrowse-switch-to-window-config-7)
   (define-key splitscreen/prefix (kbd "8") 'eyebrowse-switch-to-window-config-8)
   (define-key splitscreen/prefix (kbd "9") 'eyebrowse-switch-to-window-config-9)
-
+  
   (define-minor-mode splitscreen-mode
       "Provides tmux-like bindings for managing windows and buffers.
        See https://github.com/mattduck/splitscreen"
@@ -5697,7 +5677,7 @@ tmux. I've copied it inline now because (1) it's more convenient to edit, and
       :lighter " Split"
       :global 1
       :keymap splitscreen/mode-map)
-
+  
   (if (md/exwm-enabled)
       (splitscreen-mode 0) ;; If exwm is on, this is provided by s-w
     (splitscreen-mode 1)

@@ -799,18 +799,10 @@ Calling this will delete the file, causing i3 to load next time."
                 (exwm-workspace-rename-buffer exwm-title))))
 
 
-  (defun md/exwm-cycle ()
-    (interactive)
-    (exwm-workspace-switch
-     (if (= exwm-workspace-current-index (- (exwm-workspace--count) 1))
-         0
-       (+ exwm-workspace-current-index 1))))
-
   (defun md/exwm-input-toggle-keyboard ()
     (interactive)
     (call-interactively 'exwm-input-toggle-keyboard)
     (message "exwm: %s" exwm--input-mode))
-
 
   ;; Global keybindings can be defined with `exwm-input-global-keys'.
   ;; Here are a few examples:
@@ -824,13 +816,16 @@ Calling this will delete the file, causing i3 to load next time."
           (,(kbd "s-t") . md/alfred)
           (,(kbd "C-<SPC>") . md/leader-map)
 
+          ([?\C-w] . splitscreen/prefix)
           ([?\s-w] . splitscreen/prefix)
+
           (,(kbd "s-<tab>") . eyebrowse-next-window-config)
           ([?\s-f] . exwm-layout-toggle-fullscreen)
           ([?\s-z] . md/exwm-input-toggle-keyboard)))
 
   ;; To add a key binding only available in line-mode, simply define it in
   ;; `exwm-mode-map'.  The following example shortens 'C-c q' to 'C-q'.
+
   (define-key exwm-mode-map [?\C-q] #'exwm-input-send-next-key)
 
   ;; The following example demonstrates how to use simulation keys to mimic
@@ -839,7 +834,9 @@ Calling this will delete the file, causing i3 to load next time."
   ;; and DEST is what EXWM actually sends to application.  Note that both SRC
   ;; and DEST should be key sequences (vector or string).
   (setq exwm-input-simulation-keys
-        '(
+        `(
+          (,(kbd "C-w C-w") . [?\C-w])
+
           ;; movement
           ([?\C-b] . [left])
           ;; ([?\M-b] . [C-left])
@@ -865,16 +862,7 @@ Calling this will delete the file, causing i3 to load next time."
   ;; ready.  You can put it _anywhere_ in your configuration.
   (exwm-enable)
 
-  ;; You can hide the minibuffer and echo area when they're not used, by
-  ;; uncommenting the following line.
-                                        ;(setq exwm-workspace-minibuffer-position 'bottom)
   (require 'exwm-randr)
-  ;; (setq exwm-randr-workspace-output-plist '(0 "VGA1"))
-  ;; (add-hook 'exwm-randr-screen-change-hook
-  ;;           (lambda ()
-  ;;             (start-process-shell-command
-  ;;              "xrandr" nil "xrandr --output VGA1 --left-of LVDS1 --auto")))
-
 
   (defun md/exwm-display-one ()
     "If monitor is connected, only use that. Otherwise, only use the main display."
@@ -924,7 +912,6 @@ Calling this will delete the file, causing i3 to load next time."
            (propertized-string (mapconcat
                                 (lambda (item)
                                   (concat
-                                   ;; (propertize " " 'face `(:family "Noto sans" :height 0.8))
                                    (propertize (nth 0 item)
                                                'face
                                                `(:foreground ,(nth 2 item) :family "Font Awesome 5 Free" :height 0.6))
@@ -4064,21 +4051,10 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 (advice-add 'eyebrowse-close-window-config :around 'splitscreen/reset-zoom '((name . "splitscreen")))
 
-(defun splitscreen/window-left ()
-  (interactive)
-  (evil-window-left 1))
-
-(defun splitscreen/window-right ()
-  (interactive)
-  (evil-window-right 1))
-
-(defun splitscreen/window-up ()
-  (interactive)
-  (evil-window-up 1))
-
-(defun splitscreen/window-down ()
-  (interactive)
-  (evil-window-down 1))
+(defun splitscreen/window-left () (interactive) (evil-window-left 1))
+(defun splitscreen/window-right () (interactive) (evil-window-right 1))
+(defun splitscreen/window-up () (interactive) (evil-window-up 1))
+(defun splitscreen/window-down () (interactive) (evil-window-down 1))
 
 (defun splitscreen/increase-width () (interactive) (evil-window-increase-width 10))
 (defun splitscreen/decrease-width () (interactive) (evil-window-decrease-width 10))
@@ -4124,6 +4100,10 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (define-key splitscreen/prefix (kbd "C-j") 'splitscreen/decrease-height)
 (define-key splitscreen/prefix (kbd "C-k") 'splitscreen/increase-height)
 (define-key splitscreen/prefix (kbd "C-l") 'splitscreen/increase-width)
+(define-key splitscreen/prefix (kbd "s-h") 'splitscreen/decrease-width)
+(define-key splitscreen/prefix (kbd "s-j") 'splitscreen/decrease-height)
+(define-key splitscreen/prefix (kbd "s-k") 'splitscreen/increase-height)
+(define-key splitscreen/prefix (kbd "s-l") 'splitscreen/increase-width)
 (define-key splitscreen/prefix (kbd "SPC") 'balance-windows)
 (define-key splitscreen/prefix (kbd "0") 'eyebrowse-switch-to-window-config-0)
 (define-key splitscreen/prefix (kbd "1") 'eyebrowse-switch-to-window-config-1)
