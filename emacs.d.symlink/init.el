@@ -730,6 +730,18 @@ All scope layers are stored in md/variable-layers."
     (key-chord-define evil-replace-state-map "jk" 'evil-normal-state)
     (key-chord-mode 1)))
 
+(defun md/screenshot-image-selection ()
+  (interactive)
+  (shell-command ",screenshot --image-selection"))
+
+(defun md/screenshot-video-selection-start ()
+  (interactive)
+  (shell-command ",screenshot --video-selection-start"))
+
+(defun md/screenshot-video-stop ()
+  (interactive)
+  (shell-command ",screenshot --video-stop"))
+
 ;;;; Below are configurations for EXWM.
 
 (defun md/exwm-file-enable ()
@@ -809,6 +821,10 @@ Calling this will delete the file, causing i3 to load next time."
           (,(kbd "s-<SPC>") . md/alfred-no-frame)
           (,(kbd "s-t") . md/alfred)
           (,(kbd "C-<SPC>") . md/leader-map)
+
+          (,(kbd "s-$") . md/screenshot-image-selection)
+          (,(kbd "s-%") . md/screenshot-video-selection-start)
+          (,(kbd "s-^") . md/screenshot-video-stop)
 
           ([?\C-w] . splitscreen/prefix)
           ([?\s-w] . splitscreen/prefix)
@@ -4443,10 +4459,6 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 (bind-key "bd" 'dedicated-mode md/leader-map)
 (bind-key "tD" 'dedicated-mode md/leader-map)
-
-(defun md/screenshot ()
-  (interactive)
-  (shell-command "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg" nil nil))
 
 (dolist (this-minor-mode
          '(csv-field-index-mode
