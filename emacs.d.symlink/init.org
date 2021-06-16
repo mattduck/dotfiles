@@ -2245,7 +2245,8 @@ the shell (ie. I get the usual readline bindings).
     (evil-define-key 'normal vterm-mode-map
       "gk" 'vterm-previous-prompt
       "gj" 'vterm-next-prompt)
-    (setq vterm-max-scrollback 10000))
+    (setq vterm-max-scrollback 10000
+          vterm-buffer-name-string "vterm [%s]"))
 #+END_SRC
 
 ** Neotree
@@ -4199,25 +4200,26 @@ Close the use-package wrapper:
       (helm-mode 1)
       (helm-autoresize-mode 0)
       (helm-descbinds-mode 1)
-
+  
       ;; No need to display the header - it takes up room and doesn't add much.
-      (setq helm-display-header-line t)
-
+      (setq helm-display-header-line nil
+            helm-buffer-max-length 60)
+  
       ;; I don't need to know about some files
       (setq helm-ff-skip-boring-files t)
       (push "\\.$" helm-boring-file-regexp-list)
       (push "\\.\\.$" helm-boring-file-regexp-list)
-
+  
       ;; This lets me quickly ag/grep for "todo" comments using the same
       ;; ag/grep functions that I usually do.
       (bind-key "C-c C-t" 'md/insert-todo-regexp helm-map)
-
+  
       ;; Put C-j / C-l the sane way around.
       (bind-key "C-j" 'helm-find-files-up-one-level helm-map)
       (bind-key "C-l" 'helm-execute-persistent-action helm-map)
       (bind-key "C-l" 'helm-execute-persistent-action helm-read-file-map)
       (bind-key "C-l" 'helm-execute-persistent-action helm-find-files-map))
-
+  
     :bind (([remap find-file] . helm-find-files)  ; Remember - this also opens URLs!
            ([remap occur] . helm-occur)
            ([remap dabbrev-expand] . helm-dabbrev)
@@ -4225,23 +4227,23 @@ Close the use-package wrapper:
            ("M-x" . helm-M-x)
            ("C-x b" . helm-buffers-list)
            ("C-x p" . helm-mini)
-
+  
            :map lisp-interaction-mode-map
            ([remap completion-at-point] . helm-lisp-completion)
-
+  
            :map emacs-lisp-mode-map
            ([remap completion-at-point] . helm-lisp-completion)
-
+  
            :map md/leader-map
            ("bb" . helm-buffers-list)
            ("f" . helm-find-files)
            ("x" . helm-M-x)
            ("X" . helm-resume)
            ("p" . helm-mini)
-
+  
            :map help-map
            ("X" . helm-colors)))
-
+  
 #+END_SRC
 
 ** helm-org
@@ -4488,6 +4490,21 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
       :action '(("Launch" . (lambda (candidate)
                               (shell-command (concat "gtk-launch " candidate " >/dev/null 2>&1 & disown") nil nil))))))
 #+END_SRC
+*** Emacs M-x commands
+
+Like M-x, but matches a subset of commands.
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/alfred-source-M-x ()
+    (helm-build-sync-source "M-x"
+      :multimatch nil
+      :requires-pattern nil
+      :candidates '(("vterm" . vterm)
+                    ("org-agenda" . org-agenda)
+                    ("elfeed" . elfeed))
+      :action '(("M-x" . (lambda (candidate) (call-interactively candidate))))))
+#+END_SRC
+
 *** Run a webserver
 
 #+BEGIN_SRC emacs-lisp
@@ -4570,6 +4587,7 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
                          (md/alfred-source-org-light "Org - BACK" "back" "BACK")
                          (md/alfred-source-org-clock-out)
                          (md/alfred-source-web-bookmarks)
+                         (md/alfred-source-M-x)
                          (when (string= (system-name) "arch")
                            (md/alfred-source-apps))
                          (md/alfred-source-directories)
@@ -4577,11 +4595,11 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
                          (md/alfred-source-processes))
           :prompt ""
           :buffer buffer))
-
+  
   (defun md/alfred-no-frame ()
     (interactive)
     (md/alfred--helm nil))
-
+  
   (defun md/alfred ()
     "Entry point to create the 'alfred' frame and run helm."
     (interactive)

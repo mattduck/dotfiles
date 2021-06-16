@@ -1657,7 +1657,8 @@ represent all current available bindings accurately as a single keymap."
   (evil-define-key 'normal vterm-mode-map
     "gk" 'vterm-previous-prompt
     "gj" 'vterm-next-prompt)
-  (setq vterm-max-scrollback 10000))
+  (setq vterm-max-scrollback 10000
+        vterm-buffer-name-string "vterm [%s]"))
 
 (use-package neotree
   :demand t
@@ -3004,7 +3005,8 @@ This is intended to be used in an org-capture template.
     (helm-descbinds-mode 1)
 
     ;; No need to display the header - it takes up room and doesn't add much.
-    (setq helm-display-header-line t)
+    (setq helm-display-header-line nil
+          helm-buffer-max-length 60)
 
     ;; I don't need to know about some files
     (setq helm-ff-skip-boring-files t)
@@ -3232,6 +3234,15 @@ are ugly. It works fine though."
     :action '(("Launch" . (lambda (candidate)
                             (shell-command (concat "gtk-launch " candidate " >/dev/null 2>&1 & disown") nil nil))))))
 
+(defun md/alfred-source-M-x ()
+  (helm-build-sync-source "M-x"
+    :multimatch nil
+    :requires-pattern nil
+    :candidates '(("vterm" . vterm)
+                  ("org-agenda" . org-agenda)
+                  ("elfeed" . elfeed))
+    :action '(("M-x" . (lambda (candidate) (call-interactively candidate))))))
+
 (defun md/alfred-source-webserver ()
   "Start a webserver process in a particular directory."
   (helm-build-sync-source "Webserver"
@@ -3303,6 +3314,7 @@ are ugly. It works fine though."
                        (md/alfred-source-org-light "Org - BACK" "back" "BACK")
                        (md/alfred-source-org-clock-out)
                        (md/alfred-source-web-bookmarks)
+                       (md/alfred-source-M-x)
                        (when (string= (system-name) "arch")
                          (md/alfred-source-apps))
                        (md/alfred-source-directories)
