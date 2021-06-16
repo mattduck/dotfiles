@@ -9,6 +9,7 @@ emacs.d.symlink/.backups
 emacs.d.symlink/.dap-breakpoints
 emacs.d.symlink/.extension
 emacs.d.symlink/.lsp-*
+emacs.d.symlink/.org-generic-id-locations
 emacs.d.symlink/.org-id-locations
 emacs.d.symlink/anaconda-mode
 emacs.d.symlink/annotations
@@ -27,6 +28,8 @@ emacs.d.symlink/init.html
 emacs.d.symlink/init.tex
 emacs.d.symlink/network-security.data
 emacs.d.symlink/non-elpa/bookmark-plus/
+emacs.d.symlink/non-elpa/emacs-which-key
+emacs.d.symlink/non-elpa/org-mind-map
 emacs.d.symlink/non-elpa/use-package/
 emacs.d.symlink/org-gcal
 emacs.d.symlink/projectile*
