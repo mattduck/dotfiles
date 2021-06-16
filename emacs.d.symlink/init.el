@@ -1575,8 +1575,23 @@ represent all current available bindings accurately as a single keymap."
   (interactive)
   (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
 
-(bind-key "th" 'highlight-phrase md/leader-map)
-(bind-key "tu" 'unhighlight-regexp md/leader-map)
+(use-package highlight
+  :demand t
+  :config
+  (defun md/highlight-dwim ()
+    "If region is active, highlight the region using 'highlight'.
+Otherwise, highlight the phrase using hi-lock-mode"
+    (interactive)
+    (if (region-active-p)
+        (progn
+          (call-interactively 'hlt-highlight-region)
+          (deactivate-mark))
+      (call-interactively 'highlight-phrase)))
+
+  (bind-key "th" 'md/highlight-dwim md/leader-map)
+  (bind-key "C-S-l" 'md/highlight-dwim evil-normal-state-map)
+  (bind-key "tu" 'unhighlight-regexp md/leader-map)
+  (bind-key "tU" 'hlt-unhighlight-region md/leader-map))
 
 (use-package paren
  ;;:defer 1
