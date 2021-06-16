@@ -1654,6 +1654,7 @@ represent all current available bindings accurately as a single keymap."
   ;; Ensure leader is accessible
   (bind-key "C-<SPC>" 'md/leader-map vterm-mode-map)
   (bind-key "C-w" 'splitscreen/prefix vterm-mode-map)
+  (bind-key "C-g" 'vterm-send-C-g vterm-mode-map)
   (evil-define-key 'normal vterm-mode-map
     "gk" 'vterm-previous-prompt
     "gj" 'vterm-next-prompt)
