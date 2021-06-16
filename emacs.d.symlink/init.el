@@ -124,12 +124,6 @@
           (string= (system-name) "arch"))
   (menu-bar-mode -1))
 
-(defun contextual-menubar (&optional frame)
-    (set-frame-parameter frame 'menu-bar-lines (if (display-graphic-p frame) 1 0)))
-
-(add-hook 'after-make-frame-functions 'contextual-menubar)
-(add-hook 'after-init-hook 'contextual-menubar)
-
 (defun md/fontify-if-font-lock-mode ()
   (when font-lock-mode
     (font-lock-ensure)))
@@ -2989,6 +2983,8 @@ This is intended to be used in an org-capture template.
       (error "Clipboard doesn't contain a Slack archive link"))
     (md/format-slack-for-org-capture
      (md/slack-parse-archive-url pasted))))
+
+(use-package org-tempo :demand t)
 
 (require 'ox-rss)
 (when (fboundp 'org-rss-final-function)

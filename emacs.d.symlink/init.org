@@ -246,16 +246,19 @@ appears as any other app toolbar at the top of the screen, which is fine:
     (menu-bar-mode -1))
 #+END_SRC
 
-For new frames in the terminal, remove the menu bar (taken from
-https://stackoverflow.com/questions/24956521/how-can-i-hide-the-menu-bar-from-a-specific-frame-in-emacs):
+# [2021-06-16] This is causing the menu bar to appear by default in exwm so
+# disable it. I'm not sure exactly what issue it was solving anyway.
+#
+# For new frames in the terminal, remove the menu bar (taken from
+# https://stackoverflow.com/questions/24956521/how-can-i-hide-the-menu-bar-from-a-specific-frame-in-emacs):
 
-#+BEGIN_SRC emacs-lisp
-    (defun contextual-menubar (&optional frame)
-      (set-frame-parameter frame 'menu-bar-lines (if (display-graphic-p frame) 1 0)))
+# #+BEGIN_SRC emacs-lisp
+#     (defun contextual-menubar (&optional frame)
+#       (set-frame-parameter frame 'menu-bar-lines (if (display-graphic-p frame) 1 0)))
 
-  (add-hook 'after-make-frame-functions 'contextual-menubar)
-  (add-hook 'after-init-hook 'contextual-menubar)
-#+END_SRC
+#   (add-hook 'after-make-frame-functions 'contextual-menubar)
+#   (add-hook 'after-init-hook 'contextual-menubar)
+# #+END_SRC
 
 ** Fontify
 
@@ -3995,14 +3998,6 @@ Set Latex options to colour the links to blue by default:
   (bind-key "Th" 'md/org-html-export md/leader-map)
 #+END_SRC
 
-** org-tempo
-
-This re-instates the ~<s <TAB>~ behaviour for insert src blocks, etc.
-
-#+begin_src
-(use-package org-tempo :demand t)
-#+end_src
-
 ** [[https://github.com/theodorewiles/org-mind-map/][org-mind-map]]
 
 #+BEGIN_SRC emacs-lisp
@@ -4165,6 +4160,14 @@ This requires ~md/slack-token~ to be set.
       (md/format-slack-for-org-capture
        (md/slack-parse-archive-url pasted))))
 #+END_SRC
+
+** org-tempo
+
+This re-instates the ~<s <TAB>~ behaviour for insert src blocks, etc.
+
+#+begin_src emacs-lisp
+(use-package org-tempo :demand t)
+#+end_src
 
 ** Publish
 
