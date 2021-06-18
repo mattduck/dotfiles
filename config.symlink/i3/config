@@ -203,8 +203,8 @@ mode "md" {
     bindsym o fullscreen toggle; mode "default"
     bindsym Shift+r restart; mode "default"
 
-    bindsym Shift+5 split h; mode "default"; fullscreen disable; exec "emacsclient -ne '(call-interactively (quote md/alfred))'"
-    bindsym Shift+apostrophe split v; mode "default"; fullscreen disable; exec "emacsclient -ne '(call-interactively (quote md/alfred))'"
+    #bindsym Shift+5 split h; mode "default"; fullscreen disable; exec "emacsclient -ne '(call-interactively (quote md/alfred))'"
+    #bindsym Shift+apostrophe split v; mode "default"; fullscreen disable; exec "emacsclient -ne '(call-interactively (quote md/alfred))'"
 
     bindsym h focus left; mode "default"
     bindsym j focus down; mode "default"
@@ -213,8 +213,12 @@ mode "md" {
 
     bindsym Shift+3 exec i3-input -F "%s" -P "i3-msg: "; mode default
 
-    bindsym Shift+4 exec "scrot -z /f/inbox/screenshots/$(date --iso-8601=second).jpg"; mode "default"
-    bindsym --release Shift+Control+4 exec "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg"; mode "default"
+    #bindsym Shift+4 exec "scrot -z /f/inbox/screenshots/$(date --iso-8601=second).jpg"; mode "default"
+    #bindsym --release Shift+Control+4 exec "scrot -z -s /f/inbox/screenshots/$(date --iso-8601=second).jpg"; mode "default"
+
+    bindsym Shift+4 exec ",screenshot --image-selection"; mode "default"
+    bindsym Shift+5 exec ",screenshot --video-selection-start"; mode "default"
+    bindsym Shift+6 exec ",screenshot --video-stop"; mode "default"
 
     bindsym Shift+h move left; mode "default"
     bindsym Shift+j move down; mode "default"

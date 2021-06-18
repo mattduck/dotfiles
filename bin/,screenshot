@@ -2,12 +2,12 @@
 #
 # Features for capturing the screen as image or video.
 
-_IMAGE_OUTPUT=/f/inbox/screenshots/$(date --iso-8601=second).png
-_VIDEO_OUTPUT=/f/inbox/screenshots/$(date --iso-8601=second).mp4
+_THIS_DATE="$(date --iso-8601=second)"
+_IMAGE_OUTPUT="/f/inbox/screenshots/${_THIS_DATE}.png"
+_VIDEO_OUTPUT="/f/inbox/screenshots/${_THIS_DATE}.mp4"
 
 function image-selection () {
-    maim -s >"$_IMAGE_OUTPUT"
-    firefox "$_IMAGE_OUTPUT"
+    maim -s >"$_IMAGE_OUTPUT" && firefox "$_IMAGE_OUTPUT"
 }
 
 function video-selection-start () {
@@ -22,7 +22,7 @@ function video-selection-start () {
     # start capturing video.
     # We use yuv420p here otherwise it can't be played by Firefox.
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1368063
-    ffmpeg -f x11grab -s "$W"x"$H" -r 30 -i :0.0+"$X","$Y" -vcodec h264 -crf 18 -pix_fmt yuv420p -y "$_VIDEO_OUTPUT"  >> /tmp/ffmpg-record.log 2>&1 &
+    ffmpeg -f x11grab -s "$W"x"$H" -r 60 -i :0.0+"$X","$Y" -vcodec h264 -crf 18 -pix_fmt yuv420p -y "$_VIDEO_OUTPUT"  >> /tmp/ffmpg-record.log 2>&1 &
 
     # store pid
     echo $! >/tmp/ffmpeg-record.pid
