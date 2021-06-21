@@ -19,7 +19,7 @@ b = branch -av
 
 d = diff
 dc = diff --cached
-dd = "!git diff | ydiff -s -w 120 -l --wrap -- " 
+dd = "!git diff | ydiff -s -w 120 -l --wrap -- "
 ddc = "!git diff --cached | ydiff -s -w 120 -l --wrap -- "
 
 t = !tig
@@ -63,6 +63,7 @@ ll = "!git l --all"
 [diff]
 # I find this easier to read
 algorithm = patience
+colorMoved = default
 
 [color]
 ui = true
@@ -102,6 +103,50 @@ untracked = 10
 branch = 5 ul
 nobranch = 1
 unmerged = 9
+
+[pager]
+diff = delta
+log = delta
+reflog = delta
+show = delta
+
+[interactive]
+diffFilter = delta --color-only
+
+[delta]
+side-by-side = true
+keep-plus-minus-markers = false
+line-numbers = true
+hyperlinks = true
+true-color = never
+syntax-theme = ansimatt
+
+minus-style = syntax
+plus-style = syntax
+zero-style = syntax
+
+minus-emph-style = syntax 8
+plus-emph-style = syntax 8
+
+line-numbers-left-style = brightblack
+line-numbers-right-style = brightblack
+
+line-numbers-minus-style = red
+line-numbers-plus-style = green
+line-numbers-zero-style = brightblack
+
+minus-empty-line-marker-style = red
+plus-empty-line-marker-style = green
+
+whitespace-error-style = white reverse
+hunk-header-decoration-style = 8 box
+hunk-header-style = brightwhite line-number
+
+file-decoration-style = blue italic box
+file-style = blue
+
+commit-decoration-style = 8 ol
+
 
 # Include local config if it exists
 [include]

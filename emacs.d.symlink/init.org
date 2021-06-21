@@ -246,16 +246,19 @@ appears as any other app toolbar at the top of the screen, which is fine:
     (menu-bar-mode -1))
 #+END_SRC
 
-For new frames in the terminal, remove the menu bar (taken from
-https://stackoverflow.com/questions/24956521/how-can-i-hide-the-menu-bar-from-a-specific-frame-in-emacs):
+# [2021-06-16] This is causing the menu bar to appear by default in exwm so
+# disable it. I'm not sure exactly what issue it was solving anyway.
+#
+# For new frames in the terminal, remove the menu bar (taken from
+# https://stackoverflow.com/questions/24956521/how-can-i-hide-the-menu-bar-from-a-specific-frame-in-emacs):
 
-#+BEGIN_SRC emacs-lisp
-    (defun contextual-menubar (&optional frame)
-      (set-frame-parameter frame 'menu-bar-lines (if (display-graphic-p frame) 1 0)))
+# #+BEGIN_SRC emacs-lisp
+#     (defun contextual-menubar (&optional frame)
+#       (set-frame-parameter frame 'menu-bar-lines (if (display-graphic-p frame) 1 0)))
 
-  (add-hook 'after-make-frame-functions 'contextual-menubar)
-  (add-hook 'after-init-hook 'contextual-menubar)
-#+END_SRC
+#   (add-hook 'after-make-frame-functions 'contextual-menubar)
+#   (add-hook 'after-init-hook 'contextual-menubar)
+# #+END_SRC
 
 ** Fontify
 
@@ -1053,7 +1056,23 @@ actually use it to insert anything in insert mode.
 #+END_SRC
 
 * exwm
+** Screenshot
 
+#+BEGIN_SRC emacs-lisp
+  (defun md/screenshot-image-selection ()
+    (interactive)
+    (shell-command ",screenshot --image-selection"))
+  
+  (defun md/screenshot-video-selection-start ()
+    (interactive)
+    (shell-command ",screenshot --video-selection-start"))
+  
+  (defun md/screenshot-video-stop ()
+    (interactive)
+    (shell-command ",screenshot --video-stop"))
+#+END_SRC
+
+** Base config
 #+BEGIN_SRC emacs-lisp
   ;;;; Below are configurations for EXWM.
 
@@ -1118,18 +1137,10 @@ actually use it to insert anything in insert mode.
                   (exwm-workspace-rename-buffer exwm-title))))
 
 
-    (defun md/exwm-cycle ()
-      (interactive)
-      (exwm-workspace-switch
-       (if (= exwm-workspace-current-index (- (exwm-workspace--count) 1))
-           0
-         (+ exwm-workspace-current-index 1))))
-
     (defun md/exwm-input-toggle-keyboard ()
       (interactive)
       (call-interactively 'exwm-input-toggle-keyboard)
       (message "exwm: %s" exwm--input-mode))
-
 
     ;; Global keybindings can be defined with `exwm-input-global-keys'.
     ;; Here are a few examples:
@@ -1143,13 +1154,20 @@ actually use it to insert anything in insert mode.
             (,(kbd "s-t") . md/alfred)
             (,(kbd "C-<SPC>") . md/leader-map)
 
+            (,(kbd "s-$") . md/screenshot-image-selection)
+            (,(kbd "s-%") . md/screenshot-video-selection-start)
+            (,(kbd "s-^") . md/screenshot-video-stop)
+
+            ([?\C-w] . splitscreen/prefix)
             ([?\s-w] . splitscreen/prefix)
+
             (,(kbd "s-<tab>") . eyebrowse-next-window-config)
             ([?\s-f] . exwm-layout-toggle-fullscreen)
             ([?\s-z] . md/exwm-input-toggle-keyboard)))
 
     ;; To add a key binding only available in line-mode, simply define it in
     ;; `exwm-mode-map'.  The following example shortens 'C-c q' to 'C-q'.
+
     (define-key exwm-mode-map [?\C-q] #'exwm-input-send-next-key)
 
     ;; The following example demonstrates how to use simulation keys to mimic
@@ -1158,7 +1176,9 @@ actually use it to insert anything in insert mode.
     ;; and DEST is what EXWM actually sends to application.  Note that both SRC
     ;; and DEST should be key sequences (vector or string).
     (setq exwm-input-simulation-keys
-          '(
+          `(
+            (,(kbd "C-w C-w") . [?\C-w])
+
             ;; movement
             ([?\C-b] . [left])
             ;; ([?\M-b] . [C-left])
@@ -1184,16 +1204,7 @@ actually use it to insert anything in insert mode.
     ;; ready.  You can put it _anywhere_ in your configuration.
     (exwm-enable)
 
-    ;; You can hide the minibuffer and echo area when they're not used, by
-    ;; uncommenting the following line.
-                                          ;(setq exwm-workspace-minibuffer-position 'bottom)
     (require 'exwm-randr)
-    ;; (setq exwm-randr-workspace-output-plist '(0 "VGA1"))
-    ;; (add-hook 'exwm-randr-screen-change-hook
-    ;;           (lambda ()
-    ;;             (start-process-shell-command
-    ;;              "xrandr" nil "xrandr --output VGA1 --left-of LVDS1 --auto")))
-
 
     (defun md/exwm-display-one ()
       "If monitor is connected, only use that. Otherwise, only use the main display."
@@ -1243,7 +1254,6 @@ actually use it to insert anything in insert mode.
              (propertized-string (mapconcat
                                   (lambda (item)
                                     (concat
-                                     ;; (propertize " " 'face `(:family "Noto sans" :height 0.8))
                                      (propertize (nth 0 item)
                                                  'face
                                                  `(:foreground ,(nth 2 item) :family "Font Awesome 5 Free" :height 0.6))
@@ -2070,9 +2080,29 @@ I can use this with grep/ag to quickly find the todo comments:
 
 ** Highlight things manually
 
+There are two kinds of buffer highlighting I generally want to do: (1)
+highlighting the thing under point, and (2) highlighting the active region. The
+builtin ~hi-lock-mode~ can provide the former, but for the latter we have to
+import ~highlight~.
+
 #+BEGIN_SRC emacs-lisp
-  (bind-key "th" 'highlight-phrase md/leader-map)
-  (bind-key "tu" 'unhighlight-regexp md/leader-map)
+  (use-package highlight
+    :demand t
+    :config
+    (defun md/highlight-dwim ()
+      "If region is active, highlight the region using 'highlight'.
+  Otherwise, highlight the phrase using hi-lock-mode"
+      (interactive)
+      (if (region-active-p)
+          (progn
+            (call-interactively 'hlt-highlight-region)
+            (deactivate-mark))
+        (call-interactively 'highlight-phrase)))
+
+    (bind-key "th" 'md/highlight-dwim md/leader-map)
+    (bind-key "C-S-l" 'md/highlight-dwim evil-normal-state-map)
+    (bind-key "tu" 'unhighlight-regexp md/leader-map)
+    (bind-key "tU" 'hlt-unhighlight-region md/leader-map))
 #+END_SRC
 
 ** Parentheses
@@ -2239,7 +2269,7 @@ I can use this with grep/ag to quickly find the todo comments:
 ** Shells
 
 Start terminal processes in Emacs state so that movement commands are passed to
-the underlying terminal (ie. I get the usual readline bindings).
+the shell (ie. I get the usual readline bindings).
 
 #+BEGIN_SRC emacs-lisp
   (add-hook 'ansi-term-mode-hook 'evil-emacs-state)
@@ -2251,7 +2281,16 @@ the underlying terminal (ie. I get the usual readline bindings).
     :demand t
     :config
     (evil-set-initial-state 'vterm-mode 'emacs)
-    (add-hook 'vterm-mode-hook 'evil-emacs-state))
+    (add-hook 'vterm-mode-hook 'evil-emacs-state)
+    ;; Ensure leader is accessible
+    (bind-key "C-<SPC>" 'md/leader-map vterm-mode-map)
+    (bind-key "C-w" 'splitscreen/prefix vterm-mode-map)
+    (bind-key "C-g" 'vterm-send-C-g vterm-mode-map)
+    (evil-define-key 'normal vterm-mode-map
+      "gk" 'vterm-previous-prompt
+      "gj" 'vterm-next-prompt)
+    (setq vterm-max-scrollback 10000
+          vterm-buffer-name-string "vterm [%s]"))
 #+END_SRC
 
 ** Neotree
@@ -3191,7 +3230,7 @@ for now:
   (use-package yaml-mode :demand t)
 #+END_SRC
 
-** Lua
+** COMMENT Lua
 
 #+BEGIN_SRC emacs-lisp
   (use-package lua-mode :demand t)
@@ -3979,14 +4018,6 @@ Set Latex options to colour the links to blue by default:
   (bind-key "Th" 'md/org-html-export md/leader-map)
 #+END_SRC
 
-** org-tempo
-
-This re-instates the ~<s <TAB>~ behaviour for insert src blocks, etc.
-
-#+begin_src
-(use-package org-tempo :demand t)
-#+end_src
-
 ** [[https://github.com/theodorewiles/org-mind-map/][org-mind-map]]
 
 #+BEGIN_SRC emacs-lisp
@@ -4150,6 +4181,37 @@ This requires ~md/slack-token~ to be set.
        (md/slack-parse-archive-url pasted))))
 #+END_SRC
 
+** org-tempo
+
+This re-instates the ~<s <TAB>~ behaviour for insert src blocks, etc.
+
+#+begin_src emacs-lisp
+(use-package org-tempo :demand t)
+#+end_src
+
+** Publish
+
+[2021-06-16] Ox-rss allows for publishing of a feed.xml RSS file. This is
+useful, but has a big performance issue: it hangs for 30s+ running
+~(indent-region)~ as part of prettifying the XML file.
+
+To get around this, we redefine ~org-rss-final-function~ and skip the indenting
+part. The resulting file still has appropriate newlines everywhere, they're just
+not indented with leading whitespace, which is fine.
+
+#+BEGIN_SRC emacs-lisp
+  (require 'ox-rss)
+  (when (fboundp 'org-rss-final-function)
+    (fmakunbound 'org-rss-final-function)
+    (defun org-rss-final-function (contents backend info)
+      "Prettify the RSS output. Copied from ox-rss, but doesn't call indent-region"
+      (with-temp-buffer
+        (xml-mode)
+        (insert contents)
+        ;;(indent-region (point-min) (point-max))
+        (buffer-substring-no-properties (point-min) (point-max)))))
+#+END_SRC
+
 ** use-package wrapper *END*
 Close the use-package wrapper:
 
@@ -4184,7 +4246,8 @@ Close the use-package wrapper:
       (helm-descbinds-mode 1)
 
       ;; No need to display the header - it takes up room and doesn't add much.
-      (setq helm-display-header-line t)
+      (setq helm-display-header-line nil
+            helm-buffer-max-length 60)
 
       ;; I don't need to know about some files
       (setq helm-ff-skip-boring-files t)
@@ -4481,6 +4544,21 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
       :action '(("Launch" . (lambda (candidate)
                               (shell-command (concat "gtk-launch " candidate " >/dev/null 2>&1 & disown") nil nil))))))
 #+END_SRC
+*** Emacs M-x commands
+
+Like M-x, but matches a subset of commands.
+
+#+BEGIN_SRC emacs-lisp
+  (defun md/alfred-source-M-x ()
+    (helm-build-sync-source "M-x"
+      :multimatch nil
+      :requires-pattern nil
+      :candidates '(("vterm" . vterm)
+                    ("org-agenda" . org-agenda)
+                    ("elfeed" . elfeed))
+      :action '(("M-x" . (lambda (candidate) (call-interactively candidate))))))
+#+END_SRC
+
 *** Run a webserver
 
 #+BEGIN_SRC emacs-lisp
@@ -4572,101 +4650,102 @@ Easy way to stop the clock without having to open an emacs frame or an org-mode 
 #+END_SRC
 *** Main Alfred command
 #+BEGIN_SRC emacs-lisp
-  (defun md/ns-raise-emacs ()
-    (when (featurep 'ns)
-      (ns-do-applescript "tell application \"Emacs\" to activate")))
+    (defun md/ns-raise-emacs ()
+      (when (featurep 'ns)
+        (ns-do-applescript "tell application \"Emacs\" to activate")))
 
-  (defun md/ns-raise-emacs-with-frame (frame)
-    (with-selected-frame frame
-      (when (display-graphic-p)
-        (md/ns-raise-emacs))))
+    (defun md/ns-raise-emacs-with-frame (frame)
+      (with-selected-frame frame
+        (when (display-graphic-p)
+          (md/ns-raise-emacs))))
 
-  (defun md/alfred--helm (buffer)
-    (helm :sources
-          (if (string= (system-name) "arch")
-              (list (md/alfred-source-system)
-                    (md/alfred-source-search)
-                    (md/alfred-source-webserver)
-                    (md/alfred-source-org-capture-templates)
-                    (md/alfred-source-org-light "Org - NOW" "now" "NOW")
-                    (md/alfred-source-org-light "Org - BACK" "back" "BACK")
-                    (md/alfred-source-org-clock-out)
-                    (md/alfred-source-web-bookmarks)
-                    (md/alfred-source-apps)
-                    (md/alfred-source-directories)
-                    (md/alfred-source-files)
-                    (md/alfred-source-processes))
-            (list
-             (md/alfred-source-search)
-             (md/alfred-source-org-capture-templates)
-             (md/alfred-source-org-light "Org - URGENT" "urgent" "NOW \\[#A\\]")
-             (md/alfred-source-org-light "Org - NOW" "now" "NOW")
-             (md/alfred-source-org-light "Org - BACK" "back" "BACK")
-             (md/alfred-source-org-clock-out)
-             (md/alfred-source-processes)
-             ))
-          :prompt ""
-          :buffer buffer))
+    (defun md/alfred--helm (buffer)
+      (helm :sources
+            (if (string= (system-name) "arch")
+                (list (md/alfred-source-system)
+                      (md/alfred-source-search)
+                      (md/alfred-source-webserver)
+                      (md/alfred-source-org-capture-templates)
+                      (md/alfred-source-org-light "Org - NOW" "now" "NOW")
+                      (md/alfred-source-org-light "Org - BACK" "back" "BACK")
+                      (md/alfred-source-org-clock-out)
+                      (md/alfred-source-web-bookmarks)
+                      (md/alfred-source-apps)
+                      (md/alfred-source-directories)
+                      (md/alfred-source-files)
+                      (md/alfred-source-processes))
+              (list
+               (md/alfred-source-search)
+               (md/alfred-source-org-capture-templates)
+               (md/alfred-source-org-light "Org - URGENT" "urgent" "NOW \\[#A\\]")
+               (md/alfred-source-org-light "Org - NOW" "now" "NOW")
+               (md/alfred-source-org-light "Org - BACK" "back" "BACK")
+               (md/alfred-source-org-clock-out)
+               (md/alfred-source-apps)
+               (md/alfred-source-processes)
+               ))
+            :prompt ""
+            :buffer buffer))
 
-  (defun md/alfred-no-frame ()
-    (interactive)
-    (md/alfred--helm nil))
+    (defun md/alfred-no-frame ()
+      (interactive)
+      (md/alfred--helm nil))
 
-  (defun md/alfred ()
-    "Entry point to create the 'alfred' frame and run helm."
-    (interactive)
-    (with-current-buffer (get-buffer-create "*alfred*")
-      (let ((frame (if (string= (system-name) "arch")
+    (defun md/alfred ()
+      "Entry point to create the 'alfred' frame and run helm."
+      (interactive)
+      (with-current-buffer (get-buffer-create "*alfred*")
+        (let ((frame (if (string= (system-name) "arch")
+                         (make-frame '((name . "alfred")
+                                       (window-system . x)
+                                       (auto-raise . t)
+                                       (height . 10)
+                                       (internal-border-width . 20)
+                                       (left . 0.33)
+                                       (left-fringe . 0)
+                                       (line-spacing . 3)
+                                       (menu-bar-lines . 0)
+                                       (right-fringe . 0)
+                                       (tool-bar-lines . 0)
+                                       (top . 48)
+                                       ;; enable this to remove frame border
+                                       (undecorated . t)
+                                       (unsplittable . t)
+                                       (vertical-scroll-bars . nil)
+                                       (width . 120)))
                        (make-frame '((name . "alfred")
-                                     (window-system . x)
                                      (auto-raise . t)
-                                     (height . 10)
-                                     (internal-border-width . 20)
-                                     (left . 0.33)
+                                     (height . 20)
+                                     (internal-border-width . 10)
+                                     (left . 0.45)
                                      (left-fringe . 0)
                                      (line-spacing . 3)
                                      (menu-bar-lines . 0)
                                      (right-fringe . 0)
                                      (tool-bar-lines . 0)
-                                     (top . 48)
-                                     ;; enable this to remove frame border
-                                     (undecorated . t)
+                                     (top . 0.1)
+                                     (undecorated . nil)
                                      (unsplittable . t)
                                      (vertical-scroll-bars . nil)
-                                     (width . 120)))
-                     (make-frame '((name . "alfred")
-                                   (auto-raise . t)
-                                   (height . 20)
-                                   (internal-border-width . 10)
-                                   (left . 0.45)
-                                   (left-fringe . 0)
-                                   (line-spacing . 3)
-                                   (menu-bar-lines . 0)
-                                   (right-fringe . 0)
-                                   (tool-bar-lines . 0)
-                                   (top . 0.1)
-                                   (undecorated . nil)
-                                   (unsplittable . t)
-                                   (vertical-scroll-bars . nil)
-                                   (width . 120)))))
-            (alert-hide-all-notifications t)
-            (inhibit-message t)
-            (mode-line-format nil)
-            (helm-mode-line-string nil)
-            (helm-full-frame t)
-            (helm-display-header-line nil)
-            (helm-use-undecorated-frame-option nil)
-            ;; If we run an async shell, don't show us anything
-            (async-shell-command-display-buffer nil))
-        (when (not (string= (system-name) "arch"))
-          (md/ns-raise-emacs-with-frame frame))
-        (md/alfred--helm "*alfred*")
-        (delete-frame frame)
-        ;; For some reason without killing the buffer it messes up future state.
-        (kill-buffer "*alfred*")
-        ;; I don't want this to cause the main frame to flash
-        (when (string= (system-name) "arch")
-          (x-urgency-hint (selected-frame) nil)))))
+                                     (width . 120)))))
+              (alert-hide-all-notifications t)
+              (inhibit-message t)
+              (mode-line-format nil)
+              (helm-mode-line-string nil)
+              (helm-full-frame t)
+              (helm-display-header-line nil)
+              (helm-use-undecorated-frame-option nil)
+              ;; If we run an async shell, don't show us anything
+              (async-shell-command-display-buffer nil))
+          (when (not (string= (system-name) "arch"))
+            (md/ns-raise-emacs-with-frame frame))
+          (md/alfred--helm "*alfred*")
+          (delete-frame frame)
+          ;; For some reason without killing the buffer it messes up future state.
+          (kill-buffer "*alfred*")
+          ;; I don't want this to cause the main frame to flash
+          (when (string= (system-name) "arch")
+            (x-urgency-hint (selected-frame) nil)))))
 #+END_SRC
 
 ** COMMENT helm-ag (not using anymore)
@@ -5174,16 +5253,18 @@ Bookmark package configuration and bindings:
           bookmark-automatically-show-annotations nil
           bookmark-completion-ignore-case t))
 
-  (use-package bookmark+
-      :demand t
-      :load-path "non-elpa/bookmark-plus"
-      :bind (:map md/leader-map
-                  ("ll" . md/helm-bookmarks)
-                  ("jl" . md/helm-bookmarks-project)
-                  ("lf" . md/helm-bookmarks-temp)
-                  ("ls" . md/bookmark-temp-set)
-                  ("lj" . md/bookmark-jump-to-last-temp)
-                  ("ld" . md/bookmark-temp-delete-all)))
+  ;; [2021-06-15] Commenting out because I'm hitting error after upgradE:
+  ;; Error (use-package): bookmark+/:catch: Wrong number of arguments: make-obsolete, 2
+  ;; (use-package bookmark+
+  ;;     :demand t
+  ;;     :load-path "non-elpa/bookmark-plus"
+  ;;     :bind (:map md/leader-map
+  ;;                 ("ll" . md/helm-bookmarks)
+  ;;                 ("jl" . md/helm-bookmarks-project)
+  ;;                 ("lf" . md/helm-bookmarks-temp)
+  ;;                 ("ls" . md/bookmark-temp-set)
+  ;;                 ("lj" . md/bookmark-jump-to-last-temp)
+  ;;                 ("ld" . md/bookmark-temp-delete-all)))
 
 
 #+END_SRC
@@ -5659,21 +5740,10 @@ tmux. I've copied it inline now because (1) it's more convenient to edit, and
 
   (advice-add 'eyebrowse-close-window-config :around 'splitscreen/reset-zoom '((name . "splitscreen")))
 
-  (defun splitscreen/window-left ()
-    (interactive)
-    (evil-window-left 1))
-
-  (defun splitscreen/window-right ()
-    (interactive)
-    (evil-window-right 1))
-
-  (defun splitscreen/window-up ()
-    (interactive)
-    (evil-window-up 1))
-
-  (defun splitscreen/window-down ()
-    (interactive)
-    (evil-window-down 1))
+  (defun splitscreen/window-left () (interactive) (evil-window-left 1))
+  (defun splitscreen/window-right () (interactive) (evil-window-right 1))
+  (defun splitscreen/window-up () (interactive) (evil-window-up 1))
+  (defun splitscreen/window-down () (interactive) (evil-window-down 1))
 
   (defun splitscreen/increase-width () (interactive) (evil-window-increase-width 10))
   (defun splitscreen/decrease-width () (interactive) (evil-window-decrease-width 10))
@@ -5719,6 +5789,10 @@ tmux. I've copied it inline now because (1) it's more convenient to edit, and
   (define-key splitscreen/prefix (kbd "C-j") 'splitscreen/decrease-height)
   (define-key splitscreen/prefix (kbd "C-k") 'splitscreen/increase-height)
   (define-key splitscreen/prefix (kbd "C-l") 'splitscreen/increase-width)
+  (define-key splitscreen/prefix (kbd "s-h") 'splitscreen/decrease-width)
+  (define-key splitscreen/prefix (kbd "s-j") 'splitscreen/decrease-height)
+  (define-key splitscreen/prefix (kbd "s-k") 'splitscreen/increase-height)
+  (define-key splitscreen/prefix (kbd "s-l") 'splitscreen/increase-width)
   (define-key splitscreen/prefix (kbd "SPC") 'balance-windows)
   (define-key splitscreen/prefix (kbd "0") 'eyebrowse-switch-to-window-config-0)
   (define-key splitscreen/prefix (kbd "1") 'eyebrowse-switch-to-window-config-1)

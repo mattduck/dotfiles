@@ -124,12 +124,6 @@
           (string= (system-name) "arch"))
   (menu-bar-mode -1))
 
-(defun contextual-menubar (&optional frame)
-    (set-frame-parameter frame 'menu-bar-lines (if (display-graphic-p frame) 1 0)))
-
-(add-hook 'after-make-frame-functions 'contextual-menubar)
-(add-hook 'after-init-hook 'contextual-menubar)
-
 (defun md/fontify-if-font-lock-mode ()
   (when font-lock-mode
     (font-lock-ensure)))
@@ -736,6 +730,18 @@ All scope layers are stored in md/variable-layers."
     (key-chord-define evil-replace-state-map "jk" 'evil-normal-state)
     (key-chord-mode 1)))
 
+(defun md/screenshot-image-selection ()
+  (interactive)
+  (shell-command ",screenshot --image-selection"))
+
+(defun md/screenshot-video-selection-start ()
+  (interactive)
+  (shell-command ",screenshot --video-selection-start"))
+
+(defun md/screenshot-video-stop ()
+  (interactive)
+  (shell-command ",screenshot --video-stop"))
+
 ;;;; Below are configurations for EXWM.
 
 (defun md/exwm-file-enable ()
@@ -799,18 +805,10 @@ Calling this will delete the file, causing i3 to load next time."
                 (exwm-workspace-rename-buffer exwm-title))))
 
 
-  (defun md/exwm-cycle ()
-    (interactive)
-    (exwm-workspace-switch
-     (if (= exwm-workspace-current-index (- (exwm-workspace--count) 1))
-         0
-       (+ exwm-workspace-current-index 1))))
-
   (defun md/exwm-input-toggle-keyboard ()
     (interactive)
     (call-interactively 'exwm-input-toggle-keyboard)
     (message "exwm: %s" exwm--input-mode))
-
 
   ;; Global keybindings can be defined with `exwm-input-global-keys'.
   ;; Here are a few examples:
@@ -824,13 +822,20 @@ Calling this will delete the file, causing i3 to load next time."
           (,(kbd "s-t") . md/alfred)
           (,(kbd "C-<SPC>") . md/leader-map)
 
+          (,(kbd "s-$") . md/screenshot-image-selection)
+          (,(kbd "s-%") . md/screenshot-video-selection-start)
+          (,(kbd "s-^") . md/screenshot-video-stop)
+
+          ([?\C-w] . splitscreen/prefix)
           ([?\s-w] . splitscreen/prefix)
+
           (,(kbd "s-<tab>") . eyebrowse-next-window-config)
           ([?\s-f] . exwm-layout-toggle-fullscreen)
           ([?\s-z] . md/exwm-input-toggle-keyboard)))
 
   ;; To add a key binding only available in line-mode, simply define it in
   ;; `exwm-mode-map'.  The following example shortens 'C-c q' to 'C-q'.
+
   (define-key exwm-mode-map [?\C-q] #'exwm-input-send-next-key)
 
   ;; The following example demonstrates how to use simulation keys to mimic
@@ -839,7 +844,9 @@ Calling this will delete the file, causing i3 to load next time."
   ;; and DEST is what EXWM actually sends to application.  Note that both SRC
   ;; and DEST should be key sequences (vector or string).
   (setq exwm-input-simulation-keys
-        '(
+        `(
+          (,(kbd "C-w C-w") . [?\C-w])
+
           ;; movement
           ([?\C-b] . [left])
           ;; ([?\M-b] . [C-left])
@@ -865,16 +872,7 @@ Calling this will delete the file, causing i3 to load next time."
   ;; ready.  You can put it _anywhere_ in your configuration.
   (exwm-enable)
 
-  ;; You can hide the minibuffer and echo area when they're not used, by
-  ;; uncommenting the following line.
-                                        ;(setq exwm-workspace-minibuffer-position 'bottom)
   (require 'exwm-randr)
-  ;; (setq exwm-randr-workspace-output-plist '(0 "VGA1"))
-  ;; (add-hook 'exwm-randr-screen-change-hook
-  ;;           (lambda ()
-  ;;             (start-process-shell-command
-  ;;              "xrandr" nil "xrandr --output VGA1 --left-of LVDS1 --auto")))
-
 
   (defun md/exwm-display-one ()
     "If monitor is connected, only use that. Otherwise, only use the main display."
@@ -924,7 +922,6 @@ Calling this will delete the file, causing i3 to load next time."
            (propertized-string (mapconcat
                                 (lambda (item)
                                   (concat
-                                   ;; (propertize " " 'face `(:family "Noto sans" :height 0.8))
                                    (propertize (nth 0 item)
                                                'face
                                                `(:foreground ,(nth 2 item) :family "Font Awesome 5 Free" :height 0.6))
@@ -1588,8 +1585,23 @@ represent all current available bindings accurately as a single keymap."
   (interactive)
   (insert "TODO|FIX|FIXME|BUG|WARN|HACK|ERROR"))
 
-(bind-key "th" 'highlight-phrase md/leader-map)
-(bind-key "tu" 'unhighlight-regexp md/leader-map)
+(use-package highlight
+  :demand t
+  :config
+  (defun md/highlight-dwim ()
+    "If region is active, highlight the region using 'highlight'.
+Otherwise, highlight the phrase using hi-lock-mode"
+    (interactive)
+    (if (region-active-p)
+        (progn
+          (call-interactively 'hlt-highlight-region)
+          (deactivate-mark))
+      (call-interactively 'highlight-phrase)))
+
+  (bind-key "th" 'md/highlight-dwim md/leader-map)
+  (bind-key "C-S-l" 'md/highlight-dwim evil-normal-state-map)
+  (bind-key "tu" 'unhighlight-regexp md/leader-map)
+  (bind-key "tU" 'hlt-unhighlight-region md/leader-map))
 
 (use-package paren
  ;;:defer 1
@@ -1663,7 +1675,16 @@ represent all current available bindings accurately as a single keymap."
   :demand t
   :config
   (evil-set-initial-state 'vterm-mode 'emacs)
-  (add-hook 'vterm-mode-hook 'evil-emacs-state))
+  (add-hook 'vterm-mode-hook 'evil-emacs-state)
+  ;; Ensure leader is accessible
+  (bind-key "C-<SPC>" 'md/leader-map vterm-mode-map)
+  (bind-key "C-w" 'splitscreen/prefix vterm-mode-map)
+  (bind-key "C-g" 'vterm-send-C-g vterm-mode-map)
+  (evil-define-key 'normal vterm-mode-map
+    "gk" 'vterm-previous-prompt
+    "gj" 'vterm-next-prompt)
+  (setq vterm-max-scrollback 10000
+        vterm-buffer-name-string "vterm [%s]"))
 
 (use-package neotree
   :demand t
@@ -2157,8 +2178,6 @@ lsp can properly jump to definitions."
                 (set (make-local-variable 'company-backends) '(company-go))))))
 
 (use-package yaml-mode :demand t)
-
-(use-package lua-mode :demand t)
 
 (use-package terraform-mode)
 
@@ -2981,6 +3000,19 @@ This is intended to be used in an org-capture template.
     (md/format-slack-for-org-capture
      (md/slack-parse-archive-url pasted))))
 
+(use-package org-tempo :demand t)
+
+(require 'ox-rss)
+(when (fboundp 'org-rss-final-function)
+  (fmakunbound 'org-rss-final-function)
+  (defun org-rss-final-function (contents backend info)
+    "Prettify the RSS output. Copied from ox-rss, but doesn't call indent-region"
+    (with-temp-buffer
+      (xml-mode)
+      (insert contents)
+      ;;(indent-region (point-min) (point-max))
+      (buffer-substring-no-properties (point-min) (point-max)))))
+
 (message "use-package for org finished")
   ))
 
@@ -3001,7 +3033,8 @@ This is intended to be used in an org-capture template.
     (helm-descbinds-mode 1)
 
     ;; No need to display the header - it takes up room and doesn't add much.
-    (setq helm-display-header-line t)
+    (setq helm-display-header-line nil
+          helm-buffer-max-length 60)
 
     ;; I don't need to know about some files
     (setq helm-ff-skip-boring-files t)
@@ -3236,6 +3269,15 @@ are ugly. It works fine though."
     :action '(("Launch" . (lambda (candidate)
                             (shell-command (concat "gtk-launch " candidate " >/dev/null 2>&1 & disown") nil nil))))))
 
+(defun md/alfred-source-M-x ()
+  (helm-build-sync-source "M-x"
+    :multimatch nil
+    :requires-pattern nil
+    :candidates '(("vterm" . vterm)
+                  ("org-agenda" . org-agenda)
+                  ("elfeed" . elfeed))
+    :action '(("M-x" . (lambda (candidate) (call-interactively candidate))))))
+
 (defun md/alfred-source-webserver ()
   "Start a webserver process in a particular directory."
   (helm-build-sync-source "Webserver"
@@ -3347,6 +3389,7 @@ are ugly. It works fine though."
            (md/alfred-source-org-light "Org - NOW" "now" "NOW")
            (md/alfred-source-org-light "Org - BACK" "back" "BACK")
            (md/alfred-source-org-clock-out)
+           (md/alfred-source-apps)
            (md/alfred-source-processes)
            ))
         :prompt ""
@@ -3716,16 +3759,18 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
         bookmark-automatically-show-annotations nil
         bookmark-completion-ignore-case t))
 
-(use-package bookmark+
-    :demand t
-    :load-path "non-elpa/bookmark-plus"
-    :bind (:map md/leader-map
-                ("ll" . md/helm-bookmarks)
-                ("jl" . md/helm-bookmarks-project)
-                ("lf" . md/helm-bookmarks-temp)
-                ("ls" . md/bookmark-temp-set)
-                ("lj" . md/bookmark-jump-to-last-temp)
-                ("ld" . md/bookmark-temp-delete-all)))
+;; [2021-06-15] Commenting out because I'm hitting error after upgradE:
+;; Error (use-package): bookmark+/:catch: Wrong number of arguments: make-obsolete, 2
+;; (use-package bookmark+
+;;     :demand t
+;;     :load-path "non-elpa/bookmark-plus"
+;;     :bind (:map md/leader-map
+;;                 ("ll" . md/helm-bookmarks)
+;;                 ("jl" . md/helm-bookmarks-project)
+;;                 ("lf" . md/helm-bookmarks-temp)
+;;                 ("ls" . md/bookmark-temp-set)
+;;                 ("lj" . md/bookmark-jump-to-last-temp)
+;;                 ("ld" . md/bookmark-temp-delete-all)))
 
 (defvar md/anchored-buffer nil "Current anchored buffer")
 (defvar md/anchored-return-buffer nil "Current return buffer")
@@ -4116,21 +4161,10 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 
 (advice-add 'eyebrowse-close-window-config :around 'splitscreen/reset-zoom '((name . "splitscreen")))
 
-(defun splitscreen/window-left ()
-  (interactive)
-  (evil-window-left 1))
-
-(defun splitscreen/window-right ()
-  (interactive)
-  (evil-window-right 1))
-
-(defun splitscreen/window-up ()
-  (interactive)
-  (evil-window-up 1))
-
-(defun splitscreen/window-down ()
-  (interactive)
-  (evil-window-down 1))
+(defun splitscreen/window-left () (interactive) (evil-window-left 1))
+(defun splitscreen/window-right () (interactive) (evil-window-right 1))
+(defun splitscreen/window-up () (interactive) (evil-window-up 1))
+(defun splitscreen/window-down () (interactive) (evil-window-down 1))
 
 (defun splitscreen/increase-width () (interactive) (evil-window-increase-width 10))
 (defun splitscreen/decrease-width () (interactive) (evil-window-decrease-width 10))
@@ -4176,6 +4210,10 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (define-key splitscreen/prefix (kbd "C-j") 'splitscreen/decrease-height)
 (define-key splitscreen/prefix (kbd "C-k") 'splitscreen/increase-height)
 (define-key splitscreen/prefix (kbd "C-l") 'splitscreen/increase-width)
+(define-key splitscreen/prefix (kbd "s-h") 'splitscreen/decrease-width)
+(define-key splitscreen/prefix (kbd "s-j") 'splitscreen/decrease-height)
+(define-key splitscreen/prefix (kbd "s-k") 'splitscreen/increase-height)
+(define-key splitscreen/prefix (kbd "s-l") 'splitscreen/increase-width)
 (define-key splitscreen/prefix (kbd "SPC") 'balance-windows)
 (define-key splitscreen/prefix (kbd "0") 'eyebrowse-switch-to-window-config-0)
 (define-key splitscreen/prefix (kbd "1") 'eyebrowse-switch-to-window-config-1)

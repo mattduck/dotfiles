@@ -31,7 +31,7 @@ alias dockerc="docker-compose"
 
 alias ,bashrc=". ~/.bashrc"
 
-export BAT_THEME="zenburn"
+export BAT_THEME="ansimatt"
 if command -v bat >/dev/null; then
     alias cat="bat"
 fi

@@ -15,9 +15,9 @@ if [ $(command -v brew) ]; then
 fi
 
 # Empty completion trigger causes this to work on <TAB> rather than *<TAB>
-export FZF_DEFAULT_OPTS='-0 --cycle --inline-info --border --color="16,border:8"'
+export FZF_DEFAULT_OPTS='-0 --cycle --inline-info --border --color="16,border:8,bg+:-1"'
 export FZF_COMPLETION_TRIGGER="*"
-export FZF_COMPLETION_OPTS='--exact --height 20 --cycle -0 --border --color="16,border:8" --multi'
+export FZF_COMPLETION_OPTS='--exact --height 20 --cycle -0 --border --color="16,border:8,bg+:-1" --multi'
 
 # [2021-05-16] fzf-tab-completion setup. This provides proper fzf completion for
 # all bash tab complete candidates.

@@ -13,9 +13,11 @@ def main():
         print("Serving on {}...".format(address))
         try:
             httpd.serve_forever()
-        except KeyboardInterrupt:
+        except:
             # Close the socket
             httpd.server_close()
+            httpd.shutdown()
+            print("Closed")
 
 
 if __name__ == "__main__":
