@@ -1062,11 +1062,11 @@ actually use it to insert anything in insert mode.
   (defun md/screenshot-image-selection ()
     (interactive)
     (shell-command ",screenshot --image-selection"))
-  
+
   (defun md/screenshot-video-selection-start ()
     (interactive)
     (shell-command ",screenshot --video-selection-start"))
-  
+
   (defun md/screenshot-video-stop ()
     (interactive)
     (shell-command ",screenshot --video-stop"))
@@ -3769,11 +3769,11 @@ bindings copied directly from emacs-mode.
 ** Exports
 #+BEGIN_SRC emacs-lisp
   (setq org-export-headline-levels 6
-        org-export-with-section-numbers 2
+        org-export-with-section-numbers 3
         org-html-head-include-default-style nil
-        org-export-with-section-numbers nil
+        org-export-with-section-numbers 2
         org-html-validation-link nil
-        org-html-postamble nil
+        org-html-postamble "<hr>"
         org-export-with-sub-superscripts nil  ;; don't mess up things_with_underscores in html export
         org-html-htmlize-output-type nil
         org-export-babel-evaluate nil
@@ -3783,64 +3783,229 @@ bindings copied directly from emacs-mode.
   <script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js\"></script>
   <script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js\"></script>
   <script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/javascript.min.js\"></script>
+  <script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/shell.min.js\"></script>
+  <script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/lisp.min.js\"></script>
+  <script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/markdown.min.js\"></script>
 
-     <style type=\"text/css\">
-   b {color: #000}
-   a {font-weight: normal; color: blue}
-   a>code {font-weight: normal; color: blue}
-   html {font-size: 19px; max-width: 100%; margin: 20px 10%; font-family: Freeserif, serif; line-height:1.2}
-   pre {font-family: monospace; color: #000; font-size: 13px; line-height: 1.4; max-width: 720px}
-   code {font-family: monospace; font-size: 13px; background-color: rgba(27,31,35,.05); padding: 2px 4px; max-width: 720px;}
-   pre > code { background-color: #ffffff !important; }
-   p, dl { color: #555}
-   dt { color: #000; font-weight: bold; margin-top: 8px;}
-   hr {margin-bottom: 40px; margin-left: 0; margin-right: 0}
-   h1 {font-size: 24px}
-   h1, h2, h3 {margin-bottom: 8px}
-   h2, h3, h4 {font-family: sans-serif}
-   p {margin-top: 8px}
-   img {margin-top: 16px; margin-bottom: 16px; max-width: 100%;}
-   hr {min-height: 4px; background-color: #000}
-   hr.hrsmaller {min-height: 1px; background-color: #000}
-   ul {padding-left: 20px}
-   ul > li {list-style-type: circle}
-   li {color: #555; margin-top: 8px; margin-bottom: 8px;}
-   a:hover {color: blue}
-   h1, h2, h3, h4, p, ol, li, hr, dl {width:540px; max-width: 100%}
-   blockquote {font-style: italic; border-left: 2px solid #555; padding-left: 10px; }
-  #table-of-contents > h2 {display:none};
-     </style>
+  <script type=\"text/javascript\">
+  // @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&amp;dn=gpl-3.0.txt GPL-v3-or-Later
+  <!--/*--><![CDATA[/*><!--*/
+       function CodeHighlightOn(elem, id)
+       {
+         var target = document.getElementById(id);
+         if(null != target) {
+           elem.classList.add(\"code-highlighted\");
+           target.classList.add(\"code-highlighted\");
+         }
+       }
+       function CodeHighlightOff(elem, id)
+       {
+         var target = document.getElementById(id);
+         if(null != target) {
+           elem.classList.remove(\"code-highlighted\");
+           target.classList.remove(\"code-highlighted\");
+         }
+       }
+      /*]]>*///-->
+  // @license-end
+  </script>
+
+
+   <style type=\"text/css\">
+   @charset \"UTF-8\";
+
+   body {
+       /* Mobile settings */
+       font-size: 17px;
+       margin-left: 10px;
+       margin-right: 10px;
+
+       /* On mobile firefox the browser chrome often takes up the top of the
+       screen. I think this is a browser issue but it looks bad, so push the content down. */
+       margin-top: 3em;
+
+       /* General settings */
+       max-width: 700px;
+       line-height: 1.6;
+       font-family: sans-serif;
+
+       /* Font smoothing */
+       -moz-osx-font-smoothing: grayscale;
+       -webkit-font-smoothing: antialiased;
+   }
+
+   /* Override the mobile settings for a bigger screen size. */
+   @media (min-width: 701px) {
+       body {
+           margin-left: auto;
+           margin-right: auto;
+           margin-top: 0;
+       }
+   }
+
+   /* Heading styles. h1 has a smaller relative top margin */
+   h1 {
+       margin-bottom: 0;
+       margin-top: 2em;
+       line-height: 1.1;
+       font-weight: normal;
+
+       /* Special styling for h1 */
+       border-bottom: 2px solid black;
+       padding-bottom: 0.5em;
+   }
+   h2, h3, h4, h5, h6 {
+       margin-bottom: 0;
+       margin-top: 3em;
+       line-height: 1.1;
+       font-weight: normal;
+   }
+
+   /* The org-mode section numbers in headers are made less prominent */
+   .section-number-1, .section-number-2, .section-number-3 {
+       font-family: monospace;
+       font-size: smaller;
+   }
+
+   #root span {
+       font-size: 2em;
+       display: inline-block;
+       margin-top: 1em;
+       color: black !important;
+   }
+
+   /* Add margin below the nav links */
+   #header-sitemap {
+       margin-bottom: 2em;
+   }
+
+   img, video {
+       margin-top: 1em;
+       margin-bottom: 1em;
+       display: block;  /* So the top/bottom margins aren't double-counted */
+       max-width: 90%;
+   }
+
+   /* By default there's no spacing between list items, which is less readable IMO */
+   li {
+       margin-top: 1em;
+       margin-bottom: 1em;
+   }
+
+   /* Don't show the HOME / UP links that org-mode generates */
+   #org-div-home-and-up { display: none; }
+
+   /* Org tags */
+   .red {background-color: #af7575;}
+   .amber {background-color: #efd8a1;}
+   .green {background-color: #bcd693;}
+   .blue {background-color: #afd7db;}
+
+
+   /* Make the timestamp smaller */
+   .timestamp {
+       font-family: monospace;
+       font-size: smaller;
+   }
+
+   /* Basic table styling */
+   td, th {
+       padding: 0.5em;
+       vertical-align: top;
+       text-align: left;
+       background-color: #f9f9f9;
+       font-size: smaller;
+   }
+
+   /* For the sitemap we don't use the normal table styling */
+   .sitemap td, .sitemap th {
+       background-color: transparent;
+       padding-bottom: 1em;
+       padding-left: 0;
+       font-size: inherit;
+       line-height: 1.1;
+   }
+
+   /* Make sure there isn't any weird padding in the nav */
+   #header-sitemap td {
+       padding-top: 0;
+       padding-bottom: 0;
+   }
+
+   /* Make sure there isn't any weird padding in the nav */
+   #footer-sitemap td {
+       padding-top: 0;
+       padding-bottom: 1em;
+   }
+
+   hr {
+       margin-bottom: 2em;
+   }
+
+   /* This is copied from the hljs code blocks - it makes the pre blocks consistent. */
+   pre {
+       padding: 0.5em;
+       color: #333;
+       background: #f8f8f8;
+       overflow-x: auto;
+       display: block;
+
+       /* Lower line-height than main prose */
+       line-height: 1.3;
+   }
+
+   code {
+       /* Inline code uses the same red colour from hljs github theme */
+       color: #d14;
+       background-color: #f8f8f8;
+
+       /* Make sure pre elements don't cause the page to extend on mobile */
+       overflow-wrap: anywhere;
+
+       /* Lower line-height than main prose */
+       line-height: 1.3;
+   }
+
+   /* Use a smaller font size for code blocks so there's less horizontal scrolling */
+   pre > code, pre {
+       font-size: smaller;
+   }
+
+   /* Indent code blocks, tables */
+   pre, .hljs, table, img, video {
+       margin-left: 1em;
+       margin-right: 1em;
+   }
+
+   /* For the sitemap, we don't indent */
+   table.sitemap {
+       margin-left: 0;
+       margin-right: 0;
+   }
+
+   /* Links use the same blue colour from hljs github theme */
+   a {
+       color: #0086b3;
+   }
+
+   /* Add a left border to quotes */
+   blockquote {
+       border-left: 2px solid black;
+       padding-left: 0.5em;
+   }
+
+   /* Definition list terms can be bold */
+   dt {
+       font-weight: bold;
+   }
+   </style>
 
   <script type=\"text/javascript\">
   const init = () => {
-      document.querySelectorAll('.src-js').forEach(el => {
-          newcode = document.createElement('code');
-          newcode.classList.add('hljs', 'javascript');
-          newcode.innerHTML = el.innerHTML;
-          newpre = document.createElement('pre');
-          newpre.appendChild(newcode);
-          el.parentNode.replaceChild(newpre, el);
-      });
       hljs.initHighlighting();
-
-      document.querySelectorAll('h2').forEach(el => {
-          hr = document.createElement('hr');
-          el.parentNode.insertBefore(hr, el);
-          br = document.createElement('br');
-          el.parentNode.insertBefore(br, el);
-      });
-      document.querySelectorAll('h3').forEach(el => {
-          br = document.createElement('br');
-          el.parentNode.insertBefore(br, el);
-      });
-      document.querySelectorAll('h2')[1].scrollIntoView();
-
   }
   window.addEventListener('load', init, false );
-  </script>
-
-  <script charset=\"UTF-8\" src=\"org-info.js\"></script>
-  ")
+  </script>")
 #+END_SRC
 
 Export org-mode files to reveal.js for presentations. I think this works
