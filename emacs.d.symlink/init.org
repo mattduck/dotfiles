@@ -270,8 +270,6 @@ slow at this). This helps to ensure fonts are updated:
     (when font-lock-mode
       (font-lock-ensure)))
 
-  (add-hook 'after-save-hook 'md/fontify-if-font-lock-mode)
-
   (bind-key "tx" 'font-lock-mode md/leader-map)
 #+END_SRC
 
@@ -2542,6 +2540,7 @@ features:
             lsp-completion-show-detail t
             lsp-completion-show-kind t
             lsp-enable-file-watchers t
+            lsp-file-watch-threshold 100
             lsp-enable-folding t
             lsp-enable-imenu t
             lsp-enable-indentation t
@@ -2739,10 +2738,11 @@ success by just having web-mode provide syntax support for the various
 languages/markups, and delegating everything else to LSP.
 
 #+BEGIN_SRC emacs-lisp
-      (use-package web-mode
-      :demand t
-      :mode (("\\.tsx\\'" . web-mode)
-              ("\\.jsx\\'" . web-mode)))
+  (use-package web-mode
+  :demand t
+  :mode (("\\.html\\'" . web-mode)
+         ("\\.tsx\\'" . web-mode)
+         ("\\.jsx\\'" . web-mode)))
 #+END_SRC
 
 LSP dependencies: ~npm install -g javascript-typescript-langserver~.
@@ -3008,6 +3008,7 @@ I sometimes see issues where git opens emacsclient in Fundamental mode. Making
       (setq magit-commit-show-diff nil)
 
       ;; Remove some default hooks that I don't use
+      (remove-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell)
       (remove-hook 'git-commit-setup-hook 'git-commit-save-message)
       (remove-hook 'git-commit-setup-hook 'git-commit-setup-changelog-support)
       (remove-hook 'git-commit-setup-hook 'git-commit-turn-on-auto-fill)
@@ -3426,23 +3427,24 @@ org headings:
 
   ;; Only two priorities - default and flagged
   (setq org-highest-priority 65)
-  (setq org-lowest-priority 66)
-  (setq org-default-priority 66)
+  (setq org-lowest-priority 69)
+  (setq org-default-priority 69)
 
   ;; I find these useful enough to want them in all insert maps.
   (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
   (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm evil-insert-state-map)
   (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
   (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm evil-insert-state-map)
-  (bind-key "C-c T" 'md/org-timestamp-time-clipboard org-mode-map)
-  (bind-key "C-c T" 'md/org-timestamp-time-clipboard evil-normal-state-map)
-  (bind-key "C-c T" 'md/org-timestamp-time-clipboard evil-insert-state-map)
 
   (bind-key "C-c D" 'md/org-timestamp-date-clipboard org-mode-map)
   (bind-key "C-c D" 'md/org-timestamp-date-clipboard evil-normal-state-map)
   (bind-key "C-c D" 'md/org-timestamp-date-clipboard evil-insert-state-map)
 
-  (bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
+  (bind-key "C-c l" 'md/org-insert-link-from-paste  org-mode-map)
+
+  (bind-key "C-c P" 'org-priority-up org-mode-map)
+  (bind-key "C-c T" 'org-todo org-mode-map)
+  (bind-key "C-c E" 'org-set-effort org-mode-map)
 #+END_SRC
 
 ** Leader
@@ -3701,6 +3703,7 @@ bindings copied directly from emacs-mode.
     (kbd "RET") 'org-agenda-goto
 
     (kbd "T") 'md/org-agenda-todo
+    (kbd "P") 'org-agenda-priority-up
     (kbd "E") 'org-agenda-set-effort
     (kbd "R") 'org-agenda-refile
     (kbd "c") 'org-agenda-set-tags
@@ -6030,11 +6033,12 @@ Add a narrow/widen dwim command, inspired by http://endlessparentheses.com/emacs
     (interactive "P")
     (declare (interactive-only))
     (cond ((and (buffer-narrowed-p) (not p))
-           (progn
-             (when (and md/narrow-dwim-enable-org-clock
-                        (string= major-mode "org-mode")
-                        (org-clock-is-active))
-               (org-clock-out nil t))
+            (progn
+             (when
+                (and md/narrow-dwim-enable-org-clock
+                     (string= major-mode "org-mode")
+                     (org-clock-is-active))
+              (org-clock-out nil t))
              (widen)))
           ((region-active-p)
            (edit-indirect-region (region-beginning)

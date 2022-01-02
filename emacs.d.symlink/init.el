@@ -128,8 +128,6 @@
   (when font-lock-mode
     (font-lock-ensure)))
 
-(add-hook 'after-save-hook 'md/fontify-if-font-lock-mode)
-
 (bind-key "tx" 'font-lock-mode md/leader-map)
 
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
@@ -1829,6 +1827,7 @@ Otherwise, highlight the phrase using hi-lock-mode"
           lsp-completion-show-detail t
           lsp-completion-show-kind t
           lsp-enable-file-watchers t
+          lsp-file-watch-threshold 100
           lsp-enable-folding t
           lsp-enable-imenu t
           lsp-enable-indentation t
@@ -1968,8 +1967,9 @@ lsp can properly jump to definitions."
 
 (use-package web-mode
 :demand t
-:mode (("\\.tsx\\'" . web-mode)
-        ("\\.jsx\\'" . web-mode)))
+:mode (("\\.html\\'" . web-mode)
+       ("\\.tsx\\'" . web-mode)
+       ("\\.jsx\\'" . web-mode)))
 
 (when (fboundp 'lsp-typescript-javascript-tsx-jsx-activate-p)
   (fmakunbound 'lsp-typescript-javascript-tsx-jsx-activate-p))
@@ -2010,6 +2010,7 @@ lsp can properly jump to definitions."
     (setq magit-commit-show-diff nil)
 
     ;; Remove some default hooks that I don't use
+    (remove-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell)
     (remove-hook 'git-commit-setup-hook 'git-commit-save-message)
     (remove-hook 'git-commit-setup-hook 'git-commit-setup-changelog-support)
     (remove-hook 'git-commit-setup-hook 'git-commit-turn-on-auto-fill)
@@ -2326,23 +2327,24 @@ lsp can properly jump to definitions."
 
 ;; Only two priorities - default and flagged
 (setq org-highest-priority 65)
-(setq org-lowest-priority 66)
-(setq org-default-priority 66)
+(setq org-lowest-priority 69)
+(setq org-default-priority 69)
 
 ;; I find these useful enough to want them in all insert maps.
 (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
 (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm evil-insert-state-map)
 (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
 (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm evil-insert-state-map)
-(bind-key "C-c T" 'md/org-timestamp-time-clipboard org-mode-map)
-(bind-key "C-c T" 'md/org-timestamp-time-clipboard evil-normal-state-map)
-(bind-key "C-c T" 'md/org-timestamp-time-clipboard evil-insert-state-map)
 
 (bind-key "C-c D" 'md/org-timestamp-date-clipboard org-mode-map)
 (bind-key "C-c D" 'md/org-timestamp-date-clipboard evil-normal-state-map)
 (bind-key "C-c D" 'md/org-timestamp-date-clipboard evil-insert-state-map)
 
-(bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
+(bind-key "C-c l" 'md/org-insert-link-from-paste  org-mode-map)
+
+(bind-key "C-c P" 'org-priority-up org-mode-map)
+(bind-key "C-c T" 'org-todo org-mode-map)
+(bind-key "C-c E" 'org-set-effort org-mode-map)
 
 (evil-define-key 'normal org-mode-map (kbd "SPC") md/org-mode-leader-map)
 
@@ -2580,6 +2582,7 @@ lsp can properly jump to definitions."
   (kbd "RET") 'org-agenda-goto
 
   (kbd "T") 'md/org-agenda-todo
+  (kbd "P") 'org-agenda-priority-up
   (kbd "E") 'org-agenda-set-effort
   (kbd "R") 'org-agenda-refile
   (kbd "c") 'org-agenda-set-tags
@@ -4442,11 +4445,12 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
   (interactive "P")
   (declare (interactive-only))
   (cond ((and (buffer-narrowed-p) (not p))
-         (progn
-           (when (and md/narrow-dwim-enable-org-clock
-                      (string= major-mode "org-mode")
-                      (org-clock-is-active))
-             (org-clock-out nil t))
+          (progn
+           (when
+              (and md/narrow-dwim-enable-org-clock
+                   (string= major-mode "org-mode")
+                   (org-clock-is-active))
+            (org-clock-out nil t))
            (widen)))
         ((region-active-p)
          (edit-indirect-region (region-beginning)
