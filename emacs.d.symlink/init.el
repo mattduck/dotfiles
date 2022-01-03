@@ -3181,6 +3181,50 @@ This is intended to be used in an org-capture template.
       ;;(indent-region (point-min) (point-max))
       (buffer-substring-no-properties (point-min) (point-max)))))
 
+(defvar md/org-clock-sum-agenda-files-cache nil)
+
+(defun md/org-clock-sum-agenda-files ()
+  "This is similar to md/org-clock-sum-agenda-files-refresh, except
+it attempts to serve a cached version of the results. The idea is that the
+cached string can be safely used in a modeline."
+  (or md/org-clock-sum-agenda-files-cache
+      md/org-clock-sum-agenda-files-refresh))
+
+(defun md/org-clock-sum-agenda-files-refresh ()
+  "Iterate over all buffers that visit org-agenda-files, and return a string
+displaying the current time clocked across all files for both the current day
+and current week."
+  (let ((message-log-max nil))
+    (setq md/org-clock-sum-agenda-files-cache
+          (format "[%s/%s]"
+                  ;; TODO: only run find-file once
+                  (org-minutes-to-clocksum-string
+                   (apply '+ (map
+                              'list
+                              (lambda (f)
+                                (save-window-excursion
+                                  (find-file f)
+                                  (org-clock-sum-today)))
+                              org-agenda-files)))
+                  (org-minutes-to-clocksum-string
+                   (apply '+ (map
+                              'list
+                              (lambda (f)
+                                (save-window-excursion
+                                  (find-file f)
+                                  (org-clock-sum-custom nil 'thisweek)))
+                              org-agenda-files)))))))
+
+;; Refresh the value when clock actions are done
+(add-hook 'org-clock-in-hook 'md/org-clock-sum-agenda-files-refresh)
+(add-hook 'org-clock-out-hook 'md/org-clock-sum-agenda-files-refresh)
+(add-hook 'org-clock-cancel-hook 'md/org-clock-sum-agenda-files-refresh)
+
+;; Save the buffer when clock actions are done, as I otherwise have to do this manually
+(add-hook 'org-clock-in-hook 'md/save-if-not-remote)
+(add-hook 'org-clock-out-hook 'md/save-if-not-remote)
+(add-hook 'org-clock-cancel-hook 'md/save-if-not-remote)
+
 (message "use-package for org finished")
   ))
 
@@ -4007,6 +4051,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
   :config
 
   (progn
+    (defvar md/modeline-include-clock-summary nil)
     (defface md/powerline-inactive '((t (:inherit 'modeline))) "")
     (defface md/powerline-normal '((t (:inherit 'modeline))) "")
     (defface md/powerline-insert '((t (:inherit 'modeline))) "")
@@ -4079,15 +4124,22 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                               (powerline-raw "[Narrow] " mode-line 'l))
                             (when (string= major-mode "python-mode")
                               (powerline-raw (format "[venv:%s] " pyvenv-virtual-env-name) mode-line 'l))
-                            (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
+
+
+                            (when (and active (fboundp 'org-clocking-p) md/modeline-include-clock-summary)
                               (powerline-raw
-                               (propertize
-                                (format "%s "
-                                        (if (> (length org-mode-line-string) 50)
-                                            (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
-                                          org-mode-line-string))
-                                'face nil)
-                               face2 'l))))
+                               (md/org-clock-sum-agenda-files)
+                               (if (org-clocking-p) 'font-lock-function-name-face 'flycheck-error-list-error)
+                               'l))
+
+                            (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
+                                  (powerline-raw (propertize
+                                                  (format "%s "
+                                                          (if (> (length org-mode-line-string) 90)
+                                                              (format "%s..." (string-trim (substring org-mode-line-string 0 90)))
+                                                            org-mode-line-string))
+                                                  'face nil)
+                                                 'flycheck-error-list-warning 'l))))
 
                       (rhs
                        ;; Flycheck
