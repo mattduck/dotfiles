@@ -20,12 +20,12 @@ ICON_AUDIO_HIGH=
 ICON_AUDIO_LOW=
 ICON_AUDIO_EMPTY=
 ICON_AUDIO_MUTE=
-ICON_BRIGHTNESS=
-ICON_BATTERY_FULL=
-ICON_BATTERY_THREE_QUARTERS=
-ICON_BATTERY_HALF=
-ICON_BATTERY_QUARTER=
-ICON_BATTERY_EMPTY=
+ICON_BRIGHTNESS=☀
+ICON_BATTERY_FULL=🔋
+ICON_BATTERY_THREE_QUARTERS=🔋
+ICON_BATTERY_HALF=🔋
+ICON_BATTERY_QUARTER=🔋
+ICON_BATTERY_EMPTY=🔋
 ICON_BATTERY_PLUGGED_IN=🔌
 ICON_BATTERY_DISCHARGE=🔋
 ICON_CLOCK=⌚
@@ -43,7 +43,7 @@ function text { output+=$(echo -n '{"full_text": "'${1//\"/\\\"}'", "color": "#'
 echo -e '{ "version": 1, "click_events": true }\n['
 while :; do
 
-    AUDIO=$(amixer sget Master | grep 'Mono:' | awk -F'[][]' '{ print $2 }' | sed 's/%//')
+    AUDIO=$(amixer sget Master | grep -i 'front left:' | awk -F'[][]' '{ print $2 }' | sed 's/%//')
     if [[ $AUDIO -gt 99 ]]; then ICON_AUDIO=$ICON_AUDIO_HIGH;
     elif [[ $AUDIO -gt 5 ]]; then ICON_AUDIO=$ICON_AUDIO_LOW;
     else ICON_AUDIO=$ICON_AUDIO_EMPTY;
@@ -76,8 +76,8 @@ while :; do
     DT_TIME=$(date +'%H:%M')
 
     DUP_S3_COLOR="$RED"
-    if test -f /f/duplicity/t450s.s3.last_success; then
-        DUP_S3_DATE=$(cat /f/duplicity/t450s.s3.last_success)
+    if test -f /f/duplicity/t450s.s3.2021.last_success; then
+        DUP_S3_DATE=$(cat /f/duplicity/t450s.s3.2021.last_success)
         DUP_S3_SECONDS_AGO=$(( ( $(date +%s) - $(date -d "$DUP_S3_DATE" +%s) )))
         DUP_S3_MINUTES_AGO=$(($DUP_S3_SECONDS_AGO / (60)))
         DUP_S3_HOURS_AGO=$(($DUP_S3_SECONDS_AGO / (60 * 60)))
@@ -89,25 +89,9 @@ while :; do
         else DUP_S3_MSG="?";
         fi
         if [ $DUP_S3_HOURS_AGO -lt 8 ]; then DUP_S3_COLOR="$GREY"; fi
-    else DUP_S3_MSG="?";
+    else DUP_S3_MSG="[nofile]";
     fi
 
-    DUP_USB_COLOR="$RED"
-    if test -f /f/duplicity/t450s.usb.last_success; then
-        DUP_USB_DATE=$(cat /f/duplicity/t450s.usb.last_success)
-        DUP_USB_SECONDS_AGO=$(( ( $(date +%s) - $(date -d "$DUP_USB_DATE" +%s) )))
-        DUP_USB_MINUTES_AGO=$(($DUP_USB_SECONDS_AGO / (60)))
-        DUP_USB_HOURS_AGO=$(($DUP_USB_SECONDS_AGO / (60 * 60)))
-        DUP_USB_DAYS_AGO=$(($DUP_USB_SECONDS_AGO / (24 * 60 * 60)))
-        if [ $DUP_USB_DAYS_AGO -gt 1 ]; then DUP_USB_MSG="${DUP_USB_DAYS_AGO}d";
-        elif [ $DUP_USB_HOURS_AGO -gt 1 ]; then DUP_USB_MSG="${DUP_USB_HOURS_AGO}h";
-        elif [ $DUP_USB_MINUTES_AGO -gt 1 ]; then DUP_USB_MSG="${DUP_USB_MINUTES_AGO}m";
-        elif [ $DUP_USB_SECONDS_AGO -gt 1 ]; then DUP_USB_MSG="${DUP_USB_SECONDS_AGO}s";
-        else DUP_USB_MSG="?";
-        fi
-        if [ $DUP_USB_DAYS_AGO -lt 1 ]; then DUP_USB_COLOR="$GREY"; fi
-    else DUP_USB_MSG="?";
-    fi
     PACMAN_DATE=$(,pacman-when)
 
     EMACS_CLOCK=$(emacsclient -ne '(ignore-errors (md/org-clock-status))' || '-');
@@ -117,12 +101,11 @@ while :; do
     text "  ${ICON_ORG_MODE} ${EMACS_CLOCK:1:-1}" $WHITE
     text "  ${ICON_PENGUIN} $PACMAN_DATE" $GREY
     text "  ${ICON_FLOPPY_A} S3:$DUP_S3_MSG" $DUP_S3_COLOR
-    text "  ${ICON_FLOPPY_A} USB:$DUP_USB_MSG" $DUP_USB_COLOR
     text "  ${ICON_LOAD} $LOAD" $GREY
     text "  ${ICON_WIFI} $NETWORK_NAME" $GREY
     text "  ${ICON_AUDIO} $AUDIO" $GREY
     text "  ${ICON_BRIGHTNESS} $BRIGHTNESS" $GREY
-    text "  ${ICON_BATTERY_STATUS} ${ICON_BATTERY} ${BATTERY_PERCENT}" $BATTERY_COLOR
+    text "  ${ICON_BATTERY_STATUS} ${BATTERY_PERCENT}" $BATTERY_COLOR
     text "  ${ICON_CLOCK} ${DT_DATE}, $DT_TIME" $GREY
     text "  "
     # text "               "

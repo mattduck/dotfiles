@@ -18,7 +18,7 @@ set $mod Mod4
 # font pango:Inconsolata 12
 # font pango:Lucida Grande 11
 # font pango:Roboto 12
-font pango:Noto Sans 11
+font pango:Noto Sans 6
 # font pango:Canterell 11
 
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
@@ -260,7 +260,7 @@ hide_edge_borders smart
 # smart_gaps on
 popup_during_fullscreen leave_fullscreen
 
-gaps inner 20
+gaps inner 10
 # gaps top -12
 
 # [2019-09-08 Sun 14:33] Disabling these for now - want to try something different
@@ -270,22 +270,11 @@ gaps inner 20
 # assign [class="Firefox"] $ws3
 # # Can't distinguish private windows at creation time as they have
 # # the same title:
-# for_window [title=".*\(Private Browsing\).*"] move to workspace $ws4
+for_window [class="^(?i)emacs$" title="^(?i)alfred$"] floating enable
+for_window [class="^(?i)emacs$" title="^(?i)alfred$"] border pixel 1
 
-exec --no-startup-id xsetroot -solid '#0d1001'  # Dark bg
-#exec --no-startup-id ~/.fehbg  # Bg image
-
-exec --no-startup-id i3-msg 'workspace $ws1; exec emacs'
-
-# try emacs floating test
-
-# gaps
-for_window [class=".*"] border pixel 0
-for_window [class="^Emacs$" instance="^alfred$"] floating enable
-for_window [class="^Emacs$" instance="^alfred$"] border pixel 1
-
-for_window [class="^Emacs$" instance="^org-capture$"] floating enable
-for_window [class="^Emacs$" instance="^org-capture$"] border pixel 1
+for_window [class="^(?i)emacs$" title="^(?i)org-capture$"] floating enable
+for_window [class="^(?i)emacs$" title="^(?i)org-capture$"] border pixel 1
 
 # for_window [class="^Emacs$" instance="^org-popup"] floating enable
 # for_window [class="^Emacs$" instance="^org-popup"] border pixel 1
