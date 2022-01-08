@@ -476,6 +476,10 @@ All scope layers are stored in md/variable-layers."
 (when (memq window-system '(mac ns))
   (add-to-list 'initial-frame-alist '(fullscreen . maximized)))
 
+(use-package undo-tree
+  :demand t
+  :config (global-undo-tree-mode 1))
+
 (use-package evil
  :demand t
  :config
@@ -595,6 +599,9 @@ All scope layers are stored in md/variable-layers."
    (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
 
    (setq evil-echo-state nil)
+
+   ;; [2022-01-07] Required for C-R to use undo-tree's redo feature.
+   (evil-set-undo-system 'undo-tree)
 
    (evil-mode 1))
 
@@ -2373,6 +2380,8 @@ lsp can properly jump to definitions."
 (bind-key "a a" 'org-agenda md/leader-map)
 (bind-key "a c" 'helm-org-capture-templates md/leader-map)
 (bind-key "a j" 'org-clock-goto md/leader-map)
+(bind-key "a i" 'org-clock-in md/leader-map)
+(bind-key "a o" 'org-clock-out md/leader-map)
 (bind-key "RET" 'helm-org-capture-templates md/leader-map)
 (bind-key "TAB" 'org-agenda md/leader-map)
 
@@ -2586,6 +2595,7 @@ lsp can properly jump to definitions."
   (kbd "E") 'org-agenda-set-effort
   (kbd "R") 'org-agenda-refile
   (kbd "c") 'org-agenda-set-tags
+  (kbd "C") 'org-agenda-columns
 
   (kbd "]") 'org-agenda-later
   (kbd "[") 'org-agenda-earlier

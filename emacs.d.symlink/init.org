@@ -778,6 +778,17 @@ by using a noop function:
   (when (memq window-system '(mac ns))
     (add-to-list 'initial-frame-alist '(fullscreen . maximized)))
 #+END_SRC
+** Undo
+
+This used to work automatically, but something changed and now I have to
+explicitly enable undo tree:
+
+#+begin_src emacs-lisp
+  (use-package undo-tree
+    :demand t
+    :config (global-undo-tree-mode 1))
+#+end_src
+
 * Evil
 ** Base evil
 
@@ -909,6 +920,9 @@ by using a noop function:
      (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
 
      (setq evil-echo-state nil)
+
+     ;; [2022-01-07] Required for C-R to use undo-tree's redo feature.
+     (evil-set-undo-system 'undo-tree)
 
      (evil-mode 1))
 
@@ -3476,6 +3490,8 @@ org headings:
     (bind-key "a a" 'org-agenda md/leader-map)
     (bind-key "a c" 'helm-org-capture-templates md/leader-map)
     (bind-key "a j" 'org-clock-goto md/leader-map)
+    (bind-key "a i" 'org-clock-in md/leader-map)
+    (bind-key "a o" 'org-clock-out md/leader-map)
     (bind-key "RET" 'helm-org-capture-templates md/leader-map)
     (bind-key "TAB" 'org-agenda md/leader-map)
 #+END_SRC
@@ -3707,6 +3723,7 @@ bindings copied directly from emacs-mode.
     (kbd "E") 'org-agenda-set-effort
     (kbd "R") 'org-agenda-refile
     (kbd "c") 'org-agenda-set-tags
+    (kbd "C") 'org-agenda-columns
 
     (kbd "]") 'org-agenda-later
     (kbd "[") 'org-agenda-earlier
