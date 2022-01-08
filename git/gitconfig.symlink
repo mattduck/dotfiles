@@ -115,18 +115,20 @@ diffFilter = delta --color-only
 
 [delta]
 side-by-side = true
-keep-plus-minus-markers = false
+keep-plus-minus-markers = true
 line-numbers = true
 hyperlinks = true
-true-color = never
+true-color = true
 syntax-theme = ansimatt
 
-minus-style = syntax
-plus-style = syntax
+# 16 should be dark black
+minus-style = syntax 16
+plus-style = syntax 16
 zero-style = syntax
 
-minus-emph-style = syntax 8
-plus-emph-style = syntax 8
+# 52/22 should be dark red/green
+minus-emph-style = syntax 52
+plus-emph-style = syntax 22
 
 line-numbers-left-style = brightblack
 line-numbers-right-style = brightblack
@@ -142,7 +144,7 @@ whitespace-error-style = white reverse
 hunk-header-decoration-style = 8 box
 hunk-header-style = brightwhite line-number
 
-file-decoration-style = blue italic box
+file-decoration-style = blue italic
 file-style = blue
 
 commit-decoration-style = 8 ol

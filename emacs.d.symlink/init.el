@@ -476,6 +476,10 @@ All scope layers are stored in md/variable-layers."
 (when (memq window-system '(mac ns))
   (add-to-list 'initial-frame-alist '(fullscreen . maximized)))
 
+(use-package undo-tree
+  :demand t
+  :config (global-undo-tree-mode 1))
+
 (use-package evil
  :demand t
  :config
@@ -595,6 +599,9 @@ All scope layers are stored in md/variable-layers."
    (bind-key "h" help-map md/leader-map)  ; I prefer <leader>h to C-h
 
    (setq evil-echo-state nil)
+
+   ;; [2022-01-07] Required for C-R to use undo-tree's redo feature.
+   (evil-set-undo-system 'undo-tree)
 
    (evil-mode 1))
 
@@ -1831,6 +1838,7 @@ Otherwise, highlight the phrase using hi-lock-mode"
           lsp-completion-show-detail t
           lsp-completion-show-kind t
           lsp-enable-file-watchers t
+          lsp-file-watch-threshold 100
           lsp-enable-folding t
           lsp-enable-imenu t
           lsp-enable-indentation t
@@ -1970,8 +1978,9 @@ lsp can properly jump to definitions."
 
 (use-package web-mode
 :demand t
-:mode (("\\.tsx\\'" . web-mode)
-        ("\\.jsx\\'" . web-mode)))
+:mode (("\\.html\\'" . web-mode)
+       ("\\.tsx\\'" . web-mode)
+       ("\\.jsx\\'" . web-mode)))
 
 (when (fboundp 'lsp-typescript-javascript-tsx-jsx-activate-p)
   (fmakunbound 'lsp-typescript-javascript-tsx-jsx-activate-p))
@@ -2012,6 +2021,7 @@ lsp can properly jump to definitions."
     (setq magit-commit-show-diff nil)
 
     ;; Remove some default hooks that I don't use
+    (remove-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell)
     (remove-hook 'git-commit-setup-hook 'git-commit-save-message)
     (remove-hook 'git-commit-setup-hook 'git-commit-setup-changelog-support)
     (remove-hook 'git-commit-setup-hook 'git-commit-turn-on-auto-fill)
@@ -2330,23 +2340,24 @@ lsp can properly jump to definitions."
 
 ;; Only two priorities - default and flagged
 (setq org-highest-priority 65)
-(setq org-lowest-priority 66)
-(setq org-default-priority 66)
+(setq org-lowest-priority 69)
+(setq org-default-priority 69)
 
 ;; I find these useful enough to want them in all insert maps.
 (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm org-mode-map)
 (bind-key "C-c d" 'md/org-timestamp-date-inactive-no-confirm evil-insert-state-map)
 (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm org-mode-map)
 (bind-key "C-c t" 'md/org-timestamp-time-inactive-no-confirm evil-insert-state-map)
-(bind-key "C-c T" 'md/org-timestamp-time-clipboard org-mode-map)
-(bind-key "C-c T" 'md/org-timestamp-time-clipboard evil-normal-state-map)
-(bind-key "C-c T" 'md/org-timestamp-time-clipboard evil-insert-state-map)
 
 (bind-key "C-c D" 'md/org-timestamp-date-clipboard org-mode-map)
 (bind-key "C-c D" 'md/org-timestamp-date-clipboard evil-normal-state-map)
 (bind-key "C-c D" 'md/org-timestamp-date-clipboard evil-insert-state-map)
 
-(bind-key "C-c l" 'md/org-insert-link-from-paste org-mode-map)
+(bind-key "C-c l" 'md/org-insert-link-from-paste  org-mode-map)
+
+(bind-key "C-c P" 'org-priority-up org-mode-map)
+(bind-key "C-c T" 'org-todo org-mode-map)
+(bind-key "C-c E" 'org-set-effort org-mode-map)
 
 (evil-define-key 'normal org-mode-map (kbd "SPC") md/org-mode-leader-map)
 
@@ -2375,6 +2386,8 @@ lsp can properly jump to definitions."
 (bind-key "a a" 'org-agenda md/leader-map)
 (bind-key "a c" 'helm-org-capture-templates md/leader-map)
 (bind-key "a j" 'org-clock-goto md/leader-map)
+(bind-key "a i" 'org-clock-in md/leader-map)
+(bind-key "a o" 'org-clock-out md/leader-map)
 (bind-key "RET" 'helm-org-capture-templates md/leader-map)
 (bind-key "TAB" 'org-agenda md/leader-map)
 
@@ -2584,9 +2597,11 @@ lsp can properly jump to definitions."
   (kbd "RET") 'org-agenda-goto
 
   (kbd "T") 'md/org-agenda-todo
+  (kbd "P") 'org-agenda-priority-up
   (kbd "E") 'org-agenda-set-effort
   (kbd "R") 'org-agenda-refile
   (kbd "c") 'org-agenda-set-tags
+  (kbd "C") 'org-agenda-columns
 
   (kbd "]") 'org-agenda-later
   (kbd "[") 'org-agenda-earlier
@@ -2644,11 +2659,11 @@ lsp can properly jump to definitions."
  org-src-tab-acts-natively t)
 
 (setq org-export-headline-levels 6
-      org-export-with-section-numbers 2
+      org-export-with-section-numbers 3
       org-html-head-include-default-style nil
-      org-export-with-section-numbers nil
+      org-export-with-section-numbers 2
       org-html-validation-link nil
-      org-html-postamble nil
+      org-html-postamble "<hr>"
       org-export-with-sub-superscripts nil  ;; don't mess up things_with_underscores in html export
       org-html-htmlize-output-type nil
       org-export-babel-evaluate nil
@@ -2658,64 +2673,229 @@ lsp can properly jump to definitions."
 <script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js\"></script>
 <script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js\"></script>
 <script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/javascript.min.js\"></script>
+<script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/shell.min.js\"></script>
+<script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/lisp.min.js\"></script>
+<script charset=\"UTF-8\" src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/markdown.min.js\"></script>
 
-   <style type=\"text/css\">
- b {color: #000}
- a {font-weight: normal; color: blue}
- a>code {font-weight: normal; color: blue}
- html {font-size: 19px; max-width: 100%; margin: 20px 10%; font-family: Freeserif, serif; line-height:1.2}
- pre {font-family: monospace; color: #000; font-size: 13px; line-height: 1.4; max-width: 720px}
- code {font-family: monospace; font-size: 13px; background-color: rgba(27,31,35,.05); padding: 2px 4px; max-width: 720px;}
- pre > code { background-color: #ffffff !important; }
- p, dl { color: #555}
- dt { color: #000; font-weight: bold; margin-top: 8px;}
- hr {margin-bottom: 40px; margin-left: 0; margin-right: 0}
- h1 {font-size: 24px}
- h1, h2, h3 {margin-bottom: 8px}
- h2, h3, h4 {font-family: sans-serif}
- p {margin-top: 8px}
- img {margin-top: 16px; margin-bottom: 16px; max-width: 100%;}
- hr {min-height: 4px; background-color: #000}
- hr.hrsmaller {min-height: 1px; background-color: #000}
- ul {padding-left: 20px}
- ul > li {list-style-type: circle}
- li {color: #555; margin-top: 8px; margin-bottom: 8px;}
- a:hover {color: blue}
- h1, h2, h3, h4, p, ol, li, hr, dl {width:540px; max-width: 100%}
- blockquote {font-style: italic; border-left: 2px solid #555; padding-left: 10px; }
-#table-of-contents > h2 {display:none};
-   </style>
+<script type=\"text/javascript\">
+// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&amp;dn=gpl-3.0.txt GPL-v3-or-Later
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add(\"code-highlighted\");
+         target.classList.add(\"code-highlighted\");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove(\"code-highlighted\");
+         target.classList.remove(\"code-highlighted\");
+       }
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+
+
+ <style type=\"text/css\">
+ @charset \"UTF-8\";
+
+ body {
+     /* Mobile settings */
+     font-size: 17px;
+     margin-left: 10px;
+     margin-right: 10px;
+
+     /* On mobile firefox the browser chrome often takes up the top of the
+     screen. I think this is a browser issue but it looks bad, so push the content down. */
+     margin-top: 3em;
+
+     /* General settings */
+     max-width: 700px;
+     line-height: 1.6;
+     font-family: sans-serif;
+
+     /* Font smoothing */
+     -moz-osx-font-smoothing: grayscale;
+     -webkit-font-smoothing: antialiased;
+ }
+
+ /* Override the mobile settings for a bigger screen size. */
+ @media (min-width: 701px) {
+     body {
+         margin-left: auto;
+         margin-right: auto;
+         margin-top: 0;
+     }
+ }
+
+ /* Heading styles. h1 has a smaller relative top margin */
+ h1 {
+     margin-bottom: 0;
+     margin-top: 2em;
+     line-height: 1.1;
+     font-weight: normal;
+
+     /* Special styling for h1 */
+     border-bottom: 2px solid black;
+     padding-bottom: 0.5em;
+ }
+ h2, h3, h4, h5, h6 {
+     margin-bottom: 0;
+     margin-top: 3em;
+     line-height: 1.1;
+     font-weight: normal;
+ }
+
+ /* The org-mode section numbers in headers are made less prominent */
+ .section-number-1, .section-number-2, .section-number-3 {
+     font-family: monospace;
+     font-size: smaller;
+ }
+
+ #root span {
+     font-size: 2em;
+     display: inline-block;
+     margin-top: 1em;
+     color: black !important;
+ }
+
+ /* Add margin below the nav links */
+ #header-sitemap {
+     margin-bottom: 2em;
+ }
+
+ img, video {
+     margin-top: 1em;
+     margin-bottom: 1em;
+     display: block;  /* So the top/bottom margins aren't double-counted */
+     max-width: 90%;
+ }
+
+ /* By default there's no spacing between list items, which is less readable IMO */
+ li {
+     margin-top: 1em;
+     margin-bottom: 1em;
+ }
+
+ /* Don't show the HOME / UP links that org-mode generates */
+ #org-div-home-and-up { display: none; }
+
+ /* Org tags */
+ .red {background-color: #af7575;}
+ .amber {background-color: #efd8a1;}
+ .green {background-color: #bcd693;}
+ .blue {background-color: #afd7db;}
+
+
+ /* Make the timestamp smaller */
+ .timestamp {
+     font-family: monospace;
+     font-size: smaller;
+ }
+
+ /* Basic table styling */
+ td, th {
+     padding: 0.5em;
+     vertical-align: top;
+     text-align: left;
+     background-color: #f9f9f9;
+     font-size: smaller;
+ }
+
+ /* For the sitemap we don't use the normal table styling */
+ .sitemap td, .sitemap th {
+     background-color: transparent;
+     padding-bottom: 1em;
+     padding-left: 0;
+     font-size: inherit;
+     line-height: 1.1;
+ }
+
+ /* Make sure there isn't any weird padding in the nav */
+ #header-sitemap td {
+     padding-top: 0;
+     padding-bottom: 0;
+ }
+
+ /* Make sure there isn't any weird padding in the nav */
+ #footer-sitemap td {
+     padding-top: 0;
+     padding-bottom: 1em;
+ }
+
+ hr {
+     margin-bottom: 2em;
+ }
+
+ /* This is copied from the hljs code blocks - it makes the pre blocks consistent. */
+ pre {
+     padding: 0.5em;
+     color: #333;
+     background: #f8f8f8;
+     overflow-x: auto;
+     display: block;
+
+     /* Lower line-height than main prose */
+     line-height: 1.3;
+ }
+
+ code {
+     /* Inline code uses the same red colour from hljs github theme */
+     color: #d14;
+     background-color: #f8f8f8;
+
+     /* Make sure pre elements don't cause the page to extend on mobile */
+     overflow-wrap: anywhere;
+
+     /* Lower line-height than main prose */
+     line-height: 1.3;
+ }
+
+ /* Use a smaller font size for code blocks so there's less horizontal scrolling */
+ pre > code, pre {
+     font-size: smaller;
+ }
+
+ /* Indent code blocks, tables */
+ pre, .hljs, table, img, video {
+     margin-left: 1em;
+     margin-right: 1em;
+ }
+
+ /* For the sitemap, we don't indent */
+ table.sitemap {
+     margin-left: 0;
+     margin-right: 0;
+ }
+
+ /* Links use the same blue colour from hljs github theme */
+ a {
+     color: #0086b3;
+ }
+
+ /* Add a left border to quotes */
+ blockquote {
+     border-left: 2px solid black;
+     padding-left: 0.5em;
+ }
+
+ /* Definition list terms can be bold */
+ dt {
+     font-weight: bold;
+ }
+ </style>
 
 <script type=\"text/javascript\">
 const init = () => {
-    document.querySelectorAll('.src-js').forEach(el => {
-        newcode = document.createElement('code');
-        newcode.classList.add('hljs', 'javascript');
-        newcode.innerHTML = el.innerHTML;
-        newpre = document.createElement('pre');
-        newpre.appendChild(newcode);
-        el.parentNode.replaceChild(newpre, el);
-    });
     hljs.initHighlighting();
-
-    document.querySelectorAll('h2').forEach(el => {
-        hr = document.createElement('hr');
-        el.parentNode.insertBefore(hr, el);
-        br = document.createElement('br');
-        el.parentNode.insertBefore(br, el);
-    });
-    document.querySelectorAll('h3').forEach(el => {
-        br = document.createElement('br');
-        el.parentNode.insertBefore(br, el);
-    });
-    document.querySelectorAll('h2')[1].scrollIntoView();
-
 }
 window.addEventListener('load', init, false );
-</script>
-
-<script charset=\"UTF-8\" src=\"org-info.js\"></script>
-")
+</script>")
 
 (use-package ox-reveal)
 
@@ -3017,6 +3197,50 @@ This is intended to be used in an org-capture template.
       ;;(indent-region (point-min) (point-max))
       (buffer-substring-no-properties (point-min) (point-max)))))
 
+(defvar md/org-clock-sum-agenda-files-cache nil)
+
+(defun md/org-clock-sum-agenda-files ()
+  "This is similar to md/org-clock-sum-agenda-files-refresh, except
+it attempts to serve a cached version of the results. The idea is that the
+cached string can be safely used in a modeline."
+  (or md/org-clock-sum-agenda-files-cache
+      md/org-clock-sum-agenda-files-refresh))
+
+(defun md/org-clock-sum-agenda-files-refresh ()
+  "Iterate over all buffers that visit org-agenda-files, and return a string
+displaying the current time clocked across all files for both the current day
+and current week."
+  (let ((message-log-max nil))
+    (setq md/org-clock-sum-agenda-files-cache
+          (format "[%s/%s]"
+                  ;; TODO: only run find-file once
+                  (org-minutes-to-clocksum-string
+                   (apply '+ (map
+                              'list
+                              (lambda (f)
+                                (save-window-excursion
+                                  (find-file f)
+                                  (org-clock-sum-today)))
+                              org-agenda-files)))
+                  (org-minutes-to-clocksum-string
+                   (apply '+ (map
+                              'list
+                              (lambda (f)
+                                (save-window-excursion
+                                  (find-file f)
+                                  (org-clock-sum-custom nil 'thisweek)))
+                              org-agenda-files)))))))
+
+;; Refresh the value when clock actions are done
+(add-hook 'org-clock-in-hook 'md/org-clock-sum-agenda-files-refresh)
+(add-hook 'org-clock-out-hook 'md/org-clock-sum-agenda-files-refresh)
+(add-hook 'org-clock-cancel-hook 'md/org-clock-sum-agenda-files-refresh)
+
+;; Save the buffer when clock actions are done, as I otherwise have to do this manually
+(add-hook 'org-clock-in-hook 'md/save-if-not-remote)
+(add-hook 'org-clock-out-hook 'md/save-if-not-remote)
+(add-hook 'org-clock-cancel-hook 'md/save-if-not-remote)
+
 (message "use-package for org finished")
   ))
 
@@ -3105,13 +3329,20 @@ This is intended to be used in an org-capture template.
   (string-remove-prefix (format "%s " (car (split-string s))) s))
 
 (defun md/org-capture-popup-frame (template-shortcut)
-  (make-frame '((name . "org-capture")
-                ;;(window-system . x)
-                (auto-raise . t)
-                (height . 20)
-                (width . 120)
-                (left . 0.3)
-                (top . 0.2)))
+  (if (string= (system-name) "arch")
+      (make-frame '((name . "org-capture")
+                    (window-system . x)
+                    (auto-raise . t)
+                    (height . 20)
+                    (width . 120)
+                    (left . 0.3)
+                    (top . 0.2)))
+    (make-frame '((name . "org-capture")
+                  (auto-raise . t)
+                  (height . 20)
+                  (width . 120)
+                  (left . 0.45)
+                  (top . 0.1))))
   (select-frame-by-name "org-capture")
   (org-capture nil template-shortcut)
   (delete-other-windows))
@@ -3294,20 +3525,38 @@ are ugly. It works fine though."
 
 (defun md/alfred-source-processes ()
   "Source which uses `ps` to list processes, and then offer options to interact with them."
-  (helm-build-async-source "Processes"
-    :nohighlight t  ;; Because grep is doing the matching, not helm
-    :multimatch nil
-    :requires-pattern 1
-    :candidates-process (lambda ()
-                          (if (s-starts-with? "p " helm-pattern)
-                              (let ((pat (s-chop-prefix "p " helm-pattern)))
-                                (start-process-shell-command
-                                 ;; The weird grep -v at the end is a silly quick way to strip the grep
-                                 ;; itself from showing in the results.
-                                 "helm-source-ps" nil (format "ps axh -o pid,group,args --cols 90 -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args --cols 90'" pat)))
-                            (start-process "helm-source-noop" nil "true")))
-    :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
-              ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand))))))))
+  (if (string= (system-name) "arch")
+      (helm-build-async-source "Processes"
+        :nohighlight t  ;; Because grep is doing the matching, not helm
+        :multimatch nil
+        :requires-pattern 1
+        :candidates-process (lambda ()
+                              (if (s-starts-with? "p " helm-pattern)
+                                  (let ((pat (s-chop-prefix "p " helm-pattern)))
+                                    (start-process-shell-command
+                                     ;; The weird grep -v at the end is a silly quick way to strip the grep
+                                     ;; itself from showing in the results.
+                                     "helm-source-ps" nil (format "ps axh -o pid,group,args --cols 90 -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args --cols 90'" pat)))
+                                (start-process "helm-source-noop" nil "true")))
+        :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
+                  ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand)))))))
+
+    ;; MacOS version. uses BSD versions of ps/pgrep
+    ;; TODO - need to parse output?
+    (helm-build-async-source "Processes"
+      :nohighlight t  ;; Because grep is doing the matching, not helm
+      :multimatch nil
+      :requires-pattern 1
+      :candidates-process (lambda ()
+                            (if (s-starts-with? "p " helm-pattern)
+                                (let ((pat (s-chop-prefix "p " helm-pattern)))
+                                  (start-process-shell-command
+                                   ;; The weird grep -v at the end is a silly quick way to strip the grep
+                                   ;; itself from showing in the results.
+                                   "helm-source-ps" nil (format "ps axh -o pid,group,args -q $(pgrep '%s' -d ',' --full) 2>/dev/null | grep -v 'pid,group,args'" pat)))
+                              (start-process "helm-source-noop" nil "true")))
+      :action '(("SIGTERM" . (lambda (cand) (start-process "helm-source-sigterm" nil "kill" (car (split-string cand)))))
+                ("SIGKILL" . (lambda (cand) (start-process "helm-source-sigkill" nil "kill" "-9" (car (split-string cand)))))))))
 
 (defun md/alfred-source-directories ()
   "Open a directory."
@@ -3337,21 +3586,40 @@ are ugly. It works fine though."
                             (start-process "helm-source-noop" nil "true")))
     :action '(("Open" . (lambda (cand) (call-process "sh" nil nil nil "-c" (format "xdg-open '%s' & disown" cand)))))))
 
+(defun md/ns-raise-emacs ()
+  (when (featurep 'ns)
+    (ns-do-applescript "tell application \"Emacs\" to activate")))
+
+(defun md/ns-raise-emacs-with-frame (frame)
+  (with-selected-frame frame
+    (when (display-graphic-p)
+      (md/ns-raise-emacs))))
+
 (defun md/alfred--helm (buffer)
-  (helm :sources (list (md/alfred-source-system)
-                       (md/alfred-source-search)
-                       (md/alfred-source-webserver)
-                       (md/alfred-source-org-capture-templates)
-                       (md/alfred-source-org-light "Org - NOW" "now" "NOW")
-                       (md/alfred-source-org-light "Org - BACK" "back" "BACK")
-                       (md/alfred-source-org-clock-out)
-                       (md/alfred-source-web-bookmarks)
-                       (md/alfred-source-M-x)
-                       (when (string= (system-name) "arch")
-                         (md/alfred-source-apps))
-                       (md/alfred-source-directories)
-                       (md/alfred-source-files)
-                       (md/alfred-source-processes))
+  (helm :sources
+        (if (string= (system-name) "arch")
+            (list (md/alfred-source-system)
+                  (md/alfred-source-search)
+                  (md/alfred-source-webserver)
+                  (md/alfred-source-org-capture-templates)
+                  (md/alfred-source-org-light "Org - NOW" "now" "NOW")
+                  (md/alfred-source-org-light "Org - BACK" "back" "BACK")
+                  (md/alfred-source-org-clock-out)
+                  (md/alfred-source-web-bookmarks)
+                  (md/alfred-source-apps)
+                  (md/alfred-source-directories)
+                  (md/alfred-source-files)
+                  (md/alfred-source-processes))
+          (list
+           (md/alfred-source-search)
+           (md/alfred-source-org-capture-templates)
+           (md/alfred-source-org-light "Org - URGENT" "urgent" "NOW \\[#A\\]")
+           (md/alfred-source-org-light "Org - NOW" "now" "NOW")
+           (md/alfred-source-org-light "Org - BACK" "back" "BACK")
+           (md/alfred-source-org-clock-out)
+           (md/alfred-source-apps)
+           (md/alfred-source-processes)
+           ))
         :prompt ""
         :buffer buffer))
 
@@ -3363,23 +3631,39 @@ are ugly. It works fine though."
   "Entry point to create the 'alfred' frame and run helm."
   (interactive)
   (with-current-buffer (get-buffer-create "*alfred*")
-    (let ((frame (make-frame '((name . "alfred")
-                               ;;(window-system . x)
-                               (auto-raise . t)
-                               (height . 10)
-                               (internal-border-width . 20)
-                               (left . 0.33)
-                               (left-fringe . 0)
-                               (line-spacing . 3)
-                               (menu-bar-lines . 0)
-                               (right-fringe . 0)
-                               (tool-bar-lines . 0)
-                               (top . 48)
-                               ;; enable this to remove frame border
-                               (undecorated . t)
-                               (unsplittable . t)
-                               (vertical-scroll-bars . nil)
-                               (width . 120))))
+    (let ((frame (if (string= (system-name) "arch")
+                     (make-frame '((name . "alfred")
+                                   (window-system . x)
+                                   (auto-raise . t)
+                                   (height . 10)
+                                   (internal-border-width . 20)
+                                   (left . 0.33)
+                                   (left-fringe . 0)
+                                   (line-spacing . 3)
+                                   (menu-bar-lines . 0)
+                                   (right-fringe . 0)
+                                   (tool-bar-lines . 0)
+                                   (top . 48)
+                                   ;; enable this to remove frame border
+                                   (undecorated . t)
+                                   (unsplittable . t)
+                                   (vertical-scroll-bars . nil)
+                                   (width . 120)))
+                   (make-frame '((name . "alfred")
+                                 (auto-raise . t)
+                                 (height . 20)
+                                 (internal-border-width . 10)
+                                 (left . 0.45)
+                                 (left-fringe . 0)
+                                 (line-spacing . 3)
+                                 (menu-bar-lines . 0)
+                                 (right-fringe . 0)
+                                 (tool-bar-lines . 0)
+                                 (top . 0.1)
+                                 (undecorated . nil)
+                                 (unsplittable . t)
+                                 (vertical-scroll-bars . nil)
+                                 (width . 120)))))
           (alert-hide-all-notifications t)
           (inhibit-message t)
           (mode-line-format nil)
@@ -3389,12 +3673,15 @@ are ugly. It works fine though."
           (helm-use-undecorated-frame-option nil)
           ;; If we run an async shell, don't show us anything
           (async-shell-command-display-buffer nil))
+      (when (not (string= (system-name) "arch"))
+        (md/ns-raise-emacs-with-frame frame))
       (md/alfred--helm "*alfred*")
       (delete-frame frame)
       ;; For some reason without killing the buffer it messes up future state.
       (kill-buffer "*alfred*")
       ;; I don't want this to cause the main frame to flash
-      (x-urgency-hint (selected-frame) nil))))
+      (when (string= (system-name) "arch")
+        (x-urgency-hint (selected-frame) nil)))))
 
 (use-package annotate
   :demand t
@@ -3780,6 +4067,7 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
   :config
 
   (progn
+    (defvar md/modeline-include-clock-summary nil)
     (defface md/powerline-inactive '((t (:inherit 'modeline))) "")
     (defface md/powerline-normal '((t (:inherit 'modeline))) "")
     (defface md/powerline-insert '((t (:inherit 'modeline))) "")
@@ -3852,15 +4140,22 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
                               (powerline-raw "[Narrow] " mode-line 'l))
                             (when (string= major-mode "python-mode")
                               (powerline-raw (format "[venv:%s] " pyvenv-virtual-env-name) mode-line 'l))
-                            (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
+
+
+                            (when (and active (fboundp 'org-clocking-p) md/modeline-include-clock-summary)
                               (powerline-raw
-                               (propertize
-                                (format "%s "
-                                        (if (> (length org-mode-line-string) 50)
-                                            (format "%s..." (string-trim (substring org-mode-line-string 0 50)))
-                                          org-mode-line-string))
-                                'face nil)
-                               face2 'l))))
+                               (md/org-clock-sum-agenda-files)
+                               (if (org-clocking-p) 'font-lock-function-name-face 'flycheck-error-list-error)
+                               'l))
+
+                            (when (and active (fboundp 'org-clocking-p) (org-clocking-p))
+                                  (powerline-raw (propertize
+                                                  (format "%s "
+                                                          (if (> (length org-mode-line-string) 90)
+                                                              (format "%s..." (string-trim (substring org-mode-line-string 0 90)))
+                                                            org-mode-line-string))
+                                                  'face nil)
+                                                 'flycheck-error-list-warning 'l))))
 
                       (rhs
                        ;; Flycheck
@@ -4204,6 +4499,9 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 (bind-key "r" 'narrow-to-region narrow-map)  ; Duplicate this, I think "r" works
                                         ; better than "n" for narrow-to-region
 
+(defvar md/narrow-dwim-enable-org-clock nil
+  "When true, md/narrow-dwim will start/stop the clock for narrowed org subtrees")
+
 (defun md/narrow-dwim (p)
   "Widen if buffer is narrowed, narrow-dwim otherwise.
   Dwim means: region, org-src-block, org-subtree, or
@@ -4214,7 +4512,14 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
   is already narrowed."
   (interactive "P")
   (declare (interactive-only))
-  (cond ((and (buffer-narrowed-p) (not p)) (widen))
+  (cond ((and (buffer-narrowed-p) (not p))
+          (progn
+           (when
+              (and md/narrow-dwim-enable-org-clock
+                   (string= major-mode "org-mode")
+                   (org-clock-is-active))
+            (org-clock-out nil t))
+           (widen)))
         ((region-active-p)
          (edit-indirect-region (region-beginning)
                                (region-end)
@@ -4224,12 +4529,13 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
         (org-src-mode
          (org-edit-src-exit))
         ((derived-mode-p 'org-mode)
-         ;; `org-edit-src-code' is not a real narrowing
-         ;; command. Remove this first conditional if
-         ;; you don't want it.
          (cond ((ignore-errors (org-edit-src-code) t))
                ((ignore-errors (org-narrow-to-block) t))
-               (t (org-narrow-to-subtree))))
+               (t (progn
+                    (org-narrow-to-subtree)
+                    (when (and md/narrow-dwim-enable-org-clock
+                               (not (org-clock-is-active)))
+                      (org-clock-in))))))
         ((derived-mode-p 'latex-mode)
          (LaTeX-narrow-to-environment))
         ((derived-mode-p 'restclient-mode)
