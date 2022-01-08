@@ -270,8 +270,6 @@ slow at this). This helps to ensure fonts are updated:
     (when font-lock-mode
       (font-lock-ensure)))
 
-  (add-hook 'after-save-hook 'md/fontify-if-font-lock-mode)
-
   (bind-key "tx" 'font-lock-mode md/leader-map)
 #+END_SRC
 
@@ -288,7 +286,7 @@ Auto-wrap text.
 ** Default font
 
 #+BEGIN_SRC emacs-lisp
-  (defvar md/font-size 125)
+  (defvar md/font-size 80)
 
   (defun md/font-size-incr ()
     (interactive)
@@ -1062,11 +1060,11 @@ actually use it to insert anything in insert mode.
   (defun md/screenshot-image-selection ()
     (interactive)
     (shell-command ",screenshot --image-selection"))
-  
+
   (defun md/screenshot-video-selection-start ()
     (interactive)
     (shell-command ",screenshot --video-selection-start"))
-  
+
   (defun md/screenshot-video-stop ()
     (interactive)
     (shell-command ",screenshot --video-stop"))
@@ -1075,45 +1073,45 @@ actually use it to insert anything in insert mode.
 ** Base config
 #+BEGIN_SRC emacs-lisp
   ;;;; Below are configurations for EXWM.
-
+  
   (defun md/exwm-file-enable ()
     "If this file exists, my .xinitrc will load exwm instead of i3."
     (interactive)
     (f-touch "~/.exwm-enabled")
     (message "exwm file touched"))
-
+  
   (defun md/exwm-file-disable ()
     "If this file exists, my .xinitrc will load exwm instead of i3.
   Calling this will delete the file, causing i3 to load next time."
     (interactive)
     (delete-file "~/.exwm-enabled")
     (message "exwm file deleted"))
-
+  
   (defun md/exwm-enabled ()
     (file-exists-p "~/.exwm-enabled"))
-
+  
   (when (file-exists-p "~/.exwm-enabled")
     ;; Required for sane bindings
     (evil-set-initial-state 'exwm-mode 'emacs)
-
+  
     ;; Load EXWM.
     (require 'exwm)
-
+  
     ;; Fix problems with Ido (if you use it).
     ;; (require 'exwm-config)
     ;; (exwm-config-ido)
-
+  
     ;; Set the initial number of workspaces (they can also be created later).
     (setq exwm-workspace-number 1)
-
+  
     (setq exwm-workspace-show-all-buffers t
           exwm-layout-show-all-buffers t)
-
+  
     ;; Hide modeline for exwm buffers
-    (add-hook 'exwm-manage-finish-hook 'exwm-layout-hide-mode-line)
-
+    ;;(add-hook 'exwm-manage-finish-hook 'exwm-layout-hide-mode-line)
+  
     (setq exwm-workspace-minibuffer-position nil)
-
+  
     ;; All buffers created in EXWM mode are named "*EXWM*". You may want to
     ;; change it in `exwm-update-class-hook' and `exwm-update-title-hook', which
     ;; are run when a new X window class name or title is available.  Here's
@@ -1135,41 +1133,41 @@ actually use it to insert anything in insert mode.
                           (string-prefix-p "sun-awt-X11-" exwm-instance-name)
                           (string= "gimp" exwm-instance-name))
                   (exwm-workspace-rename-buffer exwm-title))))
-
-
+  
+  
     (defun md/exwm-input-toggle-keyboard ()
       (interactive)
       (call-interactively 'exwm-input-toggle-keyboard)
       (message "exwm: %s" exwm--input-mode))
-
+  
     ;; Global keybindings can be defined with `exwm-input-global-keys'.
     ;; Here are a few examples:
     (setq exwm-input-global-keys
           `(;; Bind "s-r" to exit char-mode and fullscreen mode.
             ([?\s-r] . exwm-reset)
-
+  
             ;; TODO: helm-mini and helm-m-x don't cause screen issues, which is interesting.
             ;; There are particular alfred sources that cause the frame problems.
             (,(kbd "s-<SPC>") . md/alfred-no-frame)
             (,(kbd "s-t") . md/alfred)
             (,(kbd "C-<SPC>") . md/leader-map)
-
+  
             (,(kbd "s-$") . md/screenshot-image-selection)
             (,(kbd "s-%") . md/screenshot-video-selection-start)
             (,(kbd "s-^") . md/screenshot-video-stop)
-
+  
             ([?\C-w] . splitscreen/prefix)
             ([?\s-w] . splitscreen/prefix)
-
+  
             (,(kbd "s-<tab>") . eyebrowse-next-window-config)
             ([?\s-f] . exwm-layout-toggle-fullscreen)
             ([?\s-z] . md/exwm-input-toggle-keyboard)))
-
+  
     ;; To add a key binding only available in line-mode, simply define it in
     ;; `exwm-mode-map'.  The following example shortens 'C-c q' to 'C-q'.
-
+  
     (define-key exwm-mode-map [?\C-q] #'exwm-input-send-next-key)
-
+  
     ;; The following example demonstrates how to use simulation keys to mimic
     ;; the behavior of Emacs.  The value of `exwm-input-simulation-keys` is a
     ;; list of cons cells (SRC . DEST), where SRC is the key sequence you press
@@ -1178,7 +1176,7 @@ actually use it to insert anything in insert mode.
     (setq exwm-input-simulation-keys
           `(
             (,(kbd "C-w C-w") . [?\C-w])
-
+  
             ;; movement
             ([?\C-b] . [left])
             ;; ([?\M-b] . [C-left])
@@ -1198,16 +1196,17 @@ actually use it to insert anything in insert mode.
             ;; ([?\C-y] . [?\C-v])
             ;; search
             ;; ([?\C-s] . [?\C-f])))
-
-
+  
+  
     ;; Do not forget to enable EXWM. It will start by itself when things are
     ;; ready.  You can put it _anywhere_ in your configuration.
     (exwm-enable)
-
+  
     (require 'exwm-randr)
-
+  
     (defun md/exwm-display-one ()
       "If monitor is connected, only use that. Otherwise, only use the main display."
+      (interactive)
       (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
             default-output)
         (with-temp-buffer
@@ -1220,10 +1219,13 @@ actually use it to insert anything in insert mode.
               (call-process "xrandr" nil nil nil "--output" default-output "--auto")
             (call-process
              "xrandr" nil nil nil
-             "--output" (match-string 1) "--primary" "--auto" "--same-as" default-output
+             "--output" (match-string 1) "--mode"
+              (completing-read "Resolution: " '("2048x1080" "1920x1080"))
+             "--primary"
              "--output" default-output "--off")
             (setq exwm-randr-workspace-output-plist (list 0 (match-string 1)))))))
-
+  
+  
     (defun md/exwm-display-mirror ()
       "Mirror display"
       (interactive)
@@ -1242,9 +1244,9 @@ actually use it to insert anything in insert mode.
              "--output" default-output "--auto" "--primary"
              "--output" (match-string 1) "--auto" "--same-as" default-output)
             (setq exwm-randr-workspace-output-plist (list 0 default-output))))))
-
+  
     ;; ---------------
-
+  
     (defun md/status-message ()
       (interactive)
       (let* ((message-log-max nil) ; ensure not logged in message buffer
@@ -1261,10 +1263,10 @@ actually use it to insert anything in insert mode.
                                                  'face
                                                  `(:foreground ,(nth 2 item) :family "Noto sans" :height 0.7))))
                                   output-as-list "")))
-
+  
         (message propertized-string)))
     (bind-key "SPC" 'md/status-message md/leader-map)
-
+  
     (exwm-randr-enable))
 #+END_SRC
 
@@ -3385,6 +3387,8 @@ org headings:
         org-fontify-quote-and-verse-blocks t
         org-image-actual-width 400
 
+        ;; Don't create bookmark to last captured item
+        org-capture-bookmark nil
 
         ;; I shouldn't need to set this manually but in my current emacs
         ;; version the "note" entry is in an unexpected format, causing

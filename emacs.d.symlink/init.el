@@ -128,15 +128,13 @@
   (when font-lock-mode
     (font-lock-ensure)))
 
-(add-hook 'after-save-hook 'md/fontify-if-font-lock-mode)
-
 (bind-key "tx" 'font-lock-mode md/leader-map)
 
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'prog-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
 
-(defvar md/font-size 125)
+(defvar md/font-size 80)
 
 (defun md/font-size-incr ()
   (interactive)
@@ -778,7 +776,7 @@ Calling this will delete the file, causing i3 to load next time."
         exwm-layout-show-all-buffers t)
 
   ;; Hide modeline for exwm buffers
-  (add-hook 'exwm-manage-finish-hook 'exwm-layout-hide-mode-line)
+  ;;(add-hook 'exwm-manage-finish-hook 'exwm-layout-hide-mode-line)
 
   (setq exwm-workspace-minibuffer-position nil)
 
@@ -876,6 +874,7 @@ Calling this will delete the file, causing i3 to load next time."
 
   (defun md/exwm-display-one ()
     "If monitor is connected, only use that. Otherwise, only use the main display."
+    (interactive)
     (let ((xrandr-output-regexp "\n\\([^ ]+\\) connected ")
           default-output)
       (with-temp-buffer
@@ -888,9 +887,12 @@ Calling this will delete the file, causing i3 to load next time."
             (call-process "xrandr" nil nil nil "--output" default-output "--auto")
           (call-process
            "xrandr" nil nil nil
-           "--output" (match-string 1) "--primary" "--auto" "--same-as" default-output
+           "--output" (match-string 1) "--mode"
+            (completing-read "Resolution: " '("2048x1080" "1920x1080"))
+           "--primary"
            "--output" default-output "--off")
           (setq exwm-randr-workspace-output-plist (list 0 (match-string 1)))))))
+
 
   (defun md/exwm-display-mirror ()
     "Mirror display"
@@ -2285,6 +2287,8 @@ lsp can properly jump to definitions."
       org-fontify-quote-and-verse-blocks t
       org-image-actual-width 400
 
+      ;; Don't create bookmark to last captured item
+      org-capture-bookmark nil
 
       ;; I shouldn't need to set this manually but in my current emacs
       ;; version the "note" entry is in an unexpected format, causing
