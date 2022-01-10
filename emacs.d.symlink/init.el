@@ -1870,7 +1870,7 @@ Otherwise, highlight the phrase using hi-lock-mode"
   :hook
    ;; NOTE: we don't have a python-mode hook - it gets handled by pyvenv-track-virtualenv
   (;;(js-mode . lsp)
-   (web-mode . lsp)
+   ;;(web-mode . lsp)
    (lsp-mode . lsp-enable-which-key-integration)
    (lsp-before-initialize . md/lsp-setup))
   :bind (:map evil-normal-state-map
@@ -4323,6 +4323,17 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
 ;; TODO a way to revert all these changes to their original setting.
 ;; maybe a macro where that idea can be reapplied - after something is disabled, all the original values get restored.
 
+(defun md/calculate-centred-margins (content-width)
+  (/
+   (- (window-total-width) content-width)
+   2))
+
+(defun md/centre-margins ()
+  (interactive)
+  (setq left-margin-width (md/calculate-centred-margins fill-column)
+        right-margin-width (md/calculate-centred-margins fill-column))
+  (set-window-buffer nil (current-buffer)))
+
 (defun md/toggle-org-pretty ()
   (interactive)
   (require 'org-indent)
@@ -4332,9 +4343,10 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
   (make-local-variable 'org-bullets-bullet-list)
   (md/toggle-variable-layer
    (format "org-pretty-%s" (current-buffer))
-   '((line-spacing . 0.25)
-     (left-margin-width . 10)
-     (right-margin-width . 5)
+   `((line-spacing . 0.3)
+     (fill-column . 100)
+     (left-margin-width . ,(md/calculate-centred-margins 100))
+     (right-margin-width . ,(md/calculate-centred-margins 100))
      (header-line-format . " ")
      (mode-line-format . " ")
      (org-hide-leading-stars . t)
