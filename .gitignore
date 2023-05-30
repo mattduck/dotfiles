@@ -43,3 +43,5 @@ emacs.d.symlink/url
 ipython.symlink/*
 spacemacs
 vim/vim.symlink
+osx/Brewfile.lock.json
+macos/Brewfile.lock.json
