@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 if [[ "$(uname -a)" != *Darwin* ]]; then return; fi
 
+# [2023-05-28] Don't print 'The default interactive shell is now zsh' - see https://support.apple.com/en-us/HT208050
+export BASH_SILENCE_DEPRECATION_WARNING=1
+
+,path --prepend "/opt/homebrew/bin"
+
 # Use Brew instead of system Ruby
 ,path --prepend "/usr/local/opt/ruby/bin"
 
@@ -10,8 +15,8 @@ if [[ "$(uname -a)" != *Darwin* ]]; then return; fi
 
 # Use GNU coreutils - it's easier if programs have the same flags between
 # machines, same man pages etc.
-,path --prepend "/usr/local/opt/coreutils/libexec/gnubin"
-export MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
+,path --prepend "$(brew --prefix)/opt/coreutils/libexec/gnubin"
+export MANPATH="$(brew --prefix)/opt/coreutils/libexec/gnuman:$MANPATH"
 
 # git __ps1 and completion aren't available by default on my Yosemite machine -
 # either due to new git version or some OS change.
@@ -80,7 +85,7 @@ alias vi="vim" # Otherwise vi will point to /usr/bin, and vim to the brew dir.
 
 
 # Golang -------------
-,path "/usr/local/opt/go/libexec/bin/"
+,path "$(brew --prefix)opt/go/libexec/bin/"
 
 # iTerm 2 - toggle colour profiles
 function ,ts () {
