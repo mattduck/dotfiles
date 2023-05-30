@@ -11,6 +11,7 @@ brew 'cmake'  # For Emacs' vterm
 brew 'coreutils'
 brew 'emacs-plus@29', args: ["--with-xwidgets", "--with-imagemagick", "--with-native-comp", "--with-no-frame-refocus"]
 brew 'fasd'
+brew 'fd'
 brew 'fzf'
 brew 'gawk'
 brew 'gcc'
