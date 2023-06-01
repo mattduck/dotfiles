@@ -20,14 +20,6 @@ set -g aggressive-resize on
 
 # Colours
 set-option -g default-terminal "screen-256color"
-col_base03=8
-col_base02=0
-col_base01=10
-col_base00=11
-col_base0=12
-col_base1=14
-col_base2=7
-col_base3=15
 col_yellow=3
 col_orange=9
 col_red=1
@@ -50,7 +42,6 @@ col_host="12"
 set-option -g status-style "bg=colour$col_bg"
 set-option -g status-style "fg=colour$col_primary"
 set-option -g status-left "#[fg=colour$col_secondary]#[bg=colour$col_bg_hl] #S"
-#set-option -g status-right "#[fg=colour$col_bg]#[bg=colour$col_host] #H #[fg=colour$col_host]#[bg=colour$col_bg_hl] %Y-%b-%d %H:%M "
 set-option -g status-right ""
 
 set-option -g window-status-style "bg=colour$col_bg"
