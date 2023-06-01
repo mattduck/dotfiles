@@ -16,6 +16,7 @@ brew 'fzf'
 brew 'gawk'
 brew 'gcc'
 brew 'git'
+brew 'git-open'
 brew 'htop'
 brew 'imagemagick'
 brew 'libgccjit'  # for emacs native compilation
