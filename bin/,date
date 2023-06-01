@@ -1,0 +1,4 @@
+#!/bin/bash
+#
+# Easy way to get a timestamp for creating files etc.
+date -u +"%Y-%m-%dT%H%M%S"

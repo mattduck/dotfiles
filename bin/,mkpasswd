@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+#
+# Get random password value
 import getpass
 
 from passlib.hash import sha512_crypt

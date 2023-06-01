@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+Quick basic way to serve a directory locally
+"""
+
 import socketserver
 from http.server import SimpleHTTPRequestHandler as h
 

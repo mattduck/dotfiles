@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# Echo data and store it in a temp file for later recall
+
+if [ -t 0 ]; then
+    less /tmp/matt_tmp
+else
+    rm -f /tmp/matt_tmp
+    tee /tmp/matt_tmp | less - <&0
+fi
