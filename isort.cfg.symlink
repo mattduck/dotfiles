@@ -1,8 +1,0 @@
-;;[settings]
-;;line_length=90
-;;
-;;; Format multiple lines as hanging and grouped
-;;multi_line_output=3
-;;
-;;; Common libs, in case I'm running this outside the environment of the project.
-;;known_third_party=django,requests,ansible,boto,celery,fabric,mock,nose,pytest,mixpanel,six,simplejson,selenium,extra_views,gocardless_pro
