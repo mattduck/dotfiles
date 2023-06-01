@@ -10,9 +10,6 @@
 [submodule "emacs.d.symlink/non-elpa/color-theme-solarized"]
 	path = emacs.d.symlink/non-elpa/color-theme-solarized
 	url = https://github.com/mattduck/emacs-color-theme-solarized.git
-[submodule "splitscreen"]
-	path = splitscreen
-	url = https://github.com/mattduck/splitscreen.git
 [submodule "vim/vim.symlink/bundle/vundle"]
 	path = vim/vim.symlink/bundle/vundle
 	url = https://github.com/gmarik/vundle.git

@@ -79,11 +79,21 @@ bind h select-pane -L
 bind j select-pane -D
 bind k select-pane -U
 bind l select-pane -R
+bind-key -T copy-mode-vi 'v' send -X begin-selection
+
+# Splitscreen
+bind r swap-pane -D
+bind R swap-pane -U
 bind -r C-h resize-pane -L 5
 bind -r C-j resize-pane -D 5
 bind -r C-k resize-pane -U 5
 bind -r C-l resize-pane -R 5
-bind-key -T copy-mode-vi 'v' send -X begin-selection
+bind H select-layout main-vertical
+bind J select-layout even-vertical
+bind K select-layout main-horizontal
+bind L select-layout even-horizontal
+bind-key Q setw synchronize-panes \; display-message "toggled pane sync"
+bind X confirm-before -p "kill-window #W? (y/n)" kill-window
 
 # Use namespace shell wrapper to enable pbcopy and pbpaste commands on OS X.
 set-option -g default-command "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace -l bash; else bash; fi"
