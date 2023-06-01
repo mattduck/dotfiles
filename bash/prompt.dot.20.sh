@@ -1,24 +1,21 @@
 # Root prompt
 if [[ $EUID == 0 ]]; then
     _user="$ANSIred$debian_chroot\u"
-    _hostname="$HOST_COLOUR_ANSI\h"
-    _pwd="$ANSIbase1\w"
-    PS1="\n$_user $_hostname $_pwd\n$ANSIred# "
+    _pwd="$ANSIbrightwhite\w"
+    PS1="\n$_user $_pwd\n$ANSIred# "
 
 else
     # Standard prompt
     _user="$ANSIyellow$debian_chroot\u"
-    _hostname="$HOST_COLOUR_ANSI\h"
-    _pwd="$HOST_COLOUR_ANSI\w"
+    _pwd="$ANSIblue\w"
 
     # Add git info
     if command -v __git_ps1 >/dev/null; then
         GIT_PS1_SHOWDIRTYSTATE=true
-        _git_info="$ANSIbase01\$(__git_ps1)"
+        _git_info="$ANSIbrightgreen\$(__git_ps1)"
     fi
 
-    # PS1="\n$_hostname: $_pwd$_git_info\n$ANSIbase1$ "
-    PS1="\n$_pwd$_git_info\n$ANSIbase1$ "
+    PS1="\n$_pwd$_git_info\n$ANSIbrightcyan$ "
 fi
 
 # Reset prompt, so first line of output doesn't appear in weird colours (eg. git
