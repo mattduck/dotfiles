@@ -1,3 +1,5 @@
+# TODO - are these required?
+
 # Solarized ANSI
 export ANSIreset="\[$(tput sgr0)\]"
 export ANSInone="\[\e[00m\]"
@@ -61,4 +63,4 @@ fi
 export HOST_COLOUR_NUM
 export HOST_COLOUR_ANSI
 
-eval $(dircolors -b $DOTFILES/solarized/dircolors/dircolors.ansi-universal)
+eval $(dircolors -b $DOTFILES/dircolors.ansi-universal)

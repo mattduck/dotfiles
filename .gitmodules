@@ -1,21 +1,9 @@
-[submodule "solarized/mate-terminal"]
-	path = solarized/mate-terminal
-	url = https://github.com/countjocular/mate-terminal-colors-solarized.git
-[submodule "solarized/gnome-terminal"]
-	path = solarized/gnome-terminal
-	url = https://github.com/sigurdga/gnome-terminal-colors-solarized.git
-[submodule "solarized/various"]
-	path = solarized/various
-	url = https://github.com/altercation/solarized.git
 [submodule "emacs.d.symlink/non-elpa/color-theme-solarized"]
 	path = emacs.d.symlink/non-elpa/color-theme-solarized
 	url = https://github.com/mattduck/emacs-color-theme-solarized.git
 [submodule "vim/vim.symlink/bundle/vundle"]
 	path = vim/vim.symlink/bundle/vundle
 	url = https://github.com/gmarik/vundle.git
-[submodule "solarized/dircolors"]
-	path = solarized/dircolors
-	url = https://github.com/seebi/dircolors-solarized.git
 [submodule "emacs.d.symlink/non-elpa/shackle"]
 	path = emacs.d.symlink/non-elpa/shackle
 	url = git@github.com:mattduck/shackle.git
