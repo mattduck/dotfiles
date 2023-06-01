@@ -1,8 +1,6 @@
-# Set EDITOR to vim, unless it's previously set to emacs
-if test "${EDITOR#*emacs}" = "$EDITOR"; then
-     export EDITOR="vim"
-fi
-export ALTERNATE_EDITOR="vim"
+# Set EDITOR
+export EDITOR="emacsclient -t"
+export ALTERNATE_EDITOR="nvim"
 
 # Allow $HISTFILE to grow to 100k lines, and allow the `history` command to
 # access all of them rather than truncating
@@ -14,7 +12,7 @@ export HISTSIZE=$HISTFILESIZE
 
 # Commands to ignore in the history file. ? and ?? ignore trival one-letter and
 # two-letter commands.
-export HISTIGNORE="?:??:ls:l:ll:h:cd:vi:vim:history:,history:g:gg:g d:tmux:tmux attach"
+export HISTIGNORE="?:??:ls:l:ll:ls -al:h:cd:vi:vim:history:,history:g:gg:g d:tmux:tmux attach"
 
 # - ignorespace: lines which begin with a space character are not saved in the
 #   history list.
@@ -65,4 +63,3 @@ export RANGER_LOAD_DEFAULT_RC=FALSE
 # [2021-05-16] Some better bind settings
 bind 'set colored-stats on'
 bind 'set colored-completion-prefix on'
-
