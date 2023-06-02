@@ -19,9 +19,4 @@ alias dockerc="docker-compose"
 alias ..="cd .."
 alias vi="nvim"
 alias vim="nvim"
-if command -v bat >/dev/null; then alias cat="bat" fi
-
-# Setup autocompletion for git alias
-if [[ $(type -t __git_complete) == *function* ]]; then
-    __git_complete g __git_main
-fi
+if command -v bat >/dev/null; then alias cat="bat"; fi

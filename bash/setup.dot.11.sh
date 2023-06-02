@@ -31,24 +31,11 @@ shopt -s cmdhist
 # ~/bin takes precedence over most of the $PATH
 ,path --prepend $HOME/bin
 
-# pager
+# Similarlly, use /f/bin if it exists
+if [ -d "/f/bin" ]; then ,path --prepend $HOME/bin; fi
+
+# Pager
 export LESS='-iMFXSx4R'
-
-# TODO - what was the reason I had to use this in the past?
-if [ $(command -v keychain) ]; then
-    eval `keychain --quiet --eval --agents "ssh" --inherit "local-once"`
-fi
-
-# If sshrc is installed, enable it to use the same completion as ssh.
-if [ $(command -v sshrc) ]; then
-    # Can't find a full man page for this, so not sure what all options do.
-    # It might be there are other `complete` args that are applicable.
-    complete -F _ssh sshrc
-fi
-
-if [ $(command -v kubectl) ]; then
-    source <(kubectl completion bash)
-fi
 
 # Ranger shouldn't use any default config - only want my own bindings
 export RANGER_LOAD_DEFAULT_RC=FALSE

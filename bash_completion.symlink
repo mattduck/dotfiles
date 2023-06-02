@@ -343,19 +343,22 @@ fi
 #
 # Uncomment and edit these lines to add your own alias completions.
 #
+if [ $(command -v kubectl) ]; then
+    source <(kubectl completion bash)
+fi
+# If sshrc is installed, enable it to use the same completion as ssh.
+if [ $(command -v sshrc) ]; then
+    complete -F _ssh sshrc
+fi
+# Setup autocompletion for git alias
+if [[ $(type -t __git_complete) == *function* ]]; then
+    __git_complete g __git_main
+fi
 complete -F _complete_alias k
 complete -F _complete_alias g
-complete -F _complete_alias r
 complete -F _complete_alias dockerc
-complete -F _complete_alias ,pyworkon
-complete -F _complete_alias ,pyactivate
-complete -F _complete_alias ,pydeactivate
-complete -F _complete_alias ,pywipe
-complete -F _complete_alias ,pycdsite
-complete -F _complete_alias ,pycd
 complete -F _complete_alias ,pymk2
 complete -F _complete_alias ,pymk3
 complete -F _complete_alias ,pymktmp2
 complete -F _complete_alias ,pymktmp3
 complete -F _complete_alias ,pyrm
-complete -F _complete_alias ,pylssite
