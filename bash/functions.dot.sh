@@ -1,5 +1,5 @@
+# Reload dotfiles environment
 function ,dotfiles-reload {
-    # Reload dotfiles environment
     source "$DOTFILES/activate.sh"
     bind -f "$DOTFILES/inputrc.symlink"
 }
@@ -10,14 +10,21 @@ function ,cd {
     dir=$(fasd -dRl | fzf-tmux --header=",cd" --exact --query="$1" --preview="ls {}") && cd "${dir}" || return 1
 }
 
+# Show env
 function ,env {
-    # Show env
     env | sort | fzf --exact | tee /dev/tty | pbcopy
     echo "Copied to clipboard"
 }
 
+# show history without numbers
 function ,history {
-    # show history without numbers
     history | awk '{$1="";print substr($0,2)}' | fzf --exact | tee /dev/tty | pbcopy
     echo "Copied to clipboard"
+}
+
+# Shows the source of a function
+function ,which-function {
+    shopt -s extdebug
+    declare -F "$@"
+    shopt -u extdebug
 }

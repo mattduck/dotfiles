@@ -50,16 +50,12 @@ if [ $(command -v kubectl) ]; then
     source <(kubectl completion bash)
 fi
 
-# Shows the source of a function
-function ,which-function {
-    shopt -s extdebug
-    declare -F "$@"
-    shopt -u extdebug
-}
-
 # Ranger shouldn't use any default config - only want my own bindings
 export RANGER_LOAD_DEFAULT_RC=FALSE
 
 # [2021-05-16] Some better bind settings
 bind 'set colored-stats on'
 bind 'set colored-completion-prefix on'
+
+# Use bat if installed
+export BAT_THEME="ansimatt"
