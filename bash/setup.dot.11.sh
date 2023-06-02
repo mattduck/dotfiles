@@ -53,3 +53,12 @@ if [ $(command -v bat) ]; then
     alias cat='bat'
     alias batg='BAT_STYLE=grid,header,changes,numbers batgrep -p'
 fi
+
+# Use exa instead of ls if installed
+if [ $(command -v exa) ]; then
+    alias ls="exa"
+    alias l="exa -l"
+    alias ll="exa -l -a"
+    alias L="exa -l -a -T --level 2"
+    alias LL="exa -l -a -T"  # Full recursion
+fi
