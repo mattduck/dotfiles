@@ -1,35 +1,35 @@
 # Create neither *.pyc files nor __pycache__ directories.
 export PYTHONDONTWRITEBYTECODE=1
 
+# New breakpoint() handling
+export PYTHONBREAKPOINT=pudb.start
+
 which pip >/dev/null && eval "$(pip completion --bash)"
 
 # By default, Python's virtualenv will modify the prompt when a virtualenv is
 # active. Disable this.
 export VIRTUAL_ENV_DISABLE_PROMPT=1
 
-export VIRTUALENVWRAPPER_PYTHON=$(which python3)
-export VIRTUALENVWRAPPER_VIRTUALENV=$(which virtualenv)
+if [ ! -z "$(which python3)" ]; then export VIRTUALENVWRAPPER_PYTHON=$(which python3); fi
+if [ ! -z "$(which virtualenv)" ]; then export VIRTUALENVWRAPPER_VIRTUALENV=$(which virtualenv); fi
+
 export VIRTUALENVWRAPPER_HOOK_DIR="$DOTFILES/virtualenvwrapper_hooks"
 export WORKON_HOME=$HOME/.virtualenvs
 mkdir -p "$WORKON_HOME"
-source $(which virtualenvwrapper.sh)
+
+VENV_WRAPPER_SCRIPT= $(which virtualenvwrapper.sh)
+if [ ! -z "$VENV_WRAPPER_SCRIPT" ]; then source "$VENV_WRAPPER_SCRIPT"; fi
 
 # Virtualenv workflow:
 # - Use pyenv to install python versions, but don't use the provided shims.
 # - Use mkvirtualenv to make venvs with a specific pyenv version.
-
-alias ,pyworkon="workon"
-alias ,pydeactivate="deactivate"
-alias ,pycdsite="cdsitepackages"
-alias ,pywhich="python --version; which python; which pip"
-alias ,pyrm="rmvirtualen"
 if [ $(command -v pyenv) ]; then
     alias ,pymk2="mkvirtualenv -p $(pyenv which python2)"
     alias ,pymk3="mkvirtualenv -p $(pyenv which python3)"
     alias ,pymktmp2="mktmpenv -p $(pyenv which python2)"
     alias ,pymktmp3="mktmpenv -p $(pyenv which python3)"
 fi
-    
+
 function ,pypath {
     # usage: ,pypath [--prepend] [<directories>]
     #
@@ -81,6 +81,3 @@ function ,pycrm() {
     find "$@" -type f -name '*.pyc' -print0 | xargs -0 rm
     find "$@" -type d -iname '__pycache__' -print0 | xargs -0 rm -r
 }
-
-# New breakpoint() handling
-export PYTHONBREAKPOINT=pudb.start
