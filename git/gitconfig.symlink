@@ -19,10 +19,6 @@ b = branch -av
 
 d = diff
 dc = diff --cached
-dd = "!git diff | ydiff -s -w 120 -l --wrap -- "
-ddc = "!git diff --cached | ydiff -s -w 120 -l --wrap -- "
-
-t = !tig
 
 save =!git stash --all --keep-index && git stash apply
 stashq = stash --all --keep-index
@@ -118,7 +114,7 @@ side-by-side = true
 keep-plus-minus-markers = true
 line-numbers = true
 hyperlinks = true
-true-color = true
+true-color = auto
 syntax-theme = ansimatt
 
 # 16 should be dark black

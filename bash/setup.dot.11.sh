@@ -44,5 +44,12 @@ export RANGER_LOAD_DEFAULT_RC=FALSE
 bind 'set colored-stats on'
 bind 'set colored-completion-prefix on'
 
-# Use bat if installed
+# Use bat if installed. Note - I have to run a bat cache command before this
+# will get picked up for the first time.
 export BAT_THEME="ansimatt"
+export BAT_STYLE=grid,header,changes
+if [ $(command -v bat) ]; then
+    export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+    alias cat='bat'
+    alias batg='BAT_STYLE=grid,header,changes,numbers batgrep -p'
+fi

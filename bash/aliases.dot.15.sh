@@ -19,4 +19,3 @@ alias dockerc="docker-compose"
 alias ..="cd .."
 alias vi="nvim"
 alias vim="nvim"
-if command -v bat >/dev/null; then alias cat="bat"; fi

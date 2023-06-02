@@ -361,4 +361,3 @@ complete -F _complete_alias ,pymk2
 complete -F _complete_alias ,pymk3
 complete -F _complete_alias ,pymktmp2
 complete -F _complete_alias ,pymktmp3
-complete -F _complete_alias ,pyrm
