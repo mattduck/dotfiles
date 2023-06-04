@@ -3,6 +3,7 @@ cask_args appdir: '/Applications'
 # Taps
 tap 'd12frosted/emacs-plus' || true
 tap 'neovim/neovim' || true
+tap 'homebrew/cask-fonts' || true
 
 # Tools
 brew 'bash'
@@ -37,3 +38,9 @@ brew 'wget'
 # [2023-05-27 Sat] Actually need to manually pin this at 2.4.0 
 # for now - see https://www.reddit.com/r/emacs/comments/137r7j7/gnupg_241_encryption_issues_with_emacs_orgmode/
 #brew 'gnupg'
+
+# Fonts
+cask 'font-inconsolata'
+cask 'font-input'
+cask 'font-iosevka'
+
