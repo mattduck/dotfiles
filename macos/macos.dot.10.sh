@@ -14,6 +14,11 @@ export MANPATH="$(brew --prefix)/opt/coreutils/libexec/gnuman:$MANPATH"
 # golang
 ,path "$(brew --prefix)opt/go/libexec/bin/"
 
+# Latex
+if [ -d /usr/local/texlive/2023 ]; then
+  ,path /usr/local/texlive/2023/bin/universal-darwin/
+fi
+
 # Bash completion lives in the brew directory
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
   . $(brew --prefix)/etc/bash_completion
