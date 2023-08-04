@@ -83,6 +83,11 @@ use it to compiled the file"
   (use-package-verbose t)
   (use-package-minimum-reported-time 0.001))
 
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns))
+  :demand t
+  :config (exec-path-from-shell-initialize))
+
 (use-package s
   :straight (:host github :repo "magnars/s.el"))
 
@@ -409,6 +414,8 @@ Uses consult-theme if available.
     (face-spec-set 'git-gutter:separator
                    `((t :inherit 'default
                         :background ,(face-attribute 'default :background))))
+    ;; Other theme customising
+
     ;;(md/powerline-reset)
     (md/fontify-buffer)
     (set-window-buffer nil (current-buffer)))
@@ -482,6 +489,7 @@ Uses consult-theme if available.
   (indent-tabs-mode nil "Use spaces instead of tabs")
   (tab-width 4 "Use 4 spaces for tabs")
   (tab-always-indent nil "Don't do magic indenting when I press tab")
+  (line-spacing 0.4 "Increase the default line spacing ")
 
   (message-log-max 5000 "Increase default size of message buffer")
   (backup-directory-alist `(("." . ,(md/emacs-get-path ".backups"))) "Put backup files in .backups instead of dropping them everywhere")
@@ -901,8 +909,8 @@ Uses consult-theme if available.
   (org-outline-path-complete-in-steps nil "Search the whole path rather than having to select the top-level heading first then the children")
   (org-refile-use-outline-path t "When refiling, show the full path to the node rather than just the node name")
   (org-highest-priority 65 "Priority A")
-  (org-lowest-priority 69 "Priority D")
-  (org-default-priority 69 "Default to D")
+  (org-lowest-priority 69 "Priority E")
+  (org-default-priority 69 "Default to E")
   (org-latex-default-packages-alist
    '(("AUTO" "inputenc" t
       ("pdflatex"))
@@ -1322,6 +1330,69 @@ Uses consult-theme if available.
         (insert contents)
         ;;(indent-region (point-min) (point-max))
         (buffer-substring-no-properties (point-min) (point-max))))))
+
+(use-package ox-org :demand t :straight nil)
+
+(use-package org-mind-map
+  :demand t
+  ;; includes my fix https://github.com/the-humanities/org-mind-map/pull/52
+  :straight (:host github :repo "mattduck/org-mind-map")
+  :load-path "/f/dotfiles/../emacs.default/non-elpa/org-mind-map"
+
+  :custom
+  (org-mind-map-include-text nil)
+  (org-mind-map-engine "dot")
+  (org-mind-map-tag-colors 'nil)
+  (org-mind-map-wrap-text-length 30)
+  (org-mind-map-default-node-attribs '(("shape" . "plaintext")))
+  (org-mind-map-default-edge-attribs '(("color" . "#cccccc")
+                                       ("arrowhead" . "none")
+                                       ("arrowtail" . "none")))
+  (org-mind-map-default-graph-attribs '(("autosize" . "false")
+                                        ("size" . "125,50")
+                                        ("resolution" . "100")
+                                        ("nodesep" . "0.4")
+                                        ("margin" . "0.1")
+                                        ("overlap" . "false")
+                                        ("splines" . "ortho")
+                                        ("rankdir" . "LR")))
+
+  :config
+  (defun md/org-mind-map-export ()
+    "org-mind-map export with some tag/property replacement"
+    (interactive)
+    (let ((current-buffer-contents ;; either selected region or whole buffer
+           (if (region-active-p)
+               (buffer-substring (region-beginning) (region-end))
+             (buffer-string)))
+          (base-filename  ;; if can't detect filename, prompt for it
+           (file-name-sans-extension
+            (file-name-sans-extension
+             (if buffer-file-name buffer-file-name
+               (completing-read "filename: " (directory-files "."))))))
+          (buffer-offset 0))
+      (with-temp-buffer
+        (insert current-buffer-contents)
+        (goto-char (point-min))
+        (org-mode)
+        (org-align-all-tags)
+        (org-element-map (org-element-parse-buffer 'object nil) 'headline
+          (lambda (elem)
+            (goto-char (+ (org-element-property :begin elem) buffer-offset))
+            (let ((first-tag (car (org-get-tags nil t)))
+                  (elem-buffer-size (buffer-size))
+                  (elem-offset 0))
+              (cond ((string= first-tag "red") (org-set-property "OMM-COLOR" "#AF7575"))
+                    ((string= first-tag "amber") (org-set-property "OMM-COLOR" "#EFD8A1"))
+                    ((string= first-tag "green") (org-set-property "OMM-COLOR" "#BCD693"))
+                    ((string= first-tag "blue") (org-set-property "OMM-COLOR" "#AFD7DB"))
+                    (t nil))
+              (org-set-tags "")
+              ;; Offset is used to account for the fact that we have added/removed characters,
+              ;; so the old :begin value will be wrong.
+              (setq elem-offset (- (buffer-size) elem-buffer-size))
+              (setq buffer-offset (+ buffer-offset elem-offset)))))
+        (org-mind-map-write-named (concat base-filename ".mind-map") (concat base-filename ".mind-map.dot") t)))))
 
 (use-package edit-indirect)
 

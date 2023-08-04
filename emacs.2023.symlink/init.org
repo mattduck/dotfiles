@@ -138,6 +138,19 @@ Configure use-package:
   (use-package-minimum-reported-time 0.001))
 #+END_SRC
 
+* [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]]
+
+In some setups (eg. if you launch the macOS Emacs app), Emacs doesn't inherit
+PATH or other key variables that you might have configured in a bashrc
+file. ~exec-path-from-shell~ fixes that.
+
+#+BEGIN_SRC emacs-lisp
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns))
+  :demand t
+  :config (exec-path-from-shell-initialize))
+#+END_SRC
+
 * [[https://github.com/magnars/s.el][s]]
 
 Common string library. Seems you have to explicitly specify the repo here -
@@ -492,6 +505,8 @@ Uses consult-theme if available.
     (face-spec-set 'git-gutter:separator
                    `((t :inherit 'default
                         :background ,(face-attribute 'default :background))))
+    ;; Other theme customising
+
     ;;(md/powerline-reset)
     (md/fontify-buffer)
     (set-window-buffer nil (current-buffer)))
@@ -565,6 +580,7 @@ Uses consult-theme if available.
   (indent-tabs-mode nil "Use spaces instead of tabs")
   (tab-width 4 "Use 4 spaces for tabs")
   (tab-always-indent nil "Don't do magic indenting when I press tab")
+  (line-spacing 0.4 "Increase the default line spacing ")
 
   (message-log-max 5000 "Increase default size of message buffer")
   (backup-directory-alist `(("." . ,(md/emacs-get-path ".backups"))) "Put backup files in .backups instead of dropping them everywhere")
@@ -1046,8 +1062,8 @@ Base org configuration that doesn't depend on evil.
   (org-outline-path-complete-in-steps nil "Search the whole path rather than having to select the top-level heading first then the children")
   (org-refile-use-outline-path t "When refiling, show the full path to the node rather than just the node name")
   (org-highest-priority 65 "Priority A")
-  (org-lowest-priority 69 "Priority D")
-  (org-default-priority 69 "Default to D")
+  (org-lowest-priority 69 "Priority E")
+  (org-default-priority 69 "Default to E")
   (org-latex-default-packages-alist
    '(("AUTO" "inputenc" t
       ("pdflatex"))
@@ -1537,7 +1553,7 @@ not indented with leading whitespace, which is fine.
         (buffer-substring-no-properties (point-min) (point-max))))))
 #+end_src
 
-** COMMENT TODO org-mind-map
+** TODO (tidy) [[https://github.com/mattduck/org-mind-map][org-mind-map]]
 :PROPERTIES:
 :OMM-COLOR: #AF7575
 :END:
@@ -1545,29 +1561,31 @@ not indented with leading whitespace, which is fine.
 #+begin_src emacs-lisp
 (use-package ox-org :demand t :straight nil)
 
-;;[2023-04-21] TODO - fix load path stuff, revisit how this works etc.
 (use-package org-mind-map
   :demand t
   ;; includes my fix https://github.com/the-humanities/org-mind-map/pull/52
+  :straight (:host github :repo "mattduck/org-mind-map")
   :load-path "/f/dotfiles/../emacs.default/non-elpa/org-mind-map"
-  :config
-  (setq org-mind-map-include-text nil
-        org-mind-map-engine "dot"
-        org-mind-map-tag-colors 'nil
-        org-mind-map-wrap-text-length 30
-        org-mind-map-default-node-attribs '(("shape" . "plaintext"))
-        org-mind-map-default-edge-attribs '(("color" . "#cccccc")
-                                            ("arrowhead" . "none")
-                                            ("arrowtail" . "none"))
-        org-mind-map-default-graph-attribs '(("autosize" . "false")
-                                             ("size" . "125,50")
-                                             ("resolution" . "100")
-                                             ("nodesep" . "0.1")
-                                             ("margin" . "0.1")
-                                             ("overlap" . "false")
-                                             ("splines" . "ortho")  ;; straight lines that wrap around
-                                             ("rankdir" . "LR")))
 
+  :custom
+  (org-mind-map-include-text nil)
+  (org-mind-map-engine "dot")
+  (org-mind-map-tag-colors 'nil)
+  (org-mind-map-wrap-text-length 30)
+  (org-mind-map-default-node-attribs '(("shape" . "plaintext")))
+  (org-mind-map-default-edge-attribs '(("color" . "#cccccc")
+                                       ("arrowhead" . "none")
+                                       ("arrowtail" . "none")))
+  (org-mind-map-default-graph-attribs '(("autosize" . "false")
+                                        ("size" . "125,50")
+                                        ("resolution" . "100")
+                                        ("nodesep" . "0.4")
+                                        ("margin" . "0.1")
+                                        ("overlap" . "false")
+                                        ("splines" . "ortho")
+                                        ("rankdir" . "LR")))
+
+  :config
   (defun md/org-mind-map-export ()
     "org-mind-map export with some tag/property replacement"
     (interactive)
@@ -1602,7 +1620,7 @@ not indented with leading whitespace, which is fine.
               ;; so the old :begin value will be wrong.
               (setq elem-offset (- (buffer-size) elem-buffer-size))
               (setq buffer-offset (+ buffer-offset elem-offset)))))
-        (org-mind-map-write-named (concat base-filename ".mind-map") nil t)))))
+        (org-mind-map-write-named (concat base-filename ".mind-map") (concat base-filename ".mind-map.dot") t)))))
 #+end_src
 
 * [[https://github.com/Fanael/edit-indirect/blob/master/edit-indirect.el][Edit-indirect]]
