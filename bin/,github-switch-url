@@ -2,18 +2,16 @@
 #
 # Swap git remote between https and ssh
 
+if [ -z "$1" ]; then export REMOTE_NAME="origin"; else export REMOTE_NAME="$1"; fi
 git='git@github.com:'
 https='https://github.com/'
-
-url="$(git remote -v | awk '/^origin.*fetch.$/ {print $2}')"
-echo Old url: "$url"
-
+url="$(git remote -v | awk "/^${REMOTE_NAME}.*fetch.$/ {print \$2}")"
+echo Old url for remote "'${REMOTE_NAME}'": "$url"
 if echo "$url" | grep -q '^git'
 then
     url="${url/${git}/${https}}"
 else
     url="${url/${https}/${git}}"
 fi
-
-echo New url: "$url"
-git remote set-url origin "$url"
+git remote set-url "$REMOTE_NAME" "$url"
+echo New url for remote "'${REMOTE_NAME}'": "$url"
