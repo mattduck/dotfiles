@@ -33,6 +33,7 @@ emacs.*.symlink/non-elpa/org-mind-map
 emacs.*.symlink/non-elpa/use-package/
 emacs.*.symlink/org-gcal
 emacs.*.symlink/org-persist
+emacs.*.symlink/org-roam.db
 emacs.*.symlink/projectile*
 emacs.*.symlink/projects
 emacs.*.symlink/recentf
