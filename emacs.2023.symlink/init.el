@@ -909,8 +909,8 @@ Uses consult-theme if available.
   (org-outline-path-complete-in-steps nil "Search the whole path rather than having to select the top-level heading first then the children")
   (org-refile-use-outline-path t "When refiling, show the full path to the node rather than just the node name")
   (org-highest-priority 65 "Priority A")
-  (org-lowest-priority 69 "Priority E")
-  (org-default-priority 69 "Default to E")
+  (org-lowest-priority 68 "Priority D")
+  (org-default-priority 68 "Default to D")
   (org-latex-default-packages-alist
    '(("AUTO" "inputenc" t
       ("pdflatex"))
