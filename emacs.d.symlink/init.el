@@ -4,7 +4,7 @@
   "Lookup files that are in my dotfiles directory"
   (concat
    (or (getenv "DOTFILES")
-       (concat (expand-file-name "~") "/f/dotfiles"))
+       "/f/dotfiles")
    "/"
    path))
 
@@ -478,7 +478,8 @@ All scope layers are stored in md/variable-layers."
 
 (use-package undo-tree
   :demand t
-  :config (global-undo-tree-mode 1))
+  :config (global-undo-tree-mode 1)
+  (setq undo-tree-auto-save-history nil))
 
 (use-package evil
  :demand t
@@ -2242,8 +2243,8 @@ lsp can properly jump to definitions."
 
   ;; Disable in-buffer line numbers and the colour column, as both decrease
   ;; org-mode / outline performance significantly on large files.
-  (linum-mode 0)
-  (fci-mode 0)
+  ;(linum-mode 0)
+  ;;(fci-mode 0)
 
   ;; Also disable the row and column numbers in the modeline. Seems you have to set
   ;; these manually to make them buffer-local.
@@ -4794,6 +4795,18 @@ uses md/bookmark-set and optionally marks the bookmark as temporary."
            treemacs-fringe-indicator-mode))
   (when (fboundp this-minor-mode)
     (funcall this-minor-mode 0)))
+
+(add-to-list 'exec-path "/opt/homebrew/bin")
+
+;; HACK Work around native compilation on macOS failing with 'ld: library not
+;; found for -lemutls_w'.
+;; https://github.com/d12frosted/homebrew-emacs-plus/issues/554
+(setenv "LIBRARY_PATH"
+    (string-join
+     '("/opt/homebrew/opt/gcc/lib/gcc/13"
+       "/opt/homebrew/opt/libgccjit/lib/gcc/13"
+       "/opt/homebrew/opt/gcc/lib/gcc/13/gcc/aarch64-apple-darwin22/13")
+     ":"))
 
 (defun md/dotfiles-edit-init ()
   (interactive)
