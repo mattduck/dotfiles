@@ -968,8 +968,7 @@ Base org configuration that doesn't depend on evil.
 
 #+begin_src emacs-lisp
 (use-package org
-
-:init
+  :init
   (defun md/org-timestamp-time-inactive-no-confirm ()
     "Insert inactive time timestamp without prompting the user"
     (interactive)
@@ -1012,11 +1011,71 @@ Base org configuration that doesn't depend on evil.
                       (with-temp-buffer
                         (org-insert-time-stamp (current-time) nil t)))) ; Inactive stamp
 
+  (defun md/org-heading-copy-id-link ()
+    "For the current heading, copy an id link to the clipboard, inserting the ID property if it doesn't already exist.
+
+I'd have expected to be able to easily store and insert ID links using some combination of org-store-link, org-store-id-link
+and org-insert-link, but it seems like org-store-id-link and org-insert-link operate on different data structures.
+This is just a convenience method to easily be able to insert heading links into arbitrary places."
+    (interactive)
+    (kill-new (format "[[id:%s][%s]]" (org-id-get-create) (org-get-heading t nil nil nil))))
+
+  :config
+
+  (defun md/org-link-sync ()
+    "Sync an org-link to show the target headline as the contents.
+
+When the cursor is on an org-link that uses the ID type, lookup the current state of the linked
+headline, and replace the link contents with the current headline value.
+
+For example, an \"outdated\" link like this:
+
+    [[id:3C5473CB-3DCF-4A9B-9387-750730DAEB7B][My link contents description]]
+
+Might be replaced by an up-to-date link like this:
+
+    [[id:3C5473CB-3DCF-4A9B-9387-750730DAEB7B][DONE [#A] The current description of the headline]]"
+    (interactive)
+    (let* ((link-context (org-element-context))
+           (type (org-element-property :type link-context))
+           (path (org-element-property :path link-context))
+           (point-begin (org-element-property :contents-begin link-context))
+           (point-end (org-element-property :contents-end link-context)))
+      (when (and path (equal type "id"))
+        (let ((new-link-text
+               (save-window-excursion
+                 (save-excursion
+                   (org-open-at-point)
+                   (org-get-heading t nil nil nil)))))
+          (goto-char point-begin)
+          (delete-region point-begin point-end)
+          (insert (format "%s" new-link-text)))
+        (goto-char point-begin))))
+
+
+  (defun md/org-ctrl-c-ctrl-c ()
+    "I use this to add custom handlers and behaviour to C-c C-c.
+
+For example, C-c- C-c is often used to update the state of org elements, and so
+it feels like a natural way for me to call md/org-link-sync, because that
+function updates the state of a ID link to be in sync with the target heading."
+    (condition-case nil
+        (let* ((link-context (org-element-context))
+               (type (org-element-property :type link-context)))
+          (cond
+           ((and (eq (car link-context) 'link) (equal type "id"))
+            (md/org-link-sync)
+            t)  ; Returning t tells org-ctrl-c-ctrl-c that we did something
+           (t nil)))  ; Tell org-ctrl-c-ctrl-c there was no match
+      (error nil)))  ; Catch any errors in case org-element-context failed
+  (add-hook 'org-ctrl-c-ctrl-c-hook 'md/org-ctrl-c-ctrl-c)
+
   :bind (:map
          org-mode-map
          ("C-c d" . 'md/org-timestamp-date-inactive-no-confirm)
          ("C-c t" . 'md/org-timestamp-time-inactive-no-confirm)
          ("C-c l" . 'md/org-insert-link-from-paste)
+         ("C-c y" . 'md/org-heading-copy-id-link)
          ("C-c P" . 'org-priority-up)
          ("C-c T" . 'org-todo)
          ("C-c E" . 'org-set-effort)
@@ -1040,7 +1099,7 @@ Base org configuration that doesn't depend on evil.
 
 
 
-:custom
+  :custom
   (org-src-window-setup 'current-window "When editing a src block, just use the current window instead of rearranging the frame")
   (org-indirect-buffer-display 'current-window "Similar to org-src-window-setup - I find this more intuitive")
   (org-edit-src-content-indentation 0 "Don't indent code in a src block. This way it's easier to edit inline in the org buffer")
@@ -1081,7 +1140,6 @@ Base org configuration that doesn't depend on evil.
      ("" "capt-of" nil)
      ("linktoc=all,colorlinks=true,linkcolor=black,urlcolor=blue" "hyperref" nil))
    "Very similar to the original value - I think I've just added the href customisation "))
-
 #+end_src
 
 ** Core evil org
@@ -1184,6 +1242,17 @@ keywords in a separate private file - I need to move that into here sometime.
     (setq current-prefix-arg '(4))  ; C-u
     (call-interactively 'org-agenda-todo))
 
+  (defun md/org-agenda-heading-copy-id-link ()
+    "Version of md/org-heading-copy-id-link that can easily be called from org-agenda.
+
+This could arguably be one function that detects the current major mode, but it doesn't
+make too much difference either way."
+    (interactive)
+    (save-window-excursion
+      (save-excursion
+        (org-agenda-goto)
+        (md/org-heading-copy-id-link))))
+
   :config
   ;; When org-agenda loads I want to be able to use j/k etc for navigation like any buffer.
   (evil-set-initial-state 'org-agenda-mode 'normal)
@@ -1204,6 +1273,11 @@ keywords in a separate private file - I need to move that into here sometime.
     (kbd "R") 'org-agenda-refile
     (kbd "c") 'org-agenda-set-tags
     (kbd "C") 'org-agenda-columns
+
+    ;; Copy ID link to the heading
+    (kbd "Y") 'md/org-agenda-heading-copy-id-link
+    (kbd "C-c y") 'md/org-agenda-heading-copy-id-link
+    (kbd "C-c C-y") 'md/org-agenda-heading-copy-id-link
 
     (kbd "]") 'org-agenda-later
     (kbd "[") 'org-agenda-earlier
