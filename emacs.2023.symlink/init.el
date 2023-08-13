@@ -181,6 +181,30 @@ use it to compiled the file"
 
   ;; ======================================================================
   :init
+
+  (defmacro md/with-widened-buffer (buffer-or-name &rest body)
+    "Widen the given BUFFER-OR-NAME, execute BODY in the context of your current buffer, and restore restrictions on the given buffer.
+
+This allows the calling code to not have to worry about manually handling
+narrowed vs widened state."
+    (let ((orig-buffer (gensym "orig-buffer")))
+      `(let ((,orig-buffer (current-buffer)))
+         (with-current-buffer ,buffer-or-name
+           (save-restriction
+             (save-excursion
+               (widen)
+               (with-current-buffer ,orig-buffer
+                 ,@body)))))))
+
+  (defun md/find-file-buffer (path)
+    "Get or create a buffer visiting PATH without affecting current windows.
+
+This is useful in situations where you have functions that accept a buffer object but you
+only have the file path."
+    (save-window-excursion
+      (find-file path)
+      (current-buffer)))
+
   (defun md/save-if-not-remote ()
     "I usually save files often (eg. when exiting insert-mode in evil).
 Usually this is helpful, but if I'm using tramp to edit a remote file,
@@ -890,15 +914,14 @@ Might be replaced by an up-to-date link like this:
            (point-end (org-element-property :contents-end link-context)))
       (when (and path (equal type "id"))
         (let ((new-link-text
-               (save-window-excursion
-                 (save-excursion
-                   (org-open-at-point)
-                   (org-get-heading t nil nil nil)))))
+               (md/with-widened-buffer (md/find-file-buffer (org-id-find-id-file path))
+                                       (save-window-excursion
+                                         (org-open-at-point)
+                                         (org-get-heading t nil nil nil)))))
           (goto-char point-begin)
           (delete-region point-begin point-end)
           (insert (format "%s" new-link-text)))
         (goto-char point-begin))))
-
 
   (defun md/org-ctrl-c-ctrl-c ()
     "I use this to add custom handlers and behaviour to C-c C-c.
