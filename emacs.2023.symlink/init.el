@@ -882,15 +882,6 @@ Uses consult-theme if available.
                       (with-temp-buffer
                         (org-insert-time-stamp (current-time) nil t)))) ; Inactive stamp
 
-  (defun md/org-heading-copy-id-link ()
-    "For the current heading, copy an id link to the clipboard, inserting the ID property if it doesn't already exist.
-
-I'd have expected to be able to easily store and insert ID links using some combination of org-store-link, org-store-id-link
-and org-insert-link, but it seems like org-store-id-link and org-insert-link operate on different data structures.
-This is just a convenience method to easily be able to insert heading links into arbitrary places."
-    (interactive)
-    (kill-new (format "[[id:%s][%s]]" (org-id-get-create) (org-get-heading t nil nil nil))))
-
   :config
 
   (defun md/org-link-sync ()
@@ -945,7 +936,9 @@ function updates the state of a ID link to be in sync with the target heading."
          ("C-c d" . 'md/org-timestamp-date-inactive-no-confirm)
          ("C-c t" . 'md/org-timestamp-time-inactive-no-confirm)
          ("C-c l" . 'md/org-insert-link-from-paste)
-         ("C-c y" . 'md/org-heading-copy-id-link)
+         ("C-c L" . 'org-insert-last-stored-link)
+         ("C-c y" . 'org-store-link)
+         ("C-c C-y" . 'org-store-link)
          ("C-c P" . 'org-priority-up)
          ("C-c T" . 'org-todo)
          ("C-c E" . 'org-set-effort)
@@ -967,14 +960,13 @@ function updates the state of a ID link to be in sync with the target heading."
          ;; TODO - is this required or does it work by default?
          (org-mode . turn-on-auto-fill))
 
-
-
   :custom
   (org-src-window-setup 'current-window "When editing a src block, just use the current window instead of rearranging the frame")
   (org-indirect-buffer-display 'current-window "Similar to org-src-window-setup - I find this more intuitive")
   (org-edit-src-content-indentation 0 "Don't indent code in a src block. This way it's easier to edit inline in the org buffer")
   (org-startup-folded t "Don't expand org buffers on open")
   (org-log-done 'time "Add timestamp when set task as closed")
+  (org-id-link-to-org-use-id 'create-if-interactive "Use :ID: values when calling org-store-link, instead of it storing a text-search link that can break easily")
   (org-level-color-stars-only nil "Colour the whole heading")
   (org-fontify-done-headline t "Colour done headings tomake them less prominent")
   (org-fold-catch-invisible-edits 'show-and-error "Try to prevent accidentally editing hidden lines")
@@ -1095,17 +1087,6 @@ function updates the state of a ID link to be in sync with the target heading."
     (setq current-prefix-arg '(4))  ; C-u
     (call-interactively 'org-agenda-todo))
 
-  (defun md/org-agenda-heading-copy-id-link ()
-    "Version of md/org-heading-copy-id-link that can easily be called from org-agenda.
-
-This could arguably be one function that detects the current major mode, but it doesn't
-make too much difference either way."
-    (interactive)
-    (save-window-excursion
-      (save-excursion
-        (org-agenda-goto)
-        (md/org-heading-copy-id-link))))
-
   :config
   ;; When org-agenda loads I want to be able to use j/k etc for navigation like any buffer.
   (evil-set-initial-state 'org-agenda-mode 'normal)
@@ -1128,9 +1109,9 @@ make too much difference either way."
     (kbd "C") 'org-agenda-columns
 
     ;; Copy ID link to the heading
-    (kbd "Y") 'md/org-agenda-heading-copy-id-link
-    (kbd "C-c y") 'md/org-agenda-heading-copy-id-link
-    (kbd "C-c C-y") 'md/org-agenda-heading-copy-id-link
+    (kbd "Y") 'org-store-link
+    (kbd "C-c y") 'org-store-link
+    (kbd "C-c C-y") 'org-store-link
 
     (kbd "]") 'org-agenda-later
     (kbd "[") 'org-agenda-earlier
