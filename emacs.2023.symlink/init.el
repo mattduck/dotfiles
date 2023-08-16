@@ -1101,11 +1101,11 @@ function updates the state of a ID link to be in sync with the target heading."
     (kbd "C-p") 'org-agenda-previous-line
 
     (kbd "RET") 'org-agenda-goto  ; Jump to selected item
-    (kbd "T") 'md/org-agenda-todo  ; Cycle todo state
+    (kbd "t") 'md/org-agenda-todo  ; Cycle todo state
     (kbd "P") 'org-agenda-priority-up
     (kbd "E") 'org-agenda-set-effort
     (kbd "R") 'org-agenda-refile
-    (kbd "c") 'org-agenda-set-tags
+    (kbd "T") 'org-agenda-set-tags
     (kbd "C") 'org-agenda-columns
 
     ;; Copy ID link to the heading
@@ -1121,8 +1121,8 @@ function updates the state of a ID link to be in sync with the target heading."
     (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view - toggle archived, logs, clocks etc.
     (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
     (kbd "/") 'org-agenda-filter-by-regexp  ; Search
-    (kbd "C-/") 'org-agenda-filter-by-tag  ; Tag filter
-    (kbd "^") 'org-agenda-filter-by-top-headline  ; Show other items with same headline as current
+    (kbd "@") 'org-agenda-filter-by-tag  ; Tag filter
+    (kbd "'") 'org-agenda-filter-by-top-headline  ; Show other items with same headline as current
     (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
 
   :bind (:map global-map
