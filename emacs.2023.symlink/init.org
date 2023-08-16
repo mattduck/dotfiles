@@ -1138,6 +1138,7 @@ function updates the state of a ID link to be in sync with the target heading."
   (org-highest-priority 65 "Priority A")
   (org-lowest-priority 68 "Priority D")
   (org-default-priority 68 "Default to D")
+  (org-log-into-drawer t "Put state transitions into the LOGBOOK drawer, instead of the main body of the item")
   (org-latex-default-packages-alist
    '(("AUTO" "inputenc" t
       ("pdflatex"))
