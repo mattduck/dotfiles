@@ -720,7 +720,9 @@ Uses consult-theme if available.
   (defun md/move-line-up ()
     "Move the current line up one row."
     (interactive)
-    (let ((col (current-column)))
+    (let ((col (current-column))
+          ;; For org-agenda I like that you can temporarily change order of items, so ignore readonly
+          (inhibit-read-only (eq major-mode 'org-agenda-mode)))
       (transpose-lines 1)
       (forward-line -2)
       (evil-goto-column col)))
@@ -728,7 +730,9 @@ Uses consult-theme if available.
   (defun md/move-line-down ()
     "Move the current line down one row."
     (interactive)
-    (let ((col (current-column)))
+    (let ((col (current-column))
+          ;; For org-agenda I like that you can temporarily change order of items, so ignore readonly
+          (inhibit-read-only (eq major-mode 'org-agenda-mode)))
       (forward-line 1)
       (transpose-lines 1)
       (forward-line -1)
@@ -1120,10 +1124,10 @@ function updates the state of a ID link to be in sync with the target heading."
     (kbd "q") 'org-agenda-quit
     (kbd "r") 'org-agenda-redo  ; Recalculate the agenda
     (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view - toggle archived, logs, clocks etc.
-    (kbd "|") 'org-agenda-filter-remove-all  ; Remove existing filters
+    (kbd "\\") 'org-agenda-filter-remove-all  ; Remove existing filters
     (kbd "/") 'org-agenda-filter-by-regexp  ; Search
-    (kbd "@") 'org-agenda-filter-by-tag  ; Tag filter
-    (kbd "'") 'org-agenda-filter-by-top-headline  ; Show other items with same headline as current
+    (kbd "@") 'org-agenda-filter  ; Tag filter
+    (kbd "'") 'org-agenda-filter-by-category  ; Show other items with same category as current
     (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
 
   :bind (:map global-map
