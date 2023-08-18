@@ -4,7 +4,7 @@
   "Lookup files that are in my dotfiles directory"
   (concat
    (or (getenv "DOTFILES")
-   "/f/dotfiles")
+       "/f/dotfiles")
    "/"
    path))
 
@@ -19,24 +19,19 @@
   (setq-local org-confirm-babel-evaluate nil)
   (org-babel-tangle nil "init.el")
   (byte-compile-file (md/emacs-get-path "init.el")))
-  ;; [2023-08-18] Disabling, have some issue with emacs not finding packages when init.elc exists
-  ;; (when (fboundp 'native-compile-async)
-  ;;   (native-compile-async (md/emacs-get-path "init.el"))))
 
-  (defun md/dotfiles-compile-early ()
+(defun md/dotfiles-compile-early ()
   "Use org-babel-tangle to create early-init.el and byte-compile it."
   (interactive)
   (find-file (md/emacs-get-path "early-init.org"))
   (setq-local org-confirm-babel-evaluate nil)
   (org-babel-tangle nil "early-init.el")
-  (byte-compile-file (md/emacs-get-path "early-init.el"))
-  (when (fboundp 'native-compile-async)
-    (native-compile-async (md/emacs-get-path "early-init.el"))))
+  (byte-compile-file (md/emacs-get-path "early-init.el")))
 
-  (defun md/dotfiles-compile-all ()
-    (interactive)
-    (md/dotfiles-compile-early)
-    (md/dotfiles-compile))
+(defun md/dotfiles-compile-all ()
+  (interactive)
+  (md/dotfiles-compile-early)
+  (md/dotfiles-compile))
 
 (setq package-enable-at-startup nil)
 
