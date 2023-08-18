@@ -18,9 +18,10 @@
   (find-file (md/emacs-get-path "init.org"))
   (setq-local org-confirm-babel-evaluate nil)
   (org-babel-tangle nil "init.el")
-  (byte-compile-file (md/emacs-get-path "init.el"))
-  (when (fboundp 'native-compile-async)
-    (native-compile-async (md/emacs-get-path "init.el"))))
+  (byte-compile-file (md/emacs-get-path "init.el")))
+  ;; [2023-08-18] Disabling, have some issue with emacs not finding packages when init.elc exists
+  ;; (when (fboundp 'native-compile-async)
+  ;;   (native-compile-async (md/emacs-get-path "init.el"))))
 
   (defun md/dotfiles-compile-early ()
   "Use org-babel-tangle to create early-init.el and byte-compile it."
