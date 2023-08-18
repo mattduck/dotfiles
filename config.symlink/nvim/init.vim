@@ -51,3 +51,6 @@ nnoremap <C-w>6 6gt
 nnoremap <C-w>7 7gt
 nnoremap <C-w>8 8gt
 nnoremap <C-w>9 9gt
+
+" Use system clipboard
+set clipboard=unnamedplus
