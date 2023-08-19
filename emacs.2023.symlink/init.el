@@ -1128,6 +1128,7 @@ function updates the state of a ID link to be in sync with the target heading."
     (kbd "/") 'org-agenda-filter-by-regexp  ; Search
     (kbd "@") 'org-agenda-filter  ; Tag filter
     (kbd "'") 'org-agenda-filter-by-category  ; Show other items with same category as current
+    (kbd "e") 'org-agenda-filter-by-effort
     (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
 
   :bind (:map global-map

@@ -1298,6 +1298,7 @@ keywords in a separate private file - I need to move that into here sometime.
     (kbd "/") 'org-agenda-filter-by-regexp  ; Search
     (kbd "@") 'org-agenda-filter  ; Tag filter
     (kbd "'") 'org-agenda-filter-by-category  ; Show other items with same category as current
+    (kbd "e") 'org-agenda-filter-by-effort
     (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
 
   :bind (:map global-map
