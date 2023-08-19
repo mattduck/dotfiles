@@ -1656,6 +1656,13 @@ function updates the state of a ID link to be in sync with the target heading."
     (apply fn args)
     (set-register (eyebrowse--get 'current-slot) nil))
 
+   (defun md/eyebrowse-status (fn &rest args)
+     "Advice for eyebrowse functions, to message the current eyebrowse status
+in the echo area. I prefer to this putting it in the mode-line, because eyebrowse is a
+slot/window-level thing, not buffer-level."
+     (apply fn args)
+     (message (format "%s" (eyebrowse-mode-line-indicator))))
+
   :custom
   (eyebrowse-wrap-around t "Allow cycling forever")
   (eyebrowse-mode-line-separator " " "Use space instead of comma in the mode-line")
@@ -1672,7 +1679,16 @@ function updates the state of a ID link to be in sync with the target heading."
         ("X" . eyebrowse-close-window-config)
         ("o" . splitscreen/toggle-zoom))
   :config
-  (advice-add 'eyebrowse-close-window-config :around 'splitscreen/reset-zoom '((name . "splitscreen"))    )
+
+  ;; Add advice to handle my zoom feature with eyebrose
+  (advice-add 'eyebrowse-close-window-config :around 'splitscreen/reset-zoom '((name . "splitscreen")))
+
+  ;; Add advice to show status in echo area when I change eyebrowse state
+  (advice-add 'eyebrowse-next-window-config :around 'md/eyebrowse-status '((name . "md/eyebrowse-status")))
+  (advice-add 'eyebrowse-prev-window-config :around 'md/eyebrowse-status '((name . "md/eyebrowse-status")))
+  (advice-add 'eyebrowse-close-window-config :around 'md/eyebrowse-status '((name . "md/eyebrowse-status")))
+  (advice-add 'eyebrowse-create-window-config :around 'md/eyebrowse-status '((name . "md/eyebrowse-status")))
+
   (eyebrowse-mode 1))
 
 (use-package vterm
