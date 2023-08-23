@@ -565,6 +565,7 @@ Uses consult-theme if available.
    ("'e" . md/scratch-open-file-elisp)
 
    ("jf" . project-find-file)
+   ("jj" . project-switch-project)
 
    ;; buffers
    ("w" . save-buffer)
