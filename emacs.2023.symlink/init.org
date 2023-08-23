@@ -622,7 +622,11 @@ Uses consult-theme if available.
      ("*\\(help\\|Help\\|Messages\\|Warnings\\|Compile-\\)"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
-      (window-height . 0.33)))
+      (window-height . 0.33))
+   ("\\*Agenda Commands\\*"
+    (display-buffer-reuse-window display-buffer-in-side-window)
+    (side . bottom)
+    (window-height . 0.33)))
    "Customise how buffers are displayed. I used to use Shackle but I'm trying to stick to this for simplicity")
 
   (switch-to-buffer-obey-display-actions t "Ensure display-buffer-alist gets used when running switch-to-buffer, which would otherwise bypass it")
@@ -1335,6 +1339,7 @@ into a no-op, and then restore once the org function has exited."
 
   :custom
   (org-agenda-restore-windows-after-quit nil "Whether to let org-agenda permanently mess with window layout")
+  (org-agenda-window-setup 'current-window "The default of 'reorganize-frame reorganising all my windows in an annoying way. Using current-window makes it predictable")
   (org-agenda-sticky t "Cache org agenda until manually refreshed, to decrease wait times")
 
   :hook ((org-agenda-mode . md/evil-org-agenda-mode)))
