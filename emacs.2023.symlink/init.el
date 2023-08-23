@@ -1092,6 +1092,32 @@ function updates the state of a ID link to be in sync with the target heading."
     (setq current-prefix-arg '(4))  ; C-u
     (call-interactively 'org-agenda-todo))
 
+  (defun md/advice-org-agenda-get-restriction-and-command (fn &rest args)
+    "Hacky advice to fix something I don't like about org-agenda.
+
+When calling org-agenda, before the '*Agenda Commands*' buffer is switched to,
+there's a manual call to (delete-other-windows). These windows are restored once
+you've selected an agenda command, but I find it jarring to have my windows
+temporarily disappear, and as the '*Agenda Commands*' buffer is quite small,
+it isn't necessary to delete everything else on my screen.
+
+Unfortunately there's no clean way to prevent this behaviour. It happens inside
+(org-agenda-get-restriction-and-command) with an inlined call to
+(delete-other-windows). This is a quite a long function, and isn't something
+that I want to inline and redefine myself. So instead we have this hacky
+dual-advice approach: this advice is intended for org-agenda-get-restriction-and-command,
+which, when executed, will create temporary advice to turn delete-other-windows
+into a no-op, and then restore once the org function has exited."
+    (advice-add 'delete-other-windows :override
+                'md/noop
+                '((name . "md/noop")))
+    (let ((result (condition-case nil
+                      (apply fn args)
+                    (t nil))))
+      (advice-remove 'delete-other-windows "md/noop")
+      result))
+  (advice-add 'org-agenda-get-restriction-and-command :around 'md/advice-org-agenda-get-restriction-and-command '((name . "md/noop")))
+
   :config
   ;; When org-agenda loads I want to be able to use j/k etc for navigation like any buffer.
   (evil-set-initial-state 'org-agenda-mode 'normal)
