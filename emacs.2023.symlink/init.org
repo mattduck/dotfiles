@@ -1092,6 +1092,17 @@ function updates the state of a ID link to be in sync with the target heading."
       (error nil)))  ; Catch any errors in case org-element-context failed
   (add-hook 'org-ctrl-c-ctrl-c-hook 'md/org-ctrl-c-ctrl-c)
 
+  (defun md/org-toggle-link-display ()
+    "Call org-toggle-link-display and ensure any links in current buffer are redrawn.
+
+By default, org-toggle-link-display does not force any kind of redraw of the
+links in the buffer. AFAICT this /does/ happen by accident if you call it via
+M-x - I don't know if that's universal by it does happen for me, I assume because
+of the focus switch away from the original buffer to the vertico/helm buffer and then back."
+    (interactive)
+    (org-toggle-link-display)
+    (org-restart-font-lock))
+
   :bind (:map
          org-mode-map
          ("C-c d" . 'md/org-timestamp-date-inactive-no-confirm)
@@ -1115,7 +1126,8 @@ function updates the state of a ID link to be in sync with the target heading."
          ("RET" . 'org-capture)
          ("a j" . 'org-clock-goto)
          ("a i" . 'org-clock-in)
-         ("a o" . 'org-clock-out))
+         ("a o" . 'org-clock-out)
+         ("t l" . 'md/org-toggle-link-display))
 
   :hook (
          ;; TODO - is this required or does it work by default?
