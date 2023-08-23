@@ -2212,6 +2212,30 @@ and theme variables.
   (progn
     (add-hook 'before-save-hook 'gofmt-before-save)))
 #+END_SRC
+* [[https://github.com/xenodium/chatgpt-shell][chatgpt-shell]]
+
+[2023-08-23] Alvaro's excellent package for interacting with the OpenAI API. We
+first ensure ~shell-maker~ exists manually, which is mentioned in the
+~chatgpt-shell~ README as a workaround when using ~straight~:
+
+#+begin_src emacs-lisp
+(use-package shell-maker
+  :straight (:host github :repo "xenodium/chatgpt-shell" :files ("shell-maker.el")))
+
+(use-package chatgpt-shell
+  :requires shell-maker
+  :straight (:host github :repo "xenodium/chatgpt-shell" :files ("chatgpt-shell.el"))
+  :config
+  (evil-set-initial-state 'chatgpt-shell-mode 'emacs)
+  :custom
+  (chatgpt-shell-openai-key
+   (lambda ()
+     ;; NOTE: if this isn't working remember that auth-source-do-cache controls auth-source caching
+     (auth-source-pick-first-password :host "api.openai.com"))
+   "API credentials")
+  (chatgpt-shell-model-version "gpt-4"))
+#+end_src
+
 * Server
 
 Always run the server so I can use emacsclient as my terminal editor.

@@ -1841,6 +1841,22 @@ slot/window-level thing, not buffer-level."
   (progn
     (add-hook 'before-save-hook 'gofmt-before-save)))
 
+(use-package shell-maker
+  :straight (:host github :repo "xenodium/chatgpt-shell" :files ("shell-maker.el")))
+
+(use-package chatgpt-shell
+  :requires shell-maker
+  :straight (:host github :repo "xenodium/chatgpt-shell" :files ("chatgpt-shell.el"))
+  :config
+  (evil-set-initial-state 'chatgpt-shell-mode 'emacs)
+  :custom
+  (chatgpt-shell-openai-key
+   (lambda ()
+     ;; NOTE: if this isn't working remember that auth-source-do-cache controls auth-source caching
+     (auth-source-pick-first-password :host "api.openai.com"))
+   "API credentials")
+  (chatgpt-shell-model-version "gpt-4"))
+
 (use-package server
   :config (when (not (server-running-p))
             (server-start)))

@@ -14,6 +14,7 @@ emacs.*.symlink/.org-id-locations
 emacs.*.symlink/anaconda-mode
 emacs.*.symlink/annotations
 emacs.*.symlink/bookmarks
+emacs.*.symlink/chatgpt
 emacs.*.symlink/custom.el
 emacs.*.symlink/datadog.el
 emacs.*.symlink/dogapi-credentials
