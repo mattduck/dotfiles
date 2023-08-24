@@ -2258,8 +2258,7 @@ and theme variables.
   (load-theme 'gruvbox-dark-hard t))
 #+end_src
 
-* Languages
-** [[https://github.com/dominikh/go-mode.el][go-mode]]
+* [[https://github.com/dominikh/go-mode.el][go-mode]]
 #+BEGIN_SRC emacs-lisp
 (use-package go-mode
   :demand t
