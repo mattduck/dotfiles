@@ -1127,6 +1127,23 @@ but I won't be surprised if it causes an issue at some point because it's very
 hacky."
     nil)
 
+  ;; Another small org list / checkbox change here: add basic support for customising the
+  ;; face for done '[X]' checkbox items.
+  (defface md/org-checkbox-done-face
+    '((t :height 0.9 :strike-through t))
+    "Face for the done checkboxes.
+
+AFAICT Org doesn't provide a way to customise the face used for done [X] checkboxes.
+I use this face with a very basic regex to match done checkbox items, and apply the
+face to the checkbox itself, so I can visually distinguish between done vs open items
+more easily.
+
+I think some properties will get overridden by org's actual font lock keywords, and
+I haven't looked into that, but basic things like assigning strikethrough works ok,
+and that's all I need."
+    :group 'md/faces)
+  (font-lock-add-keywords 'org-mode '(("- \\(\\[X\\]\\)" 1 'md/org-checkbox-done-face)))
+
   :bind (:map
          org-mode-map
          ("C-c d" . 'md/org-timestamp-date-inactive-no-confirm)
