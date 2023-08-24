@@ -2,7 +2,7 @@
 
 (defun md/maybe-native-compile-and-load (path loadp)
   "If a file exists and Emacs has the native compilation feature enabled,
-use it to compiled the file"
+use it to compile the file"
   (if (and path (file-exists-p path))
       (progn
         (when loadp
