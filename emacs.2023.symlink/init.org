@@ -2266,6 +2266,36 @@ and theme variables.
   (progn
     (add-hook 'before-save-hook 'gofmt-before-save)))
 #+END_SRC
+* [[https://github.com/magit/magit/blob/main/lisp/git-commit.el][git-commit]]
+
+The ~git-commit~ package is part of ~magit~ (which I otherwise don't use
+much). It provides useful behaviour when editing COMMIT_EDITMSG and other
+similar temporary git files, eg. font highlighting, or ~C-c C-c~ and ~C-c C-k~
+to save or quit.
+
+#+begin_src emacs-lisp
+(use-package git-commit
+  :demand t
+  :config
+  (defun md/git-commit-setup ()
+    "Basic setup for git-commit mode, eg. to set a fill column"
+    (interactive)
+    (setq fill-column 70)
+    (display-fill-column-indicator-mode)
+    (evil-normal-state))
+
+  (add-hook 'git-commit-setup-hook 'md/git-commit-setup)
+  (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell)
+
+  ;; Remove some default hooks that I don't use
+  (remove-hook 'git-commit-setup-hook 'git-commit-save-message)
+  (remove-hook 'git-commit-setup-hook 'git-commit-setup-changelog-support)
+  (remove-hook 'git-commit-setup-hook 'git-commit-turn-on-auto-fill)
+  (remove-hook 'git-commit-setup-hook 'git-commit-propertize-diff)
+
+  (global-git-commit-mode 1))
+#+end_src
+
 * [[https://github.com/xenodium/chatgpt-shell][chatgpt-shell]]
 
 [2023-08-23] Alvaro's excellent package for interacting with the OpenAI API. We

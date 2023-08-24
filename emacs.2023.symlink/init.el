@@ -1896,6 +1896,27 @@ slot/window-level thing, not buffer-level."
   (progn
     (add-hook 'before-save-hook 'gofmt-before-save)))
 
+(use-package git-commit
+  :demand t
+  :config
+  (defun md/git-commit-setup ()
+    "Basic setup for git-commit mode, eg. to set a fill column"
+    (interactive)
+    (setq fill-column 70)
+    (display-fill-column-indicator-mode)
+    (evil-normal-state))
+
+  (add-hook 'git-commit-setup-hook 'md/git-commit-setup)
+  (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell)
+
+  ;; Remove some default hooks that I don't use
+  (remove-hook 'git-commit-setup-hook 'git-commit-save-message)
+  (remove-hook 'git-commit-setup-hook 'git-commit-setup-changelog-support)
+  (remove-hook 'git-commit-setup-hook 'git-commit-turn-on-auto-fill)
+  (remove-hook 'git-commit-setup-hook 'git-commit-propertize-diff)
+
+  (global-git-commit-mode 1))
+
 (use-package shell-maker
   :straight (:host github :repo "xenodium/chatgpt-shell" :files ("shell-maker.el")))
 
