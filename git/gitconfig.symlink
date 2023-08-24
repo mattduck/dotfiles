@@ -14,7 +14,7 @@ excludesfile = ~/.gitignore
 s = "!tig status"
 co = checkout
 cob = checkout -b
-ci = commit --verbose
+ci = commit
 b = branch -av
 
 d = diff
