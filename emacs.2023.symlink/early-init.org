@@ -1,6 +1,14 @@
 # -*- mode:org; org-confirm-babel-evaluate: nil -*-
 #+TITLE: early-init.org
+
+This file contains anything that I want to run before the main ~init.el~.
+
 * Compile
+
+The ~org-babel~ functions I use to compile ~init.el~ and ~early-init.el~. I want
+these to always be available in case anything in the config breaks -- otherwise
+I won't be able to edit the config easily.
+
 #+begin_src emacs-lisp
 (message "start of early-init.el")
 
@@ -40,11 +48,19 @@
 
 * Straight package manager
 
+The straight docs recommend disabling this in early init:
+
 #+begin_src emacs-lisp
 (setq package-enable-at-startup nil)
 #+end_src
 
 * exwm
+
+I use ~exwm~, which is cool but has the downside that emacs and X become closely
+coupled, and if I get into a bad state on startup with either emacs or X, then
+it can prevent me from easily booting emacs to fix the problem. To provide an
+escape hatch, I check for the existence of a file on startup, and only
+initialise ~exwm~ if the file is found.
 
 #+begin_src emacs-lisp
 (defun md/exwm-file-enable ()
@@ -66,8 +82,9 @@ Calling this will delete the file, causing i3 to load next time."
 
 * Fonts
 
-#+begin_src emacs-lisp
+Setting this in early-init allows it to apply before the first buffer:
 
+#+begin_src emacs-lisp
 (defun md/set-default-font ()
 	(interactive)
 	(set-face-attribute 'default nil
@@ -80,6 +97,9 @@ Calling this will delete the file, causing i3 to load next time."
 #+end_src
 
 * Other pre-init formatting
+
+This also ensures that any early buffers (eg. scratch) have the same mode line,
+instead of the default mode line:
 
 #+begin_src emacs-lisp
 ;; Want this to apply to first buffer - a very basic modeline
