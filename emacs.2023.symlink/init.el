@@ -1084,15 +1084,31 @@ and that's all I need."
           evil-shift-width 2))
 
   (defun md/org-insert-link-from-paste ()
-    "Perform org-insert-link with the current contents of the clipboard"
+    "Perform org-insert-link with the current contents of the clipboard.
+
+If a region is highlighted, then turn that region into a link using the
+clipboard contents. Otherwise, prompt for a description"
     (interactive)
-    (org-insert-link
-     nil
-     (with-temp-buffer
-       (evil-paste-after nil)
-       (delete-trailing-whitespace)
-       (buffer-string))
-     (read-string "Description: ")))
+    ;; Region version - turn selected region into link
+    (if (use-region-p)
+        (let ((region-text (buffer-substring (region-beginning) (region-end))))
+          (delete-region (region-beginning) (region-end))
+          (org-insert-link
+           nil
+           (with-temp-buffer
+             (evil-paste-after nil)
+             (delete-trailing-whitespace)
+             (buffer-string))
+           region-text))
+
+      ;; New link - prompt for description
+      (org-insert-link
+       nil
+       (with-temp-buffer
+         (evil-paste-after nil)
+         (delete-trailing-whitespace)
+         (buffer-string))
+       (read-string "Description: "))))
 
   :config
   ;; Normal state shortcuts
