@@ -40,6 +40,20 @@ def main(argv):
 
     for root, symlink_name in symlink_paths:
         home_name = "." + symlink_name.split(".symlink")[0]
+
+        # [2023-08-25] Workaround: I've moved my emacs config into a directory
+        # named emacs.2023. I want .emacs.d to point to the new directory, so
+        # that my new config is used by default. I don't want to rename the
+        # directories, as that will break various http links to
+        # them. Alternatively I could set the right envvars to get emacs to user
+        # the new directory as my init directory, but I'm assuming that it'll be
+        # more reliable and portable to just symlink emacs.d to the directory I
+        # want to use.
+        if home_name == ".emacs.d":
+            continue
+        if home_name == ".emacs.2023":
+            home_name = ".emacs.d"
+
         home_path = os.path.join(HOME_PATH, home_name)
         dotfiles_path = os.path.join(root, symlink_name)
 
