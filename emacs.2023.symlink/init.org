@@ -129,13 +129,76 @@ Install use-package:
 (straight-use-package 'use-package)
 #+END_SRC
 
-Configure use-package:
+Configure use-package. We add a custom keyword ~:md/bind~ here. This is my
+alternative to the included ~:bind~ keyword. It has fewer features overall
+compared to ~:bind~, but offers two additional features that I miss - see the
+docstring below.
 
 #+BEGIN_SRC emacs-lisp
 (use-package use-package
   :custom
   (use-package-verbose t)
-  (use-package-minimum-reported-time 0.001))
+  (use-package-minimum-reported-time 0.001)
+
+  :config
+  (add-to-list 'use-package-keywords :md/bind t)
+
+  (defun use-package-normalize/:md/bind (name keyword args)
+    "Custom use-keyword :md/bind. I use this to provide something similar to ':bind',
+but with additional two features that I miss from the default implementation:
+
+1. Integration with 'evil-define-key', so I can extend the keymap declaration
+   to specify one or more evil states that the binding should apply to.
+
+2. The ability to detect keymaps that aren't defined as prefix commands. This
+   allows me to define a binding to a keymap variable, eg. maybe I want '<leader>h'
+   to trigger 'help-map'. This fails using the default ':bind', meaning that I
+   have to fall back to calling 'bind-key' manually if I want to assign a
+   prefix.
+
+The expected form is slightly different to 'bind':
+
+((:map (KEYMAP . STATE) (KEY . FUNC) (KEY . FUNC) ...)
+ (:map (KEYMAP . STATE) (KEY . FUNC) (KEY . FUNC) ...) ...)
+
+STATE is the evil state. It can be nil or omitted entirely. If given, it should be an
+argument suitable for passing to 'evil-define-key' -- meaning a symbol like 'normal', or
+a list like '(normal insert)'."
+    (setq args (car args))
+    (unless (listp args)
+      (use-package-error ":md/bind expects ((:map (MAP . STATE) (KEY . FUNC) ..) ..)"))
+    (dolist (def args args)
+      (unless (and (eq (car def) :map)
+                   (consp (cdr def))
+                   (listp (cddr def)))
+        (use-package-error ":md/bind expects ((:map (MAP . STATE) (KEY . FUNC) ..) ..)"))))
+
+  (defun use-package-handler/:md/bind (name _keyword args rest state)
+    "Handler for ':md/bind' use-package extension. See 'use-package-normalize/:md/bind' for full docs."
+    (let ((body (use-package-process-keywords name rest
+                  (use-package-plist-delete state :md/bind))))
+      (use-package-concat
+       `((with-eval-after-load ',name
+           ,@(mapcan
+              (lambda (entry)
+                (let ((keymap (car (cadr entry)))
+                      (state (cdr (cadr entry)))
+                      (bindings (cddr entry)))
+                  (mapcar
+                   (lambda (binding)
+                     (let ((key (car binding))
+                           (val (if (and (boundp (cdr binding)) (keymapp (symbol-value (cdr binding))))
+                                    ;; Keymaps need to be vars without quotes
+                                    (cdr binding)
+                                  ;; But functions need to be quoted symbols
+                                  `(quote ,(cdr binding)))))
+                       ;; When state is provided, use evil-define-key. Otherwise fall back to bind-key.
+                       (if state
+                           `(evil-define-key ',state ,keymap (kbd ,key) ,val)
+                         `(bind-key ,key ,val ,keymap))))
+                   bindings)))
+              args)))
+       body))))
 #+END_SRC
 
 * [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]]
@@ -242,11 +305,9 @@ exwm by creating or deleting the file ~/.exwm-enabled~.
      ([?\C-e] . [end]))
    "Rebindings that get sent through to X programs, eg. C-n/C-p can be down/up")
 
-  :bind
-  (:map exwm-mode-map
-        ("C-q" . exwm-input-send-next-key))
+  :md/bind ((:map (exwm-mode-map)
+                  ("C-q" . exwm-input-send-next-key)))
   :config
-
   ;; Suspending frame accidentally is very annoying with exwm
   (global-set-key (kbd "C-x C-z") nil)
   (exwm-enable))
@@ -540,12 +601,6 @@ Uses consult-theme if available.
   ;; Start up in fullscreen mode
   (toggle-frame-fullscreen)
 
-  ;; Bind some keymaps. Would be tidier to do this with :bind-keys, but you
-  ;; can't pass a keymap to it - see
-  ;; https://github.com/jwiegley/use-package/issues/736
-  (bind-key "C-<SPC>" md/leader-map)  ; Global
-  (bind-key "h" help-map md/leader-map)
-
   ;; By default "?" in help-map shows some help thing, but I prefer the
   ;; global behaviour of showing the key bindings for the map
   (unbind-key "?" help-map)
@@ -623,14 +678,14 @@ Uses consult-theme if available.
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
       (window-height . 0.33))
-   ("*\\(Agenda Commands\\|Org Select\\)\\*" ;; Annoying org popups - agenda and capture selection
-    (display-buffer-reuse-window display-buffer-in-side-window)
-    (side . bottom)
-    (window-height . 0.33))
-   ("CAPTURE-.+"  ;; Org capture buffer
-    (display-buffer-reuse-window display-buffer-in-side-window)
-    (side . bottom)
-    (window-height . 0.33)))
+     ("*\\(Agenda Commands\\|Org Select\\)\\*" ;; Annoying org popups - agenda and capture selection
+      (display-buffer-reuse-window display-buffer-in-side-window)
+      (side . bottom)
+      (window-height . 0.33))
+     ("CAPTURE-.+"  ;; Org capture buffer
+      (display-buffer-reuse-window display-buffer-in-side-window)
+      (side . bottom)
+      (window-height . 0.33)))
    "Customise how buffers are displayed. I used to use Shackle but I'm trying to stick to this for simplicity")
 
   (switch-to-buffer-obey-display-actions t "Ensure display-buffer-alist gets used when running switch-to-buffer, which would otherwise bypass it")
@@ -641,64 +696,67 @@ Uses consult-theme if available.
    "Stop prompting me to accept these local variables")
 
   ;; ======================================================================
-  :bind
-  (:map
-   md/leader-map
-   ("+" . md/font-size-incr)
-   ("-" . md/font-size-decr)
-   ("tx" . font-lock-mode)
-   ("x" . execute-extended-command) ; M-x
-   ("f" . find-file)
-   ("U" . undo-tree-visualize)
-   ("o" . md/insert-blank-line-before)
+  :md/bind ((:map (global-map)
+                  ("C-<SPC>" . md/leader-map))
+            (:map (md/leader-map)
+                  ("+" . md/font-size-incr)
+                  ("-" . md/font-size-decr)
+                  ("tx" . font-lock-mode)
+                  ("x" . execute-extended-command) ; M-x
+                  ("f" . find-file)
+                  ("U" . undo-tree-visualize)
+                  ("o" . md/insert-blank-line-before)
 
-   ("'o" . md/scratch-open-file-org)
-   ("'e" . md/scratch-open-file-elisp)
+                  ("'o" . md/scratch-open-file-org)
+                  ("'e" . md/scratch-open-file-elisp)
 
-   ("jf" . project-find-file)
-   ("jj" . project-switch-project)
+                  ("jf" . project-find-file)
+                  ("jj" . project-switch-project)
 
-   ;; buffers
-   ("w" . save-buffer)
-   ("W" . md/strip-whitespace-and-save)
-   ("k" . kill-buffer)
-   ("bi" . md/file-info)
-   ("bk" . kill-buffer)
-   ("br" . read-only-mode)
+                  ;; buffers
+                  ("w" . save-buffer)
+                  ("W" . md/strip-whitespace-and-save)
+                  ("k" . kill-buffer)
+                  ("bi" . md/file-info)
+                  ("bk" . kill-buffer)
+                  ("br" . read-only-mode)
 
-   ;; eval
-   ("ef" . eval-defun)
-   ("ee" . eval-last-sexp)
-   ("eb" . eval-buffer)
-   ("eE" . eval-expression)   ; in minibuffer
-   ("ex" . md/fontify-buffer)
+                  ;; eval
+                  ("ef" . eval-defun)
+                  ("ee" . eval-last-sexp)
+                  ("eb" . eval-buffer)
+                  ("eE" . eval-expression)   ; in minibuffer
+                  ("ex" . md/fontify-buffer)
 
-   ;; Emacs
-   ("Ek" . kill-emacs)
-   ("Es" . server-start)
-   ("Ep" . list-processes)
-   ("Ed" . md/toggle-debug-on-error)
+                  ;; Emacs
+                  ("Ek" . kill-emacs)
+                  ("Es" . server-start)
+                  ("Ep" . list-processes)
+                  ("Ed" . md/toggle-debug-on-error)
 
-   ;; Packages
-   ("Pi" . straight-use-package)
-   ("Pu" . package-update)
-   ("Pl" . package-list-packages)
-   ("Pr" . package-refresh-contents)
+                  ;; Packages
+                  ("Pi" . straight-use-package)
+                  ("Pu" . package-update)
+                  ("Pl" . package-list-packages)
+                  ("Pr" . package-refresh-contents)
 
-   ;; Formatting
-   ("Fj" . json-pretty-print)
-   ("Fs" . sort-lines)
-   ("Fn" . md/expand-newlines)
+                  ;; Formatting
+                  ("Fj" . json-pretty-print)
+                  ("Fs" . sort-lines)
+                  ("Fn" . md/expand-newlines)
 
-   ;; Toggle misGc
-   ("tw" . toggle-truncate-lines)
-   ("tt" . md/load-theme)
-   ("tD" . md/toggle-window-dedicated)
-   ("t <tab>" . whitespace-mode)
+                  ;; Toggle misc
+                  ("tw" . toggle-truncate-lines)
+                  ("tt" . md/load-theme)
+                  ("tD" . md/toggle-window-dedicated)
+                  ("t <tab>" . whitespace-mode)
 
-   :map help-map
-   ("x" . describe-face)
-   ("K" . describe-personal-keybindings)))
+                  ;; Help
+                  ("h" . help-map))
+
+            (:map (help-map)
+                  ("x" . describe-face)
+                  ("K" . describe-personal-keybindings))))
 #+end_src
 
 * MacOS
@@ -774,41 +832,47 @@ in Emacs.
 (use-package evil
   :demand t
   :after (undo-tree)
-  :bind (
-         ;; Like my vimrc, remap  ; to : and , to ;
-         :map evil-motion-state-map
-         (";" . evil-ex)
-         ("," . evil-repeat-find-char)
 
-         ;; Like in the terminal. Mainly useful in minibuffer
-         :map evil-insert-state-map
-         ("C-a" . move-beginning-of-line)
-         ("C-e" . move-end-of-line)
-
-         :map evil-visual-state-map
-         ("SPC" . md/leader-map)
-         ("H" . move-beginning-of-line)
-         ("L" . move-beginning-of-line)
-
-         ;; Various common bindings I use
-         :map evil-normal-state-map
-         ("H" . move-beginning-of-line)
-         ("L" . move-beginning-of-line)
-         ("(" . evil-previous-open-paren)
-         (")" . evil-next-close-paren)
-         ("j" . evil-next-visual-line)  ; equivalent of mapping to gj/gk
-         ("k" . evil-previous-visual-line)
-         ("M-j" . md/move-line-down)
-         ("M-k" . md/move-line-up)
-         ("M-h" . evil-shift-left-line)
-         ("M-l" . evil-shift-right-line)
-         ("C-l" . evil-jump-forward) ;; See setting below - we use this instead of vim's default C-i
-         ("SPC" . md/leader-map)
-
-         :map md/leader-map
-         ("q" . md/evil-fill)
-         ("Q" . md/evil-unfill)
-         ("cc" . comment-or-uncomment-region))
+  :md/bind ( ;; Like my vimrc, remap  ; to : and , to ;
+            (:map (evil-motion-state-map)
+                  (";" . evil-ex)
+                  ("," . evil-repeat-find-char))
+            ;; Like in the terminal. Mainly useful in minibuffer
+            (:map (evil-insert-state-map)
+                  ("C-a" . move-beginning-of-line)
+                  ("C-e" . move-end-of-line))
+            (:map (evil-visual-state-map)
+                  ("SPC" . md/leader-map)
+                  ("H" . move-beginning-of-line)
+                  ("L" . move-beginning-of-line))
+            ;; Various common bindings I use
+            (:map (evil-normal-state-map)
+                  ("H" . move-beginning-of-line)
+                  ("L" . move-beginning-of-line)
+                  ("(" . evil-previous-open-paren)
+                  (")" . evil-next-close-paren)
+                  ("j" . evil-next-visual-line)  ; equivalent of mapping to gj/gk
+                  ("k" . evil-previous-visual-line)
+                  ("M-j" . md/move-line-down)
+                  ("M-k" . md/move-line-up)
+                  ("M-h" . evil-shift-left-line)
+                  ("M-l" . evil-shift-right-line)
+                  ("C-l" . evil-jump-forward) ;; See setting below - we use this instead of vim's default C-i
+                  ("SPC" . md/leader-map))
+            (:map (md/leader-map)
+                  ("q" . md/evil-fill)
+                  ("Q" . md/evil-unfill)
+                  ("cc" . comment-or-uncomment-region))
+            ;; The *Warnings* buffer loads in normal mode, and I want to be able to quit
+            ;; it easily
+            (:map (special-mode-map . normal)
+                  ("q" . quit-window))
+            ;; Help bindings
+            (:map (help-mode-map . normal)
+                  ("q" . quit-window)
+                  ("C-i" . help-go-forward)
+                  ("C-o" . help-go-back)
+                  ("<RET>" . help-follow-symbol)))
 
   :chords
   (:map evil-insert-state-map
@@ -884,19 +948,8 @@ in Emacs.
   ;; Evil's undo functionality should be undo-tree
   (evil-set-undo-system 'undo-tree)
 
-  ;; The *Warnings* buffer loads in normal mode, and I want to be able to quit
-  ;; it easily
-  (evil-define-key 'normal special-mode-map
-    "q" 'quit-window)
-
   ;; Use vi keys to navigate help-mode
   (evil-set-initial-state 'help-mode 'normal)
-
-  (evil-define-key 'normal help-mode-map
-    "q" 'quit-window
-    (kbd "C-i") 'help-go-forward
-    (kbd "C-o") 'help-go-back
-    (kbd "<RET>") 'help-follow-symbol)
 
   (evil-mode 1))
 #+END_SRC
@@ -990,9 +1043,9 @@ Builtin module to undo window changes.
   :if (not (md/exwm-enabled))
   :straight nil
   :config (winner-mode 1)
-  :bind (:map splitscreen/prefix
-              ("u" . winner-undo)
-              ("U" . winner-redo)))
+  :md/bind ((:map (splitscreen/prefix)
+                  ("u" . winner-undo)
+                  ("U" . winner-redo))))
 #+end_src
 
 * [[https://orgmode.org/][org-mode]]
@@ -1144,31 +1197,28 @@ and that's all I need."
     :group 'md/faces)
   (font-lock-add-keywords 'org-mode '(("- \\(\\[X\\]\\)" 1 'md/org-checkbox-done-face)))
 
-  :bind (:map
-         org-mode-map
-         ("C-c d" . 'md/org-timestamp-date-inactive-no-confirm)
-         ("C-c t" . 'md/org-timestamp-time-inactive-no-confirm)
-         ("C-c l" . 'md/org-insert-link-from-paste)
-         ("C-c L" . 'org-insert-last-stored-link)
-         ("C-c y" . 'org-store-link)
-         ("C-c C-y" . 'org-store-link)
-         ("C-c P" . 'org-priority-up)
-         ("C-c T" . 'org-todo)
-         ("C-c E" . 'org-set-effort)
-         ("C-c C-r" . 'md/org-review)
-         ("C-j" . 'md/org-narrow-next)
-         ("C-k" . 'md/org-narrow-prev)
-
-         :map global-map
-         ("C-c c" . 'org-capture)
-
-         :map md/leader-map
-         ("a c" . 'org-capture)
-         ("RET" . 'org-capture)
-         ("a j" . 'org-clock-goto)
-         ("a i" . 'org-clock-in)
-         ("a o" . 'org-clock-out)
-         ("t l" . 'md/org-toggle-link-display))
+  :md/bind ((:map (org-mode-map)
+                  ("C-c d" . md/org-timestamp-date-inactive-no-confirm)
+                  ("C-c t" . md/org-timestamp-time-inactive-no-confirm)
+                  ("C-c l" . md/org-insert-link-from-paste)
+                  ("C-c L" . org-insert-last-stored-link)
+                  ("C-c y" . org-store-link)
+                  ("C-c C-y" . org-store-link)
+                  ("C-c P" . org-priority-up)
+                  ("C-c T" . org-todo)
+                  ("C-c E" . org-set-effort)
+                  ("C-c C-r" . md/org-review)
+                  ("C-j" . md/org-narrow-next)
+                  ("C-k" . md/org-narrow-prev))
+            (:map (global-map)
+                  ("C-c c" . org-capture))
+            (:map (md/leader-map)
+                  ("a c" . org-capture)
+                  ("RET" . org-capture)
+                  ("a j" . org-clock-goto)
+                  ("a i" . org-clock-in)
+                  ("a o" . org-clock-out)
+                  ("t l" . md/org-toggle-link-display)))
 
   :hook (
          ;; TODO - is this required or does it work by default?
@@ -1270,43 +1320,34 @@ clipboard contents. Otherwise, prompt for a description"
          (buffer-string))
        (read-string "Description: "))))
 
-  :config
-  ;; Normal state shortcuts
-  (evil-define-key 'normal md/evil-org-mode-map
-    "gk" 'outline-previous-visible-heading
-    "gj" 'outline-next-visible-heading
-    "gK" 'md/org-narrow-prev
-    "gJ" 'md/org-narrow-next
-    "H" 'org-beginning-of-line
-    "L" 'org-end-of-line
-    "$" 'org-end-of-line
-    "^" 'org-beginning-of-line
-    "-" 'org-cycle-list-bullet
-    (kbd "RET") 'org-cycle
-    (kbd "TAB") 'org-cycle)
+  :md/bind ((:map (evil-insert-state-map)
+                  ("C-c d" . md/org-timestamp-date-inactive-no-confirm)
+                  ("C-c t" . md/org-timestamp-time-inactive-no-confirm))
+            (:map (md/evil-org-mode-map . normal)
+                  ("gk" . outline-previous-visible-heading)
+                  ("gj" . outline-next-visible-heading)
+                  ("gK" . md/org-narrow-prev)
+                  ("gJ" . md/org-narrow-next)
+                  ("H" . org-beginning-of-line)
+                  ("L" . org-end-of-line)
+                  ("$" . org-end-of-line)
+                  ("^" . org-beginning-of-line)
+                  ("-" . org-cycle-list-bullet)
+                  ("RET" . org-cycle)
+                  ("TAB" . org-cycle))
+            (:map (md/evil-org-mode-map . (normal insert))
+                  ("M-l" . org-metaright)
+                  ("M-h" . org-metaleft)
+                  ("M-k" . org-metaup)
+                  ("M-j" . org-metadown)
+                  ("M-L" . org-shiftmetaright)
+                  ("M-H" . org-shiftmetaleft)
+                  ("M-K" . org-shiftmetaup)
+                  ("M-J" . org-shiftmetadown)
+                  ("C-c u" . org-priority-up)))
 
-  ;; Normal and insert state shortcuts.
-  (mapc (lambda (state)
-          (evil-define-key state md/evil-org-mode-map
-            (kbd "M-l") 'org-metaright
-            (kbd "M-h") 'org-metaleft
-            (kbd "M-k") 'org-metaup
-            (kbd "M-j") 'org-metadown
-            (kbd "M-L") 'org-shiftmetaright
-            (kbd "M-H") 'org-shiftmetaleft
-            (kbd "M-K") 'org-shiftmetaup
-            (kbd "M-J") 'org-shiftmetadown
-            (kbd "C-c u") 'org-priority-up))
-        '(normal insert))
-
-  :bind
-  (:map evil-insert-state-map
-   ("C-c d" . 'md/org-timestamp-date-inactive-no-confirm)
-   ("C-c t" . 'md/org-timestamp-time-inactive-no-confirm))
-
-  :hook
-  ((org-mode . md/org-hook)
-   (org-mode . md/evil-org-mode)))
+  :hook ((org-mode . md/org-hook)
+         (org-mode . md/evil-org-mode)))
 #+end_src
 
 ** Org agenda
@@ -1367,46 +1408,45 @@ delete-other-windows into a no-op, and then restore once the org function has ex
   ;; When org-agenda loads I want to be able to use j/k etc for navigation like any buffer.
   (evil-set-initial-state 'org-agenda-mode 'normal)
 
-  (evil-define-key 'normal md/evil-org-agenda-mode-map
-    ;; Next/previous line
-    (kbd "j") 'org-agenda-next-line
-    (kbd "n") 'org-agenda-next-line
-    (kbd "C-n") 'org-agenda-next-line
-    (kbd "k") 'org-agenda-previous-line
-    (kbd "p") 'org-agenda-previous-line
-    (kbd "C-p") 'org-agenda-previous-line
+  :md/bind ((:map (global-map)
+                  ("C-c a" . org-agenda))
+            (:map (md/leader-map)
+                  ("a a" . org-agenda)
+                  ("TAB" . org-agenda))
+            (:map (md/evil-org-agenda-mode-map . normal)
+                  ;; Next/previous line
+                  ("j" . org-agenda-next-line)
+                  ("n" . org-agenda-next-line)
+                  ("C-n" . org-agenda-next-line)
+                  ("k" . org-agenda-previous-line)
+                  ("p" . org-agenda-previous-line)
+                  ("C-p" . org-agenda-previous-line)
 
-    (kbd "RET") 'org-agenda-goto  ; Jump to selected item
-    (kbd "t") 'md/org-agenda-todo  ; Cycle todo state
-    (kbd "P") 'org-agenda-priority-up
-    (kbd "E") 'org-agenda-set-effort
-    (kbd "R") 'org-agenda-refile
-    (kbd "T") 'org-agenda-set-tags
-    (kbd "C") 'org-agenda-columns
+                  ("RET" . org-agenda-goto)  ; Jump to selected item
+                  ("t" . md/org-agenda-todo)  ; Cycle todo state
+                  ("P" . org-agenda-priority-up)
+                  ("E" . org-agenda-set-effort)
+                  ("R" . org-agenda-refile)
+                  ("T" . org-agenda-set-tags)
+                  ("C" . org-agenda-columns)
 
-    ;; Copy ID link to the heading
-    (kbd "Y") 'org-store-link
-    (kbd "C-c y") 'org-store-link
-    (kbd "C-c C-y") 'org-store-link
+                  ;; Copy ID link to the heading
+                  ("Y" . org-store-link)
+                  ("C-c y" . org-store-link)
+                  ("C-c C-y" . org-store-link)
 
-    (kbd "]") 'org-agenda-later
-    (kbd "[") 'org-agenda-earlier
+                  ("]" . org-agenda-later)
+                  ("[" . org-agenda-earlier)
 
-    (kbd "q") 'org-agenda-quit
-    (kbd "r") 'org-agenda-redo  ; Recalculate the agenda
-    (kbd "v") 'org-agenda-view-mode-dispatch  ; Alter the view - toggle archived, logs, clocks etc.
-    (kbd "\\") 'org-agenda-filter-remove-all  ; Remove existing filters
-    (kbd "/") 'org-agenda-filter-by-regexp  ; Search
-    (kbd "@") 'org-agenda-filter  ; Tag filter
-    (kbd "'") 'org-agenda-filter-by-category  ; Show other items with same category as current
-    (kbd "e") 'org-agenda-filter-by-effort
-    (kbd "A") 'org-agenda-append-agenda)  ; Add another agenda
-
-  :bind (:map global-map
-              ("C-c a" . 'org-agenda)
-              :map md/leader-map
-              ("a a" . 'org-agenda)
-              ("TAB" . 'org-agenda))
+                  ("q" . org-agenda-quit)
+                  ("r" . org-agenda-redo)  ; Recalculate the agenda
+                  ("v" . org-agenda-view-mode-dispatch)  ; Alter the view - toggle archived, logs, clocks etc.
+                  ("\\" . org-agenda-filter-remove-all)  ; Remove existing filters
+                  ("/" . org-agenda-filter-by-regexp)  ; Search
+                  ("@" . org-agenda-filter)  ; Tag filter
+                  ("'" . org-agenda-filter-by-category)  ; Show other items with same category as current
+                  ("e" . org-agenda-filter-by-effort)
+                  ("A" . org-agenda-append-agenda)))  ; Add another agenda
 
   :custom
   (org-agenda-restore-windows-after-quit nil "Whether to let org-agenda permanently mess with window layout")
@@ -1847,9 +1887,6 @@ rather than 4.
   ;; Don't ask for confirmation on narrow-to-region
   (put 'narrow-to-region 'disabled nil)
 
-  ;; This doesn't work using :bind - see https://github.com/jwiegley/use-package/issues/736
-  (bind-key "n" narrow-map md/leader-map)
-
   (defvar md/narrow-dwim-enable-org-clock nil
     "When true, md/narrow-dwim will start/stop the clock for narrowed org subtrees")
 
@@ -1900,12 +1937,13 @@ rather than 4.
         (narrow-to-region start end))
       (switch-to-buffer buf)))
 
-  :bind
-  (:map narrow-map
-        (("i" . org-tree-to-indirect-buffer)
-         ("v" . md/narrow-to-region-indirect)
-         ("f" . md/narrow-dwim)
-         ("r" . narrow-to-region))))
+  :md/bind ((:map (md/leader-map)
+                  ("n" . narrow-map))
+            (:map (narrow-map)
+                  ("i" . org-tree-to-indirect-buffer)
+                  ("v" . md/narrow-to-region-indirect)
+                  ("f" . md/narrow-dwim)
+                  ("r" . narrow-to-region))))
 #+END_SRC
 
 * [[https://github.com/minad/vertico][Vertico]] and friends
@@ -1939,10 +1977,10 @@ I've used previously for this kind of fzf selection feature.
   (vertico-count 10 "Items displayed, defaults to 10")
   :config
   (vertico-mode 1)
-  :bind (:map vertico-map
+  :md/bind ((:map (vertico-map)
               ;; Make C-l and C-j behave similar to what I'm used to from my Helm setup
-              ("C-l" . vertico-insert))
-              ("C-j" . 'evil-delete-backward-word))
+              ("C-l" . vertico-insert)
+              ("C-j" . evil-delete-backward-word))))
 #+END_SRC
 
 *** [[https://github.com/oantolin/orderless][Orderless]]
@@ -2014,14 +2052,13 @@ example, a buffer-switching command similar to
    ;; Disable preview when switching buffers
    consult-buffer :preview-key nil)
 
-   ;; Populate an initial value for consult-line, as this doesn't happen by default
-   ;; consult-line :initial (thing-at-point 'symbol))
+  ;; Populate an initial value for consult-line, as this doesn't happen by default
+  ;; consult-line :initial (thing-at-point 'symbol))
 
-  :bind (:map
-         md/leader-map
-         ("p" . consult-buffer)
-         ("jp" . consult-project-buffer)  ; project-file-file just works by default, this is separate
-         ("/" . consult-line)))
+  :md/bind ((:map (md/leader-map)
+                  ("p" . consult-buffer)
+                  ("jp" . consult-project-buffer)  ; project-file-file just works by default, this is separate
+                  ("/" . consult-line))))
 #+end_src
 
 * [[https://elpa.gnu.org/packages/xclip.html][xclip]]
@@ -2045,16 +2082,16 @@ commands like ~helpful-macro~.
 
 #+begin_src emacs-lisp
 (use-package helpful
-  :config
-  (evil-define-key 'normal helpful-mode-map "q" 'md/quit-and-kill-window)
-  :bind (:map help-map
-              ("v" . helpful-variable)
-              ("f" . helpful-function)
-              ("k" . helpful-key)
-              ("c" . helpful-command)
-              ("m" . helpful-macro)
-              ("M" . describe-mode)  ; This is "m" by default.
-              ("g" . helpful-at-point)))
+  :md/bind ((:map (help-map)
+                  ("v" . helpful-variable)
+                  ("f" . helpful-function)
+                  ("k" . helpful-key)
+                  ("c" . helpful-command)
+                  ("m" . helpful-macro)
+                  ("M" . describe-mode)  ; This is "m" by default.
+                  ("g" . helpful-at-point))
+            (:map (helpful-mode-map . normal)
+                  ("q" . md/quit-and-kill-window))))
 
 #+end_src
 * [[https://github.com/Fuco1/free-keys][free-keys]]
@@ -2062,9 +2099,8 @@ List unused keys in current buffer.
 
 #+begin_src emacs-lisp
 (use-package free-keys
-  :bind (:map
-         help-map
-         ("@" . free-keys)))
+  :md/bind ((:map (help-map)
+               ("@" . free-keys))))
 #+end_src
 
 * [[https://github.com/wasamasa/eyebrowse][eyebrowse]]
@@ -2098,12 +2134,12 @@ similar way to vim tabs.
     (apply fn args)
     (set-register (eyebrowse--get 'current-slot) nil))
 
-   (defun md/eyebrowse-status (fn &rest args)
-     "Advice for eyebrowse functions, to message the current eyebrowse status
+  (defun md/eyebrowse-status (fn &rest args)
+    "Advice for eyebrowse functions, to message the current eyebrowse status
 in the echo area. I prefer to this putting it in the mode-line, because eyebrowse is a
 slot/window-level thing, not buffer-level."
-     (apply fn args)
-     (message (format "%s" (eyebrowse-mode-line-indicator))))
+    (apply fn args)
+    (message (format "%s" (eyebrowse-mode-line-indicator))))
 
   :custom
   (eyebrowse-wrap-around t "Allow cycling forever")
@@ -2113,13 +2149,12 @@ slot/window-level thing, not buffer-level."
   (eyebrowse-mode-line-style t "Always show this in the mode line (Although, I modify the mode-line separately so this is redundant unless I disable that)")
   (eyebrowse-new-workspace t "The new workspace should show the scratch buffer initally")
 
-  :bind
-  (:map splitscreen/prefix
-        ("c" . eyebrowse-create-window-config)
-        ("n" . eyebrowse-next-window-config)
-        ("p" . eyebrowse-prev-window-config)
-        ("X" . eyebrowse-close-window-config)
-        ("o" . splitscreen/toggle-zoom))
+  :md/bind ((:map (splitscreen/prefix)
+                  ("c" . eyebrowse-create-window-config)
+                  ("n" . eyebrowse-next-window-config)
+                  ("p" . eyebrowse-prev-window-config)
+                  ("X" . eyebrowse-close-window-config)
+                  ("o" . splitscreen/toggle-zoom)))
   :config
 
   ;; Add advice to handle my zoom feature with eyebrose
@@ -2145,16 +2180,14 @@ performs a lot better than term/ansi-term.
   :after (evil)
   :config
   (evil-set-initial-state 'vterm-mode 'emacs)
-  (evil-define-key 'normal vterm-mode-map
-    "gk" 'vterm-previous-prompt
-    "gj" 'vterm-next-prompt)
-  (bind-key "C-<SPC>" md/leader-map vterm-mode-map)
   :hook ((vterm-mode . evil-emacs-state))
-  :bind
-  (:map
-   vterm-mode-map
-   ("C-w" . splitscreen/prefix)
-   ("C-g" . vterm--self-insert))
+  :md/bind ((:map (vterm-mode-map)
+                  ("C-<SPC>" . md/leader-map)
+                  ("C-w" . splitscreen/prefix)
+                  ("C-g" . vterm--self-insert))
+            (:map (vterm-mode-map . normal)
+                  ("gk" . vterm-previous-prompt)
+                  ("gj" . vterm-next-prompt)))
   :custom
   (vterm-max-scrollback 10000)
   (vterm-buffer-name-string "vterm [%s]"))
@@ -2198,53 +2231,51 @@ is the main configuration.
   (elfeed-search-title-max-width 110 "Truncate title width")
   (elfeed-search-filter "@2-weeks-ago -hidden !ojwtech" "Default search filter")
 
-  :bind
-  (:map
-   md/leader-map
-   ("R" . elfeed)
+  :md/bind ((:map (md/leader-map)
+                  ("R" . elfeed))
 
-   :map elfeed-search-mode-map
-   ("SPC" . md/leader-map)
-   ("C-h" . help-mode-map)
-   ("q" . elfeed-search-quit-window)
-   ("j" . evil-next-visual-line)
-   ("n" . evil-next-visual-line)
-   ("C-n" . evil-next-visual-line)
-   ("k" . evil-previous-visual-line)
-   ("p" . evil-previous-visual-line)
-   ("C-p" . evil-previous-visual-line)
-   ("C-f" . evil-scroll-page-down)
-   ("C-b" . evil-scroll-page-up)
-   ("C-d" . evil-scroll-down)
-   ("l" . elfeed-search-show-entry)
-   ("o" . elfeed-search-browse-url)
-   ("r" . elfeed-search-update--force)
-   ("R" . elfeed-search-fetch)
-   ("|" . elfeed-search-clear-filter)
-   ("/" . elfeed-search-set-filter)
-   ("g" . elfeed-search-first-entry)
-   ("G" . elfeed-search-last-entry)
-   ("u" . md/elfeed-search-toggle-unread)
-   ("H" . md/elfeed-search-toggle-hide)
-   ("s" . md/elfeed-search-toggle-starred)
+            (:map (elfeed-search-mode-map)
+                  ("SPC" . md/leader-map)
+                  ("C-h" . help-mode-map)
+                  ("q" . elfeed-search-quit-window)
+                  ("j" . evil-next-visual-line)
+                  ("n" . evil-next-visual-line)
+                  ("C-n" . evil-next-visual-line)
+                  ("k" . evil-previous-visual-line)
+                  ("p" . evil-previous-visual-line)
+                  ("C-p" . evil-previous-visual-line)
+                  ("C-f" . evil-scroll-page-down)
+                  ("C-b" . evil-scroll-page-up)
+                  ("C-d" . evil-scroll-down)
+                  ("l" . elfeed-search-show-entry)
+                  ("o" . elfeed-search-browse-url)
+                  ("r" . elfeed-search-update--force)
+                  ("R" . elfeed-search-fetch)
+                  ("|" . elfeed-search-clear-filter)
+                  ("/" . elfeed-search-set-filter)
+                  ("g" . elfeed-search-first-entry)
+                  ("G" . elfeed-search-last-entry)
+                  ("u" . md/elfeed-search-toggle-unread)
+                  ("H" . md/elfeed-search-toggle-hide)
+                  ("s" . md/elfeed-search-toggle-starred))
 
-   :map elfeed-show-mode-map
-   ("h" . elfeed-kill-buffer)
-   ("q" . elfeed-kill-buffer)
-   ("SPC" . md/leader-map)
-   ("C-h" . help-mode-map)
-   ("n" . evil-next-visual-line)
-   ("C-n" . evil-next-visual-line)
-   ("C-p" . evil-previous-visual-line)
-   ("C-f" . evil-scroll-page-down)
-   ("C-b" . evil-scroll-page-up)
-   ("C-d" . evil-scroll-down)
-   ("o" . elfeed-show-visit)
-   ("l" . elfeed-show-next-link)
-   ("j" . evil-next-visual-line)
-   ("k" . evil-previous-visual-line)
-   ("w" . evil-forward-word-begin)
-   ("b" . evil-backward-word-begin)))
+            (:map (elfeed-show-mode-map)
+                  ("h" . elfeed-kill-buffer)
+                  ("q" . elfeed-kill-buffer)
+                  ("SPC" . md/leader-map)
+                  ("C-h" . help-mode-map)
+                  ("n" . evil-next-visual-line)
+                  ("C-n" . evil-next-visual-line)
+                  ("C-p" . evil-previous-visual-line)
+                  ("C-f" . evil-scroll-page-down)
+                  ("C-b" . evil-scroll-page-up)
+                  ("C-d" . evil-scroll-down)
+                  ("o" . elfeed-show-visit)
+                  ("l" . elfeed-show-next-link)
+                  ("j" . evil-next-visual-line)
+                  ("k" . evil-previous-visual-line)
+                  ("w" . evil-forward-word-begin)
+                  ("b" . evil-backward-word-begin))))
 #+end_src
 * [[https://github.com/lewang/fic-mode][fic-mode]]
 
@@ -2359,10 +2390,8 @@ hook into some code that's not in this file, eg. my list of RSS feeds.
   (defun md/dotfiles-edit-init-local ()
     (interactive)
     (find-file md/dotfiles-init-local-path))
-  :bind
-  (:map
-   md/leader-map
-   ("vl" . md/dotfiles-edit-init-local)))
+  :md/bind ((:map (md/leader-map)
+                  ("vl" . md/dotfiles-edit-init-local))))
 #+end_src
 
 * End
