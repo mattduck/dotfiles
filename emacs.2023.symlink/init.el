@@ -1977,6 +1977,28 @@ slot/window-level thing, not buffer-level."
    "API credentials")
   (chatgpt-shell-model-version "gpt-4"))
 
+(use-package neotree
+  :demand t
+  :custom
+  (neo-theme 'ascii)
+  (neo-smart-open t "Jump to the current node when Neotree is opened")
+  (neo-show-hidden-files t "Show hidden files in the tree")
+  :config
+  (evil-set-initial-state 'neotree-mode 'normal)
+  :md/bind ((:map (md/leader-map)
+                  ("N" . neotree-toggle))
+            (:map (neotree-mode-map . normal)
+                  ("J" . neotree-dir)
+                  ("q" . neotree-hide)
+                  ("r" . neotree-refresh)
+                  ("RET" . neotree-enter)
+                  ("TAB" . neotree-quick-look)
+                  ("'" . neotree-stretch-toggle)
+                  ("H" . neotree-select-up-node)
+                  ("L" . neotree-change-root)
+                  ("h" . neotree-enter)
+                  ("l" . neotree-enter))))
+
 (use-package server
   :config (when (not (server-running-p))
             (server-start)))

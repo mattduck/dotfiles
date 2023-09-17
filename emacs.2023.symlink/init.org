@@ -2367,6 +2367,34 @@ first ensure ~shell-maker~ exists manually, which is mentioned in the
   (chatgpt-shell-model-version "gpt-4"))
 #+end_src
 
+* [[https://github.com/jaypei/emacs-neotree][Neotree]]
+
+[2023-09-17] Neotree provides a file/directory tree buffer. 
+
+#+begin_src emacs-lisp
+(use-package neotree
+  :demand t
+  :custom
+  (neo-theme 'ascii)
+  (neo-smart-open t "Jump to the current node when Neotree is opened")
+  (neo-show-hidden-files t "Show hidden files in the tree")
+  :config
+  (evil-set-initial-state 'neotree-mode 'normal)
+  :md/bind ((:map (md/leader-map)
+                  ("N" . neotree-toggle))
+            (:map (neotree-mode-map . normal)
+                  ("J" . neotree-dir)
+                  ("q" . neotree-hide)
+                  ("r" . neotree-refresh)
+                  ("RET" . neotree-enter)
+                  ("TAB" . neotree-quick-look)
+                  ("'" . neotree-stretch-toggle)
+                  ("H" . neotree-select-up-node)
+                  ("L" . neotree-change-root)
+                  ("h" . neotree-enter)
+                  ("l" . neotree-enter))))
+#+end_src
+
 * Server
 
 Always run the server so I can use emacsclient as my terminal editor.
