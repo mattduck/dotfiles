@@ -1961,6 +1961,38 @@ slot/window-level thing, not buffer-level."
 
   (global-git-commit-mode 1))
 
+(use-package git-gutter
+  :demand t
+  :init
+  (defun md/maybe-git-gutter-mode ()
+    "Unless file is too big, enter git-gutter mode (when in git dir)"
+    (interactive)
+    (when (and (< (count-lines (point-min) (point-max)) 1500)
+               (not (eq major-mode 'org-mode)))
+      (if (string= "git" (downcase (format "%s" (vc-backend
+                                                 (buffer-file-name
+                                                  (current-buffer))))))
+          (git-gutter-mode 1))))
+  (add-hook 'find-file-hook 'md/maybe-git-gutter-mode)
+
+  :custom
+  (git-gutter:ask-p nil "Don't ask for confirmation of gadd")
+  (git-gutter:modified-sign "~" "Use format I initially got used to in the vim version")
+  (git-gutter:added-sign "+")
+  (git-gutter:deleted-sign "-")
+  (git-gutter:unchanged-sign " ")
+  (git-gutter:always-show-separator t)
+  (git-gutter:separator-sign " " "Ensure there's some space between the gutter column and the code")
+
+  :md/bind ((:map (md/leader-map)
+                  ("g <RET>" . git-gutter-mode)
+                  ("gk" . git-gutter:previous-hunk)
+                  ("gp" . git-gutter:previous-hunk)
+                  ("gj" . git-gutter:next-hunk)
+                  ("gn" . git-gutter:next-hunk)
+                  ("g+" . git-gutter:stage-hunk)
+                  ("g-" . git-gutter:revert-hunk))))
+
 (use-package shell-maker
   :straight (:host github :repo "xenodium/chatgpt-shell" :files ("shell-maker.el")))
 

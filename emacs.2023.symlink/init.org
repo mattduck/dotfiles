@@ -2343,6 +2343,45 @@ to save or quit.
   (global-git-commit-mode 1))
 #+end_src
 
+* [[https://github.com/emacsorphanage/git-gutter][git-gutter]]
+
+~git-gutter~ shows a +/-/~ symbol in a gutter on the left of the buffer. I got
+used to this back when I was using vim and found it very helpful.
+
+#+begin_src emacs-lisp
+(use-package git-gutter
+  :demand t
+  :init
+  (defun md/maybe-git-gutter-mode ()
+    "Unless file is too big, enter git-gutter mode (when in git dir)"
+    (interactive)
+    (when (and (< (count-lines (point-min) (point-max)) 1500)
+               (not (eq major-mode 'org-mode)))
+      (if (string= "git" (downcase (format "%s" (vc-backend
+                                                 (buffer-file-name
+                                                  (current-buffer))))))
+          (git-gutter-mode 1))))
+  (add-hook 'find-file-hook 'md/maybe-git-gutter-mode)
+
+  :custom
+  (git-gutter:ask-p nil "Don't ask for confirmation of gadd")
+  (git-gutter:modified-sign "~" "Use format I initially got used to in the vim version")
+  (git-gutter:added-sign "+")
+  (git-gutter:deleted-sign "-")
+  (git-gutter:unchanged-sign " ")
+  (git-gutter:always-show-separator t)
+  (git-gutter:separator-sign " " "Ensure there's some space between the gutter column and the code")
+
+  :md/bind ((:map (md/leader-map)
+                  ("g <RET>" . git-gutter-mode)
+                  ("gk" . git-gutter:previous-hunk)
+                  ("gp" . git-gutter:previous-hunk)
+                  ("gj" . git-gutter:next-hunk)
+                  ("gn" . git-gutter:next-hunk)
+                  ("g+" . git-gutter:stage-hunk)
+                  ("g-" . git-gutter:revert-hunk))))
+#+end_src
+
 * [[https://github.com/xenodium/chatgpt-shell][chatgpt-shell]]
 
 [2023-08-23] Alvaro's excellent package for interacting with the OpenAI API. We
@@ -2369,7 +2408,7 @@ first ensure ~shell-maker~ exists manually, which is mentioned in the
 
 * [[https://github.com/jaypei/emacs-neotree][Neotree]]
 
-[2023-09-17] Neotree provides a file/directory tree buffer. 
+[2023-09-17] Neotree provides a file/directory tree buffer.
 
 #+begin_src emacs-lisp
 (use-package neotree
