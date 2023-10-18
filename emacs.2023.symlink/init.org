@@ -2313,6 +2313,12 @@ and theme variables.
   (progn
     (add-hook 'before-save-hook 'gofmt-before-save)))
 #+END_SRC
+* [[https://github.com/davazp/graphql-mode][graphql-mode]]
+
+#+begin_src emacs-lisp
+(use-package graphql-mode)
+#+end_src
+
 * [[https://github.com/magit/magit/blob/main/lisp/git-commit.el][git-commit]]
 
 The ~git-commit~ package is part of ~magit~ (which I otherwise don't use

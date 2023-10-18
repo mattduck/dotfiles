@@ -1940,6 +1940,8 @@ slot/window-level thing, not buffer-level."
   (progn
     (add-hook 'before-save-hook 'gofmt-before-save)))
 
+(use-package graphql-mode)
+
 (use-package git-commit
   :demand t
   :config
