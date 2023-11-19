@@ -92,6 +92,16 @@ able to configure monitors, even if something breaks later in the file.
 
 #+END_SRC
 
+** Compat fix
+
+[2023-11-19] I'm not sure what's happening exactly but compat-string-width is
+expected to exist by consult, but doesn't. Defining it here early as a workaround.
+
+#+begin_src emacs-lisp
+(defun compat-string-width (STRING &optional FROM TO)
+  (string-width STRING FROM TO))
+#+end_src
+
 * [[https://github.com/radian-software/straight.el][Straight]] and [[https://github.com/jwiegley/use-package][use-package]]
 :PROPERTIES:
 :LAST_REVIEWED: [2023-06-02 Fri]
@@ -2438,6 +2448,21 @@ first ensure ~shell-maker~ exists manually, which is mentioned in the
                   ("L" . neotree-change-root)
                   ("h" . neotree-enter)
                   ("l" . neotree-enter))))
+#+end_src
+
+* [[https://magit.vc/][Magit]]
+
+#+begin_src emacs-lisp
+(use-package magit
+  :config
+  (add-hook 'magit-blame-mode-hook 'evil-normal-state)
+  :md/bind ((:map (md/leader-map)
+                  ("gb" . magit-blame))
+            (:map (magit-blame-mode-map . normal)
+                  ("RET" . magit-show-commit)
+                  ("q" . magit-blame-quit)
+                  ("gn" . magit-blame-next-chunk)
+                  ("gk" . magit-blame-previous-chunk))))
 #+end_src
 
 * Server

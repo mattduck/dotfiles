@@ -60,6 +60,9 @@ use it to compile the file"
          "--output" (match-string 1) "--auto" "--same-as" default-output)
         (setq exwm-randr-workspace-output-plist (list 0 default-output))))))
 
+(defun compat-string-width (STRING &optional FROM TO)
+  (string-width STRING FROM TO))
+
 (defvar straight-bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -2032,6 +2035,17 @@ slot/window-level thing, not buffer-level."
                   ("L" . neotree-change-root)
                   ("h" . neotree-enter)
                   ("l" . neotree-enter))))
+
+(use-package magit
+  :config
+  (add-hook 'magit-blame-mode-hook 'evil-normal-state)
+  :md/bind ((:map (md/leader-map)
+                  ("gb" . magit-blame))
+            (:map (magit-blame-mode-map . normal)
+                  ("RET" . magit-show-commit)
+                  ("q" . magit-blame-quit)
+                  ("gn" . magit-blame-next-chunk)
+                  ("gk" . magit-blame-previous-chunk))))
 
 (use-package server
   :config (when (not (server-running-p))
