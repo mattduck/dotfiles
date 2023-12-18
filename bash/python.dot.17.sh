@@ -17,17 +17,17 @@ export VIRTUALENVWRAPPER_HOOK_DIR="$DOTFILES/virtualenvwrapper_hooks"
 export WORKON_HOME=$HOME/.virtualenvs
 mkdir -p "$WORKON_HOME"
 
-VENV_WRAPPER_SCRIPT= $(which virtualenvwrapper.sh)
+VENV_WRAPPER_SCRIPT=$(which virtualenvwrapper.sh)
 if [ ! -z "$VENV_WRAPPER_SCRIPT" ]; then source "$VENV_WRAPPER_SCRIPT"; fi
 
 # Virtualenv workflow:
 # - Use pyenv to install python versions, but don't use the provided shims.
 # - Use mkvirtualenv to make venvs with a specific pyenv version.
 if [ $(command -v pyenv) ]; then
-    alias ,pymk2="mkvirtualenv -p $(pyenv which python2)"
-    alias ,pymk3="mkvirtualenv -p $(pyenv which python3)"
-    alias ,pymktmp2="mktmpenv -p $(pyenv which python2)"
-    alias ,pymktmp3="mktmpenv -p $(pyenv which python3)"
+    alias ,pymk2='mkvirtualenv -p $(pyenv which python2)'
+    alias ,pymk3='mkvirtualenv -p $(pyenv which python3)'
+    alias ,pymktmp2='mktmpenv -p $(pyenv which python2)'
+    alias ,pymktmp3='mktmpenv -p $(pyenv which python3)'
 fi
 
 function ,pypath {
