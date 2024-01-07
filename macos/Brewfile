@@ -27,6 +27,7 @@ brew 'go'
 brew 'graphviz'  # Provides dot etc.
 brew 'htop'
 brew 'imagemagick'
+brew 'jq'
 brew 'libgccjit'  # For Emacs native compilation
 brew 'libtool'  # For Emacs' vterm
 brew 'ncdu'
