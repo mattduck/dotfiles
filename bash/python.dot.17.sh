@@ -81,3 +81,10 @@ function ,pycrm() {
     find "$@" -type f -name '*.pyc' -print0 | xargs -0 rm
     find "$@" -type d -iname '__pycache__' -print0 | xargs -0 rm -r
 }
+
+function ,pydebug() {
+    # Prepare terminal to be a pudb debugger. See https://documen.tician.de/pudb/starting.html
+    echo "Set PUDB_TTY:"
+    echo "export PUDB_TTY=$(tty)" 
+    perl -MPOSIX -e pause
+}
