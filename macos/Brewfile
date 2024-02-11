@@ -39,7 +39,7 @@ brew 'ripgrep'
 brew 'sbcl'
 brew 'tig'
 brew 'tokei'
-brew 'tmux'
+brew 'tmux', args: ["HEAD"]  # From head to get terminal links working, no release cut since 3.3a in June 2022
 brew 'tree'
 brew 'wget'
 
