@@ -2465,6 +2465,33 @@ first ensure ~shell-maker~ exists manually, which is mentioned in the
                   ("gk" . magit-blame-previous-chunk))))
 #+end_src
 
+
+* Treesit
+
+[2024-02-26] Start use treesitter for syntax highlighting and other features
+that make use of the AST.
+
+#+begin_src emacs-lisp
+(use-package treesit
+  :straight nil
+  :config
+  (defun md/treesit-install-all-languages ()
+    "From https://www.masteringemacs.org/article/how-to-get-started-tree-sitter"
+    (interactive)
+    (mapc #'treesit-install-language-grammar (mapcar #'car treesit-language-source-alist)))
+
+  :custom
+  (treesit-language-source-alist
+   '((python "https://github.com/tree-sitter/tree-sitter-python"))
+   "The treesitter grammars to use")
+
+  (major-mode-remap-alist
+   '((python-mode . python-ts-mode))
+   "Introduced in Emacs 29, presumably to support treesitter")
+
+  (treesit-font-lock-level 4)) 
+#+end_src
+
 * Server
 
 Always run the server so I can use emacsclient as my terminal editor.

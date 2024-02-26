@@ -2047,6 +2047,25 @@ slot/window-level thing, not buffer-level."
                   ("gn" . magit-blame-next-chunk)
                   ("gk" . magit-blame-previous-chunk))))
 
+(use-package treesit
+  :straight nil
+  :config
+  (defun md/treesit-install-all-languages ()
+    "From https://www.masteringemacs.org/article/how-to-get-started-tree-sitter"
+    (interactive)
+    (mapc #'treesit-install-language-grammar (mapcar #'car treesit-language-source-alist)))
+
+  :custom
+  (treesit-language-source-alist
+   '((python "https://github.com/tree-sitter/tree-sitter-python"))
+   "The treesitter grammars to use")
+
+  (major-mode-remap-alist
+   '((python-mode . python-ts-mode))
+   "Introduced in Emacs 29, presumably to support treesitter")
+
+  (treesit-font-lock-level 4))
+
 (use-package server
   :config (when (not (server-running-p))
             (server-start)))

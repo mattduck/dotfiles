@@ -17,6 +17,7 @@ emacs.*.symlink/bookmarks
 emacs.*.symlink/chatgpt
 emacs.*.symlink/custom.el
 emacs.*.symlink/datadog.el
+emacs.*.symlink/devdocs
 emacs.*.symlink/dogapi-credentials
 emacs.*.symlink/ede-projects.el
 emacs.*.symlink/eln-cache/
@@ -43,6 +44,7 @@ emacs.*.symlink/request/
 emacs.*.symlink/straight/
 emacs.*.symlink/tramp
 emacs.*.symlink/transient
+emacs.*.symlink/tree-sitter
 emacs.*.symlink/tutorial
 emacs.*.symlink/url
 ipython.symlink/*
