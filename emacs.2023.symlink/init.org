@@ -2503,8 +2503,11 @@ symbols.
 #+begin_src emacs-lisp
 (use-package eglot
   :straight nil ;; Use the builtin version, don't download
-  :custom
-  (eglot-stay-out-of '(eldoc flymake) "These make too much noise -- disable by default")
+  :config
+  ;; These make too much noise -- disable by default. For some reason this doesn't get picked
+  ;; up setting via :custom, so we do it with setq.
+  (setq eglot-stay-out-of '(eldoc flymake))
+
   :md/bind ((:map (md/leader-map)
                   ("ll" . eglot)
                   ("lL" . eglot-shutdown))))

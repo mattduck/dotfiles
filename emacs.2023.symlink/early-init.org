@@ -1,5 +1,6 @@
-# -*- mode:org; org-confirm-babel-evaluate: nil -*-
+# -*- mode:org; org-confirm-babel-evaluate: nil; org-time-stamp-formats: ("%Y-%m-%d" . "%Y-%m-%d %H:%M") -*-
 #+TITLE: early-init.org
+#+PROPERTY: header-args :results none
 
 This file contains anything that I want to run before the main ~init.el~.
 
@@ -103,11 +104,12 @@ instead of the default mode line:
 
 #+begin_src emacs-lisp
 ;; Want this to apply to first buffer - a very basic modeline
-(setq-default mode-line-format
-      `("    %b"
-       ,(let ((p (and (fboundp 'project-current) (project-current))))
-         (when p
-           (format " [%s]" (project-name (project-current)))))))
+(setq-default
+ mode-line-format
+ '("    %b"
+   (:eval (let ((p (and (fboundp 'project-current) (project-current))))
+            (when p
+              (format " [%s]" (project-name (project-current))))))))
 #+end_src
 
 * End
