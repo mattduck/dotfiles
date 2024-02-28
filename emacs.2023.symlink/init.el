@@ -2104,6 +2104,14 @@ slot/window-level thing, not buffer-level."
 
   (treesit-font-lock-level 4))
 
+(use-package rainbow-mode
+  :hook
+  ((css-mode . rainbow-mode)
+   (help-mode . rainbow-mode)
+   (html-mode . rainbow-mode))
+  :bind (:map md/leader-map
+              ("tr" . rainbow-mode)))
+
 (use-package server
   :config (when (not (server-running-p))
             (server-start)))

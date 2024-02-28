@@ -2544,6 +2544,18 @@ that make use of the AST.
   (treesit-font-lock-level 4))
 #+end_src
 
+* [[https://github.com/emacsmirror/rainbow-mode][rainbow-mode]]
+
+#+begin_src emacs-lisp
+(use-package rainbow-mode
+  :hook
+  ((css-mode . rainbow-mode)
+   (help-mode . rainbow-mode)
+   (html-mode . rainbow-mode))
+  :bind (:map md/leader-map
+              ("tr" . rainbow-mode)))
+#+end_src
+
 * Server
 
 Always run the server so I can use emacsclient as my terminal editor.
