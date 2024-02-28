@@ -1711,6 +1711,7 @@ delete-other-windows into a no-op, and then restore once the org function has ex
   (marginalia-mode 1))
 
 (use-package consult
+  :after (evil)
   :init
   (defun md/list-applications ()
     "List applications installed in /usr/share. Linux only."
@@ -1725,7 +1726,8 @@ delete-other-windows into a no-op, and then restore once the org function has ex
     (shell-command (concat "gtk-launch " program-name " >/dev/null 2>&1 & disown") nil nil))
 
   (defun md/consult-launch ()
-    "Alfred-like task launcher - type the program name and run it from within Emacs. I use this to start programs with exwm."
+    "Alfred-like task launcher - type the program name and run it from within
+    Emacs. I use this to start programs with exwm."
     (interactive)
     (consult--read
      (md/list-applications)
@@ -1735,6 +1737,18 @@ delete-other-windows into a no-op, and then restore once the org function has ex
               (when (and cand (eq action 'return))
                 (md/gtk-launch cand)))))
 
+  ;; [2024-02-28] Use consult to improve C-o -- taken from
+  ;; https://github.com/emacs-evil/evil-collection/blob/master/modes/consult/evil-collection-consult.el
+  (defun evil-collection-consult-jump-list ()
+    "Jump to a position in the evil jump list."
+    (interactive)
+    (consult-global-mark
+     (delq nil (mapcar (lambda (jump)
+                         (let ((mark (car jump)))
+                           (when (markerp mark)
+                             mark)))
+                       (ring-elements (evil--jumps-get-window-jump-list))))))
+
   :config
 
   (consult-customize
@@ -1743,11 +1757,13 @@ delete-other-windows into a no-op, and then restore once the org function has ex
 
   ;; Populate an initial value for consult-line, as this doesn't happen by default
   ;; consult-line :initial (thing-at-point 'symbol))
-
   :md/bind ((:map (md/leader-map)
                   ("p" . consult-buffer)
                   ("jp" . consult-project-buffer)  ; project-file-file just works by default, this is separate
-                  ("/" . consult-line))))
+                  ("r" . consult-ripgrep)
+                  ("/" . consult-line))
+            (:map (global-map . normal)
+                  ("C-o" . evil-collection-consult-jump-list))))
 
 (use-package xclip
   :config
