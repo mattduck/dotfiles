@@ -1768,8 +1768,9 @@ delete-other-windows into a no-op, and then restore once the org function has ex
   :md/bind ((:map (md/leader-map)
                   ("p" . consult-buffer)
                   ("jp" . consult-project-buffer)  ; project-file-file just works by default, this is separate
-                  ("r" . consult-ripgrep)
-                  ("/" . consult-line))
+                  ("/" . consult-line)
+                  ("j/" . consult-ripgrep)
+                  ("." . consult-imenu)) ; See eglot section for consult-eglot-symbols, bound to j.
             (:map (global-map . normal)
                   ("C-o" . evil-collection-consult-jump-list))))
 
@@ -2070,6 +2071,16 @@ slot/window-level thing, not buffer-level."
                   ("q" . magit-blame-quit)
                   ("gn" . magit-blame-next-chunk)
                   ("gk" . magit-blame-previous-chunk))))
+
+(use-package eglot
+  :straight nil ;; Use the builtin version, don't download
+  :custom
+  (eglot-stay-out-of '(eldoc flymake) "These make too much noise -- disable by default"))
+
+(use-package consult-eglot
+  :after (consult eglot)
+  :md/bind ((:map (md/leader-map)
+              ("j ." . consult-eglot-symbols))))
 
 (use-package treesit
   :straight nil

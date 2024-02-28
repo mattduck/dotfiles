@@ -2089,8 +2089,9 @@ example, a buffer-switching command similar to
   :md/bind ((:map (md/leader-map)
                   ("p" . consult-buffer)
                   ("jp" . consult-project-buffer)  ; project-file-file just works by default, this is separate
-                  ("r" . consult-ripgrep)
-                  ("/" . consult-line))
+                  ("/" . consult-line)
+                  ("j/" . consult-ripgrep)
+                  ("." . consult-imenu)) ; See eglot section for consult-eglot-symbols, bound to j.
             (:map (global-map . normal)
                   ("C-o" . evil-collection-consult-jump-list))))
 #+end_src
@@ -2487,6 +2488,31 @@ first ensure ~shell-maker~ exists manually, which is mentioned in the
                   ("q" . magit-blame-quit)
                   ("gn" . magit-blame-next-chunk)
                   ("gk" . magit-blame-previous-chunk))))
+#+end_src
+
+* Eglot
+
+Very basic eglot setup -- I mostly just use this for searching and jumping to
+symbols.
+
+#+begin_src emacs-lisp
+(use-package eglot
+  :straight nil ;; Use the builtin version, don't download
+  :custom
+  (eglot-stay-out-of '(eldoc flymake) "These make too much noise -- disable by default"))
+#+end_src
+
+** [[https://github.com/mohkale/consult-eglot][consult-eglot]]
+
+[2024-02-28] Useful package providing a consult interface for the
+~workspace/symbols~ lsp call. This just provides one command --
+~consult-eglot-symbols~.
+
+#+begin_src emacs-lisp
+(use-package consult-eglot
+  :after (consult eglot)
+  :md/bind ((:map (md/leader-map)
+              ("j ." . consult-eglot-symbols))))
 #+end_src
 
 * Treesit
