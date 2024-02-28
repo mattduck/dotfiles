@@ -740,7 +740,7 @@ Uses consult-theme if available.
             (:map (md/leader-map)
                   ("q" . md/evil-fill)
                   ("Q" . md/evil-unfill)
-                  ("cc" . comment-or-uncomment-region))
+                  ("c" . comment-or-uncomment-region))
             ;; The *Warnings* buffer loads in normal mode, and I want to be able to quit
             ;; it easily
             (:map (special-mode-map . normal)
@@ -2075,7 +2075,10 @@ slot/window-level thing, not buffer-level."
 (use-package eglot
   :straight nil ;; Use the builtin version, don't download
   :custom
-  (eglot-stay-out-of '(eldoc flymake) "These make too much noise -- disable by default"))
+  (eglot-stay-out-of '(eldoc flymake) "These make too much noise -- disable by default")
+  :md/bind ((:map (md/leader-map)
+                  ("ll" . eglot)
+                  ("lL" . eglot-shutdown))))
 
 (use-package consult-eglot
   :after (consult eglot)
