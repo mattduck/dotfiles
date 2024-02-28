@@ -30,6 +30,9 @@ if [ $(command -v pyenv) ]; then
     alias ,pymktmp3='mktmpenv -p $(pyenv which python3)'
 fi
 
+# [2024-02-12] pipx on macos uses this path
+,path /Users/matt/.local/bin
+
 function ,pypath {
     # usage: ,pypath [--prepend] [<directories>]
     #
