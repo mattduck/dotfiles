@@ -103,7 +103,11 @@ instead of the default mode line:
 
 #+begin_src emacs-lisp
 ;; Want this to apply to first buffer - a very basic modeline
-(setq-default mode-line-format "    %b")
+(setq mode-line-format
+      `("    %b"
+       ,(let ((p (and (fboundp 'project-current) (project-current))))
+         (when p
+           (format " [%s]" (project-name (project-current)))))))
 #+end_src
 
 * End
