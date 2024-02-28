@@ -62,7 +62,7 @@ Calling this will delete the file, causing i3 to load next time."
 (md/set-default-font)
 
 ;; Want this to apply to first buffer - a very basic modeline
-(setq mode-line-format
+(setq-default mode-line-format
       `("    %b"
        ,(let ((p (and (fboundp 'project-current) (project-current))))
          (when p
