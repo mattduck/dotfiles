@@ -2112,6 +2112,8 @@ slot/window-level thing, not buffer-level."
   :bind (:map md/leader-map
               ("tr" . rainbow-mode)))
 
+(use-package terraform-mode)
+
 (use-package server
   :config (when (not (server-running-p))
             (server-start)))

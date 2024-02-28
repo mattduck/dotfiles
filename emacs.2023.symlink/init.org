@@ -2556,6 +2556,14 @@ that make use of the AST.
               ("tr" . rainbow-mode)))
 #+end_src
 
+* [[https://github.com/hcl-emacs/terraform-mode][terraform-mode]]
+
+I just use this to get basic syntax highlighting.
+
+#+begin_src emacs-lisp
+(use-package terraform-mode)
+#+end_src
+
 * Server
 
 Always run the server so I can use emacsclient as my terminal editor.
