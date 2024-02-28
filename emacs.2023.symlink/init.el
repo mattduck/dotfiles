@@ -1775,9 +1775,14 @@ delete-other-windows into a no-op, and then restore once the org function has ex
                   ("j/" . consult-ripgrep)
                   ("." . consult-imenu)) ; See eglot section for consult-eglot-symbols, bound to j.
             (:map (global-map . normal)
-                  ("C-o" . evil-collection-consult-jump-list)))
+                  ("C-o" . evil-collection-consult-jump-list))
+            (:map (consult-narrow-map)
+                  ;; This shows the support "narrow" keys for this completion
+                  ("?" . consult-narrow-help)))
 
-    :custom (completion-in-region-function 'consult-completion-in-region "Use consult for completion"))
+  :custom
+  (completion-in-region-function 'consult-completion-in-region "Use consult for completion")
+  (consult-narrow-key "<" "Used to narrow results to a particular type, eg. functions, files"))
 
 (use-package xclip
   :config
@@ -2087,6 +2092,10 @@ slot/window-level thing, not buffer-level."
   ;; These make too much noise -- disable by default. For some reason this doesn't get picked
   ;; up setting via :custom, so we do it with setq.
   (setq eglot-stay-out-of '(eldoc flymake))
+
+  ;; Changes supposed to help with performance
+  (fset #'jsonrpc--log-event #'ignore)
+  (setq eglot-events-buffer-size 0)
 
   :md/bind ((:map (md/leader-map)
                   ("ll" . eglot)

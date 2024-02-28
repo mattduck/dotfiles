@@ -2096,9 +2096,14 @@ example, a buffer-switching command similar to
                   ("j/" . consult-ripgrep)
                   ("." . consult-imenu)) ; See eglot section for consult-eglot-symbols, bound to j.
             (:map (global-map . normal)
-                  ("C-o" . evil-collection-consult-jump-list)))
+                  ("C-o" . evil-collection-consult-jump-list))
+            (:map (consult-narrow-map)
+                  ;; This shows the support "narrow" keys for this completion
+                  ("?" . consult-narrow-help)))
 
-    :custom (completion-in-region-function 'consult-completion-in-region "Use consult for completion"))
+  :custom
+  (completion-in-region-function 'consult-completion-in-region "Use consult for completion")
+  (consult-narrow-key "<" "Used to narrow results to a particular type, eg. functions, files"))
 #+end_src
 
 * [[https://elpa.gnu.org/packages/xclip.html][xclip]]
@@ -2511,6 +2516,10 @@ symbols.
   ;; These make too much noise -- disable by default. For some reason this doesn't get picked
   ;; up setting via :custom, so we do it with setq.
   (setq eglot-stay-out-of '(eldoc flymake))
+
+  ;; Changes supposed to help with performance
+  (fset #'jsonrpc--log-event #'ignore)
+  (setq eglot-events-buffer-size 0)
 
   :md/bind ((:map (md/leader-map)
                   ("ll" . eglot)
