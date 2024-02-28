@@ -583,7 +583,7 @@ Uses consult-theme if available.
   (display-buffer-alist
    `(("\\*shell"
       (display-buffer-reuse-window display-buffer-same-window))
-     ("*\\(help\\|Help\\|Messages\\|Warnings\\|Compile-\\)"
+     ("*\\(help\\|Help\\|Messages\\|Warnings\\|Compile-\\|chatgpt\\)"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
       (window-height . 0.33))
@@ -2042,7 +2042,11 @@ slot/window-level thing, not buffer-level."
      ;; NOTE: if this isn't working remember that auth-source-do-cache controls auth-source caching
      (auth-source-pick-first-password :host "api.openai.com"))
    "API credentials")
-  (chatgpt-shell-model-version "gpt-4"))
+  (chatgpt-shell-model-version "gpt-4")
+  :md/bind ((:map (md/leader-map)
+               ("G" . chatgpt-shell))
+         (:map (chatgpt-shell-mode-map . normal)
+               ("q" . quit-window))))
 
 (use-package neotree
   :demand t
