@@ -717,6 +717,10 @@ Uses consult-theme if available.
                   ("," . evil-repeat-find-char))
             ;; Like in the terminal. Mainly useful in minibuffer
             (:map (evil-insert-state-map)
+                  ;; Use this instead of the default evil-complete-next, as
+                  ;; completion-at-point integrates with consult etc. by default.
+                  ("C-n" . completion-at-point)
+                  ;; Emacs movement
                   ("C-a" . move-beginning-of-line)
                   ("C-e" . move-end-of-line))
             (:map (evil-visual-state-map)
@@ -1758,7 +1762,6 @@ delete-other-windows into a no-op, and then restore once the org function has ex
                        (ring-elements (evil--jumps-get-window-jump-list))))))
 
   :config
-
   (consult-customize
    ;; Disable preview when switching buffers
    consult-buffer :preview-key nil)
@@ -1772,7 +1775,9 @@ delete-other-windows into a no-op, and then restore once the org function has ex
                   ("j/" . consult-ripgrep)
                   ("." . consult-imenu)) ; See eglot section for consult-eglot-symbols, bound to j.
             (:map (global-map . normal)
-                  ("C-o" . evil-collection-consult-jump-list))))
+                  ("C-o" . evil-collection-consult-jump-list)))
+
+    :custom (completion-in-region-function 'consult-completion-in-region "Use consult for completion"))
 
 (use-package xclip
   :config
