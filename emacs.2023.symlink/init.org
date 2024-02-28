@@ -474,28 +474,24 @@ echos results in the minibuffer. Only works on linux."
     (funcall-interactively 'replace-string "\\n" "
  " nil (region-beginning) (region-end)))
 
-  (defun md/noop ()
-    "No-op function that I sometimes use to nullify bindings in keymaps."
-    (interactive))
-
   (defun md/make-keymap-noop (kmap)
     "Overwrite bindings on a given keymap to perform a noop function.  There
 might be a better way to do this (eg. unset the binding) but I've had this code
 for ages and it seems to work."
     (mapc (lambda (key)
-            (bind-key key 'md/noop kmap)
-            (bind-key (concat "C-" key) 'md/noop kmap)
-            (bind-key (concat "M-" key) 'md/noop kmap)
-            (bind-key (concat "C-M-" key) 'md/noop kmap)
-            (bind-key (capitalize key) 'md/noop kmap)
-            (bind-key (concat "C-" (capitalize key)) 'md/noop kmap)
-            (bind-key (concat "M-" (capitalize key)) 'md/noop kmap)
-            (bind-key (concat "C-M-" (capitalize key)) 'md/noop kmap))
+            (bind-key key 'ignore kmap)
+            (bind-key (concat "C-" key) 'ignore kmap)
+            (bind-key (concat "M-" key) 'ignore kmap)
+            (bind-key (concat "C-M-" key) 'ignore kmap)
+            (bind-key (capitalize key) 'ignore kmap)
+            (bind-key (concat "C-" (capitalize key)) 'ignore kmap)
+            (bind-key (concat "M-" (capitalize key)) 'ignore kmap)
+            (bind-key (concat "C-M-" (capitalize key)) 'ignore kmap))
           '("a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r"
             "s" "t" "u" "v" "w" "x" "y" "z"
             "1" "2" "3" "4" "5" "6" "7" "8" "9" "0"))
     (mapc (lambda (key)
-            (bind-key key 'md/noop kmap))
+            (bind-key key 'ignore kmap))
           '("SPC" "TAB")))
 
   (defun md/insert-blank-line-before ()
@@ -1181,7 +1177,7 @@ of the focus switch away from the original buffer to the vertico/helm buffer and
     (org-toggle-link-display)
     (org-restart-font-lock))
 
-  (defadvice org-list-struct-fix-box (around md/noop last activate)
+  (defadvice org-list-struct-fix-box (around ignore last activate)
     "Turn org-list-struct-fix-box into a no-op.
 
 [2023-08-23]: By default, if an org list item is checked using the square-bracket
@@ -1414,15 +1410,15 @@ that I want to inline and redefine myself. So instead we have this hacky
 dual-advice approach: this advice will create temporary advice to turn
 delete-other-windows into a no-op, and then restore once the org function has exited."
     (advice-add 'delete-other-windows :override
-                'md/noop
-                '((name . "md/noop")))
+                'ignore
+                '((name . "ignore")))
     (let ((result (condition-case nil
                       (apply fn args)
                     (t nil))))
-      (advice-remove 'delete-other-windows "md/noop")
+      (advice-remove 'delete-other-windows "ignore")
       result))
-  (advice-add 'org-agenda-get-restriction-and-command :around 'md/advice-suppress-delete-other-windows '((name . "md/noop")))
-  (advice-add 'org-capture :around 'md/advice-suppress-delete-other-windows '((name . "md/noop")))
+  (advice-add 'org-agenda-get-restriction-and-command :around 'md/advice-suppress-delete-other-windows '((name . "ignore")))
+  (advice-add 'org-capture :around 'md/advice-suppress-delete-other-windows '((name . "ignore")))
 
   :config
   ;; When org-agenda loads I want to be able to use j/k etc for navigation like any buffer.
@@ -1994,7 +1990,7 @@ I've used previously for this kind of fzf selection feature.
   :demand t
   :after (evil)
   :custom
-  (vertico-count 10 "Items displayed, defaults to 10")
+  (vertico-count 7 "Items displayed, defaults to 10")
   :config
   (vertico-mode 1)
   :md/bind ((:map (vertico-map)
