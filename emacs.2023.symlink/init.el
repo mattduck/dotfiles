@@ -1708,7 +1708,10 @@ delete-other-windows into a no-op, and then restore once the org function has ex
   :md/bind ((:map (vertico-map)
               ;; Make C-l and C-j behave similar to what I'm used to from my Helm setup
               ("C-l" . vertico-insert)
-              ("C-j" . evil-delete-backward-word))))
+              ("C-j" . evil-delete-backward-word)
+              ;; If the output is grouped, I can use this to cycle the groups. This is easier
+              ;; than using consult narrowing.
+              ("C-k" . vertico-next-group))))
 
 (use-package orderless
   :demand t
@@ -1782,7 +1785,8 @@ delete-other-windows into a no-op, and then restore once the org function has ex
 
   :custom
   (completion-in-region-function 'consult-completion-in-region "Use consult for completion")
-  (consult-narrow-key "<" "Used to narrow results to a particular type, eg. functions, files"))
+  (consult-narrow-key "<" "Used to narrow results to a particular type, eg. functions, files")
+  (consult-async-min-input 1 "Run async commands like consult-eglot-symbols sooner than the default of 3 keys"))
 
 (use-package xclip
   :config
