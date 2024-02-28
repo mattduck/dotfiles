@@ -1714,7 +1714,9 @@ delete-other-windows into a no-op, and then restore once the org function has ex
 
 (use-package marginalia
   :config
-  (marginalia-mode 1))
+  (marginalia-mode 1)
+  :custom
+  (marginalia-field-width 160 "Increase the width from 80 to see more info"))
 
 (use-package consult
   :after (evil)
