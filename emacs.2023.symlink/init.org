@@ -385,16 +385,16 @@ it can result in extra latency."
     "Print info about the file in the minibuffer"
     (interactive)
     (message
-     "%s | %s lines | line %d:%d %3d%% | %s | %s"
+     "%s | %s %d:%d | %s lines | [%s]"
+     major-mode
      (buffer-file-name)
-     (count-lines (point-min) (point-max)) ; total
-     (count-lines (point-min) (point)) ; current
+     (array-current-line) ; current line
      (current-column) ; column
-     (/ (window-end) 0.01 (point-max)) ; line %
-     (if (boundp 'projectile-project-name)
-         (or projectile-project-name "[no project]")
-       "[no projectile]")
-     major-mode))
+     (count-lines (point-min) (point-max)) ; total lines
+     (let ((p (and (fboundp 'project-current) (project-current))))
+       (if p
+           (project-name p)
+       "no project"))))
 
   (defun md/toggle-debug-on-error ()
     "When enabled, this feature causes a debug buffer to pop up when there's an
@@ -950,6 +950,12 @@ in Emacs.
 
   :custom
   (evil-echo-state nil "Don't put insert/visual etc in minibuffer")
+  (evil-goto-definition-functions
+   '(evil-goto-definition-xref
+     evil-goto-definition-imenu
+     evil-goto-definition-semantic
+     evil-goto-definition-search)
+   "Prefer xref for jumping to definition, as this means we get the Eglot jump-to feature when enabled. By default this prefers imenu")
 
   :config
   ;; I keep accidentally quiting with :q. Just deleting the window is enough
