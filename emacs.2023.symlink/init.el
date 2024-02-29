@@ -2131,6 +2131,9 @@ slot/window-level thing, not buffer-level."
   (fset #'jsonrpc--log-event #'ignore)
   (setq eglot-events-buffer-size 0)
 
+  :custom
+  (eglot-report-progress nil "Eglot spams the minibuffer a lot on save -- this seems to keep it quieter")
+
   :md/bind ((:map (md/leader-map)
                   ("ll" . eglot)
                   ("lL" . eglot-shutdown))))
