@@ -644,11 +644,7 @@ Uses consult-theme if available.
              diff-auto-refine-mode
              file-name-shadow-mode
              global-magit-file-mode
-             mouse-wheel-mode
-             treemacs-filewatch-mode
-             treemacs-follow-mode
-             treemacs-git-mode
-             treemacs-fringe-indicator-mode))
+             mouse-wheel-mode))
     (when (fboundp this-minor-mode)
       (funcall this-minor-mode 0)))
 
@@ -872,7 +868,7 @@ in Emacs.
             (:map (md/leader-map)
                   ("q" . md/evil-fill)
                   ("Q" . md/evil-unfill)
-                  ("c" . comment-or-uncomment-region))
+                  ("cc" . comment-or-uncomment-region))
             ;; The *Warnings* buffer loads in normal mode, and I want to be able to quit
             ;; it easily
             (:map (special-mode-map . normal)
@@ -2000,7 +1996,7 @@ I've used previously for this kind of fzf selection feature.
               ;; If the output is grouped, I can use this to cycle the groups. This is easier
               ;; than using consult narrowing.
               ("C-k" . vertico-next-group))))
-  
+
 #+END_SRC
 
 *** [[https://github.com/oantolin/orderless][Orderless]]
@@ -2462,9 +2458,12 @@ first ensure ~shell-maker~ exists manually, which is mentioned in the
                ("q" . quit-window))))
 #+end_src
 
-* [[https://github.com/jaypei/emacs-neotree][Neotree]]
+* COMMENT [[https://github.com/jaypei/emacs-neotree][Neotree]]
 
 [2023-09-17] Neotree provides a file/directory tree buffer.
+
+[2024-02-29] Disabling this in favour of treemacs for now, for imenu
+integration.
 
 #+begin_src emacs-lisp
 (use-package neotree
@@ -2488,6 +2487,61 @@ first ensure ~shell-maker~ exists manually, which is mentioned in the
                   ("L" . neotree-change-root)
                   ("h" . neotree-enter)
                   ("l" . neotree-enter))))
+#+end_src
+
+* [[https://github.com/Alexander-Miller/treemacs][Treemacs]]
+
+The new(ish) treesit imenu integration is pretty useful, and Treemacs shows
+imenu nodes underneath files by default, so I'm switching to it over Neotree
+(which doesn't support imenu).
+
+#+begin_src emacs-lisp
+(use-package treemacs
+  :demand t
+  :init
+  (defun md/treemacs-mode-hook ()
+    ;; Treemacs seems to use this by default, and I can't see a way to disable it via variables.
+    (hl-line-mode -1)
+    ;; Don't follow current buffers
+    (treemacs-follow-mode -1))
+
+  :hook ((treemacs-mode . md/treemacs-mode-hook))
+
+  :custom
+  (treemacs-no-png-images t "Don't use icons, too noisy")
+  (treemacs-indentation 1 "Tree can get deep so use minimum indent")
+  (treemacs-space-between-root-nodes nil "Don't show newlines between projects")
+
+  :config
+  ;; Override the fallback icons. I ignore the :icon value here as I'm not using png icons.
+  (treemacs-modify-theme "Default"
+    :config
+    (progn
+      (treemacs-create-icon :icon "" :fallback "  " :extensions '(tag-leaf))
+      (treemacs-create-icon :icon "" :fallback "  " :extensions '(tag-open))
+      (treemacs-create-icon :icon "" :fallback "+ " :extensions '(tag-closed))))
+
+  (defun md/treemacs ()
+    "Setup some variables before running treemacs"
+    (interactive)
+    ;; Reduce the margin width to make better use of space.
+    (let ((left-margin-width 0))
+      (call-interactively 'treemacs)))
+
+  (defun md/treemacs-current-project ()
+    (interactive)
+    (call-interactively #'treemacs-add-and-display-current-project)
+    (call-interactively #'treemacs-collapse-other-projects))
+
+  :md/bind ((:map (md/leader-map)
+                  ("T" . md/treemacs)
+                  ("jT" . md/treemacs-current-project))
+            (:map (treemacs-mode-map . normal)
+                  ("l" . treemacs-TAB-action)
+                  ("h" . treemacs-TAB-action)
+                  ("r" . treemacs-refresh)
+                  ("M-k" . treemacs-move-project-up)
+                  ("M-j" . treemacs-move-project-down))))
 #+end_src
 
 * [[https://magit.vc/][Magit]]
@@ -2514,9 +2568,18 @@ symbols.
 (use-package eglot
   :straight nil ;; Use the builtin version, don't download
   :config
-  ;; These make too much noise -- disable by default. For some reason this doesn't get picked
-  ;; up setting via :custom, so we do it with setq.
-  (setq eglot-stay-out-of '(eldoc flymake))
+  ;; eldoc and flymake make too much noise -- disable by default.
+  ;;
+  ;; For imenu, the languages I'm initially using with eglot are using have imenu
+  ;; functions provided by treesit, which use labels like *class definition* and
+  ;; *function definition* to show the imenu results as a tree in the same order
+  ;; defined in the file. Eglot seems to instead break it into symbol types,
+  ;; which is much less useful. So we stick with the treesit implementation for now,
+  ;; and just use eglot for project-wide search etc.
+  ;;
+  ;; For some reason this doesn't get picked up setting via :custom, so we do it
+  ;; with setq.
+  (setq eglot-stay-out-of '(eldoc flymake imenu))
 
   ;; Changes supposed to help with performance
   (fset #'jsonrpc--log-event #'ignore)
@@ -2584,6 +2647,20 @@ I just use this to get basic syntax highlighting.
 
 #+begin_src emacs-lisp
 (use-package terraform-mode)
+#+end_src
+
+* python-mode
+
+#+begin_src emacs-lisp
+(use-package python
+  :config
+  (defun md/python-imenu-format-item-label (type name)
+    "Instead of the default format of eg. `my_function (def)`, use `def:
+myfunction`. This makes it easier to read."
+    (format "%s: %s" type name))
+  :custom
+  (python-imenu-format-item-label-function #'md/python-imenu-format-item-label)
+  (python-imenu-format-parent-item-label-function #'md/python-imenu-format-item-label))
 #+end_src
 
 * Server

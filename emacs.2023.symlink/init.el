@@ -543,11 +543,7 @@ Uses consult-theme if available.
              diff-auto-refine-mode
              file-name-shadow-mode
              global-magit-file-mode
-             mouse-wheel-mode
-             treemacs-filewatch-mode
-             treemacs-follow-mode
-             treemacs-git-mode
-             treemacs-fringe-indicator-mode))
+             mouse-wheel-mode))
     (when (fboundp this-minor-mode)
       (funcall this-minor-mode 0)))
 
@@ -740,7 +736,7 @@ Uses consult-theme if available.
             (:map (md/leader-map)
                   ("q" . md/evil-fill)
                   ("Q" . md/evil-unfill)
-                  ("c" . comment-or-uncomment-region))
+                  ("cc" . comment-or-uncomment-region))
             ;; The *Warnings* buffer loads in normal mode, and I want to be able to quit
             ;; it easily
             (:map (special-mode-map . normal)
@@ -2053,27 +2049,52 @@ slot/window-level thing, not buffer-level."
          (:map (chatgpt-shell-mode-map . normal)
                ("q" . quit-window))))
 
-(use-package neotree
+(use-package treemacs
   :demand t
+  :init
+  (defun md/treemacs-mode-hook ()
+    ;; Treemacs seems to use this by default, and I can't see a way to disable it via variables.
+    (hl-line-mode -1)
+    ;; Don't follow current buffers
+    (treemacs-follow-mode -1))
+
+  :hook ((treemacs-mode . md/treemacs-mode-hook))
+
   :custom
-  (neo-theme 'ascii)
-  (neo-smart-open t "Jump to the current node when Neotree is opened")
-  (neo-show-hidden-files t "Show hidden files in the tree")
+  (treemacs-no-png-images t "Don't use icons, too noisy")
+  (treemacs-indentation 1 "Tree can get deep so use minimum indent")
+  (treemacs-space-between-root-nodes nil "Don't show newlines between projects")
+
   :config
-  (evil-set-initial-state 'neotree-mode 'normal)
+  ;; Override the fallback icons. I ignore the :icon value here as I'm not using png icons.
+  (treemacs-modify-theme "Default"
+    :config
+    (progn
+      (treemacs-create-icon :icon "" :fallback "  " :extensions '(tag-leaf))
+      (treemacs-create-icon :icon "" :fallback "  " :extensions '(tag-open))
+      (treemacs-create-icon :icon "" :fallback "+ " :extensions '(tag-closed))))
+
+  (defun md/treemacs ()
+    "Setup some variables before running treemacs"
+    (interactive)
+    ;; Reduce the margin width to make better use of space.
+    (let ((left-margin-width 0))
+      (call-interactively 'treemacs)))
+
+  (defun md/treemacs-current-project ()
+    (interactive)
+    (call-interactively #'treemacs-add-and-display-current-project)
+    (call-interactively #'treemacs-collapse-other-projects))
+
   :md/bind ((:map (md/leader-map)
-                  ("N" . neotree-toggle))
-            (:map (neotree-mode-map . normal)
-                  ("J" . neotree-dir)
-                  ("q" . neotree-hide)
-                  ("r" . neotree-refresh)
-                  ("RET" . neotree-enter)
-                  ("TAB" . neotree-quick-look)
-                  ("'" . neotree-stretch-toggle)
-                  ("H" . neotree-select-up-node)
-                  ("L" . neotree-change-root)
-                  ("h" . neotree-enter)
-                  ("l" . neotree-enter))))
+                  ("T" . md/treemacs)
+                  ("jT" . md/treemacs-current-project))
+            (:map (treemacs-mode-map . normal)
+                  ("l" . treemacs-TAB-action)
+                  ("h" . treemacs-TAB-action)
+                  ("r" . treemacs-refresh)
+                  ("M-k" . treemacs-move-project-up)
+                  ("M-j" . treemacs-move-project-down))))
 
 (use-package magit
   :config
@@ -2089,9 +2110,18 @@ slot/window-level thing, not buffer-level."
 (use-package eglot
   :straight nil ;; Use the builtin version, don't download
   :config
-  ;; These make too much noise -- disable by default. For some reason this doesn't get picked
-  ;; up setting via :custom, so we do it with setq.
-  (setq eglot-stay-out-of '(eldoc flymake))
+  ;; eldoc and flymake make too much noise -- disable by default.
+  ;;
+  ;; For imenu, the languages I'm initially using with eglot are using have imenu
+  ;; functions provided by treesit, which use labels like *class definition* and
+  ;; *function definition* to show the imenu results as a tree in the same order
+  ;; defined in the file. Eglot seems to instead break it into symbol types,
+  ;; which is much less useful. So we stick with the treesit implementation for now,
+  ;; and just use eglot for project-wide search etc.
+  ;;
+  ;; For some reason this doesn't get picked up setting via :custom, so we do it
+  ;; with setq.
+  (setq eglot-stay-out-of '(eldoc flymake imenu))
 
   ;; Changes supposed to help with performance
   (fset #'jsonrpc--log-event #'ignore)
@@ -2134,6 +2164,16 @@ slot/window-level thing, not buffer-level."
               ("tr" . rainbow-mode)))
 
 (use-package terraform-mode)
+
+(use-package python
+  :config
+  (defun md/python-imenu-format-item-label (type name)
+    "Instead of the default format of eg. `my_function (def)`, use `def:
+myfunction`. This makes it easier to read."
+    (format "%s: %s" type name))
+  :custom
+  (python-imenu-format-item-label-function #'md/python-imenu-format-item-label)
+  (python-imenu-format-parent-item-label-function #'md/python-imenu-format-item-label))
 
 (use-package server
   :config (when (not (server-running-p))
