@@ -732,6 +732,7 @@ Uses consult-theme if available.
                   ("M-h" . evil-shift-left-line)
                   ("M-l" . evil-shift-right-line)
                   ("C-l" . evil-jump-forward) ;; See setting below - we use this instead of vim's default C-i
+                  ("gD" . xref-find-references)  ;; Like the opposite to gd, which goes to definition
                   ("SPC" . md/leader-map))
             (:map (md/leader-map)
                   ("q" . md/evil-fill)
@@ -1768,6 +1769,7 @@ delete-other-windows into a no-op, and then restore once the org function has ex
                   ("jp" . consult-project-buffer)  ; project-file-file just works by default, this is separate
                   ("/" . consult-line)
                   ("j/" . consult-ripgrep)
+                  ("j." . xref-find-apropos)
                   ("." . consult-imenu)) ; See eglot section for consult-eglot-symbols, bound to j.
             (:map (global-map . normal)
                   ("C-o" . evil-collection-consult-jump-list))
@@ -1776,7 +1778,9 @@ delete-other-windows into a no-op, and then restore once the org function has ex
                   ("?" . consult-narrow-help)))
 
   :custom
-  (completion-in-region-function 'consult-completion-in-region "Use consult for completion")
+  (completion-in-region-function #'consult-completion-in-region "Use consult for completion")
+  (xref-show-xrefs-function #'consult-xref "Use consult to show xrefs, ie. when looking for references to a symbol")
+  (xref-show-definitions-function #'consult-xref "Use consult to select xref definitions when there are more than one")
   (consult-narrow-key "<" "Used to narrow results to a particular type, eg. functions, files")
   (consult-async-min-input 1 "Run async commands like consult-eglot-symbols sooner than the default of 3 keys"))
 
@@ -2133,8 +2137,32 @@ slot/window-level thing, not buffer-level."
 
 (use-package consult-eglot
   :after (consult eglot)
+  :config
+
+  (defun md/consult-eglot-xref-dwim ()
+    "If eglot is enabled and managing xref, consult-eglot-symbols is
+similar to xref-find-apropos, because they both call :workspace/symbol on the
+language server. The main difference is that consult-eglot-symbols groups and
+lets you filter by symbol type, which can be useful if there are lots of
+matches. Xref-find-apropos groups by file and doesn't show the type of the
+symbol. I don't want to have to think about using both functions, so if
+consult-eglot-symbols works, we'll use that, otherwise we fall back to
+xref-find-apropos.
+
+This should catch cases both where eglot isn't running for a buffer, and also
+where the language server doesn't support the workspace/symbol call, in which
+case if another xref backend is available that will be used instead.
+
+If the eglot xref backend gets updated to provide more symbol-type-aware
+features, then I can get rid of this and just use xref."
+    (interactive)
+     (condition-case nil
+         (call-interactively #'consult-eglot-symbols)
+       (error
+        (call-interactively #'xref-find-apropos))))
+
   :md/bind ((:map (md/leader-map)
-              ("j ." . consult-eglot-symbols))))
+              ("j ." . md/consult-eglot-xref-dwim))))
 
 (use-package treesit
   :straight nil
