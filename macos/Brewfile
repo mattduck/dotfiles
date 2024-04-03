@@ -13,8 +13,8 @@ brew 'bat-extras'
 brew 'cmake'  # For Emacs' vterm
 brew 'coreutils'
 brew 'docker'
-brew 'emacs-plus@29', args: ["--with-xwidgets", "--with-imagemagick", "--with-native-comp", "--with-no-frame-refocus"]
-brew 'exa'
+brew 'emacs-plus@29', args: ["with-xwidgets", "with-imagemagick", "with-native-comp", "with-no-frame-refocus"]
+brew 'eza'  # ls alternative, swapped from exa which is now unmaintained
 brew 'fasd'
 brew 'fd'
 brew 'fzf'
@@ -42,6 +42,7 @@ brew 'tokei'
 brew 'tmux', args: ["HEAD"]  # From head to get terminal links working, no release cut since 3.3a in June 2022
 brew 'tree'
 brew 'wget'
+brew 'zoxide'
 
 # [2023-05-27 Sat] Actually need to manually pin this at 2.4.0
 # for now - see https://www.reddit.com/r/emacs/comments/137r7j7/gnupg_241_encryption_issues_with_emacs_orgmode/

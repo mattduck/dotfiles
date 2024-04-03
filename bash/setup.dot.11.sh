@@ -54,11 +54,11 @@ if [ $(command -v bat) ]; then
     alias batg='BAT_STYLE=grid,header,changes,numbers batgrep -p'
 fi
 
-# Use exa instead of ls if installed
-if [ $(command -v exa) ]; then
-    alias ls="exa"
-    alias l="exa -l"
-    alias ll="exa -l -a"
-    alias L="exa -l -a -T --level 2"
-    alias LL="exa -l -a -T"  # Full recursion
+# Use eza instead of ls if installed
+if [ $(command -v eza) ]; then
+    alias ls="eza"
+    alias l="eza -l"
+    alias ll="eza -l -a"
+    alias L="eza -l -a -T --level 2"
+    alias LL="eza -l -a -T"  # Full recursion
 fi

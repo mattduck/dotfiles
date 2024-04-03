@@ -67,13 +67,13 @@ use it to compile the file"
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
       (straight-bootstrap-version 6))
-  ;;(unless (file-exists-p bootstrap-file)
-  ;;  (with-current-buffer
-  ;;      (url-retrieve-synchronously
-  ;;       "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-  ;;       'silent 'inhibit-cookies)
-  ;;    (goto-char (point-max))
-  ;;    (eval-print-last-sexp)))
+  ;; (unless (file-exists-p bootstrap-file)
+  ;;   (with-current-buffer
+  ;;       (url-retrieve-synchronously
+  ;;        "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+  ;;        'silent 'inhibit-cookies)
+  ;;     (goto-char (point-max))
+  ;;     (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
 ;; Equivalent of using :straight t with use-package
@@ -1133,7 +1133,10 @@ and that's all I need."
     "Some behaviour overrides for org-mode"
 
     ;; Change tab widths to fit headline indents
-    (setq tab-width 2
+    ;;
+    ;; [2024-03-29] NOTE: since a recent org release lots of commands error if
+    ;; tab width isn't set to 8. I previously had it as 2. Unsure implications of this.
+    (setq tab-width 8
           evil-shift-width 2))
 
   (defun md/org-insert-link-from-paste ()
