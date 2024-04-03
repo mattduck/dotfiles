@@ -15,7 +15,6 @@ brew 'coreutils'
 brew 'docker'
 brew 'emacs-plus@29', args: ["with-xwidgets", "with-imagemagick", "with-native-comp", "with-no-frame-refocus"]
 brew 'eza'  # ls alternative, swapped from exa which is now unmaintained
-brew 'fasd'
 brew 'fd'
 brew 'fzf'
 brew 'gawk'
