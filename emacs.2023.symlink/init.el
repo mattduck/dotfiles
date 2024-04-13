@@ -503,7 +503,8 @@ Uses consult-theme if available.
 
   (defun md/consult-diff-hunks-git-command (git-command-string)
     "Use consult read to jump between all current diff hunks with preview. Disclaimer -- seems to work but written quickly with GPT."
-    (let* ((git-root (vc-root-dir))
+    (let* ((vertico-sort-function nil)
+           (git-root (vc-root-dir))
            (diff-output (shell-command-to-string git-command-string))
            (lines (split-string diff-output "\n" t))  ; `t` to omit null strings from results
            (current-file "")
