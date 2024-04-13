@@ -1,4 +1,4 @@
-# -*- mode:org; org-confirm-babel-evaluate: nil; org-time-stamp-formats: ("%Y-%m-%d" . "%Y-%m-%d %H:%M") -*-
+# -*-   mode:org; org-confirm-babel-evaluate: nil; org-time-stamp-formats: ("%Y-%m-%d" . "%Y-%m-%d %H:%M") -*-
 #+TITLE: init.org
 #+PROPERTY: header-args :results none
 * Early setup
@@ -394,7 +394,7 @@ it can result in extra latency."
      (let ((p (and (fboundp 'project-current) (project-current))))
        (if p
            (project-name p)
-       "no project"))))
+         "no project"))))
 
   (defun md/toggle-debug-on-error ()
     "When enabled, this feature causes a debug buffer to pop up when there's an
@@ -602,6 +602,60 @@ Uses consult-theme if available.
     (md/fontify-buffer)
     (set-window-buffer nil (current-buffer)))
 
+  (defun md/consult-diff-hunks-git-command (git-command-string)
+    "Use consult read to jump between all current diff hunks with preview. Disclaimer -- seems to work but written quickly with GPT."
+    (let* ((git-root (vc-root-dir))
+           (diff-output (shell-command-to-string git-command-string))
+           (lines (split-string diff-output "\n" t))  ; `t` to omit null strings from results
+           (current-file "")
+           (hunks '()))
+      ;; Parse diff output to extract file names and hunks
+      (dolist (line lines)
+        (cond ((string-match "^diff --git a/\\(.*\\) b/\\(.*\\)" line)
+               (setq current-file (expand-file-name (match-string 2 line) git-root)))
+              ((string-match "^@@ -\\([0-9]+\\),?\\([0-9]*\\) \\+\\([0-9]+\\),?\\([0-9]*\\) @@" line)
+               (let* ((line-number (match-string 3 line))
+                      (deleted (if (> (length (match-string 2 line)) 0)
+                                   (string-to-number (match-string 2 line))
+                                 (if (equal (match-string 2 line) "") 1 0)))
+                      (added (if (> (length (match-string 4 line)) 0)
+                                 (string-to-number (match-string 4 line))
+                               (if (equal (match-string 4 line) "") 1 0)))
+                      (change-type (cond ((and (> added 0) (> deleted 0)) 'diff-changed)
+                                         ((> added 0) 'diff-added)
+                                         ((> deleted 0) 'diff-removed)
+                                         (t 'diff-changed)))  ; Default to 'diff-changed' for any other unforeseen cases
+                      (formatted-line (format "%s:%s%s%s" current-file line-number
+                                              (if (> added 0) (format " +%d" added) "")
+                                              (if (> deleted 0) (format " -%d" deleted) ""))))
+                 (put-text-property 0 (length formatted-line) 'face change-type formatted-line)
+                 (setq hunks (append hunks
+                                     (list (cons formatted-line
+                                                 (cons current-file (string-to-number line-number))))))))))
+      ;; Use consult to select and navigate to hunks
+      (if hunks
+          (consult--read hunks
+                         :prompt "Select hunk: "
+                         :lookup #'consult--lookup-cdr
+                         :category 'file
+                         :state (lambda (action entry)
+                                  (when entry
+                                    (let ((file (car entry))
+                                          (line-number (cdr entry)))
+                                      (find-file file)
+                                      (goto-char (point-min))
+                                      (forward-line (1- line-number))
+                                      (recenter-top-bottom 10)))))
+        (message "No matches"))))
+
+  (defun md/consult-diff-hunks ()
+    (interactive)
+    (md/consult-diff-hunks-git-command "git diff --no-color -U0"))
+
+  (defun md/consult-diff-cached-hunks ()
+    (interactive)
+    (md/consult-diff-hunks-git-command "git diff --no-color -U0 --cached"))
+
   ;; ======================================================================
   :config
   ;; Start up in fullscreen mode
@@ -735,6 +789,10 @@ Uses consult-theme if available.
                   ("Es" . server-start)
                   ("Ep" . list-processes)
                   ("Ed" . md/toggle-debug-on-error)
+
+                  ;; Git
+                  ("gd" . md/consult-diff-hunks)
+                  ("gc" . md/consult-diff-cached-hunks)
 
                   ;; Packages
                   ("Pi" . straight-use-package)
@@ -2689,6 +2747,7 @@ I just use this to get basic syntax highlighting.
 
 #+begin_src emacs-lisp
 (use-package python
+  :demand t
   :config
   (defun md/python-imenu-format-item-label (type name)
     "Instead of the default format of eg. `my_function (def)`, use `def:
