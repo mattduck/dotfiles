@@ -501,52 +501,55 @@ Uses consult-theme if available.
     (md/fontify-buffer)
     (set-window-buffer nil (current-buffer)))
 
-  (defun md/consult-diff-hunks-git-command (git-command-string)
-    "Use consult read to jump between all current diff hunks with preview. Disclaimer -- seems to work but written quickly with GPT."
-    (let* ((vertico-sort-function nil)
-           (git-root (vc-root-dir))
-           (diff-output (shell-command-to-string git-command-string))
-           (lines (split-string diff-output "\n" t))  ; `t` to omit null strings from results
-           (current-file "")
-           (hunks '()))
-      ;; Parse diff output to extract file names and hunks
-      (dolist (line lines)
-        (cond ((string-match "^diff --git a/\\(.*\\) b/\\(.*\\)" line)
-               (setq current-file (expand-file-name (match-string 2 line) git-root)))
-              ((string-match "^@@ -\\([0-9]+\\),?\\([0-9]*\\) \\+\\([0-9]+\\),?\\([0-9]*\\) @@" line)
-               (let* ((line-number (match-string 3 line))
-                      (deleted (if (> (length (match-string 2 line)) 0)
-                                   (string-to-number (match-string 2 line))
-                                 (if (equal (match-string 2 line) "") 1 0)))
-                      (added (if (> (length (match-string 4 line)) 0)
-                                 (string-to-number (match-string 4 line))
-                               (if (equal (match-string 4 line) "") 1 0)))
-                      (change-type (cond ((and (> added 0) (> deleted 0)) 'diff-changed)
-                                         ((> added 0) 'diff-added)
-                                         ((> deleted 0) 'diff-removed)
-                                         (t 'diff-changed)))  ; Default to 'diff-changed' for any other unforeseen cases
-                      (formatted-line (format "%s:%s%s%s" current-file line-number
-                                              (if (> added 0) (format " +%d" added) "")
-                                              (if (> deleted 0) (format " -%d" deleted) ""))))
-                 (put-text-property 0 (length formatted-line) 'face change-type formatted-line)
-                 (setq hunks (append hunks
-                                     (list (cons formatted-line
-                                                 (cons current-file (string-to-number line-number))))))))))
-      ;; Use consult to select and navigate to hunks
-      (if hunks
-          (consult--read hunks
-                         :prompt "Select hunk: "
-                         :lookup #'consult--lookup-cdr
-                         :category 'file
-                         :state (lambda (action entry)
-                                  (when entry
-                                    (let ((file (car entry))
-                                          (line-number (cdr entry)))
-                                      (find-file file)
-                                      (goto-char (point-min))
-                                      (forward-line (1- line-number))
-                                      (recenter-top-bottom 10)))))
-        (message "No matches"))))
+(defun md/consult-diff-hunks-git-command (git-command-string)
+  "Use consult read to jump between all current diff hunks with preview. Disclaimer -- seems to work but written quickly with GPT."
+  (let* ((vertico-sort-function nil)
+          (git-root (vc-root-dir))
+          (diff-output (shell-command-to-string git-command-string))
+          (lines (split-string diff-output "\n" t))  ; `t` to omit null strings from results
+          (current-file "")
+          (hunks '()))
+    ;; Parse diff output to extract file names and hunks
+    (dolist (line lines)
+      (cond ((string-match "^diff --git a/\\(.*\\) b/\\(.*\\)" line)
+              (setq current-file (expand-file-name (match-string 2 line) git-root)))
+            ((string-match "^@@ -\\([0-9]+\\),?\\([0-9]*\\) \\+\\([0-9]+\\),?\\([0-9]*\\) @@\\(.*\\)" line)
+              (let* ((line-number (match-string 3 line))
+                    (deleted (if (> (length (match-string 2 line)) 0)
+                                  (string-to-number (match-string 2 line))
+                                (if (equal (match-string 2 line) "") 1 0)))
+                    (added (if (> (length (match-string 4 line)) 0)
+                                (string-to-number (match-string 4 line))
+                              (if (equal (match-string 4 line) "") 1 0)))
+                    (change-type (cond ((and (> added 0) (> deleted 0)) 'diff-changed)
+                                        ((> added 0) 'diff-added)
+                                        ((> deleted 0) 'diff-removed)
+                                        (t 'diff-changed)))  ; Default to 'diff-changed' for any other unforeseen cases
+                    (rest-of-line (match-string 5 line))
+                    (formatted-line (format "%s:%s%s%s" current-file line-number
+                                            (if (> added 0) (format " +%d" added) "")
+                                            (if (> deleted 0) (format " -%d" deleted) "")
+                                            )
+                                    ))
+                (put-text-property 0 (length formatted-line) 'face change-type formatted-line)
+                (setq hunks (append hunks
+                                    (list (cons (format "%s %s" formatted-line rest-of-line)
+                                                (cons current-file (string-to-number line-number))))))))))
+    ;; Use consult to select and navigate to hunks
+    (if hunks
+        (consult--read hunks
+                        :prompt "Select hunk: "
+                        :lookup #'consult--lookup-cdr
+                        :category 'file
+                        :state (lambda (action entry)
+                                (when entry
+                                  (let ((file (car entry))
+                                        (line-number (cdr entry)))
+                                    (find-file file)
+                                    (goto-char (point-min))
+                                    (forward-line (1- line-number))
+                                    (recenter-top-bottom 10)))))
+      (message "No matches"))))
 
   (defun md/consult-diff-hunks ()
     (interactive)
