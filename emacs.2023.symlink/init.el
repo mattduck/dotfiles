@@ -528,9 +528,7 @@ Uses consult-theme if available.
                     (rest-of-line (match-string 5 line))
                     (formatted-line (format "%s:%s%s%s" current-file line-number
                                             (if (> added 0) (format " +%d" added) "")
-                                            (if (> deleted 0) (format " -%d" deleted) "")
-                                            )
-                                    ))
+                                            (if (> deleted 0) (format " -%d" deleted) ""))))
                 (put-text-property 0 (length formatted-line) 'face change-type formatted-line)
                 (setq hunks (append hunks
                                     (list (cons (format "%s %s" formatted-line rest-of-line)
@@ -1320,7 +1318,8 @@ delete-other-windows into a no-op, and then restore once the org function has ex
                   ("p" . org-agenda-previous-line)
                   ("C-p" . org-agenda-previous-line)
 
-                  ("RET" . org-agenda-goto)  ; Jump to selected item
+                  ("TAB" . org-agenda-goto)  ; Goto selected item in other window
+                  ("RET" . org-agenda-switch-to)  ; Replace agenda with this item
                   ("t" . md/org-agenda-todo)  ; Cycle todo state
                   ("P" . org-agenda-priority-up)
                   ("E" . org-agenda-set-effort)
