@@ -295,6 +295,20 @@ it can result in extra latency."
            (project-name p)
          "no project"))))
 
+(defun md/project-copy-visited-file-path ()
+  "Copy the file path relative to the current project root to the clipboard."
+  (interactive)
+  (if (buffer-file-name)
+      (let* ((project-root (if (fboundp 'project-current)
+                               (car (last (project-current)))
+                             nil))
+             (relative-path (if project-root
+                                (file-relative-name buffer-file-name project-root)
+                              buffer-file-name)))
+        (kill-new relative-path)
+        (message "Copied relative file path '%s'." relative-path))
+    (message "No file is currently being visited.")))
+
   (defun md/toggle-debug-on-error ()
     "When enabled, this feature causes a debug buffer to pop up when there's an
     error. Helpful for er, debugging."
@@ -638,6 +652,8 @@ Uses consult-theme if available.
   (display-buffer-alist
    `(("\\*shell"
       (display-buffer-reuse-window display-buffer-same-window))
+     ("\\*edit-indirect"
+      (display-buffer-same-window))
      ("*\\(help\\|Help\\|Messages\\|Warnings\\|Compile-\\|chatgpt\\)"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
@@ -804,7 +820,8 @@ Uses consult-theme if available.
             (:map (md/leader-map)
                   ("q" . md/evil-fill)
                   ("Q" . md/evil-unfill)
-                  ("cc" . comment-or-uncomment-region))
+                  ("cc" . comment-or-uncomment-region)
+                  ("y" . md/project-copy-visited-file-path))
             ;; The *Warnings* buffer loads in normal mode, and I want to be able to quit
             ;; it easily
             (:map (special-mode-map . normal)
@@ -1758,6 +1775,7 @@ delete-other-windows into a no-op, and then restore once the org function has ex
                   ("n" . narrow-map))
             (:map (narrow-map)
                   ("i" . org-tree-to-indirect-buffer)
+                  ("F" . md/edit-indirect-jinja)
                   ("v" . md/narrow-to-region-indirect)
                   ("f" . md/narrow-dwim)
                   ("r" . narrow-to-region))))
@@ -2277,6 +2295,10 @@ myfunction`. This makes it easier to read."
   :custom
   (python-imenu-format-item-label-function #'md/python-imenu-format-item-label)
   (python-imenu-format-parent-item-label-function #'md/python-imenu-format-item-label))
+
+(use-package dockerfile-mode)
+
+(use-package yaml-mode)
 
 (use-package server
   :config (when (not (server-running-p))
