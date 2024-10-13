@@ -2671,6 +2671,18 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
                   ("g-" . git-gutter:revert-hunk))))
 #+end_src
 
+* [[https://github.com/ozanmakes/github-browse-file][github-browse-file]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package github-browse-file
+    :demand t
+    :config
+    (progn
+      (setq github-browse-file-show-line-at-point t))
+    :bind (:map md/leader-map
+          ("go" . github-browse-file)))
+#+END_SRC
+
 * [[https://github.com/xenodium/chatgpt-shell][chatgpt-shell]]
 
 [2023-08-23] Alvaro's excellent package for interacting with the OpenAI API. We

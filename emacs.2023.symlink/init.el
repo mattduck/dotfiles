@@ -2260,6 +2260,14 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
                   ("g+" . git-gutter:stage-hunk)
                   ("g-" . git-gutter:revert-hunk))))
 
+(use-package github-browse-file
+  :demand t
+  :config
+  (progn
+    (setq github-browse-file-show-line-at-point t))
+  :bind (:map md/leader-map
+        ("go" . github-browse-file)))
+
 (use-package shell-maker
   :straight (:host github :repo "xenodium/chatgpt-shell" :files ("shell-maker.el")))
 
