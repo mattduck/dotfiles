@@ -567,7 +567,16 @@ Uses consult-theme if available.
                                       (find-file file)
                                       (goto-char (point-min))
                                       (forward-line (1- line-number))
-                                      (recenter-top-bottom 10)))))
+                                      (recenter-top-bottom 10)
+                                      ;; TODO: buffer display alist, and bindings
+                                      (when git-gutter-mode
+                                        (condition-case nil
+                                            (call-interactively 'git-gutter:popup-hunk)
+                                          (error nil)))
+                                      ;; Kill windows when done
+                                      (when (eq action 'return)
+                                        (quit-windows-on git-gutter:popup-buffer))
+                                      ))))
         (message "No matches"))))
 
   (defun md/consult-diff-hunks ()
@@ -658,6 +667,10 @@ Uses consult-theme if available.
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
       (window-height . 0.33))
+     ("*\\(git-gutter:diff\\)"
+      (display-buffer-reuse-window display-buffer-in-side-window)
+      (side . right)
+      (window-width . 0.5))
      ("*\\(Agenda Commands\\|Org Select\\)\\*" ;; Annoying org popups - agenda and capture selection
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
@@ -2164,11 +2177,11 @@ git-gutter to show which lines were added/changed/removed."
     "Open or preview the file content for COMMIT-HASH using RELATIVE-FILE and ORIGINAL-MODE.
 Restores the cursor as close as possible to the ORIGINAL-POINT."
     (let* ((buffer-name
-           (if (eq action 'preview)
-               "*md/git-timemachine-preview*"
-             (format "*md/git-timemachine %s@%s*" relative-file commit-hash)))
-          (git-root (locate-dominating-file relative-file ".git"))
-          (original-line-content (thing-at-point 'line t)))
+            (if (eq action 'preview)
+                "*md/git-timemachine-preview*"
+              (format "*md/git-timemachine %s@%s*" relative-file commit-hash)))
+           (git-root (locate-dominating-file relative-file ".git"))
+           (original-line-content (thing-at-point 'line t)))
       (with-current-buffer (get-buffer-create buffer-name)
         (setq-local default-directory git-root)
         (setq buffer-read-only nil)
@@ -2207,10 +2220,40 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
           (git-gutter:update-diffinfo diff-results)
           (git-gutter)))))
 
+  (defvar md/git-gutter-auto-diff-last-line nil
+    "Stores the last line number to detect line changes.")
+
+  (defun md/git-gutter-popup-hunk-on-line-change ()
+    "Check if the current line has changed, and if so, call `git-gutter:popup-hunk`."
+    (let ((current-line (line-number-at-pos)))
+      ;; Check diffinfos rather than git-gutter-mode, as this way it catches my history function
+      (when (and (bound-and-true-p git-gutter:diffinfos)
+                 (not (equal md/git-gutter-auto-diff-last-line current-line))) ;; Check if the line has changed
+        (setq md/git-gutter-auto-diff-last-line current-line)  ;; Update the last line tracked
+        (condition-case nil
+            (git-gutter:popup-hunk)
+          (error
+           (quit-windows-on git-gutter:popup-buffer)
+           ))
+        )))
+
+;;;###autoload
+  (define-minor-mode md/git-gutter-auto-diff-mode
+    "A minor mode to automatically show Git hunk diffs when moving the cursor."
+    :global nil
+    (if md/git-gutter-auto-diff-mode
+        (progn
+          (add-hook 'post-command-hook #'md/git-gutter-popup-hunk-on-line-change nil t)
+          (md/git-gutter-popup-hunk-on-line-change))
+      (progn
+        (quit-windows-on git-gutter:popup-buffer)
+        (remove-hook 'post-command-hook #'md/git-gutter-popup-hunk-on-line-change t))))
+
 
   :md/bind ((:map (md/leader-map)
                   ("g <RET>" . git-gutter-mode)
                   ("gh" . md/git-file-history)
+                  ("ga" . md/git-gutter-auto-diff-mode)
                   ("gk" . git-gutter:previous-hunk)
                   ("gp" . git-gutter:previous-hunk)
                   ("gj" . git-gutter:next-hunk)
@@ -2402,6 +2445,10 @@ myfunction`. This makes it easier to read."
   (("\\.djhtml\\'" . web-mode))
   :custom
   (web-mode-enable-engine-detection t))
+
+(use-package diff-mode
+  :md/bind ((:map (diff-mode-map . normal)
+                  ("q" . quit-window))))
 
 (use-package server
   :config (when (not (server-running-p))
