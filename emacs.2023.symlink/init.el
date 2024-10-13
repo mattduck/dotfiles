@@ -2449,6 +2449,13 @@ myfunction`. This makes it easier to read."
   :md/bind ((:map (diff-mode-map . normal)
                   ("q" . quit-window))))
 
+(use-package conf-mode
+  :mode (("\\.conf\\'" . conf-mode)
+         ("\\.cfg\\'" . conf-mode)
+         ("\\.*rc\\'" . conf-mode)
+         ("\\.ssh/config\\'" . conf-mode)
+         ("\\.ini\\'" . conf-mode)))
+
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
   :mode (("README\\.md\\'" . gfm-mode)

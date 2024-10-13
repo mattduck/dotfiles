@@ -2966,6 +2966,19 @@ Builtin diff mode.
                   ("q" . quit-window))))
 #+end_src
 
+* conf-mode
+
+Builtin mode for editing different config files -- I think the only feature I
+actually use here is the syntax highlighting.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package conf-mode
+    :mode (("\\.conf\\'" . conf-mode)
+           ("\\.cfg\\'" . conf-mode)
+           ("\\.*rc\\'" . conf-mode)
+           ("\\.ssh/config\\'" . conf-mode)
+           ("\\.ini\\'" . conf-mode)))
+#+END_SRC
 * [[https://github.com/jrblevin/markdown-mode][markdown-mode]]
 
 This includes ~gfm-mode~ for Github-flavoured markdown.
