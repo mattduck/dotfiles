@@ -2489,6 +2489,13 @@ to save or quit.
 ~git-gutter~ shows a +/-/~ symbol in a gutter on the left of the buffer. I got
 used to this back when I was using vim and found it very helpful.
 
+[2024-10-13] Adding ~md/git-file-history~, which allows me to look through past
+versions of the current file and open them at a particular revision, using
+git-gutter to show which lines in that commit were added/removed/changed. There
+are other features like this, eg ~vc-revision-other-window~, but I couldn't find
+anything that both (1) lets me consult to select/preview the file, and (2) shows
+diff indicators.
+
 #+begin_src emacs-lisp
 (use-package git-gutter
   :demand t
@@ -2513,8 +2520,104 @@ used to this back when I was using vim and found it very helpful.
   (git-gutter:always-show-separator t)
   (git-gutter:separator-sign " " "Ensure there's some space between the gutter column and the code")
 
+  :config
+
+  (defun md/git-file-history ()
+    "Show a consult list of the git log history for the current file.
+On preview/action, open the file contents in a readonly buffer, and use
+git-gutter to show which lines were added/changed/removed."
+    (interactive)
+    (when (and buffer-file-name (vc-root-dir))
+      (let* ((file (buffer-file-name))
+             (original-mode major-mode)
+             (original-point (point))
+             (git-root (vc-root-dir))
+             (relative-file (file-relative-name file git-root))
+             ;; Update log-cmd to include commit hash, date, relative date, author, and message
+             (log-cmd (format "git log --pretty=format:'%%h %%ad (%%ar) | %%an | %%s' --date=iso -- %s"
+                              (shell-quote-argument file)))
+             (log-entries (split-string (shell-command-to-string log-cmd) "\n" t))
+             ;; Construct list of (display-string . commit-hash) pairs
+             (colored-entries (mapcar (lambda (entry)
+                                        (let* ((parts (split-string entry "\\s-+|\\s-+"))
+                                               (hash-and-date (nth 0 parts))
+                                               (author (nth 1 parts))
+                                               (message (string-trim (nth 2 parts)))
+                                               ;; Further split the hash-and-date part
+                                               (hash (car (split-string hash-and-date)))
+                                               (date-part (string-join (cdr (split-string hash-and-date)) " ")))
+                                          ;; Construct display string and store commit hash in pair
+                                          (cons (concat (propertize hash 'face 'font-lock-builtin-face)
+                                                        " "
+                                                        (propertize date-part 'face 'font-lock-string-face)
+                                                        " | "
+                                                        (propertize author 'face 'font-lock-keyword-face)
+                                                        " | "
+                                                        (propertize message 'face 'font-lock-variable-name-face))
+                                                hash)))
+                                      log-entries)))
+
+        (consult--read (mapcar #'car colored-entries)
+                       :prompt "Select commit: "
+                       :sort nil
+                       :require-match t
+                       ;; The :state function handles both preview and final selection
+                       :state (lambda (action chosen-entry)
+                                (when chosen-entry
+                                  (let ((commit-hash (cdr (assoc chosen-entry colored-entries))))
+                                    (md/do-git-file-history commit-hash relative-file original-mode action original-point))))))))
+
+  (defun md/do-git-file-history (commit-hash relative-file original-mode action original-point)
+    "Open or preview the file content for COMMIT-HASH using RELATIVE-FILE and ORIGINAL-MODE.
+Restores the cursor as close as possible to the ORIGINAL-POINT."
+    (let* ((buffer-name
+           (if (eq action 'preview)
+               "*md/git-timemachine-preview*"
+             (format "*md/git-timemachine %s@%s*" relative-file commit-hash)))
+          (git-root (locate-dominating-file relative-file ".git"))
+          (original-line-content (thing-at-point 'line t)))
+      (with-current-buffer (get-buffer-create buffer-name)
+        (setq-local default-directory git-root)
+        (setq buffer-read-only nil)
+        (erase-buffer)
+        ;; Fetch and insert the file content for the given commit
+        (message default-directory)
+        (insert (shell-command-to-string
+                 (format "git --no-pager show %s:%s" commit-hash (shell-quote-argument relative-file))))
+        ;; Apply the original major mode
+        (funcall original-mode)
+        (setq buffer-read-only t)
+        ;; Restore the cursor position (or as close as possible)
+        (pop-to-buffer (current-buffer))
+        (goto-char (min original-point (point-max)))
+        (recenter)
+        ;; Naive attempt to look at the same place in the file: try to match the
+        ;; current line. Won't work when there are duplicates.
+        (if (search-forward original-line-content nil t)
+            (recenter)
+          (if (search-backward original-line-content nil t)
+              (recenter)))
+
+        ;; Git-gutter stuff
+        (let ((inhibit-read-only t)
+              (diff-results nil))
+          (with-temp-buffer
+            ;; Run git diff command and insert output into the temp buffer
+            (setq-local default-directory git-root)
+            (process-file "git" nil (current-buffer) nil
+                          "--no-pager" "-c" "diff.autorefreshindex=0"
+                          "diff" "--no-color" "--no-ext-diff" "-U0"
+                          (format "%s^" commit-hash) commit-hash "--" relative-file)
+            (setq diff-results (git-gutter:process-diff-output (current-buffer))))
+
+          ;; Use the diff result to apply git-gutter
+          (git-gutter:update-diffinfo diff-results)
+          (git-gutter)))))
+
+
   :md/bind ((:map (md/leader-map)
                   ("g <RET>" . git-gutter-mode)
+                  ("gh" . md/git-file-history)
                   ("gk" . git-gutter:previous-hunk)
                   ("gp" . git-gutter:previous-hunk)
                   ("gj" . git-gutter:next-hunk)
@@ -2795,6 +2898,17 @@ myfunction`. This makes it easier to read."
 
 #+begin_src emacs-lisp
 (use-package yaml-mode)
+#+end_src
+
+* web-mode
+
+#+begin_src emacs-lisp
+(use-package web-mode
+  :mode
+  (("\\.html\\'" . web-mode))
+  (("\\.djhtml\\'" . web-mode))
+  :custom
+  (web-mode-enable-engine-detection t))
 #+end_src
 
 * Server
