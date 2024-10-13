@@ -488,8 +488,7 @@ for ages and it seems to work."
 We disable all enabled themes before new theme selection, and then
 make sure that we properly reload by fontifying the buffer etc.
 
-Uses consult-theme if available.
-"
+Uses consult-theme if available."
     (interactive)
     (md/disable-all-themes)
     (setq org-todo-keyword-faces nil)
@@ -2449,6 +2448,20 @@ myfunction`. This makes it easier to read."
 (use-package diff-mode
   :md/bind ((:map (diff-mode-map . normal)
                   ("q" . quit-window))))
+
+(use-package markdown-mode
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.gfm\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :md/bind ((:map (markdown-mode-map . normal)
+                  ;; Markdown-cycle behaves like org-cycle, but by default is only
+                  ;; enabled in insert mode. gfm-mode-map inherits from
+                  ;; markdown-mode-map, so this will enable it in both.
+                  ("TAB" . markdown-cycle)
+                  ("gk" . markdown-previous-visible-heading)
+                  ("gj" . markdown-next-visible-heading))))
 
 (use-package server
   :config (when (not (server-running-p))
