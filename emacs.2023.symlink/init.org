@@ -2663,16 +2663,26 @@ feature to automatically show the diff buffer when you're on a hunk.
     (evil-scroll-line-to-top nil)
     (call-interactively 'md/git-gutter-popup-hunk-overlay))
 
+  (defun md/get-vc-root-dir (file-path)
+    "Get the version control root directory for the given FILE-PATH. Using this so
+  I can get the git directory when I'm not in that project."
+    (let* ((backend (vc-responsible-backend file-path)))
+      (if backend
+          (vc-call-backend backend 'root file-path)
+        (error "No version control for this file"))))
+
+  (defvar-local md/git-history-file-name nil)
+
   (defun md/git-file-history ()
     "Show a consult list of the git log history for the current file.
 On preview/action, open the file contents in a readonly buffer, and use
 git-gutter to show which lines were added/changed/removed."
     (interactive)
-    (when (and buffer-file-name (vc-root-dir))
-      (let* ((file (buffer-file-name))
+    (when (or md/git-history-file-name (and buffer-file-name (vc-root-dir)))
+      (let* ((file (or md/git-history-file-name (buffer-file-name)))
              (original-mode major-mode)
              (original-point (point))
-             (git-root (vc-root-dir))
+             (git-root (md/get-vc-root-dir file))
              (relative-file (file-relative-name file git-root))
              ;; Update log-cmd to include commit hash, date, relative date, author, and message
              (log-cmd (format "git log --pretty=format:'%%h %%ad (%%ar) | %%an | %%s' --date=iso -- %s"
@@ -2701,20 +2711,20 @@ git-gutter to show which lines were added/changed/removed."
         (consult--read (mapcar #'car colored-entries)
                        :prompt "Select commit: "
                        :sort nil
-                       :require-match t
+                       :require-match nil
                        ;; The :state function handles both preview and final selection
                        :state (lambda (action chosen-entry)
                                 (when chosen-entry
                                   (let ((commit-hash (cdr (assoc chosen-entry colored-entries))))
-                                    (md/do-git-file-history commit-hash relative-file original-mode action original-point))))))))
+                                    (md/do-git-file-history commit-hash file relative-file original-mode action original-point))))))))
 
-  (defun md/do-git-file-history (commit-hash relative-file original-mode action original-point)
+  (defun md/do-git-file-history (commit-hash file relative-file original-mode action original-point)
     "Open or preview the file content for COMMIT-HASH using RELATIVE-FILE and ORIGINAL-MODE.
 Restores the cursor as close as possible to the ORIGINAL-POINT."
     (let* ((buffer-name
             (if (eq action 'preview)
                 "*md/git-timemachine-preview*"
-              (format "*md/git-timemachine %s@%s*" relative-file commit-hash)))
+              (format "*md/git-timemachine %s*" relative-file)))
            (git-root (locate-dominating-file relative-file ".git"))
            (original-line-content (thing-at-point 'line t)))
       (with-current-buffer (get-buffer-create buffer-name)
@@ -2753,7 +2763,9 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
 
           ;; Use the diff result to apply git-gutter
           (git-gutter:update-diffinfo diff-results)
-          (git-gutter)))))
+          (git-gutter)
+          (setq md/git-history-file-name file)
+          ))))
 
   (defun md/git-gutter-popup-hunk-overlay ()
     "Check if the current line has changed, and if so, call `git-gutter:popup-hunk`."
