@@ -628,16 +628,69 @@ over any existing rules with the same match pattern."
        ;; Restore the original display-buffer-alist afterwards
        (setq display-buffer-alist original-display-buffer-alist))))
 
-(defun md/display-buffer-in-overlay (buffer _alist)
-  "Display BUFFER using `show-buffer-popup` as an overlay instead of a window.
-BUFFER is the buffer object to display."
-  (md/do-display-buffer-in-overlay buffer)
+(defun md/display-buffer-in-overlay-margin (buffer _alist)
+  "Display BUFFER as an overlay instead of a window. To be called in display buffer alist config"
+  (md/do-display-buffer-in-overlay-margin buffer)
   ;; Return nil to signal that we didn't use a regular window for display.
   ;; Return 'display-buffer-no-window to prevent displaying the buffer in a window.
   'display-buffer-no-window)
 
-(defun md/do-display-buffer-in-overlay (buffer)
-  "Show the contents of BUFFER as an overlay popup."
+(defun md/do-display-buffer-in-overlay-margin (buffer)
+  "Show the contents of BUFFER as an overlay popup to the right margin"
+  (unless (bufferp buffer)
+    (error "Argument must be a buffer object"))
+  (let* ((content (with-current-buffer buffer
+                    ;; Ensure font-lock is applied to the buffer
+                    (font-lock-ensure)
+                    (buffer-substring (point-min) (point-max))))
+         ;; Strip trailing newlines from content
+         (stripped-content (replace-regexp-in-string "\n\\'" "" content))
+         ;; Split content into lines
+         (lines (split-string stripped-content "\n"))
+         (overlay-list nil)
+         (event nil)
+         ;; Determine the number of lines in the overlay content
+         (overlay-line-count (length lines))
+         (max-width 0)) ;; Initialize max-width
+
+    ;; Process each line in the popup content
+    (save-excursion
+      ;; Calculate the maximum width of the buffer lines where the overlay will be displayed
+      (dotimes (i overlay-line-count)
+        (end-of-line)
+        (setq max-width (max max-width (current-column)))
+        (forward-line 1)) ;; Move to the next line
+      ;; Move back to the starting point
+      (goto-char (point)))
+
+    ;; Process each line in the popup content, inserting it at max-width + 2
+    (save-excursion
+      (dotimes (i (min overlay-line-count (- (line-number-at-pos (point-max)) (line-number-at-pos))))
+        (let ((line-content (nth i lines))
+              (target-column (+ max-width 2))) ;; Set the column to max-width + 2
+          ;; Move to the corresponding line in the buffer
+          (end-of-line)
+          (let ((current-column (current-column)))
+            ;; Calculate how many spaces are needed to pad to the target column
+            (let ((padding (make-string (- target-column current-column) ?\s)))
+              ;; Create an overlay at the current point with the padded content
+              (let ((overlay (make-overlay (point) (point))))
+                (overlay-put overlay 'after-string (concat padding line-content))
+                (push overlay overlay-list))))
+          (forward-line 1)))) ;; Move to the next line
+
+    ;; Use unwind-protect to ensure the overlays are cleaned up even if an error occurs
+    (unwind-protect
+        (setq event (read-event))  ;; Capture the event (key press or quit)
+      ;; Always clean up the overlays
+      (mapc #'delete-overlay overlay-list))
+
+    ;; If the event was a keypress, apply it to the buffer
+    (when (characterp event)
+      (setq unread-command-events (list event)))))
+
+(defun md/do-display-buffer-in-overlay-insert (buffer)
+  "Show the contents of BUFFER as an overlay popup inserted below the current line."
   (unless (bufferp buffer)
     (error "Argument must be a buffer object"))
   (let* ((content (with-current-buffer buffer
@@ -2219,7 +2272,7 @@ example, a buffer-switching command similar to
                                             ;; Popup in buffer overlay
                                             (md/with-display-buffer-alist
                                              '("*\\(git-gutter:diff\\)"
-                                               (md/display-buffer-in-overlay))
+                                               (md/display-buffer-in-overlay-margin))
                                             (call-interactively 'git-gutter:popup-hunk))
                                           (error nil)))))
                                       ;; Kill windows when done
@@ -2236,6 +2289,7 @@ example, a buffer-switching command similar to
     (interactive)
     (md/consult-diff-hunks-git-command "git diff --no-color -U0 --cached"))
 
+  :config
   (consult-customize
    ;; Disable preview when switching buffers
    consult-buffer :preview-key nil)
@@ -2706,7 +2760,7 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
           (when (not (eq (git-gutter-hunk-type (git-gutter:search-here-diffinfo git-gutter:diffinfos)) 'added))
             (md/with-display-buffer-alist
              '("*\\(git-gutter:diff\\)"
-               (md/display-buffer-in-overlay))
+               (md/display-buffer-in-overlay-margin))
              (git-gutter:popup-hunk)))
         (error
          (quit-windows-on git-gutter:popup-buffer)
