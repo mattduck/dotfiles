@@ -615,77 +615,62 @@ Uses consult-theme if available."
     (md/fontify-buffer)
     (set-window-buffer nil (current-buffer)))
 
-  (defun md/consult-diff-hunks-git-command (git-command-string)
-    "Use consult read to jump between all current diff hunks with preview. Disclaimer -- seems to work but written quickly with GPT."
-    (let* ((vertico-sort-function nil)
-           (git-root (vc-root-dir))
-           (diff-output (shell-command-to-string git-command-string))
-           (lines (split-string diff-output "\n" t))  ; `t` to omit null strings from results
-           (current-file "")
-           (hunks '()))
-      ;; Parse diff output to extract file names and hunks
-      (dolist (line lines)
-        (cond ((string-match "^diff --git a/\\(.*\\) b/\\(.*\\)" line)
-               (setq current-file (expand-file-name (match-string 2 line) git-root)))
-              ((string-match "^@@ -\\([0-9]+\\),?\\([0-9]*\\) \\+\\([0-9]+\\),?\\([0-9]*\\) @@\\(.*\\)" line)
-               (let* ((line-number (match-string 3 line))
-                      (deleted (if (> (length (match-string 2 line)) 0)
-                                   (string-to-number (match-string 2 line))
-                                 (if (equal (match-string 2 line) "") 1 0)))
-                      (added (if (> (length (match-string 4 line)) 0)
-                                 (string-to-number (match-string 4 line))
-                               (if (equal (match-string 4 line) "") 1 0)))
-                      (change-type (cond ((and (> added 0) (> deleted 0)) 'diff-changed)
-                                         ((> added 0) 'diff-added)
-                                         ((> deleted 0) 'diff-removed)
-                                         (t 'diff-changed)))  ; Default to 'diff-changed' for any other unforeseen cases
-                      (rest-of-line (match-string 5 line))
-                      (formatted-line (format "%s:%s%s%s" current-file line-number
-                                              (if (> added 0) (format " +%d" added) "")
-                                              (if (> deleted 0) (format " -%d" deleted) ""))))
-                 (put-text-property 0 (length formatted-line) 'face change-type formatted-line)
-                 (setq hunks (append hunks
-                                     (list (cons (format "%s %s" formatted-line rest-of-line)
-                                                 (cons current-file (string-to-number line-number))))))))))
-      ;; Use consult to select and navigate to hunks
-      (if hunks
-          (consult--read hunks
-                         :prompt "Select hunk: "
-                         :lookup #'consult--lookup-cdr
-                         :category 'file
-                         ;; If transform if t then this must return the item. If nil,
-                         ;; must return the group name. We naively just split on a colon
-                         ;; character, assuming it won't be included in the file path.
-                         :group (lambda (cand transform)
-                                  (if transform
-                                      (mapconcat 'identity (cdr (split-string cand ":" t)) ":")
-                                    (car (split-string cand ":"))))
-                         :state (lambda (action entry)
-                                  (when entry
-                                    (let ((file (car entry))
-                                          (line-number (cdr entry)))
-                                      (find-file file)
-                                      (goto-char (point-min))
-                                      (forward-line (1- line-number))
-                                      (recenter-top-bottom 10)
-                                      ;; TODO: buffer display alist, and bindings
-                                      (when git-gutter-mode
-                                        (condition-case nil
-                                            (call-interactively 'git-gutter:popup-hunk)
-                                          (error nil)))
-                                      ;; Kill windows when done
-                                      (when (eq action 'return)
-                                        (quit-windows-on git-gutter:popup-buffer))
-                                      ))))
-        (message "No matches"))))
+(defmacro md/with-display-buffer-alist (rule &rest body)
+  "Temporarily override `display-buffer-alist` with RULE for the duration of BODY.
+RULE is a list describing the buffer display rule. This rule takes precedence
+over any existing rules with the same match pattern."
+  `(let ((original-display-buffer-alist display-buffer-alist))
+     ;; Add the new rule at the front, so it takes precedence
+     (unwind-protect
+         (progn
+           (push ,rule display-buffer-alist)
+           ,@body)
+       ;; Restore the original display-buffer-alist afterwards
+       (setq display-buffer-alist original-display-buffer-alist))))
 
-  (defun md/consult-diff-hunks ()
-    (interactive)
-    (md/consult-diff-hunks-git-command "git diff --no-color -U0"))
+(defun md/display-buffer-in-overlay (buffer _alist)
+  "Display BUFFER using `show-buffer-popup` as an overlay instead of a window.
+BUFFER is the buffer object to display."
+  (md/do-display-buffer-in-overlay buffer)
+  ;; Return nil to signal that we didn't use a regular window for display.
+  ;; Return 'display-buffer-no-window to prevent displaying the buffer in a window.
+  'display-buffer-no-window)
 
-  (defun md/consult-diff-cached-hunks ()
-    (interactive)
-    (md/consult-diff-hunks-git-command "git diff --no-color -U0 --cached"))
+(defun md/do-display-buffer-in-overlay (buffer)
+  "Show the contents of BUFFER as an overlay popup."
+  (unless (bufferp buffer)
+    (error "Argument must be a buffer object"))
+  (let* ((content (with-current-buffer buffer
+                    ;; Ensure font-lock is applied to the buffer
+                    (font-lock-ensure)
+                    (buffer-substring (point-min) (point-max))))
+         ;; Strip trailing newlines from content
+         (stripped-content (replace-regexp-in-string "\n\\'" "" content))
+         (border (propertize (make-string 80 ?-) 'face 'font-lock-comment-face)) ;; Create a bordered string with face
+         (bordered-content (concat border "\n"  ;; Top border with comment face
+                                   stripped-content "\n" ;; Stripped content
+                                   border "\n")) ;; Bottom border with comment face
+         (overlay nil)
+         (event nil))
+
+    ;; Move the point to the beginning of the next line without inserting a newline
+    (save-excursion
+      (forward-line 1) ;; Move to the next line
+      (move-beginning-of-line 1) ;; Move to the beginning of that line
+      ;; Create an overlay that starts at this point and has no width
+      (setq overlay (make-overlay (point) (point))))
+
+    ;; Set the overlay to display the bordered popup text with preserved text properties
+    (overlay-put overlay 'before-string bordered-content)
+
+    ;; Use unwind-protect to ensure the overlay is cleaned up even if an error occurs
+    (unwind-protect
+        (setq event (read-event))  ;; Capture the event (key press or quit)
+      (delete-overlay overlay)) ;; Always clean up the overlay
+
+    ;; If the event was a keypress, apply it to the buffer
+    (when (characterp event)
+      (setq unread-command-events (list event)))))
 
   ;; ======================================================================
   :config
@@ -767,10 +752,6 @@ Uses consult-theme if available."
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
       (window-height . 0.33))
-     ("*\\(git-gutter:diff\\)"
-      (display-buffer-reuse-window display-buffer-in-side-window)
-      (side . right)
-      (window-width . 0.5))
      ("*\\(Agenda Commands\\|Org Select\\)\\*" ;; Annoying org popups - agenda and capture selection
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
@@ -826,10 +807,6 @@ Uses consult-theme if available."
                   ("Es" . server-start)
                   ("Ep" . list-processes)
                   ("Ed" . md/toggle-debug-on-error)
-
-                  ;; Git
-                  ("gd" . md/consult-diff-hunks)
-                  ("gc" . md/consult-diff-cached-hunks)
 
                   ;; Packages
                   ("Pi" . straight-use-package)
@@ -2180,7 +2157,85 @@ example, a buffer-switching command similar to
                              mark)))
                        (ring-elements (evil--jumps-get-window-jump-list))))))
 
-  :config
+  (defun md/consult-diff-hunks-git-command (git-command-string)
+    "Use consult read to jump between all current diff hunks with preview. Disclaimer -- seems to work but written quickly with GPT."
+    (let* ((vertico-sort-function nil)
+           (git-root (vc-root-dir))
+           (diff-output (shell-command-to-string git-command-string))
+           (lines (split-string diff-output "\n" t))  ; `t` to omit null strings from results
+           (current-file "")
+           (hunks '()))
+      ;; Parse diff output to extract file names and hunks
+      (dolist (line lines)
+        (cond ((string-match "^diff --git a/\\(.*\\) b/\\(.*\\)" line)
+               (setq current-file (expand-file-name (match-string 2 line) git-root)))
+              ((string-match "^@@ -\\([0-9]+\\),?\\([0-9]*\\) \\+\\([0-9]+\\),?\\([0-9]*\\) @@\\(.*\\)" line)
+               (let* ((line-number (match-string 3 line))
+                      (deleted (if (> (length (match-string 2 line)) 0)
+                                   (string-to-number (match-string 2 line))
+                                 (if (equal (match-string 2 line) "") 1 0)))
+                      (added (if (> (length (match-string 4 line)) 0)
+                                 (string-to-number (match-string 4 line))
+                               (if (equal (match-string 4 line) "") 1 0)))
+                      (change-type (cond ((and (> added 0) (> deleted 0)) 'diff-changed)
+                                         ((> added 0) 'diff-added)
+                                         ((> deleted 0) 'diff-removed)
+                                         (t 'diff-changed)))  ; Default to 'diff-changed' for any other unforeseen cases
+                      (rest-of-line (match-string 5 line))
+                      (formatted-line (format "%s:%s%s%s" current-file line-number
+                                              (if (> added 0) (format " +%d" added) "")
+                                              (if (> deleted 0) (format " -%d" deleted) ""))))
+                 (put-text-property 0 (length formatted-line) 'face change-type formatted-line)
+                 (setq hunks (append hunks
+                                     (list (cons (format "%s %s" formatted-line rest-of-line)
+                                                 (cons current-file (string-to-number line-number))))))))))
+      ;; Use consult to select and navigate to hunks
+      (if hunks
+          (consult--read hunks
+                         :prompt "Select hunk: "
+                         :lookup #'consult--lookup-cdr
+                         :category 'file
+                         ;; If transform if t then this must return the item. If nil,
+                         ;; must return the group name. We naively just split on a colon
+                         ;; character, assuming it won't be included in the file path.
+                         :group (lambda (cand transform)
+                                  (if transform
+                                      (mapconcat 'identity (cdr (split-string cand ":" t)) ":")
+                                    (car (split-string cand ":"))))
+                         :state (lambda (action entry)
+                                  (when entry
+                                    (let ((file (car entry))
+                                          (line-number (cdr entry)))
+                                      (find-file file)
+                                      (goto-char (point-min))
+                                      (forward-line (1- line-number))
+                                      (recenter-top-bottom 10)
+                                      ;; Don't popup the hunk if it's added as I can see that from the buffer contents
+                                      (when (and git-gutter-mode
+                                                 (not (eq (git-gutter-hunk-type
+                                                           (git-gutter:search-here-diffinfo git-gutter:diffinfos))
+                                                          'added)))
+                                        (condition-case nil
+                                            ;; Popup in buffer overlay
+                                            (md/with-display-buffer-alist
+                                             '("*\\(git-gutter:diff\\)"
+                                               (md/display-buffer-in-overlay))
+                                            (call-interactively 'git-gutter:popup-hunk))
+                                          (error nil)))))
+                                      ;; Kill windows when done
+                                      (when (eq action 'return)
+                                        (quit-windows-on git-gutter:popup-buffer))
+                                      ))))
+        (message "No matches"))
+
+  (defun md/consult-diff-hunks ()
+    (interactive)
+    (md/consult-diff-hunks-git-command "git diff --no-color -U0"))
+
+  (defun md/consult-diff-cached-hunks ()
+    (interactive)
+    (md/consult-diff-hunks-git-command "git diff --no-color -U0 --cached"))
+
   (consult-customize
    ;; Disable preview when switching buffers
    consult-buffer :preview-key nil)
@@ -2188,6 +2243,8 @@ example, a buffer-switching command similar to
   ;; Populate an initial value for consult-line, as this doesn't happen by default
   ;; consult-line :initial (thing-at-point 'symbol))
   :md/bind ((:map (md/leader-map)
+                  ("gd" . md/consult-diff-hunks)
+                  ("gc" . md/consult-diff-cached-hunks)
                   ("p" . consult-buffer)
                   ("jp" . consult-project-buffer)  ; project-file-file just works by default, this is separate
                   ("/" . consult-line)
@@ -2537,6 +2594,16 @@ feature to automatically show the diff buffer when you're on a hunk.
 
   :config
 
+  (defun md/git-gutter-next-hunk ()
+    (interactive)
+    (call-interactively 'git-gutter:next-hunk)
+    (evil-scroll-line-to-top nil))
+
+  (defun md/git-gutter-previous-hunk ()
+    (interactive)
+    (call-interactively 'git-gutter:previous-hunk)
+    (evil-scroll-line-to-top nil))
+
   (defun md/git-file-history ()
     "Show a consult list of the git log history for the current file.
 On preview/action, open the file contents in a readonly buffer, and use
@@ -2629,44 +2696,31 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
           (git-gutter:update-diffinfo diff-results)
           (git-gutter)))))
 
-  (defvar md/git-gutter-auto-diff-last-line nil
-    "Stores the last line number to detect line changes.")
-
-  (defun md/git-gutter-popup-hunk-on-line-change ()
+  (defun md/git-gutter-popup-hunk-overlay ()
     "Check if the current line has changed, and if so, call `git-gutter:popup-hunk`."
-    (let ((current-line (line-number-at-pos)))
-      ;; Check diffinfos rather than git-gutter-mode, as this way it catches my history function
-      (when (and (bound-and-true-p git-gutter:diffinfos)
-                 (not (equal md/git-gutter-auto-diff-last-line current-line))) ;; Check if the line has changed
-        (setq md/git-gutter-auto-diff-last-line current-line)  ;; Update the last line tracked
-        (condition-case nil
-            (git-gutter:popup-hunk)
-          (error
-           (quit-windows-on git-gutter:popup-buffer)
-           ))
-        )))
-
-;;;###autoload
-  (define-minor-mode md/git-gutter-auto-diff-mode
-    "A minor mode to automatically show Git hunk diffs when moving the cursor."
-    :global nil
-    (if md/git-gutter-auto-diff-mode
-        (progn
-          (add-hook 'post-command-hook #'md/git-gutter-popup-hunk-on-line-change nil t)
-          (md/git-gutter-popup-hunk-on-line-change))
-      (progn
-        (quit-windows-on git-gutter:popup-buffer)
-        (remove-hook 'post-command-hook #'md/git-gutter-popup-hunk-on-line-change t))))
-
+    (interactive)
+    ;; Check diffinfos rather than git-gutter-mode, as this way it catches my history function
+    (when (and (bound-and-true-p git-gutter:diffinfos))
+      (condition-case nil
+          ;; We don't show added popups as that's obvious from the buffer
+          (when (not (eq (git-gutter-hunk-type (git-gutter:search-here-diffinfo git-gutter:diffinfos)) 'added))
+            (md/with-display-buffer-alist
+             '("*\\(git-gutter:diff\\)"
+               (md/display-buffer-in-overlay))
+             (git-gutter:popup-hunk)))
+        (error
+         (quit-windows-on git-gutter:popup-buffer)
+         ))))
 
   :md/bind ((:map (md/leader-map)
                   ("g <RET>" . git-gutter-mode)
                   ("gh" . md/git-file-history)
-                  ("ga" . md/git-gutter-auto-diff-mode)
-                  ("gk" . git-gutter:previous-hunk)
-                  ("gp" . git-gutter:previous-hunk)
-                  ("gj" . git-gutter:next-hunk)
-                  ("gn" . git-gutter:next-hunk)
+                  ("gl" . md/git-gutter-popup-hunk-overlay)
+                  ("gL" . git-gutter:popup-hunk)
+                  ("gk" . md/git-gutter-previous-hunk)
+                  ("gp" . md/git-gutter-previous-hunk)
+                  ("gj" . md/git-gutter-next-hunk)
+                  ("gn" . md/git-gutter-next-hunk)
                   ("g+" . git-gutter:stage-hunk)
                   ("g-" . git-gutter:revert-hunk))))
 #+end_src
