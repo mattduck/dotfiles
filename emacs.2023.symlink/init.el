@@ -1186,6 +1186,9 @@ and that's all I need."
                   ("C-c C-r" . md/org-review)
                   ("C-j" . md/org-narrow-next)
                   ("C-k" . md/org-narrow-prev))
+            (:map (org-mode-map . normal)
+                  ("C-j" . md/org-narrow-next)
+                  ("C-k" . md/org-narrow-prev))
             (:map (global-map)
                   ("C-c c" . org-capture))
             (:map (md/leader-map)
@@ -2241,12 +2244,14 @@ slot/window-level thing, not buffer-level."
   (defun md/git-gutter-next-hunk ()
     (interactive)
     (call-interactively 'git-gutter:next-hunk)
-    (evil-scroll-line-to-top nil))
+    (evil-scroll-line-to-top nil)
+    (call-interactively 'md/git-gutter-popup-hunk-overlay))
 
   (defun md/git-gutter-previous-hunk ()
     (interactive)
     (call-interactively 'git-gutter:previous-hunk)
-    (evil-scroll-line-to-top nil))
+    (evil-scroll-line-to-top nil)
+    (call-interactively 'md/git-gutter-popup-hunk-overlay))
 
   (defun md/git-file-history ()
     "Show a consult list of the git log history for the current file.
@@ -2366,7 +2371,10 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
                   ("gj" . md/git-gutter-next-hunk)
                   ("gn" . md/git-gutter-next-hunk)
                   ("g+" . git-gutter:stage-hunk)
-                  ("g-" . git-gutter:revert-hunk))))
+                  ("g-" . git-gutter:revert-hunk))
+            (:map (evil-normal-state-map)
+                  ("C-j" . md/git-gutter-next-hunk)
+                  ("C-k" . md/git-gutter-previous-hunk))))
 
 (use-package github-browse-file
   :demand t
