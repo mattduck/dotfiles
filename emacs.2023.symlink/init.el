@@ -700,7 +700,7 @@ over any existing rules with the same match pattern."
       (display-buffer-reuse-window display-buffer-same-window))
      ("\\*edit-indirect"
       (display-buffer-same-window))
-     ("*\\(help\\|Help\\|Messages\\|Warnings\\|Compile-\\|chatgpt\\)"
+     ("*\\(help\\|Help\\|Messages\\|Warnings\\|Compile-\\|chatgpt\\|eldoc\\)"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
       (window-height . 0.33))
@@ -828,6 +828,15 @@ over any existing rules with the same match pattern."
   :demand t
   :after (undo-tree)
 
+  :config
+  (defun md/goto-definition-dwim ()
+    (interactive)
+    (if (and
+         (fboundp 'md/org-goto-ticket-at-point) ;; Will only be set when org loaded
+         (string-match "^ORG-[0-9]+$" (thing-at-point 'symbol t)))
+        (call-interactively 'md/org-goto-ticket-at-point)
+      (call-interactively 'evil-goto-definition)))
+
   :md/bind ( ;; Like my vimrc, remap  ; to : and , to ;
             (:map (evil-motion-state-map)
                   (";" . evil-ex)
@@ -857,6 +866,7 @@ over any existing rules with the same match pattern."
                   ("M-h" . evil-shift-left-line)
                   ("M-l" . evil-shift-right-line)
                   ("C-l" . evil-jump-forward) ;; See setting below - we use this instead of vim's default C-i
+                  ("gd" . md/goto-definition-dwim)
                   ("gD" . xref-find-references)  ;; Like the opposite to gd, which goes to definition
                   ("SPC" . md/leader-map))
             (:map (md/leader-map)
@@ -1077,6 +1087,77 @@ over any existing rules with the same match pattern."
                       (with-temp-buffer
                         (org-insert-time-stamp (current-time) nil t)))) ; Inactive stamp
 
+  (defun md/org-ticket ()
+    "Insert a ticket number with the fixed prefix ORG in the format ORG-<num>.
+Adds the ticket number to the selected heading and as a `TICKET` property.
+If a `TICKET` property is already present, the function returns early."
+    (interactive)
+    (let ((prefix "ORG")
+          (max-ticket-num 0)
+          (new-ticket-num)
+          (new-ticket))
+
+      ;; Check if TICKET property already exists
+      (if (org-entry-get nil "TICKET")
+          (message "This item already has a TICKET property.")
+
+        ;; Find the highest ticket number by looking at TICKET properties in the buffer
+        (org-map-entries
+         (lambda ()
+           (let ((ticket (org-entry-get nil "TICKET")))
+             (when (and ticket (string-match (concat "^" prefix "-\\([0-9]+\\)") ticket))
+               (let ((num (string-to-number (match-string 1 ticket))))
+                 (setq max-ticket-num (max max-ticket-num num))))))
+         nil
+         'agenda)
+
+        ;; Increment the ticket number
+        (setq new-ticket-num (1+ max-ticket-num))
+        (setq new-ticket (format "%s-%d" prefix new-ticket-num))
+
+        ;; Insert ticket at heading start if not already present
+        (org-edit-headline
+         (if (string-match (concat "^" prefix "-[0-9]+") (org-get-heading t t t t))
+             (replace-match new-ticket nil nil (org-get-heading t t t t))
+           (concat new-ticket " " (org-get-heading t t t t))))
+
+        ;; Add TICKET property to the current entry
+        (org-set-property "TICKET" new-ticket)
+
+        ;; Feedback message
+        (message "%s" new-ticket))))
+
+  (defun md/org-goto-ticket-at-point ()
+    "Go to the Org entry with a `TICKET` property matching the ticket ID at point.
+The ticket ID at point should match the format ORG-<num> (e.g., ORG-1).
+Searches across all Org agenda files."
+    (interactive)
+    (let* ((word (thing-at-point 'symbol t)) ;; Capture the symbol at point
+           (ticket-id (and word (string-match "^ORG-[0-9]+$" word) word))
+           (found nil)
+           (found-buffer nil)
+           (found-point nil))
+
+      (if (not ticket-id)
+          (message "No valid ticket ID at point")
+        ;; Search for the ticket in all agenda files
+        (org-map-entries
+         (lambda ()
+           (when (string= (org-entry-get nil "TICKET") ticket-id)
+             (setq found t)
+             (setq found-buffer (current-buffer))
+             (setq found-point (point))
+             (org-show-entry) ;; Reveal entry in case it's folded
+             (message "Found ticket ID %s" ticket-id)))
+         (format "+TICKET=\"%s\"" ticket-id) ;; Match entries with TICKET property equal to ticket-id
+         'agenda) ;; Search within all agenda files
+
+        (if found-buffer
+            (progn
+              (switch-to-buffer found-buffer)
+              (goto-char found-point))
+          (message "Ticket ID %s not found" ticket-id)))))
+
   :config
 
   (defun md/org-link-sync ()
@@ -1175,7 +1256,7 @@ and that's all I need."
 
   :md/bind ((:map (org-mode-map)
                   ("C-c d" . md/org-timestamp-date-inactive-no-confirm)
-                  ("C-c t" . md/org-timestamp-time-inactive-no-confirm)
+                  ("C-c t" . md/org-timestamp-time-inactive-no-confirm  )
                   ("C-c l" . md/org-insert-link-from-paste)
                   ("C-c L" . org-insert-last-stored-link)
                   ("C-c y" . org-store-link)
@@ -1184,6 +1265,7 @@ and that's all I need."
                   ("C-c T" . org-todo)
                   ("C-c E" . org-set-effort)
                   ("C-c C-r" . md/org-review)
+                  ("C-c C-i" . md/org-ticket)  ;; Overrides C-c C-tab on terminal but I don't use that
                   ("C-j" . md/org-narrow-next)
                   ("C-k" . md/org-narrow-prev))
             (:map (org-mode-map . normal)
@@ -2503,7 +2585,7 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
 
 (use-package consult-eglot
   :after (consult eglot)
-  :config
+  :init
 
   (defun md/consult-eglot-xref-dwim ()
     "If eglot is enabled and managing xref, consult-eglot-symbols is
