@@ -738,6 +738,7 @@ over any existing rules with the same match pattern."
 
                   ("jf" . project-find-file)
                   ("jj" . project-switch-project)
+                  ("jk" . project-kill-buffers)
 
                   ;; buffers
                   ("w" . save-buffer)
