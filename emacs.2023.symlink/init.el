@@ -1929,7 +1929,22 @@ delete-other-windows into a no-op, and then restore once the org function has ex
   (completion-category-overrides '((file (styles basic partial-completion))) "Orderless docs recommend this for handling Tramp properly."))
 
 (use-package marginalia
+  :init
+
+  (defun md/marginalia-annotate-buffer (cand)
+    "My version of annotations for buffers. Includeds the project name, which for
+some reason marginalia doesn't do by default."
+    (when-let (buffer (get-buffer cand))
+      (let ((project-name (when-let ((project (project-current nil (buffer-local-value 'default-directory buffer))))
+                            (file-name-nondirectory (directory-file-name (project-root project))))))
+        (marginalia--fields
+         (project-name :face 'marginalia-symbol :truncate 12)
+         ((marginalia--buffer-status buffer))
+         ((marginalia--buffer-file buffer) :truncate -0.5 :face 'marginalia-file-name)))))
+
   :config
+  (add-to-list 'marginalia-annotator-registry
+               '(buffer md/marginalia-annotate-buffer builtin none))
   (marginalia-mode 1)
   :custom
   (marginalia-field-width 160 "Increase the width from 80 to see more info"))
