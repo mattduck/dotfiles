@@ -2076,13 +2076,16 @@ project: search the project.
 dir: search only the current directory.
 
 python packages: choose a python module directory or file, and search within that. This is useful
-as I don't see a way to reliably/efficiently achieve the same thing with pyright."
+as I don't see a way to reliably/efficiently achieve the same thing with pyright.
+
+consult-line-multi: call consult-line-multi to search all open project buffers"
     (interactive)
-    (let* ((choices '("project" "dir" "python packages"))
+    (let* ((choices '("project" "dir" "python packages" "consult-line-multi"))
            (selection (completing-read "Select ripgrep type: " choices nil t)))
       (pcase selection
         ("project" (consult-ripgrep))  ;; Run consult-ripgrep with default project scope
         ("dir" (consult-ripgrep default-directory))  ;; Run consult-ripgrep in the current directory
+        ("consult-line-multi" (call-interactively 'consult-line-multi))
         ("python packages"
          (let* ((packages (md/find-python-packages))
                 (selected (completing-read "Select python package: " packages nil t)))
