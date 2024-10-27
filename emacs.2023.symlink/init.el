@@ -2052,7 +2052,6 @@ delete-other-windows into a no-op, and then restore once the org function has ex
     (interactive)
     (md/consult-diff-hunks-git-command "git diff --no-color -U0 --cached"))
 
-
   (defun md/consult-ripgrep-dwim ()
     "Wrapper around consult-ripgrep, supporting a couple of different call modes.
 
@@ -2082,6 +2081,30 @@ as I don't see a way to reliably/efficiently achieve the same thing with pyright
             (t
              (message "Selected item does not exist or is not accessible"))))))))
 
+  (defun md/consult-find-dwim ()
+    "Like md/consult-ripgrep-dwim, but the actions are finding files rather than grepping"
+    (interactive)
+    (let* ((choices '("project" "dir" "python packages"))
+           (selection (completing-read "Select find type: " choices nil t)))
+      (pcase selection
+        ("project" (project-find-file))
+        ("dir"
+         (let ((consult-fd-args (append consult-fd-args '("--no-ignore"))))
+           (consult-fd default-directory)))
+        ("python packages"
+         (let* ((packages (md/find-python-packages))
+                (selected (completing-read "Select python package: " packages nil t)))
+           (cond
+            ((and selected (file-directory-p selected))
+             ;; Directories can be passed straight to fd
+             (let ((consult-fd-args (append consult-fd-args '("--no-ignore"))))
+               (consult-fd selected)))
+            ;; Files are already files, so open them
+            ((and selected (file-exists-p selected))
+             (find-file selected))
+            (t
+             (message "Selected item does not exist or is not accessible"))))))))
+
   :config
   (consult-customize
    ;; Disable preview when switching buffers
@@ -2094,6 +2117,7 @@ as I don't see a way to reliably/efficiently achieve the same thing with pyright
                   ("gc" . md/consult-diff-cached-hunks)
                   ("p" . consult-buffer)
                   ("jp" . consult-project-buffer)  ; project-file-file just works by default, this is separate
+                  ("jF" . md/consult-find-dwim)  ;; Search packages and other places
                   ("/" . consult-line)
                   ("j/" . md/consult-ripgrep-dwim)  ;; I have a few different uses for consult-ripgrep
                   ("j." . xref-find-apropos)
