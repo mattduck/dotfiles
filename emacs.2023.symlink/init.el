@@ -703,7 +703,10 @@ over any existing rules with the same match pattern."
      ("*\\(help\\|Help\\|Messages\\|Warnings\\|Compile-\\|chatgpt\\|eldoc\\)"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
-      (window-height . 0.33))
+      ;; TODO this is close
+      (window-height . (lambda (win)
+                         ;; Adjust window height to fit buffer contents, up to a max height of 10 lines
+                         (fit-window-to-buffer win 25 4))))
      ("*\\(Agenda Commands\\|Org Select\\)\\*" ;; Annoying org popups - agenda and capture selection
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
@@ -2159,14 +2162,28 @@ consult-line-multi: call consult-line-multi to search all open project buffers"
   (xclip-mode 1))
 
 (use-package helpful
+  :after (eldoc evil)
+  :init
+  (defun md/help-at-point-dwim ()
+    "Open help buffer for the thing at point.
+
+In some modes, the best thing we have will be the eglot symbol hover for its
+eldoc integration. For emacs-lisp mode we use the helpful-at-point function."
+    (interactive)
+    (if (eq major-mode 'emacs-lisp-mode)
+        (call-interactively 'helpful-at-point)
+      (call-interactively 'eldoc)
+      (switch-to-buffer (eldoc-doc-buffer))))
+
   :md/bind ((:map (help-map)
                   ("v" . helpful-variable)
                   ("f" . helpful-function)
                   ("k" . helpful-key)
                   ("c" . helpful-command)
                   ("m" . helpful-macro)
-                  ("M" . describe-mode)  ; This is "m" by default.
-                  ("g" . helpful-at-point))
+                  ("M" . describe-mode))  ; This is "m" by default.
+            (:map (evil-normal-state-map)
+                  ("gh" . md/help-at-point-dwim))
             (:map (helpful-mode-map . normal)
                   ("q" . md/quit-and-kill-window))))
 
@@ -2643,11 +2660,17 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
   ;;
   ;; For some reason this doesn't get picked up setting via :custom, so we do it
   ;; with setq.
-  (setq eglot-stay-out-of '(eldoc flymake imenu))
+  (setq eglot-stay-out-of '(flymake imenu))
 
   ;; Changes supposed to help with performance
   (fset #'jsonrpc--log-event #'ignore)
   (setq eglot-events-buffer-size 0)
+
+  ;; [2024-10-27] Eglot hard-codes calling this function on eldoc symbol hover,
+  ;; to highlight the current symbol with eglot-highlight-symbol-face. I don't
+  ;; want this but there's no builtin way to disable it, so just redefine the
+  ;; function.
+  (defun eglot--highlight-piggyback (cb))
 
   :custom
   (eglot-report-progress nil "Eglot spams the minibuffer a lot on save -- this seems to keep it quieter")
@@ -2684,6 +2707,14 @@ features, then I can get rid of this and just use xref."
 
   :md/bind ((:map (md/leader-map)
               ("j ." . md/consult-eglot-xref-dwim))))
+
+(use-package eldoc
+  :straight nil
+  :demand t
+
+  :custom
+    (eldoc-documentation-strategy 'eldoc-documentation-compose "Allow eldoc to pull in info from multiple sources")
+    (eldoc-echo-area-use-multiline-p nil "Don't keep increasing the minibuffer size to show big docs"))
 
 (use-package treesit
   :straight nil
