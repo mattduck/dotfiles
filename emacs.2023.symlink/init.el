@@ -2052,6 +2052,36 @@ delete-other-windows into a no-op, and then restore once the org function has ex
     (interactive)
     (md/consult-diff-hunks-git-command "git diff --no-color -U0 --cached"))
 
+
+  (defun md/consult-ripgrep-dwim ()
+    "Wrapper around consult-ripgrep, supporting a couple of different call modes.
+
+project: search the project.
+
+dir: search only the current directory.
+
+python packages: choose a python module directory or file, and search within that. This is useful
+as I don't see a way to reliably/efficiently achieve the same thing with pyright."
+    (interactive)
+    (let* ((choices '("project" "dir" "python packages"))
+           (selection (completing-read "Select ripgrep type: " choices nil t)))
+      (pcase selection
+        ("project" (consult-ripgrep))  ;; Run consult-ripgrep with default project scope
+        ("dir" (consult-ripgrep default-directory))  ;; Run consult-ripgrep in the current directory
+        ("python packages"
+         (let* ((packages (md/find-python-packages))
+                (selected (completing-read "Select python package: " packages nil t)))
+           (cond
+            ((and selected (file-directory-p selected))
+             ;; Directories can be passed straight to ripgrep
+             (let ((consult-ripgrep-args (concat consult-ripgrep-args " --no-ignore")))
+               (consult-ripgrep selected)))  ;; Run consult-ripgrep in the selected package directory
+            ;; Files need to be passed as a list
+            ((and selected (file-exists-p selected))
+             (consult-ripgrep (list (shell-quote-argument selected))))  ;; Run consult-ripgrep on the single file
+            (t
+             (message "Selected item does not exist or is not accessible"))))))))
+
   :config
   (consult-customize
    ;; Disable preview when switching buffers
@@ -2065,7 +2095,7 @@ delete-other-windows into a no-op, and then restore once the org function has ex
                   ("p" . consult-buffer)
                   ("jp" . consult-project-buffer)  ; project-file-file just works by default, this is separate
                   ("/" . consult-line)
-                  ("j/" . consult-ripgrep)
+                  ("j/" . md/consult-ripgrep-dwim)  ;; I have a few different uses for consult-ripgrep
                   ("j." . xref-find-apropos)
                   ("." . consult-imenu)) ; See eglot section for consult-eglot-symbols, bound to j.
             (:map (global-map . normal)
@@ -2643,11 +2673,58 @@ features, then I can get rid of this and just use xref."
 
 (use-package python
   :demand t
+
+  :init
+  (defun md/find-python-executable ()
+    "Find the current project's python executable. If a venv directory exists in
+the project root, this takes preference. Otherwise, we try to look at
+pyrightconfig.json, as this is where I'm telling pyright which python
+to use.
+
+This can be used to run scripts in the context of the project's python -- this is initially
+just used by md/find-python-packages, but have other uses."
+
+    "Return the path to 'venv/bin/python' in the current project root, if it exists.
+If no 'venv/bin/python' file is found, check for a `pyrightconfig.json` file to locate
+the Python executable in an external virtual environment.
+If both attempts fail, return 'python' as a fallback."
+
+    (let* ((project-root (project-root (project-current)))
+           ;; If there's a venv directory, prefer it
+           (default-python-path (expand-file-name "venv/bin/python" project-root)))
+      (if (and default-python-path (file-executable-p default-python-path))
+          default-python-path
+        ;; If no venv directory, assume I'm configuring `pyrightconfig.json` and we can grab it there
+        (let* ((pyright-config (expand-file-name "pyrightconfig.json" project-root))
+               (python-path
+                (when (file-exists-p pyright-config)
+                  (let* ((config (json-read-file pyright-config))
+                         (venv-path (cdr (assoc 'venvPath config)))
+                         (venv-name (cdr (assoc 'venv config))))
+                    (when (and venv-path venv-name)
+                      (expand-file-name "bin/python" (expand-file-name venv-name venv-path)))))))
+          ;; Return the found path or fallback to "python" if not found
+          (if (and python-path (file-executable-p python-path))
+              python-path
+            "python")))))
+
+  (defun md/find-python-packages ()
+    "Run a python script to figure out all the importable packages and their paths. Returns
+the list of paths. Idea is that this can be used to run consult-ripgrep or consult-fd, or eglot
+commands. It seems to be a lot more reliable and faster than attempting to get the same info
+out of eglot or an lsp server directly."
+    (let* ((script-path (md/dotfiles-get-path "emacs.2023.symlink/find_packages.py"))
+           (output (shell-command-to-string (concat (md/find-python-executable) " " (shell-quote-argument script-path)))))
+      (if (string-empty-p output)
+          (message "No packages found or script returned empty output.")
+        (split-string output "\n" t))))
+
   :config
   (defun md/python-imenu-format-item-label (type name)
     "Instead of the default format of eg. `my_function (def)`, use `def:
 myfunction`. This makes it easier to read."
     (format "%s: %s" type name))
+
   :custom
   (python-imenu-format-item-label-function #'md/python-imenu-format-item-label)
   (python-imenu-format-parent-item-label-function #'md/python-imenu-format-item-label))
