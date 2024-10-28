@@ -1947,7 +1947,7 @@ some reason marginalia doesn't do by default."
       (let ((project-name (when-let ((project (project-current nil (buffer-local-value 'default-directory buffer))))
                             (file-name-nondirectory (directory-file-name (project-root project))))))
         (marginalia--fields
-         (project-name :face 'marginalia-symbol :truncate 12)
+         (project-name :face 'marginalia-symbol :truncate 30)
          ((marginalia--buffer-status buffer))
          ((marginalia--buffer-file buffer) :truncate -0.5 :face 'marginalia-file-name)))))
 
