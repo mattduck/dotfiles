@@ -149,7 +149,13 @@ a list like '(normal insert)'."
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns))
   :demand t
-  :config (exec-path-from-shell-initialize))
+  :config
+  ;; Define vars to inherit beyond the default PATH and MANPATH
+  (setq exec-path-from-shell-variables
+        '("DOTFILES"
+          "MANPATH"
+          "PATH"))
+  (exec-path-from-shell-initialize))
 
 (use-package s
   :straight (:host github :repo "magnars/s.el"))
