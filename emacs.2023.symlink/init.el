@@ -700,10 +700,9 @@ over any existing rules with the same match pattern."
       (display-buffer-reuse-window display-buffer-same-window))
      ("\\*edit-indirect"
       (display-buffer-same-window))
-     ("*\\(help\\|Help\\|Messages\\|Warnings\\|Compile-\\|chatgpt\\|eldoc\\)"
+     ("*\\(help\\|Help\\|Messages\\|Warnings\\|Compile-\\|chatgpt\\|eldoc\\|eglot-help\\)"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
-      ;; TODO this is close
       (window-height . (lambda (win)
                          ;; Adjust window height to fit buffer contents, up to a max height of 10 lines
                          (fit-window-to-buffer win 25 4))))
@@ -2170,10 +2169,13 @@ consult-line-multi: call consult-line-multi to search all open project buffers"
 In some modes, the best thing we have will be the eglot symbol hover for its
 eldoc integration. For emacs-lisp mode we use the helpful-at-point function."
     (interactive)
-    (if (eq major-mode 'emacs-lisp-mode)
-        (call-interactively 'helpful-at-point)
-      (call-interactively 'eldoc)
-      (switch-to-buffer (eldoc-doc-buffer))))
+    (cond ((eq major-mode 'emacs-lisp-mode)
+           (call-interactively 'helpful-at-point))
+          ((eglot-current-server)
+           (md/eglot-helpful))
+          (t
+           (call-interactively 'eldoc)
+           (switch-to-buffer (eldoc-doc-buffer)))))
 
   :md/bind ((:map (help-map)
                   ("v" . helpful-variable)
@@ -2672,12 +2674,99 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
   ;; function.
   (defun eglot--highlight-piggyback (cb))
 
+  ;; TODO: these functions are very rough atm, needs some work
+  (define-derived-mode md/eglot-helpful-mode special-mode "Eglot-Helpful"
+    "Major mode for displaying Eglot information about a symbol. Similar to help/helpful,
+but for elgot rather than emacs lisp"
+    (read-only-mode 1))
+
+  (defun md/eglot-helpful ()
+    "Display information about the symbol at point in a buffer named '*eglot-helpful*', and switch to it."
+    (interactive)
+    (if-let ((server (eglot-current-server))
+             (symbol-name (thing-at-point 'symbol t))
+             (original-buffer (current-buffer)))  ;; Store the original buffer
+        (with-current-buffer (get-buffer-create "*eglot-help*")
+          ;; Temporarily disable read-only mode
+          (read-only-mode -1)
+          (erase-buffer)
+          (insert (format "Symbol: %s\n\n" symbol-name))
+          ;; Switch to the original buffer to retrieve hover info
+          (insert (or (with-current-buffer original-buffer
+                        (md/eglot-get-hover-info)) ""))
+
+          (insert "\n")
+          (insert (or (with-current-buffer original-buffer
+                        (md/eglot-get-full-definition)) ""))
+          ;; Re-enable read-only mode and switch to our custom mode
+          (md/eglot-helpful-mode)
+          ;; Display and switch to the buffer
+          (pop-to-buffer (current-buffer))
+          (goto-char (point-min)))
+      (message (if (eglot-current-server)
+                   "No symbol at point."
+                 "No active Eglot server for the current buffer."))))
+
+  (defun md/eglot-get-full-definition ()
+    "Get the full definition range for the symbol at point using `textDocument/definition` and `textDocument/documentSymbol`."
+    (when-let* ((server (eglot-current-server))
+                (symbol-name (thing-at-point 'symbol t))
+                ;; Step 1: Get the definition location of the symbol at point
+                (definition-info (jsonrpc-request server :textDocument/definition
+                                                  (eglot--TextDocumentPositionParams))))
+      ;; Extract the URI and position from the definition-info
+      (pcase definition-info
+        (`[(:uri ,uri :range (:start ,_start :end ,_end))]
+         ;; Step 2: Get document symbols in the target file (URI)
+         (md/find-symbol-in-external-file symbol-name uri))
+        (_ (message "No definition found for symbol: %s" symbol-name)))))
+
+  (defun md/find-symbol-in-external-file (symbol-name uri)
+    "Find SYMBOL-NAME in the external file specified by URI and return its full definition range."
+    (let ((server (eglot-current-server))
+          (document-symbols (jsonrpc-request server :textDocument/documentSymbol
+                                             `(:textDocument (:uri ,uri)))))
+      ;; Convert the URI to a file path and find the full definition range in the document symbols
+      (md/find-symbol-in-symbols symbol-name document-symbols (eglot--uri-to-path uri))))
+
+  (defun md/find-symbol-in-symbols (symbol-name symbols filename)
+    "Search recursively in SYMBOLS from FILENAME to find the full range for SYMBOL-NAME."
+    (setq symbols (if (vectorp symbols) (append symbols nil) symbols))  ;; Ensure symbols is a list
+    (dolist (symbol symbols)
+      (let ((name (plist-get symbol :name))
+            (range (plist-get symbol :range)))
+        (when (and name (string= name symbol-name))
+          (return (md/eglot--fetch-code-snippet filename
+                                                (plist-get range :start)
+                                                (plist-get range :end))))
+        ;; Recursive search in children if symbol has nested symbols
+        (when (plist-get symbol :children)
+          (md/find-symbol-in-symbols symbol-name (plist-get symbol :children) filename)))))
+
+  (defun md/eglot--fetch-code-snippet (filename start end)
+    "Fetch code snippet from FILENAME between START and END positions."
+    (when (and filename (file-readable-p filename))
+      (with-temp-buffer
+        (insert-file-contents filename)
+        (goto-char (point-min))
+        ;; Convert LSP positions to buffer positions
+        (let ((beg (eglot--lsp-position-to-point start))
+              (fin (eglot--lsp-position-to-point end))
+              (mode (assoc-default filename auto-mode-alist #'string-match)))
+          (when mode
+            (funcall mode)
+            (font-lock-ensure))
+          (buffer-substring beg fin)))))
+
+
   :custom
   (eglot-report-progress nil "Eglot spams the minibuffer a lot on save -- this seems to keep it quieter")
 
   :md/bind ((:map (md/leader-map)
                   ("ll" . eglot)
-                  ("lL" . eglot-shutdown))))
+                  ("lL" . eglot-shutdown))
+            (:map (md/eglot-helpful-mode-map  . normal)
+                  ("q" . md/quit-and-kill-window))))
 
 (use-package consult-eglot
   :after (consult eglot)
