@@ -2743,16 +2743,18 @@ but for elgot rather than emacs lisp"
   (defun md/find-symbol-in-symbols (symbol-name symbols filename)
     "Search recursively in SYMBOLS from FILENAME to find the full range for SYMBOL-NAME."
     (setq symbols (if (vectorp symbols) (append symbols nil) symbols))  ;; Ensure symbols is a list
-    (dolist (symbol symbols)
-      (let ((name (plist-get symbol :name))
-            (range (plist-get symbol :range)))
-        (when (and name (string= name symbol-name))
-          (return (md/eglot--fetch-code-snippet filename
-                                                (plist-get range :start)
-                                                (plist-get range :end))))
-        ;; Recursive search in children if symbol has nested symbols
-        (when (plist-get symbol :children)
-          (md/find-symbol-in-symbols symbol-name (plist-get symbol :children) filename)))))
+    (catch 'found
+      (dolist (symbol symbols)
+        (let ((name (plist-get symbol :name))
+              (range (plist-get symbol :range)))
+          (cond ((and name (string= name symbol-name))
+                 (throw 'found (md/eglot--fetch-code-snippet filename
+                                                             (plist-get range :start)
+                                                             (plist-get range :end))))
+                ((plist-get symbol :children)
+                 (let ((result (md/find-symbol-in-symbols symbol-name (plist-get symbol :children) filename)))
+                   (when result
+                     (throw 'found result)))))))))
 
   (defun md/eglot--fetch-code-snippet (filename start end)
     "Fetch code snippet from FILENAME between START and END positions."
