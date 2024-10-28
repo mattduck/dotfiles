@@ -3148,6 +3148,17 @@ but for elgot rather than emacs lisp"
                    "No symbol at point."
                  "No active Eglot server for the current buffer."))))
 
+  (defun md/eglot-get-hover-info ()
+    "Get hover information for the symbol at point using Eglot and return it as a propertized string."
+    (when-let ((server (eglot-current-server)))
+      (let* ((hover-info (jsonrpc-request server :textDocument/hover
+                                          (eglot--TextDocumentPositionParams)))
+             (contents (plist-get hover-info :contents))
+             (range (plist-get hover-info :range)))
+        (if (and contents (not (seq-empty-p contents)))
+            (eglot--hover-info contents range)  ;; Use eglot's internal hover formatting
+          "No hover information available."))))
+
   (defun md/eglot-get-full-definition ()
     "Get the full definition range for the symbol at point using `textDocument/definition` and `textDocument/documentSymbol`."
     (when-let* ((server (eglot-current-server))
