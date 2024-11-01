@@ -834,6 +834,7 @@ over any existing rules with the same match pattern."
   :config
   (defun md/goto-definition-dwim ()
     (interactive)
+    (evil-set-jump)
     (if (and
          (fboundp 'md/org-goto-ticket-at-point) ;; Will only be set when org loaded
          (string-match "^ORG-[0-9]+$" (thing-at-point 'symbol t)))
