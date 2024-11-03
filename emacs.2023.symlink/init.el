@@ -712,6 +712,10 @@ over any existing rules with the same match pattern."
       (window-height . (lambda (win)
                          ;; Adjust window height to fit buffer contents, up to a max height of 10 lines
                          (fit-window-to-buffer win 25 4))))
+     ("*\\(vterm\\)\\*" ;; Annoying org popups - agenda and capture selection
+      (display-buffer-reuse-window display-buffer-in-side-window)
+      (side . right)
+      (window-width . 80))
      ("*\\(Agenda Commands\\|Org Select\\)\\*" ;; Annoying org popups - agenda and capture selection
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
@@ -2262,10 +2266,29 @@ slot/window-level thing, not buffer-level."
 (use-package vterm
   :demand t
   :after (evil)
+  :init
+  (defun md/vterm-mode-hook ()
+    "Remove the margins for more efficient side-window display"
+    (evil-emacs-state)
+    (setq left-margin-width 0)
+    (set-window-buffer (selected-window) (current-buffer)))
+
+  (defun md/vterm-toggle ()
+    "Display or start a vterm buffer, or hide it if it's already visible."
+    (interactive)
+    (let ((vterm-buffer (get-buffer "*vterm*")))
+      (if vterm-buffer
+          (if (get-buffer-window vterm-buffer)
+              (delete-window (get-buffer-window vterm-buffer))
+            (switch-to-buffer vterm-buffer))
+        (vterm))))
+
   :config
   (evil-set-initial-state 'vterm-mode 'emacs)
-  :hook ((vterm-mode . evil-emacs-state))
-  :md/bind ((:map (vterm-mode-map)
+  :hook ((vterm-mode . md/vterm-mode-hook))
+  :md/bind ((:map (md/leader-map)
+                  (";v" . md/vterm-toggle))
+            (:map (vterm-mode-map)
                   ("C-<SPC>" . md/leader-map)
                   ("C-w" . splitscreen/prefix)
                   ("C-g" . vterm--self-insert))
