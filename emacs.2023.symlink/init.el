@@ -146,6 +146,11 @@ a list like '(normal insert)'."
               args)))
        body))))
 
+(add-to-list
+ 'straight-recipe-repositories
+ '("melpa-stable" . "https://stable.melpa.org/packages/")
+ t)
+
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns))
   :demand t
@@ -712,7 +717,11 @@ over any existing rules with the same match pattern."
       (window-height . (lambda (win)
                          ;; Adjust window height to fit buffer contents, up to a max height of 10 lines
                          (fit-window-to-buffer win 25 4))))
-     ("*\\(vterm\\)\\*" ;; Annoying org popups - agenda and capture selection
+     ("*\\(vterm\\)\\*"
+      (display-buffer-reuse-window display-buffer-in-side-window)
+      (side . right)
+      (window-width . 80))
+     ("*\\(aider\\)\\*"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . right)
       (window-width . 80))
@@ -1039,6 +1048,7 @@ over any existing rules with the same match pattern."
   (define-key splitscreen/prefix (kbd "%") 'split-window-right)
   (define-key splitscreen/prefix (kbd "\"") 'split-window-below)
   (define-key splitscreen/prefix (kbd "x") 'delete-window)
+  (define-key splitscreen/prefix (kbd "q") 'delete-window)
   (define-key splitscreen/prefix (kbd "SPC") 'balance-windows)
 
   (define-minor-mode splitscreen-mode
@@ -2600,26 +2610,6 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
   :bind (:map md/leader-map
         ("go" . github-browse-file)))
 
-(use-package shell-maker
-  :straight (:host github :repo "xenodium/chatgpt-shell" :files ("shell-maker.el")))
-
-(use-package chatgpt-shell
-  :requires shell-maker
-  :straight (:host github :repo "xenodium/chatgpt-shell" :files ("chatgpt-shell.el"))
-  :config
-  (evil-set-initial-state 'chatgpt-shell-mode 'emacs)
-  :custom
-  (chatgpt-shell-openai-key
-   (lambda ()
-     ;; NOTE: if this isn't working remember that auth-source-do-cache controls auth-source caching
-     (auth-source-pick-first-password :host "api.openai.com"))
-   "API credentials")
-  (chatgpt-shell-model-version "gpt-4")
-  :md/bind ((:map (md/leader-map)
-               ("G" . chatgpt-shell))
-         (:map (chatgpt-shell-mode-map . normal)
-               ("q" . quit-window))))
-
 (use-package treemacs
   :demand t
   :init
@@ -2970,6 +2960,183 @@ myfunction`. This makes it easier to read."
                   ("TAB" . markdown-cycle)
                   ("gk" . markdown-previous-visible-heading)
                   ("gj" . markdown-next-visible-heading))))
+
+(use-package gptel
+  :init
+
+  (defun md/gptel-context-remove ()
+    "gptel doesn't provide a way to remove all context without
+interacting with the context buffer.
+
+This provides a shorthand to do that by setting gptel-context--alist to nil. We
+also call the context-remove function, so that if gptel has highlighted part of
+a buffer and I'm currently looking at that buffer, the highlights will be
+removed.
+
+TBD on how well this works."
+    (interactive)
+    (setq gptel-context--alist nil)
+    (gptel-context-remove)
+    (message "Removed all gptel context"))
+
+  (defun md/gptel-context-dwim ()
+    "Add context. gptel provides an add dwim function but I don't like how it behaves."
+    (interactive)
+    (cond
+     ;; If the region is active
+     ((use-region-p)
+      (gptel-context--add-region (current-buffer)
+                                 (region-beginning)
+                                 (region-end))
+      (deactivate-mark))
+     ;; If the buffer is not narrowed and is visiting a file
+     ((and (not (buffer-narrowed-p))
+           (buffer-file-name))
+      (gptel-add-file (buffer-file-name)))
+     ;; If the buffer is narrowed or is not visiting a file
+     (t
+      (gptel-add))))
+
+  (defun md/gptel-rewrite-code ()
+    "Gptel provides a rewrite feature, but it makes you interact with it through the menu
+to accept/reject changes, and I just want something simple that rewrites the region."
+    (interactive)
+    (if (use-region-p)
+        (let ((bounds (cons (region-beginning) (region-end))))
+          (gptel-request
+              (buffer-substring-no-properties (car bounds) (cdr bounds)) ; the prompt
+            :system "You are a code-producing machine. Respond only with the replacement version of the code: NEVER RETURN MARKDOWN,
+EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in your response as much as possible."
+            :buffer (current-buffer)
+            :context (cons (set-marker (make-marker) (car bounds))
+                           (set-marker (make-marker) (cdr bounds)))
+            :callback
+            (lambda (response info)
+              (if (not response)
+                  (message "ChatGPT response failed with: %s" (plist-get info :status))
+                (let* ((bounds (plist-get info :context))
+                       (beg (car bounds))
+                       (end (cdr bounds))
+                       (buf (plist-get info :buffer)))
+                  (with-current-buffer buf
+                    (save-excursion
+                      (goto-char beg)
+                      (kill-region beg end)
+                      (insert response)
+                      (set-marker beg nil)
+                      (set-marker end nil)
+                      (message "Rewrote region. Original region saved to kill-ring."))))))))
+      (message "Not in region")))
+
+  (defun md/gptel-send ()
+    "Call gptel-send, but only if a topic is set. This is to prevent accidentally calling it in buffers that I don't want to share."
+    (interactive)
+    (if (derived-mode-p 'org-mode)
+        (let* ((gptel-topic (org-entry-get (point) "GPTEL_TOPIC" t)))
+          (if gptel-topic
+              (gptel-send)
+            (message "needs GPTEL_TOPIC property")))
+      (gpt-send)))
+
+  (defun md/gptel-org-properties ()
+    (interactive)
+    (call-interactively 'gptel-org-set-topic)
+    (call-interactively 'gptel-org-set-properties))
+
+  :custom
+  (gptel-default-mode 'org-mode "Use org in the chat buffer")
+  (gptel-log-level 'info "Log requests and responses to buffer")
+
+  :md/bind ((:map (org-mode-map)
+                  ("C-c <RET>" . md/gptel-send))
+            (:map (md/leader-map)
+                  ("G <RET>" . md/gptel-send)
+                  ("Gt" . md/gptel-org-properties)
+                  ("G+" . md/gptel-context-dwim)
+                  ("G-" . md/gptel-context-remove)
+                  ("GR" . md/gptel-rewrite-code)
+                  ("GG" . gptel))))
+
+(use-package emacs
+  :init
+
+  (defun md/aider-toggle ()
+    "Toggle or start an aider comint buffer"
+    (interactive)
+    (let ((aider-buffer (get-buffer "*aider*")))
+      (if aider-buffer
+          (if (get-buffer-window aider-buffer)
+              (delete-window (get-buffer-window aider-buffer))
+            (switch-to-buffer aider-buffer))
+        (progn
+          (make-comint-in-buffer "aider" "*aider*" "aider" nil)
+          (switch-to-buffer "*aider*")
+          (setq fill-column 60)
+          (evil-emacs-state)))))
+
+  (defun md/aider-send-command (cmd msg show switch)
+    "Send the given command string to the buffer using comint"
+    (let ((comint-process (get-buffer-process "*aider*")))
+      (if comint-process
+          (progn
+            (comint-send-string comint-process (format "%s\n" cmd))
+            (accept-process-output comint-process 10 nil t)
+            (when msg
+              (message msg))
+            (when show
+              (display-buffer "*aider*"))
+            (when switch
+              (switch-to-buffer "*aider*")))
+        (message "No aider process running"))))
+
+  (defun md/aider-drop ()
+    "Use /drop to drop current context"
+    (interactive)
+    (md/aider-send-command "/drop" "Aider: dropped context" t nil))
+
+  (defun md/aider-mode-ask ()
+    "Go into /chat-mode ask"
+    (interactive)
+    (md/aider-send-command "/chat-mode ask" "Aider: ask mode" t nil)
+    (when (use-region-p)
+      (call-interactively 'md/aider-send-region)))
+
+  (defun md/aider-mode-code ()
+    "Go into /chat-mode code"
+    (interactive)
+    (md/aider-send-command "/chat-mode code" "Aider: code mode" t nil)
+    (when (use-region-p)
+      (call-interactively 'md/aider-send-region)))
+
+  (defun md/aider-add-file ()
+    "Add current visited file to the context"
+    (interactive)
+    (if (buffer-file-name)
+        (let* ((project-root (if (fboundp 'project-current)
+                                 (car (last (project-current)))
+                               nil))
+               (relative-path (if project-root
+                                  (file-relative-name buffer-file-name project-root)
+                                buffer-file-name)))
+          (if relative-path
+              (md/aider-send-command (format "/add %s" relative-path) (format "Aider: added %s" relative-path) t nil)))))
+
+  (defun md/aider-send-region (start end)
+    "Switch to code mode and send the current region to aider"
+    (interactive "r")
+    (if (use-region-p)
+        (let ((region-text (string-trim (buffer-substring-no-properties start end))))
+          ;; Aider will handle multi-line strings if you start and end with a curly brace
+          (md/aider-send-command (format "{\n%s\n}" region-text) nil t nil))
+      (message "Aider: no region selected")))
+
+  :md/bind ((:map (md/leader-map)
+                  ("A-" . md/aider-drop)
+                  ("A+" . md/aider-add-file)
+                  ("A/" . md/aider-mode-ask)
+                  ("A!" . md/aider-mode-code)
+                  ("AR" . md/aider-send-region)
+                  (";a" . md/aider-toggle))))
 
 (use-package server
   :config (when (not (server-running-p))
