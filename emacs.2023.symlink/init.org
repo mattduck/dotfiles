@@ -3474,6 +3474,25 @@ Note -- compiling requires ~markdown~ to be installed.
 (use-package gptel
   :init
 
+  ;; TODO: Adjust this function. if it's at the end of a paragraph or an item, and 
+  ;; the very next line below it contains anything other than whitespace only,
+  ;; then we should insert a blank newline
+  ;;
+  ;; to avoid mutating the org elements as we're parsing the doc, you should
+  ;; only store the position of the newlines that we'll need to insert, and then
+  ;; insert them all at the end.
+(defun md/gptel-post-response (start end)
+  "Try to fill columns for the text items in the response, using org-element-map.
+This makes it easier to read and more consistent with the rest of the buffer"
+  (when (eq major-mode 'org-mode)
+    (org-with-wide-buffer
+     (cl-loop for el in (org-element-map (org-element-parse-buffer) '(paragraph item) #'identity)
+              when (and (<= (org-element-property :begin el) end)
+                        (>= (org-element-property :end el) start))
+              do
+              (goto-char (org-element-property :contents-begin el))
+              (org-fill-paragraph)))))
+
   (defun md/gptel-context-remove ()
     "gptel doesn't provide a way to remove all context without
 interacting with the context buffer.
@@ -3546,7 +3565,7 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
           (if gptel-topic
               (gptel-send)
             (message "needs GPTEL_TOPIC property")))
-      (gpt-send)))
+      (gptel-send)))
 
   (defun md/gptel-org-properties ()
     (interactive)
@@ -3556,6 +3575,7 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
   :custom
   (gptel-default-mode 'org-mode "Use org in the chat buffer")
   (gptel-log-level 'info "Log requests and responses to buffer")
+  (gptel-post-response-functions '(md/gptel-post-response))
 
   :md/bind ((:map (org-mode-map)
                   ("C-c <RET>" . md/gptel-send))
