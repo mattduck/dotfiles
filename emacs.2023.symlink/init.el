@@ -3059,6 +3059,36 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
 
 (use-package emacs
   :init
+  (defun md/aider-fontify ()
+    "Fontify all markdown code blocks in the current buffer.
+This builds on the markdown-fontify-code-block-natively behaviour
+provided by markdown-mode.
+
+Aider does provide its own markdown highlighting and maybe there's a way to get
+that to work via comint, but I like the idea that this is consistent with the
+rest of the theme."
+    (interactive)
+    (save-excursion
+      ;; NOTE: jit lock mode conflicts and must be disabled. This seems to work.
+      (jit-lock-mode nil)
+      (goto-char (point-min))
+      (while (re-search-forward markdown-regex-gfm-code-block-open nil t)
+        (let ((markdown-fontify-code-blocks-natively t)
+              (start (match-beginning 0))
+              (lang (string-trim (match-string 0) "```"))
+              (end (progn
+                     (re-search-forward markdown-regex-gfm-code-block-close nil t)
+                     (match-end 0))))
+          ;;(message "START: %s END: %s LANG: %s MATCH: %s" start end lang (match-string 0))
+          (markdown-fontify-code-block-natively lang start end)
+          ;; This hopefully ensures that font lock mode won't rewrite this
+          ;; portion of the buffer
+          (add-text-properties start end '(fontified t))))
+      (jit-lock-mode 1)))
+
+  (defun md/aider-output-filter-function (STRING)
+    "I'm using this to enable the markdown code highlighting"
+    (md/aider-fontify))
 
   (defun md/aider-toggle ()
     "Toggle or start an aider comint buffer"
@@ -3069,8 +3099,20 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
               (delete-window (get-buffer-window aider-buffer))
             (switch-to-buffer aider-buffer))
         (progn
-          (make-comint-in-buffer "aider" "*aider*" "aider" nil)
+          ;; NOTE: even though we specify --no-stream, the program output might
+          ;; come out in batches. This means we can't rely on a comint output
+          ;; filter function to apply the markdown.
+          (make-comint-in-buffer "aider" "*aider*" "aider" nil "--no-stream" "--no-fancy-input" "--no-pretty" "--no-analytics")
           (switch-to-buffer "*aider*")
+          ;; This gives us highlighting for the markdown syntax that aider uses.
+          (font-lock-add-keywords nil markdown-mode-font-lock-keywords)
+          ;; By default, when markdown-mode-font-lock-keywords are applied, the
+          ;; markup is invisible. Markdown-mode usually calls
+          ;; `remove-from-invisibility-spec` to show the markup.
+          (remove-from-invisibility-spec 'markdown-markup)
+          ;; TODO: confirm this is buffer local
+          (add-to-list 'comint-output-filter-functions 'md/aider-output-filter-function)
+
           (setq fill-column 60)
           (evil-emacs-state)))))
 
@@ -3134,6 +3176,7 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
                   ("A-" . md/aider-drop)
                   ("A+" . md/aider-add-file)
                   ("A/" . md/aider-mode-ask)
+                  ("Ax" . md/aider-fontify)
                   ("A!" . md/aider-mode-code)
                   ("AR" . md/aider-send-region)
                   (";a" . md/aider-toggle))))
