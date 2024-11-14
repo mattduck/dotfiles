@@ -3059,6 +3059,7 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
 
 (use-package emacs
   :init
+
   (defun md/aider-fontify ()
     "Fontify all markdown code blocks in the current buffer.
 This builds on the markdown-fontify-code-block-natively behaviour
@@ -3069,22 +3070,27 @@ that to work via comint, but I like the idea that this is consistent with the
 rest of the theme."
     (interactive)
     (save-excursion
-      ;; NOTE: jit lock mode conflicts and must be disabled. This seems to work.
-      (jit-lock-mode nil)
       (goto-char (point-min))
+
+      ;; I don't fully understand this but this is what markdown-mode does on
+      ;; startup, and it seems to solve the problem of font-lock-mode rewriting
+      ;; over our code blocks. Without this the syntax highlighting only works
+      ;; if I disable font-lock-mode.
+      (add-hook 'syntax-propertize-extend-region-functions
+                #'markdown-syntax-propertize-extend-region nil t)
+      (add-hook 'jit-lock-after-change-extend-region-functions
+                #'markdown-font-lock-extend-region-function t t)
+      (setq-local syntax-propertize-function #'markdown-syntax-propertize)
+      (syntax-propertize (point-max))
+
       (while (re-search-forward markdown-regex-gfm-code-block-open nil t)
-        (let ((markdown-fontify-code-blocks-natively t)
-              (start (match-beginning 0))
-              (lang (string-trim (match-string 0) "```"))
-              (end (progn
-                     (re-search-forward markdown-regex-gfm-code-block-close nil t)
-                     (match-end 0))))
-          ;;(message "START: %s END: %s LANG: %s MATCH: %s" start end lang (match-string 0))
-          (markdown-fontify-code-block-natively lang start end)
-          ;; This hopefully ensures that font lock mode won't rewrite this
-          ;; portion of the buffer
-          (add-text-properties start end '(fontified t))))
-      (jit-lock-mode 1)))
+        (let* ((markdown-fontify-code-blocks-natively t)
+               (start (match-beginning 0))
+               (lang (string-trim (match-string 0) "```"))
+               (end (progn
+                      (re-search-forward markdown-regex-gfm-code-block-close nil t)
+                      (match-end 0))))
+          (markdown-fontify-code-block-natively lang start end)))))
 
   (defun md/aider-output-filter-function (STRING)
     "I'm using this to enable the markdown code highlighting"
@@ -3110,7 +3116,8 @@ rest of the theme."
           ;; markup is invisible. Markdown-mode usually calls
           ;; `remove-from-invisibility-spec` to show the markup.
           (remove-from-invisibility-spec 'markdown-markup)
-          ;; TODO: confirm this is buffer local
+          ;; Try to trigger the code block fontifying when we have the output
+          (make-variable-buffer-local 'comint-output-filter-functions)
           (add-to-list 'comint-output-filter-functions 'md/aider-output-filter-function)
 
           (setq fill-column 60)
