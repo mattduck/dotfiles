@@ -721,7 +721,7 @@ over any existing rules with the same match pattern."
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . right)
       (window-width . 80))
-     ("*\\(aider\\)\\*"
+     ("\\*aider-"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . right)
       (window-width . 80))
@@ -3060,6 +3060,11 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
 (use-package emacs
   :init
 
+  (defun md/aider-project-name ()
+    (if (project-current)
+        (format "*aider-%s*" (project-name (project-current)))
+      (error "Aider: Not in project")))
+
   (defun md/aider-fontify ()
     "Fontify all markdown code blocks in the current buffer.
 This builds on the markdown-fontify-code-block-natively behaviour
@@ -3099,17 +3104,19 @@ rest of the theme."
   (defun md/aider-toggle ()
     "Toggle or start an aider comint buffer"
     (interactive)
-    (let ((aider-buffer (get-buffer "*aider*")))
+    (let ((aider-buffer (get-buffer (md/aider-project-name))))
       (if aider-buffer
           (if (get-buffer-window aider-buffer)
               (delete-window (get-buffer-window aider-buffer))
             (switch-to-buffer aider-buffer))
         (progn
+          ;; Set terminal columns although it doesn't seem to do anything
+          (let ((process-environment (append (list "COLUMNS=60") process-environment)))
           ;; NOTE: even though we specify --no-stream, the program output might
           ;; come out in batches. This means we can't rely on a comint output
           ;; filter function to apply the markdown.
-          (make-comint-in-buffer "aider" "*aider*" "aider" nil "--no-stream" "--no-fancy-input" "--no-pretty" "--no-analytics")
-          (switch-to-buffer "*aider*")
+            (make-comint-in-buffer (md/aider-project-name) (md/aider-project-name) "aider" nil "--no-stream" "--no-fancy-input" "--no-pretty" "--no-analytics"))
+          (switch-to-buffer (md/aider-project-name))
           ;; This gives us highlighting for the markdown syntax that aider uses.
           (font-lock-add-keywords nil markdown-mode-font-lock-keywords)
           ;; By default, when markdown-mode-font-lock-keywords are applied, the
@@ -3125,7 +3132,7 @@ rest of the theme."
 
   (defun md/aider-send-command (cmd msg show switch)
     "Send the given command string to the buffer using comint"
-    (let ((comint-process (get-buffer-process "*aider*")))
+    (let ((comint-process (get-buffer-process (md/aider-project-name))))
       (if comint-process
           (progn
             (comint-send-string comint-process (format "%s\n" cmd))
@@ -3133,9 +3140,9 @@ rest of the theme."
             (when msg
               (message msg))
             (when show
-              (display-buffer "*aider*"))
+              (display-buffer (md/aider-project-name)))
             (when switch
-              (switch-to-buffer "*aider*")))
+              (switch-to-buffer (md/aider-project-name))))
         (message "No aider process running"))))
 
   (defun md/aider-drop ()
