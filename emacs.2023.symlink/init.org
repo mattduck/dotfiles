@@ -3474,24 +3474,20 @@ Note -- compiling requires ~markdown~ to be installed.
 (use-package gptel
   :init
 
-  ;; TODO: Adjust this function. if it's at the end of a paragraph or an item, and
-  ;; the very next line below it contains anything other than whitespace only,
-  ;; then we should insert a blank newline
-  ;;
-  ;; to avoid mutating the org elements as we're parsing the doc, you should
-  ;; only store the position of the newlines that we'll need to insert, and then
-  ;; insert them all at the end.
-(defun md/gptel-post-response (start end)
-  "Try to fill columns for the text items in the response, using org-element-map.
+  (defun md/gptel-post-response (start end)
+    "Try to fill columns for the text items in the response.
 This makes it easier to read and more consistent with the rest of the buffer"
-  (when (eq major-mode 'org-mode)
-    (org-with-wide-buffer
-     (cl-loop for el in (org-element-map (org-element-parse-buffer) '(paragraph item) #'identity)
-              when (and (<= (org-element-property :begin el) end)
-                        (>= (org-element-property :end el) start))
-              do
-              (goto-char (org-element-property :contents-begin el))
-              (org-fill-paragraph)))))
+    (when (eq major-mode 'org-mode)
+      (org-with-wide-buffer
+       (goto-char start)
+       (while (and (< (point) end) (not (eobp))) ;; Ensure we don't go past 'end' or EOF
+         (let ((el (org-element-at-point)))
+           (when (or (eq (org-element-type el) 'paragraph)
+                     (eq (org-element-type el) 'item)
+                     (eq (org-element-type el) 'plain-list))
+             (org-fill-element))
+           (forward-line 1))))
+      (md/fontify-buffer)))
 
   (defun md/gptel-context-remove ()
     "gptel doesn't provide a way to remove all context without
