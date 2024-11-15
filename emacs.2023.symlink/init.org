@@ -908,6 +908,10 @@ over any existing rules with the same match pattern."
                   ("h" . help-map))
 
             (:map (help-map)
+                  ;; These seem natural as I use f/v a lot for viewing help
+                  ;; on functions/variables
+                  ("F" . find-function) ;; Overwrites info-goto but I never use that
+                  ("V" . find-variable)
                   ("x" . describe-face)
                   ("K" . describe-personal-keybindings))))
 #+end_src
