@@ -2975,6 +2975,27 @@ myfunction`. This makes it easier to read."
 (use-package gptel
   :init
 
+  (defun md/gptel-goto-next ()
+    "Move to the next line that matches the horizontal rule we're using as a chat
+  divider."
+    (interactive)
+    (let ((current-pos (point))
+          (regex "^-\\{5,\\}"))
+      (forward-char 1)  ;; If we're already on one we don't want to match the same one
+      (if (re-search-forward regex nil t)
+          (goto-char (match-beginning 0))
+        (goto-char current-pos) (message "No match"))))
+
+  (defun md/gptel-goto-previous ()
+    "Move to the previous line that matches the horizontal rule we're using as a
+chat divider"
+    (interactive)
+    (let ((current-pos (point))
+          (regex "^-\\{5,\\}"))
+      (if (re-search-backward regex nil t)
+          (goto-char (match-beginning 0))
+        (goto-char current-pos) (message "No match"))))
+
   (defun md/gptel-post-response (start end)
     "Try to fill columns for the text items in the response.
 This makes it easier to read and more consistent with the rest of the buffer"
@@ -3055,7 +3076,8 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
       (message "Not in region")))
 
   (defun md/gptel-send ()
-    "Call gptel-send, but only if a topic is set. This is to prevent accidentally calling it in buffers that I don't want to share."
+    "Call gptel-send, but only if a topic is set. This is to prevent
+accidentally calling it in buffers that I don't want to share."
     (interactive)
     (if (derived-mode-p 'org-mode)
         (let* ((gptel-topic (org-entry-get (point) "GPTEL_TOPIC" t)))
@@ -3065,6 +3087,8 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
       (gptel-send)))
 
   (defun md/gptel-org-properties ()
+    "Insert a topic and properties. Generally I only plan to use gptel for org
+buffers that have this set"
     (interactive)
     (call-interactively 'gptel-org-set-topic)
     (call-interactively 'gptel-org-set-properties))
@@ -3075,12 +3099,12 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
   (gptel--system-message "You are a large language model living in Emacs and a helpful assistant. Respond concisely. Never use org headings in your response. Always put newlines between list elements." "Customise the default system prompt")
   (gptel-prompt-prefix-alist
    '((markdown-mode . "### ")
-     (org-mode . "----- (prompt)\n\n")
+     (org-mode . "----- [user]\n\n")
      (text-mode . "### "))
    "Use a clearer prompt/response divider for org")
   (gptel-response-prefix-alist
    '((markdown-mode . "")
-     (org-mode . "----- (response)\n\n")
+     (org-mode . "----- [assistant]\n\n")
      (text-mode . ""))
    "Use a clearer prompt/response divider for org")
 
@@ -3090,6 +3114,8 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
                   ("C-c <RET>" . md/gptel-send))
             (:map (md/leader-map)
                   ("G <RET>" . md/gptel-send)
+                  ("Gk" . md/gptel-goto-previous)
+                  ("Gj" . md/gptel-goto-next)
                   ("Gt" . md/gptel-org-properties)
                   ("G+" . md/gptel-context-dwim)
                   ("G-" . md/gptel-context-remove)
