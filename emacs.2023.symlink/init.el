@@ -711,7 +711,7 @@ over any existing rules with the same match pattern."
       (display-buffer-reuse-window display-buffer-same-window))
      ("\\*edit-indirect"
       (display-buffer-same-window))
-     ("*\\(help\\|Help\\|Messages\\|Warnings\\|Compile-\\|chatgpt\\|eldoc\\|eglot-help\\)"
+     ("*\\(help\\|Help\\|Messages\\|Warnings\\|Compile-\\|chatgpt\\|eldoc\\|eglot-help\\|gptel-log\\)"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
       (window-height . (lambda (win)
@@ -1376,7 +1376,14 @@ and that's all I need."
     ;; [2024-03-29] NOTE: since a recent org release lots of commands error if
     ;; tab width isn't set to 8. I previously had it as 2. Unsure implications of this.
     (setq tab-width 8
-          evil-shift-width 2))
+          evil-shift-width 2)
+
+    ;; [2024-11-15] Add syntax for horizontal rules, as org doesn't provide
+    ;; anything by default. The main situation where I expect to use this is
+    ;; gptel.
+    (font-lock-add-keywords
+     nil
+     '(("^-\\{5,\\}"  0 '(:inherit 'comint-highlight-prompt)))))
 
   (defun md/org-insert-link-from-paste ()
     "Perform org-insert-link with the current contents of the clipboard.
@@ -3065,6 +3072,18 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
   :custom
   (gptel-default-mode 'org-mode "Use org in the chat buffer")
   (gptel-log-level 'info "Log requests and responses to buffer")
+  (gptel--system-message "You are a large language model living in Emacs and a helpful assistant. Respond concisely. Never use org headings in your response. Always put newlines between list elements." "Customise the default system prompt")
+  (gptel-prompt-prefix-alist
+   '((markdown-mode . "### ")
+     (org-mode . "----- (prompt)\n\n")
+     (text-mode . "### "))
+   "Use a clearer prompt/response divider for org")
+  (gptel-response-prefix-alist
+   '((markdown-mode . "")
+     (org-mode . "----- (response)\n\n")
+     (text-mode . ""))
+   "Use a clearer prompt/response divider for org")
+
   (gptel-post-response-functions '(md/gptel-post-response))
 
   :md/bind ((:map (org-mode-map)
