@@ -214,10 +214,11 @@ a list like '(normal insert)'."
 Include melpa stable (as this isn't in the default list but is needed for ~gptel~):
 
 #+begin_src emacs-lisp
-(add-to-list
- 'straight-recipe-repositories
- '("melpa-stable" . "https://stable.melpa.org/packages/")
- t)
+;; TODO: erroring on start, must be wrong format.
+;;(add-to-list
+;; 'straight-recipe-repositories
+;; '(melpa-stable . "https://stable.melpa.org/packages/")
+;; t)
 #+end_src
 
 * [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]]
@@ -913,6 +914,7 @@ over any existing rules with the same match pattern."
                   ("F" . find-function) ;; Overwrites info-goto but I never use that
                   ("V" . find-variable)
                   ("x" . describe-face)
+                  ("X" . describe-text-properties)
                   ("K" . describe-personal-keybindings))))
 #+end_src
 
@@ -1447,6 +1449,7 @@ I think some properties will get overridden by org's actual font lock keywords, 
 I haven't looked into that, but basic things like assigning strikethrough works ok,
 and that's all I need."
     :group 'md/faces)
+
   (font-lock-add-keywords 'org-mode '(("- \\(\\[X\\]\\)" 1 'md/org-checkbox-done-face)))
 
   :md/bind ((:map (org-mode-map)
@@ -1550,14 +1553,7 @@ some vim-like org-mode bindings.
     ;; [2024-03-29] NOTE: since a recent org release lots of commands error if
     ;; tab width isn't set to 8. I previously had it as 2. Unsure implications of this.
     (setq tab-width 8
-          evil-shift-width 2)
-
-    ;; [2024-11-15] Add syntax for horizontal rules, as org doesn't provide
-    ;; anything by default. The main situation where I expect to use this is
-    ;; gptel.
-    (font-lock-add-keywords
-     nil
-     '(("^-\\{5,\\}"  0 '(:inherit 'comint-highlight-prompt)))))
+          evil-shift-width 2))
 
   (defun md/org-insert-link-from-paste ()
     "Perform org-insert-link with the current contents of the clipboard.
@@ -3485,6 +3481,12 @@ Note -- compiling requires ~markdown~ to be installed.
 (use-package gptel
   :init
 
+  (defun md/org-mode-gptel-hook ()
+    "If an org buffer ends in .gptel.org, start gptel-mode."
+    (when (and (buffer-file-name)
+               (string-suffix-p ".gptel.org" (buffer-file-name)))
+      (gptel-mode)))
+
   (defun md/gptel-goto-next ()
     "Move to the next line that matches the horizontal rule we're using as a chat
   divider."
@@ -3508,18 +3510,61 @@ chat divider"
 
   (defun md/gptel-post-response (start end)
     "Try to fill columns for the text items in the response.
-This makes it easier to read and more consistent with the rest of the buffer"
+This makes it easier to read and more consistent with the rest of the buffer.
+
+We do this in a temp buffer and then replace the original contents: this way it's possible
+to get the size of the new region, and add the appropriate text properties so that gptel
+knows it's a response."
     (when (eq major-mode 'org-mode)
-      (org-with-wide-buffer
-       (goto-char start)
-       (while (and (< (point) end) (not (eobp))) ;; Ensure we don't go past 'end' or EOF
-         (let ((el (org-element-at-point)))
-           (when (or (eq (org-element-type el) 'paragraph)
-                     (eq (org-element-type el) 'item)
-                     (eq (org-element-type el) 'plain-list))
-             (org-fill-element))
-           (forward-line 1))))
-      (md/fontify-buffer)))
+      (let* ((original-text (buffer-substring-no-properties start end))
+             (original-size (length original-text))
+             (in-gptel-mode gptel-mode)
+             (new-size)
+             (size-difference)
+             (new-end)
+             (el)
+             (new-text))
+
+        (with-temp-buffer
+          (org-mode) ;; must be done before the prefix insert
+          (when (not in-gptel-mode)
+            ;; gptel-mode has the useful feature of inserting prompt/response prefix strings.
+            ;; These are not used if invoked directly as (gptel-send) outside the context of the buffer,
+            ;; but I would like to do that. So, if we're not in gptel-mode
+            ;; already, insert the response prefix string.
+            (insert (gptel-response-prefix-string)))
+          (insert original-text)
+          (goto-char (point-min))
+          (while (not (eobp))
+            (setq el (org-element-at-point))
+            (when (or (eq (org-element-type el) 'paragraph)
+                      (eq (org-element-type el) 'item)
+                      (eq (org-element-type el) 'plain-list))
+              (org-fill-element))
+            (forward-line 1))
+          (when (not in-gptel-mode)
+            ;; Similar to the the response prefix -- see above.
+            (insert "\n\n" (gptel-prompt-prefix-string)))
+          (setq new-size (buffer-size))
+          (setq size-difference (- new-size original-size)) ;; New size expected to be bigger
+          (setq new-text (buffer-string))
+          (setq new-end (+ end size-difference)))
+
+        ;;(message "start:%s end:%s new-size:%s size-difference:%s new-end:%s original-text:%s new-text:%s"
+        ;;         start end new-size size-difference new-end original-text new-text)
+
+        ;; Replace the text
+        (goto-char start)
+        (delete-region start end)
+        (insert new-text)
+
+        ;; gptel uses text properties to figure out which parts of the buffer were
+        ;; returned by the gptel response. When we modify the post-response
+        ;; region, it ruins the gptel text property, so we add it back manually
+        ;; here taking into account the full range of the new response content.
+        (add-text-properties start new-end '(gptel response))
+        (md/fontify-buffer))))
+
 
   (defun md/gptel-context-remove ()
     "gptel doesn't provide a way to remove all context without
@@ -3590,9 +3635,17 @@ EXTRA FORMATTING OR ANY OTHER EXPLANATION. Keep the user's original comments in 
 accidentally calling it in buffers that I don't want to share."
     (interactive)
     (if (derived-mode-p 'org-mode)
-        (let* ((gptel-topic (org-entry-get (point) "GPTEL_TOPIC" t)))
+        (let* ((gptel-topic (org-entry-get (point) "GPTEL_TOPIC" t))
+               ;; When in a standard org buffer (rather than the gptel minor mode),
+               ;; gptel doesn't insert the usual prompt/response prefix. I find this useful,
+               ;; so I do want it if I'm in org-mode.
+               (gptel-stream t))
           (if gptel-topic
               (gptel-send)
+            ;; (progn
+            ;;   ;;(insert "\n\n" (gptel-response-prefix-string))
+            ;;   (gptel-send))
+            ;;(insert "\n\n" (gptel-prompt-prefix-string)))
             (message "needs GPTEL_TOPIC property")))
       (gptel-send)))
 
@@ -3602,6 +3655,10 @@ buffers that have this set"
     (interactive)
     (call-interactively 'gptel-org-set-topic)
     (call-interactively 'gptel-org-set-properties))
+
+  :config
+  (add-hook 'org-mode-hook 'md/org-mode-gptel-hook)
+  (font-lock-add-keywords 'org-mode '(("^-\\{5,\\}" (0 'comint-highlight-prompt))))
 
   :custom
   (gptel-default-mode 'org-mode "Use org in the chat buffer")
