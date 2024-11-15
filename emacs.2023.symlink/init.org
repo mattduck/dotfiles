@@ -383,6 +383,13 @@ only have the file path."
       (find-file path)
       (current-buffer)))
 
+(defun md/messages-toggle ()
+  "Visit or hide the *Messages* buffer"
+  (interactive)
+  (if (get-buffer-window "*Messages*")
+      (delete-window (get-buffer-window "*Messages*"))
+    (pop-to-buffer "*Messages*")))
+
   (defun md/save-if-not-remote ()
     "I usually save files often (eg. when exiting insert-mode in evil).
 Usually this is helpful, but if I'm using tramp to edit a remote file,
@@ -881,6 +888,7 @@ over any existing rules with the same match pattern."
                   ("eb" . eval-buffer)
                   ("eE" . eval-expression)   ; in minibuffer
                   ("ex" . md/fontify-buffer)
+                  (";m" . md/messages-toggle)
 
                   ;; Emacs
                   ("Ek" . kill-emacs)
@@ -1171,6 +1179,18 @@ and tmux.
   (defun splitscreen/increase-height () (interactive) (evil-window-increase-height 10))
   (defun splitscreen/decrease-height () (interactive) (evil-window-decrease-height 10))
 
+  (defun md/close-side-windows ()
+    "Close any visible side windows defined in display-buffer-alist."
+    (interactive)
+    (walk-windows (lambda (window)
+                    (when (and (window-live-p window)
+                              (let ((side (window-parameter window 'window-side)))
+                                (or (eq side 'left)
+                                    (eq side 'right)
+                                    (eq side 'top)
+                                    (eq side 'bottom))))
+                      (delete-window window)))))
+
   ;; We override these. Just declare them as part of the splitscreen map, not
   ;; evil-window-map.
   (define-key evil-window-map (kbd "h") nil)
@@ -1207,6 +1227,7 @@ and tmux.
   (define-key splitscreen/prefix (kbd "x") 'delete-window)
   (define-key splitscreen/prefix (kbd "q") 'delete-window)
   (define-key splitscreen/prefix (kbd "SPC") 'balance-windows)
+  (define-key splitscreen/prefix (kbd ";") 'md/close-side-windows)
 
   (define-minor-mode splitscreen-mode
     "Provides tmux-like bindings for managing windows and buffers.
@@ -2659,7 +2680,10 @@ performs a lot better than term/ansi-term.
       (if vterm-buffer
           (if (get-buffer-window vterm-buffer)
               (delete-window (get-buffer-window vterm-buffer))
-            (switch-to-buffer vterm-buffer))
+            (progn
+              (switch-to-buffer vterm-buffer)
+              ;; Go to normal state so it's easy to read the buffer and close it
+              (evil-normal-state)))
         (vterm))))
 
   :config
@@ -3725,6 +3749,34 @@ knows more about the codebase structure through the repo map and treesitter etc.
         (format "*aider-%s*" (project-name (project-current)))
       (error "Aider: Not in project")))
 
+  (defun md/aider-fill-markdown ()
+    "Naive way to provide some text wrapping because the output isn't very
+readable by default. This relies on the places where org-mode and markdown
+overlap, and uses the org element parsing + fill features.
+
+Ideally we would just apply this in the pre-output function to everything, but that
+has its own problems because there are false positives that get filled (eg. code
+blocks).
+
+Another approach would be to convert the markdown to org syntax, but that has
+its own complexity."
+    (interactive)
+    (let ((parsed (org-element-parse-buffer))
+          (end (if (use-region-p) (region-end) (point-max)))
+          (start (if (use-region-p) (region-beginning) comint-last-input-start)))
+      (let ((elements (append
+                       (org-element-map parsed 'item 'identity)
+                       (org-element-map parsed 'plain-list 'identity)
+                       (org-element-map parsed 'paragraph 'identity))))
+        (dolist (element (reverse elements))
+          (let ((element-begin (org-element-property :begin element)))
+            (when (or (not start)
+                      (and (>= element-begin start)
+                           (< element-begin end)))
+              (save-excursion
+                (goto-char element-begin)
+                (org-fill-element))))))))
+
   (defun md/aider-fontify ()
     "Fontify all markdown code blocks in the current buffer.
 This builds on the markdown-fontify-code-block-natively behaviour
@@ -3749,17 +3801,21 @@ rest of the theme."
       (syntax-propertize (point-max))
 
       (while (re-search-forward markdown-regex-gfm-code-block-open nil t)
-        (let* ((markdown-fontify-code-blocks-natively t)
-               (start (match-beginning 0))
+        (let* ((start (match-beginning 0))
                (lang (string-trim (match-string 0) "```"))
                (end (progn
                       (re-search-forward markdown-regex-gfm-code-block-close nil t)
                       (match-end 0))))
           (markdown-fontify-code-block-natively lang start end)))))
 
-  (defun md/aider-output-filter-function (STRING)
+  ;; This function is used as a comint-output-filter-functions function.
+  ;; You should adjust so that, after
+  (defun md/aider-output-filter-function (string)
     "I'm using this to enable the markdown code highlighting"
     (md/aider-fontify))
+
+  (defun md/aider-preoutput-filter-function (string)
+    string)
 
   (defun md/aider-toggle ()
     "Toggle or start an aider comint buffer"
@@ -3768,7 +3824,10 @@ rest of the theme."
       (if aider-buffer
           (if (get-buffer-window aider-buffer)
               (delete-window (get-buffer-window aider-buffer))
-            (switch-to-buffer aider-buffer))
+            (progn
+              (switch-to-buffer aider-buffer)
+              ;; So it's easy to read and close
+              (evil-normal-state)))
         (progn
           ;; Set terminal columns although it doesn't seem to do anything
           (let ((process-environment (append (list "COLUMNS=60") process-environment)))
@@ -3786,6 +3845,10 @@ rest of the theme."
           ;; Try to trigger the code block fontifying when we have the output
           (make-variable-buffer-local 'comint-output-filter-functions)
           (add-to-list 'comint-output-filter-functions 'md/aider-output-filter-function)
+
+          (make-variable-buffer-local 'comint-output-filter-functions)
+          (add-to-list 'comint-preoutput-filter-functions 'md/aider-preoutput-filter-function)
+          (setq markdown-fontify-code-blocks-natively t)
 
           (setq fill-column 60)
           (evil-emacs-state)))))
@@ -3853,6 +3916,8 @@ rest of the theme."
                   ("jgx" . md/aider-fontify)
                   ("jg!" . md/aider-mode-code)
                   ("jgR" . md/aider-send-region)
+                  ("jgq" . md/aider-fill-markdown) ;; similar to q binding
+                  ("jgg" . md/aider-toggle)
                   (";g" . md/aider-toggle))))
 #+end_src
 
