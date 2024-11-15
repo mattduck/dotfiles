@@ -3212,7 +3212,7 @@ buffers that have this set"
       (error "Aider: Not in project")))
 
   (defun md/aider-fill-markdown ()
-    "Naive way to provide some text wrapping because the output isn't very
+    "Naive way to provide some text formatting because the output isn't very
 readable by default. This relies on the places where org-mode and markdown
 overlap, and uses the org element parsing + fill features.
 
@@ -3230,6 +3230,10 @@ its own complexity."
                        (org-element-map parsed 'item 'identity)
                        (org-element-map parsed 'plain-list 'identity)
                        (org-element-map parsed 'paragraph 'identity))))
+        ;; NOTE: we parse the items and then iterate backwards. This allows us
+        ;; to mutate document state. If we iterated forwards, then every
+        ;; mutation would affect the position of all the elements below which
+        ;; makes things more complicated.
         (dolist (element (reverse elements))
           (let ((element-begin (org-element-property :begin element)))
             (when (or (not start)
@@ -3237,7 +3241,32 @@ its own complexity."
                            (< element-begin end)))
               (save-excursion
                 (goto-char element-begin)
-                (org-fill-element))))))))
+                ;; Fill the element so it wraps appropriately for the buffer
+                (org-fill-element)
+
+                ;; Guess if this looks like it would be easier to read with a
+                ;; newline before the element. Eg. I prefer list items to have
+                ;; newlines between them.
+                (let ((line-above (save-excursion
+                                    (forward-line -1)
+                                    (thing-at-point 'line t))))
+                  (when (and line-above
+                             (not (string-blank-p line-above)))
+                    (goto-char element-begin)
+                    (when
+                        ;; There must be a nicer way than this -- check if we're
+                        ;; at the first non-whitespace character in the line. If
+                        ;; we're not, then it's possible that we're in a nested
+                        ;; element like a paragraph that sits inside a list
+                        ;; item, where the "begin" point is actually the start
+                        ;; of the text and not the start of the list bullet.
+                        (or (bolp)
+                            (and (not (bolp))
+                                 (save-excursion
+                                   (backward-char)
+                                   (skip-chars-backward " \t")
+                                   (bolp))))
+                    (newline)))))))))))
 
   (defun md/aider-fontify ()
     "Fontify all markdown code blocks in the current buffer.
