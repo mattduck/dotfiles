@@ -2964,7 +2964,7 @@ myfunction`. This makes it easier to read."
 (use-package gptel
   :init
 
-  ;; TODO: Adjust this function. if it's at the end of a paragraph or an item, and 
+  ;; TODO: Adjust this function. if it's at the end of a paragraph or an item, and
   ;; the very next line below it contains anything other than whitespace only,
   ;; then we should insert a blank newline
   ;;
@@ -3207,13 +3207,13 @@ rest of the theme."
       (message "Aider: no region selected")))
 
   :md/bind ((:map (md/leader-map)
-                  ("A-" . md/aider-drop)
-                  ("A+" . md/aider-add-file)
-                  ("A/" . md/aider-mode-ask)
-                  ("Ax" . md/aider-fontify)
-                  ("A!" . md/aider-mode-code)
-                  ("AR" . md/aider-send-region)
-                  (";a" . md/aider-toggle))))
+                  ("jg-" . md/aider-drop)
+                  ("jg+" . md/aider-add-file)
+                  ("jg/" . md/aider-mode-ask)
+                  ("jgx" . md/aider-fontify)
+                  ("jg!" . md/aider-mode-code)
+                  ("jgR" . md/aider-send-region)
+                  (";g" . md/aider-toggle))))
 
 (use-package server
   :config (when (not (server-running-p))

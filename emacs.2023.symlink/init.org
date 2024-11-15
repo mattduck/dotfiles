@@ -3474,7 +3474,7 @@ Note -- compiling requires ~markdown~ to be installed.
 (use-package gptel
   :init
 
-  ;; TODO: Adjust this function. if it's at the end of a paragraph or an item, and 
+  ;; TODO: Adjust this function. if it's at the end of a paragraph or an item, and
   ;; the very next line below it contains anything other than whitespace only,
   ;; then we should insert a blank newline
   ;;
@@ -3610,7 +3610,9 @@ Looking at ~*gptel-log*~, here's how the API content works:
 
 * [[https://github.com/Aider-AI/aider][aider]] utils
 
-Some functions for interacting with aider in a comint buffer.
+Some functions for interacting with aider in a comint buffer. For coding
+projects this is more useful than gptel, as it provides proper file edits and
+knows more about the codebase structure through the repo map and treesitter etc.
 
 #+begin_src emacs-lisp
 (use-package emacs
@@ -3743,13 +3745,13 @@ rest of the theme."
       (message "Aider: no region selected")))
 
   :md/bind ((:map (md/leader-map)
-                  ("A-" . md/aider-drop)
-                  ("A+" . md/aider-add-file)
-                  ("A/" . md/aider-mode-ask)
-                  ("Ax" . md/aider-fontify)
-                  ("A!" . md/aider-mode-code)
-                  ("AR" . md/aider-send-region)
-                  (";a" . md/aider-toggle))))
+                  ("jg-" . md/aider-drop)
+                  ("jg+" . md/aider-add-file)
+                  ("jg/" . md/aider-mode-ask)
+                  ("jgx" . md/aider-fontify)
+                  ("jg!" . md/aider-mode-code)
+                  ("jgR" . md/aider-send-region)
+                  (";g" . md/aider-toggle))))
 #+end_src
 
 * Server
