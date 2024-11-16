@@ -3542,6 +3542,25 @@ knows it's a response."
     (when (eq major-mode 'org-mode)
       (let* ((original-text (buffer-substring-no-properties start end))
              (original-size (length original-text))
+             ;; gptel seems to have two states for its text properties: text is either
+             ;; it's part of the response, or its part of the request prompt.
+             ;; This means the prompt and response prefixes get grouped into one of those.
+             ;; gptel includes code that tries to strip the prefixes in a couple of places,
+             ;; but it doesn't work reliably. The result is that the prompt prefix can get
+             ;; sent to the LLM, and the LLM sometimes then imitates it in the
+             ;; response and you end up with duplicates.
+             ;;
+             ;; To get around this, I'm stripping all occurrences of the prefix
+             ;; from the response text, and then we re-insert them if needed
+             ;; below.
+             (original-text-no-prefixes
+              (s-trim
+              (replace-regexp-in-string
+               (regexp-quote (s-trim (gptel-prompt-prefix-string)))
+               ""
+               (replace-regexp-in-string
+                (regexp-quote (s-trim (gptel-response-prefix-string)))
+                              "" original-text))))
              (in-gptel-mode gptel-mode)
              (new-size)
              (size-difference)
@@ -3557,7 +3576,7 @@ knows it's a response."
             ;; but I would like to do that. So, if we're not in gptel-mode
             ;; already, insert the response prefix string.
             (insert (gptel-response-prefix-string)))
-          (insert original-text)
+          (insert original-text-no-prefixes)
           (goto-char (point-min))
           (while (not (eobp))
             (setq el (org-element-at-point))
@@ -3566,9 +3585,12 @@ knows it's a response."
                       (eq (org-element-type el) 'plain-list))
               (org-fill-element))
             (forward-line 1))
-          (when (not in-gptel-mode)
-            ;; Similar to the the response prefix -- see above.
-            (insert "\n\n" (gptel-prompt-prefix-string)))
+          ;; Similar to the the response prefix -- see above.
+          ;;
+          ;; NOTE: I originally wrapped this in (when (not in-gptel-mode)), but
+          ;; my custom prefix stripping implementation above means that we also
+          ;; need to insert this in gptel mode.
+          (insert "\n\n" (gptel-prompt-prefix-string))
           (setq new-size (buffer-size))
           (setq size-difference (- new-size original-size)) ;; New size expected to be bigger
           (setq new-text (buffer-string))
@@ -3666,10 +3688,6 @@ accidentally calling it in buffers that I don't want to share."
                (gptel-stream t))
           (if gptel-topic
               (gptel-send)
-            ;; (progn
-            ;;   ;;(insert "\n\n" (gptel-response-prefix-string))
-            ;;   (gptel-send))
-            ;;(insert "\n\n" (gptel-prompt-prefix-string)))
             (message "needs GPTEL_TOPIC property")))
       (gptel-send)))
 
@@ -3677,7 +3695,19 @@ accidentally calling it in buffers that I don't want to share."
     "Insert a topic and properties. Generally I only plan to use gptel for org
 buffers that have this set"
     (interactive)
-    (call-interactively 'gptel-org-set-topic)
+    ;; Rather than calling gptel-org-set-topic, which is always interactive,
+    ;; we just insert the org property directly.
+    (org-set-property
+     "GPTEL_TOPIC"
+     (downcase
+      (truncate-string-to-width
+       (substring-no-properties
+        (replace-regexp-in-string
+         "\\s-+" "-"
+         (org-get-heading)))
+       50)))
+    ;; Store the gptel prompt and model etc. This makes it easy to edit
+    ;; if I want to use something different to default.
     (call-interactively 'gptel-org-set-properties))
 
   :config
