@@ -2434,6 +2434,40 @@ slot/window-level thing, not buffer-level."
   (md/disable-all-themes)
   (load-theme 'gruvbox-dark-hard t))
 
+(use-package emacs
+  :init
+
+  (defun md/first-non-whitespace ()
+    " Go to the first non-whitespace character on the current line or the next
+couple of lines. This is useful after running the treesit defun movement as it
+can put you on a character that isn't actually the start of the defun."
+    (interactive)
+    (let ((current-pos (point)))
+      (beginning-of-line)
+      (when (eolp)  ;; end of line, try line below
+        (forward-line)
+        (when (eolp)
+          (forward-line)))
+      (while (and (not (eobp))
+                  (looking-at-p "\\s-"))
+        (forward-char))
+      (unless (eobp)
+        (goto-char (point)))))
+
+  (defun md/prev-defun ()
+    (interactive)
+    (beginning-of-defun)
+    (md/first-non-whitespace))
+
+  (defun md/next-defun ()
+    (interactive)
+    (beginning-of-defun -1) ;; Goes to the start of next function
+    (md/first-non-whitespace))
+
+  :md/bind ((:map (prog-mode-map . motion)
+                  ("gk" . md/prev-defun)
+                  ("gj" . md/next-defun))))
+
 (use-package go-mode
   :demand t
   :config
@@ -2694,7 +2728,9 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
   :config
   (add-hook 'magit-blame-mode-hook 'evil-normal-state)
   :md/bind ((:map (md/leader-map)
-                  ("gb" . magit-blame))
+                  ("gb" . magit-blame)
+                  ("gC" . magit-commit)
+                  ("gP" . magit-push))
             (:map (magit-blame-mode-map . normal)
                   ("RET" . magit-show-commit)
                   ("q" . magit-blame-quit)
@@ -2873,6 +2909,8 @@ features, then I can get rid of this and just use xref."
 
 (use-package treesit
   :straight nil
+  :demand t
+
   :config
   (defun md/treesit-install-all-languages ()
     "From https://www.masteringemacs.org/article/how-to-get-started-tree-sitter"
@@ -2889,6 +2927,25 @@ features, then I can get rid of this and just use xref."
    "Introduced in Emacs 29, presumably to support treesitter")
 
   (treesit-font-lock-level 4))
+
+(use-package treesit-fold
+  :demand t
+  :config
+
+  (defun md/treesit-fold-global-toggle ()
+    "Treesit doesn't provide a global toggle function"
+    (interactive)
+    ;; There's no builtin function that encapsulates the "is anything folded"
+    ;; concept, but it looks like we can pull these overlays within a region
+    ;; to achieve it
+    (if (treesit-fold--overlays-in 'invisible 'treesit-fold (point-min) (point-max))
+        (treesit-fold-open-all)
+      (treesit-fold-close-all)))
+
+  :hook (prog-mode . treesit-fold-mode)
+  :md/bind ((:map (prog-mode-map . normal)
+                  ("<tab>" . treesit-fold-toggle)
+                  ("<backtab>" . md/treesit-fold-global-toggle))))
 
 (use-package rainbow-mode
   :hook
