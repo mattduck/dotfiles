@@ -1006,7 +1006,7 @@ in Emacs.
     (evil-set-jump)
     (if (and
          (fboundp 'md/org-goto-ticket-at-point) ;; Will only be set when org loaded
-         (string-match "^ORG-[0-9]+$" (thing-at-point 'symbol t)))
+         (string-match "^.*ORG-[0-9]+.*$" (thing-at-point 'symbol t)))
         (call-interactively 'md/org-goto-ticket-at-point)
       (call-interactively 'evil-goto-definition)))
 
@@ -1350,7 +1350,25 @@ If a `TICKET` property is already present, the function returns early."
 The ticket ID at point should match the format ORG-<num> (e.g., ORG-1).
 Searches across all Org agenda files."
     (interactive)
-    (let* ((word (thing-at-point 'symbol t)) ;; Capture the symbol at point
+    (let* ((word
+            ;; I was originally using thing-at-point, but I couldn't find a type
+            ;; (like 'word or 'symbol) that consistently returned the current word
+            ;; like vim would do with yiW -- in certain modes the dash character
+            ;; would be used to terminate the thing. So instead we start by looking
+            ;; at the whole line and figure it out from there. There must be a
+            ;; simpler approach.
+            (save-excursion
+              (let ((line (thing-at-point 'line t)))
+                (when (string-match "\\(ORG-[0-9]+\\)" line)
+                  (let ((match-start (match-beginning 1))
+                        (match-end (match-end 1)))
+                    (let ((line-start (line-beginning-position)))
+                      (setq match-start (+ line-start match-start))
+                      (setq match-end (+ line-start match-end)))
+                    (if (and (>= (point) match-start)
+                             (< (point) match-end))
+                        (message "%s" (match-string 1 line))
+                      nil))))))
            (ticket-id (and word (string-match "^ORG-[0-9]+$" word) word))
            (found nil)
            (found-buffer nil)
