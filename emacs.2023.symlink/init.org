@@ -2063,6 +2063,12 @@ not indented with leading whitespace, which is fine.
         (buffer-substring-no-properties (point-min) (point-max))))))
 #+end_src
 
+** [[https://github.com/alf/ob-restclient.el][ob-restclient]]
+
+#+begin_src emacs-lisp
+(use-package ob-restclient)
+#+end_src
+
 ** TODO (tidy) [[https://github.com/mattduck/org-mind-map][org-mind-map]]
 :PROPERTIES:
 :OMM-COLOR: #AF7575
@@ -3430,6 +3436,12 @@ myfunction`. This makes it easier to read."
   :custom
   (python-imenu-format-item-label-function #'md/python-imenu-format-item-label)
   (python-imenu-format-parent-item-label-function #'md/python-imenu-format-item-label))
+#+end_src
+
+* [[https://github.com/emacs-php/php-mode][php-mode]]
+
+#+begin_src emacs-lisp
+(use-package php-mode)
 #+end_src
 
 * dockerfile-mode

@@ -1828,6 +1828,8 @@ delete-other-windows into a no-op, and then restore once the org function has ex
         ;;(indent-region (point-min) (point-max))
         (buffer-substring-no-properties (point-min) (point-max))))))
 
+(use-package ob-restclient)
+
 (use-package ox-org :demand t :straight nil)
 
 (use-package org-mind-map
@@ -2955,6 +2957,8 @@ myfunction`. This makes it easier to read."
   :custom
   (python-imenu-format-item-label-function #'md/python-imenu-format-item-label)
   (python-imenu-format-parent-item-label-function #'md/python-imenu-format-item-label))
+
+(use-package php-mode)
 
 (use-package dockerfile-mode)
 
