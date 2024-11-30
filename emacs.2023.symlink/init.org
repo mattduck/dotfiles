@@ -3213,6 +3213,7 @@ imenu nodes underneath files by default, so I'm switching to it over Neotree
   (add-hook 'magit-blame-mode-hook 'evil-normal-state)
   :md/bind ((:map (md/leader-map)
                   ("gb" . magit-blame)
+                  ("gl" . magit-log)
                   ("gC" . magit-commit)
                   ("gP" . magit-push))
             (:map (magit-blame-mode-map . normal)

@@ -2775,6 +2775,7 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
   (add-hook 'magit-blame-mode-hook 'evil-normal-state)
   :md/bind ((:map (md/leader-map)
                   ("gb" . magit-blame)
+                  ("gl" . magit-log)
                   ("gC" . magit-commit)
                   ("gP" . magit-push))
             (:map (magit-blame-mode-map . normal)
