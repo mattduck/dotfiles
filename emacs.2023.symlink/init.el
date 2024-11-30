@@ -733,6 +733,10 @@ over any existing rules with the same match pattern."
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . right)
       (window-width . 80))
+     ("\\*babel-" ;; Name prefix I'll use for babel sessions as they don't have a naming convention
+      (display-buffer-reuse-window display-buffer-in-side-window)
+      (side . bottom)
+      (window-height . 0.33))
      ("*\\(Agenda Commands\\|Org Select\\)\\*" ;; Annoying org popups - agenda and capture selection
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
@@ -1973,8 +1977,10 @@ delete-other-windows into a no-op, and then restore once the org function has ex
   :md/bind ((:map (md/leader-map)
                   ("n" . narrow-map))
             (:map (narrow-map)
+                  ;; Not strictly narrowing, but related
+                  ("F" . org-babel-pop-to-session) 
                   ("i" . org-tree-to-indirect-buffer)
-                  ("F" . md/edit-indirect-jinja)
+
                   ("v" . md/narrow-to-region-indirect)
                   ("f" . md/narrow-dwim)
                   ("r" . narrow-to-region))))
@@ -2474,6 +2480,7 @@ can put you on a character that isn't actually the start of the defun."
 
   (defun md/prev-defun ()
     (interactive)
+    (beginning-of-line)
     (beginning-of-defun)
     (md/first-non-whitespace))
 
