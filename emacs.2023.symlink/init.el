@@ -727,8 +727,8 @@ over any existing rules with the same match pattern."
                          (fit-window-to-buffer win 25 4))))
      ("*\\(vterm\\)\\*"
       (display-buffer-reuse-window display-buffer-in-side-window)
-      (side . right)
-      (window-width . 80))
+      (side . bottom)
+      (window-height . 0.33))
      ("\\*aider-"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . right)
@@ -2337,6 +2337,25 @@ slot/window-level thing, not buffer-level."
     (setq left-margin-width 0)
     (set-window-buffer (selected-window) (current-buffer)))
 
+  (defun md/run-in-vterm-buffer (buffer-name command)
+    "Run the given command in the given buffer. Ideally this would
+also return the output of the command but for long-running stuff
+that gets complicated"
+    (with-current-buffer buffer-name
+      (vterm-send-C-u)
+      (sleep-for 0 200) ;; allow line to clear
+      (vterm-send-string command)
+      (vterm-send-return)))
+
+  (defun md/vterm-command ()
+    "Prompt for a command and run it in my default vterm buffer"
+    (interactive)
+    (let ((shell-command (read-string "$ " nil 'md/vterm-history))
+          (vterm-buffer (get-buffer "*vterm*")))
+      (switch-to-buffer vterm-buffer)
+      (evil-normal-state)
+      (md/run-in-vterm-buffer "*vterm*" shell-command)))
+
   (defun md/vterm-toggle ()
     "Display or start a vterm buffer, or hide it if it's already visible."
     (interactive)
@@ -2354,12 +2373,14 @@ slot/window-level thing, not buffer-level."
   (evil-set-initial-state 'vterm-mode 'emacs)
   :hook ((vterm-mode . md/vterm-mode-hook))
   :md/bind ((:map (md/leader-map)
-                  (";v" . md/vterm-toggle))
+                  (";v" . md/vterm-toggle)
+                  (";V" . md/vterm-command))
             (:map (vterm-mode-map)
                   ("C-<SPC>" . md/leader-map)
                   ("C-w" . splitscreen/prefix)
                   ("C-g" . vterm--self-insert))
             (:map (vterm-mode-map . normal)
+                  ("q" . quit-window)
                   ("gk" . vterm-previous-prompt)
                   ("gj" . vterm-next-prompt)))
   :custom
