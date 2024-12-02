@@ -729,6 +729,14 @@ over any existing rules with the same match pattern."
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
       (window-height . 0.33))
+     ("\\magit: "
+      (display-buffer-reuse-window display-buffer-in-side-window)
+      (side . left)
+      (window-width . 80))
+     ("\\magit-log: "
+      (display-buffer-reuse-window display-buffer-in-side-window)
+      (side . bottom)
+      (window-height . 0.33))
      ("\\*aider-"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . right)
@@ -1978,7 +1986,7 @@ delete-other-windows into a no-op, and then restore once the org function has ex
                   ("n" . narrow-map))
             (:map (narrow-map)
                   ;; Not strictly narrowing, but related
-                  ("F" . org-babel-pop-to-session) 
+                  ("F" . org-babel-pop-to-session)
                   ("i" . org-tree-to-indirect-buffer)
 
                   ("v" . md/narrow-to-region-indirect)
@@ -2771,9 +2779,22 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
                   ("M-j" . treemacs-move-project-down))))
 
 (use-package magit
+  :init
+
+  (defun md/send-emacs-ret ()
+    (interactive)
+    (evil-emacs-state)
+    (execute-kbd-macro (kbd "RET"))
+    (evil-normal-state))
+
   :config
-  (add-hook 'magit-blame-mode-hook 'evil-normal-state)
-  :md/bind ((:map (md/leader-map)
+  (evil-set-initial-state 'magit-status-mode 'normal)
+  (evil-set-initial-state 'magit-blame-mode 'normal)
+  (evil-set-initial-state 'magit-log-mode 'normal)
+  (evil-set-initial-state 'magit-diff-mode 'normal)
+  :md/bind (
+            (:map (md/leader-map)
+                  ("gg" . magit-status)
                   ("gb" . magit-blame)
                   ("gl" . magit-log)
                   ("gC" . magit-commit)
@@ -2781,8 +2802,22 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
             (:map (magit-blame-mode-map . normal)
                   ("RET" . magit-show-commit)
                   ("q" . magit-blame-quit)
-                  ("gn" . magit-blame-next-chunk)
-                  ("gk" . magit-blame-previous-chunk))))
+                  ("gj" . magit-blame-next-chunk)
+                  ("gk" . magit-blame-previous-chunk))
+            (:map (magit-status-mode-map . normal)
+                  ("j" . magit-next-line)
+                  ("k" . magit-previous-line)
+                  ("gj" . magit-section-forward)
+                  ("gk" . magit-section-backward)
+                  ("<RET>" . md/send-emacs-ret)
+                  ("C" . magit-commit)
+                  ("+" . magit-stage)
+                  ("-" . magit-unstage))
+            (:map (magit-section-mode-map . normal)
+                  ("j" . magit-next-line)
+                  ("k" . magit-previous-line)
+                  ("gj" . magit-section-forward)
+                  ("gk" . magit-section-backward))))
 
 (use-package eglot
   :straight nil ;; Use the builtin version, don't download
