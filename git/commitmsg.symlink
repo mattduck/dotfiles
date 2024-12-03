@@ -1,7 +1,15 @@
 
 
 # --------------------
-# Commitlint keywords: build chore ci docs feat fix perf refactor revert style test
+# Commitlint keywords:
+# build chore ci docs feat fix perf
+# refactor revert style test
+# --------------------
+
+# --------------------
+# Trailers:
+# Co-authored-by: Name <name@example.com> 
+#
 # --------------------
 
 # --------------------

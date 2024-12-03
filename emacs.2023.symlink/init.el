@@ -733,6 +733,10 @@ over any existing rules with the same match pattern."
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . left)
       (window-width . 80))
+     ("\\COMMIT_EDITMSG"
+      (display-buffer-reuse-window display-buffer-in-side-window)
+      (side . left)
+      (window-width . 68))
      ("\\magit-log: "
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
@@ -2782,16 +2786,23 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
   :init
 
   (defun md/send-emacs-ret ()
+    "Send RET in emacs state, and then put the buffer back in normal state.
+This is useful because RET is bound to different functions at different points
+in magit buffers and I'm not sure an easy way to replicate that in my normal
+mode bindings"
     (interactive)
-    (evil-emacs-state)
-    (execute-kbd-macro (kbd "RET"))
-    (evil-normal-state))
+    (let ((orig-buf (current-buffer)))
+      (evil-emacs-state)
+      (execute-kbd-macro (kbd "RET"))
+      (with-current-buffer orig-buf
+        (evil-normal-state))))
 
   :config
   (evil-set-initial-state 'magit-status-mode 'normal)
   (evil-set-initial-state 'magit-blame-mode 'normal)
   (evil-set-initial-state 'magit-log-mode 'normal)
   (evil-set-initial-state 'magit-diff-mode 'normal)
+  (evil-set-initial-state 'magit-revision-mode 'normal)
   :md/bind (
             (:map (md/leader-map)
                   ("gg" . magit-status)
@@ -2818,7 +2829,9 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
                   ("j" . magit-next-line)
                   ("k" . magit-previous-line)
                   ("gj" . magit-section-forward)
-                  ("gk" . magit-section-backward))))
+                  ("gk" . magit-section-backward))
+            (:map (magit-log-mode-map . normal)
+                  ("<RET>" . md/send-emacs-ret))))
 
 (use-package eglot
   :straight nil ;; Use the builtin version, don't download
