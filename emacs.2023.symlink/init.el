@@ -2811,6 +2811,7 @@ Restores the cursor as close as possible to the ORIGINAL-POINT."
                   ("gk" . magit-section-backward)
                   ("<RET>" . md/send-emacs-ret)
                   ("C" . magit-commit)
+                  ("R" . magit-refresh)
                   ("+" . magit-stage)
                   ("-" . magit-unstage))
             (:map (magit-section-mode-map . normal)
@@ -3011,6 +3012,7 @@ features, then I can get rid of this and just use xref."
   (treesit-font-lock-level 4))
 
 (use-package treesit-fold
+  :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold")
   :demand t
   :config
 

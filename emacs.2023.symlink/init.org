@@ -3487,6 +3487,7 @@ of the box, so I'll have to come back and add this in.
 
 #+begin_src emacs-lisp
 (use-package treesit-fold
+  :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold")
   :demand t
   :config
 
