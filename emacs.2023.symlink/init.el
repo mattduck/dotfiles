@@ -714,6 +714,12 @@ over any existing rules with the same match pattern."
 
   (initial-buffer-choice md/scratch-file-org "Open my org scratch file on startup")
 
+  (project-switch-commands '((project-find-file "Find file" "f")
+                             (md/consult-find-dwim "Find dwim" "F")
+                             (project-kill-buffers "Kill buffers" "k")
+                             (consult-project-buffer "Buffers" "p")
+                             (md/consult-ripgrep-dwim "Grep dwim" "/")))
+
   (display-buffer-alist
    `(("\\*shell"
       (display-buffer-reuse-window display-buffer-same-window))
