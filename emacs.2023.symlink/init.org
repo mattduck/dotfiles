@@ -1295,6 +1295,21 @@ Base org configuration that doesn't depend on evil.
     (interactive)
     (org-insert-time-stamp (current-time) nil t))
 
+  (defun md/org-goto-last-timestamp ()
+    "Move cursor to the most recent org timestamp in the current buffer"
+    (interactive)
+    (let ((most-recent-date nil)
+          (timestamp-start nil))
+      (org-element-map (org-element-parse-buffer) 'timestamp
+        (lambda (timestamp)
+          (let ((ts (org-element-property :raw-value timestamp)))
+            (when (or (not most-recent-date)
+                      (time-less-p (date-to-time most-recent-date) (date-to-time ts)))
+              (setq most-recent-date ts)
+              (setq timestamp-start (org-element-property :begin timestamp))))))
+      (when timestamp-start
+        (goto-char timestamp-start))))
+
   (defun md/org-narrow-next ()
     "Show a narrowed view of the next org node in the buffer. Can be used to cycle through nodes one by one."
     (interactive)
@@ -1513,6 +1528,10 @@ and that's all I need."
 
   (font-lock-add-keywords 'org-mode '(("- \\(\\[X\\]\\)" 1 'md/org-checkbox-done-face)))
 
+  ;; Ensure these are loaded
+  (require 'ob-python)
+  (require 'ob-shell)
+
   :md/bind ((:map (org-mode-map)
                   ("C-c d" . md/org-timestamp-date-inactive-no-confirm)
                   ("C-c t" . md/org-timestamp-time-inactive-no-confirm  )
@@ -1651,6 +1670,7 @@ clipboard contents. Otherwise, prompt for a description"
                   ("gj" . outline-next-visible-heading)
                   ("gK" . md/org-narrow-prev)
                   ("gJ" . md/org-narrow-next)
+                  ("gl" . md/org-goto-last-timestamp)
                   ("H" . org-beginning-of-line)
                   ("L" . org-end-of-line)
                   ("$" . org-end-of-line)
@@ -2737,7 +2757,7 @@ that gets complicated"
     (let ((shell-command (read-string "$ " nil 'md/vterm-history))
           (vterm-buffer (get-buffer "*vterm*")))
       (switch-to-buffer vterm-buffer)
-      (evil-normal-state)
+      (evil-emacs-state)
       (md/run-in-vterm-buffer "*vterm*" shell-command)))
 
   (defun md/vterm-toggle ()
@@ -3251,7 +3271,7 @@ mode bindings"
             (:map (md/leader-map)
                   ("gg" . magit-status)
                   ("gb" . magit-blame)
-                  ("gl" . magit-log)
+                  ("gl" . magit-log-current)
                   ("gC" . magit-commit)
                   ("gP" . magit-push))
             (:map (magit-blame-mode-map . normal)
@@ -3331,7 +3351,7 @@ but for elgot rather than emacs lisp"
           (insert (or (with-current-buffer original-buffer
                         (md/eglot-get-hover-info)) ""))
 
-          (insert "\n")
+          (insert "\n\nFull definition:\n\n")
           (insert (or (with-current-buffer original-buffer
                         (md/eglot-get-full-definition)) ""))
           ;; Re-enable read-only mode and switch to our custom mode
@@ -3407,12 +3427,20 @@ but for elgot rather than emacs lisp"
             (font-lock-ensure))
           (buffer-substring beg fin)))))
 
+  (defun md/eglot-rename-and-save ()
+    "Eglot doesn't handle saving edited buffers, which is annoying as we
+generally want to save after a rename so that build/test steps will pick up the
+new code."
+    (interactive)
+    (call-interactively 'eglot-rename)
+    (save-some-buffers))
 
   :custom
   (eglot-report-progress nil "Eglot spams the minibuffer a lot on save -- this seems to keep it quieter")
 
   :md/bind ((:map (md/leader-map)
                   ("ll" . eglot)
+                  ("lR" . md/eglot-rename-and-save)
                   ("lL" . eglot-shutdown))
             (:map (md/eglot-helpful-mode-map  . normal)
                   ("q" . md/quit-and-kill-window))))
@@ -4074,7 +4102,10 @@ rest of the theme."
               (evil-normal-state)))
         (progn
           ;; Set terminal columns although it doesn't seem to do anything
-          (let ((process-environment (append (list "COLUMNS=60") process-environment)))
+          (let ((default-directory (if (project-current)
+                                       (project-root (project-current))
+                                     default-directory))
+                (process-environment (append (list "COLUMNS=60") process-environment)))
           ;; NOTE: even though we specify --no-stream, the program output might
           ;; come out in batches. This means we can't rely on a comint output
           ;; filter function to apply the markdown.
