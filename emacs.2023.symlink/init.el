@@ -3187,6 +3187,16 @@ myfunction`. This makes it easier to read."
 (use-package gptel
   :init
 
+  (defun md/gptel-same-window ()
+    "In theory gptel-display-buffer-action should work, but I found
+trying to display in the same window leads to it displaying in the minibuffer,
+so we wrap gptel and explicitly switch to the buffer."
+    (interactive)
+    (let ((this-gptel-buffer nil))
+      (save-window-excursion
+        (setq this-gptel-buffer (call-interactively 'gptel)))
+      (switch-to-buffer this-gptel-buffer)))
+
   (defun md/org-mode-gptel-hook ()
     "If an org buffer ends in .gptel.org, start gptel-mode."
     (when (and (buffer-file-name)
@@ -3423,7 +3433,7 @@ buffers that have this set"
                   ("G+" . md/gptel-context-dwim)
                   ("G-" . md/gptel-context-remove)
                   ("GR" . md/gptel-rewrite-code)
-                  ("GG" . gptel))))
+                  ("GG" . md/gptel-same-window))))
 
 (use-package emacs
   :init
