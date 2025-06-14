@@ -1535,6 +1535,40 @@ clipboard contents. Otherwise, prompt for a description"
     (setq current-prefix-arg '(4))  ; C-u
     (call-interactively 'org-agenda-todo))
 
+  (defun md/org-agenda-toggle-flag-tag ()
+    "Toggle a tag named 'flag' for the current agenda entry.
+
+Implementation largely copied from org-agenda-toggle-archive-tag."
+    (interactive)
+    (org-agenda-check-no-diary)
+    (org-agenda-maybe-loop
+     #'org-agenda-toggle-flag-tag nil nil nil
+     (let* ((hdmarker (or (org-get-at-bol 'org-hd-marker)
+                          (org-agenda-error)))
+            (buffer (marker-buffer hdmarker))
+            (pos (marker-position hdmarker))
+            (inhibit-read-only t)
+            newhead)
+       (org-with-remote-undo buffer
+         (with-current-buffer buffer
+           (widen)
+           (goto-char pos)
+           (org-fold-show-context 'agenda)
+           (let ((tags (org-get-tags)))
+             (if (member "flag" tags)
+                 (org-set-tags (delete "flag" tags))
+               (org-set-tags (append tags '("flag")))))
+           (end-of-line 1)
+           (setq newhead (org-get-heading)))
+         (org-agenda-change-all-lines newhead hdmarker)
+         (beginning-of-line 1)))))
+
+  (defun md/org-agenda-refile-no-update ()
+    "By default org-agenda-refile refreshes the agenda buffer, which adds latency. I generally
+don't want this."
+    (interactive)
+    (org-agenda-refile nil nil t))
+
   ;; Not strictly an org util - if I need it anywhere else I'll move it out.
   (defun md/advice-suppress-delete-other-windows (fn &rest args)
     "Hacky advice to fix something I don't like about org-agenda and org-capture.
@@ -1586,9 +1620,10 @@ delete-other-windows into a no-op, and then restore once the org function has ex
                   ("t" . md/org-agenda-todo)  ; Cycle todo state
                   ("P" . org-agenda-priority-up)
                   ("E" . org-agenda-set-effort)
-                  ("R" . org-agenda-refile)
+                  ("R" . md/org-agenda-refile-no-update)
                   ("T" . org-agenda-set-tags)
                   ("C" . org-agenda-columns)
+                  ("f" . md/org-agenda-toggle-flag-tag)  ; toggle "flag" tag on current item
 
                   ;; Copy ID link to the heading
                   ("Y" . org-store-link)
