@@ -747,6 +747,10 @@ over any existing rules with the same match pattern."
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . bottom)
       (window-height . 0.33))
+     ("\\*Gofmt Errors\\*"
+      (display-buffer-reuse-window display-buffer-in-side-window)
+      (side . bottom)
+      (window-height . 0.10))
      ("\\*aider-"
       (display-buffer-reuse-window display-buffer-in-side-window)
       (side . right)
@@ -911,7 +915,7 @@ over any existing rules with the same match pattern."
             (:map (evil-visual-state-map)
                   ("SPC" . md/leader-map)
                   ("H" . move-beginning-of-line)
-                  ("L" . move-beginning-of-line))
+                  ("L" . move-end-of-line))
             ;; Various common bindings I use
             (:map (evil-normal-state-map)
                   ("H" . move-beginning-of-line)
