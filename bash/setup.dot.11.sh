@@ -41,8 +41,11 @@ export LESS='-iMFXSx4R'
 export RANGER_LOAD_DEFAULT_RC=FALSE
 
 # [2021-05-16] Some better bind settings
-bind 'set colored-stats on'
-bind 'set colored-completion-prefix on'
+# Only set readline bindings in interactive shells to avoid warnings
+if [[ $- == *i* ]]; then
+    bind 'set colored-stats on'
+    bind 'set colored-completion-prefix on'
+fi
 
 # Use bat if installed. Note - I have to run a bat cache command before this
 # will get picked up for the first time.
@@ -53,6 +56,9 @@ if [ $(command -v bat) ]; then
     alias cat='bat'
     alias batg='BAT_STYLE=grid,header,changes,numbers batgrep -p'
 fi
+
+# Ripgrep configuration
+#export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
 
 # Use eza instead of ls if installed
 if [ $(command -v eza) ]; then

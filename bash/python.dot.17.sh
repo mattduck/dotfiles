@@ -17,7 +17,16 @@ export VIRTUALENVWRAPPER_HOOK_DIR="$DOTFILES/virtualenvwrapper_hooks"
 export WORKON_HOME=$HOME/.virtualenvs
 mkdir -p "$WORKON_HOME"
 
-VENV_WRAPPER_SCRIPT=$(which virtualenvwrapper.sh)
+# Sometimes the wrapper breaks if eg. python is upgraded, as the script tries to import
+# the virtualenvwrapper module. This is annoying and adds startup time for the shell.
+# The lazy version avoids python init work until it's actually called for the first time.
+#
+# NOTE: this is supposed to mean tab completion of environments doesn't work
+# until you've run it once.
+#
+# I could probably also fix the python mismatch issue by doing something different
+# with VIRTUALENVWRAPPER_PYTHON
+VENV_WRAPPER_SCRIPT=$(which virtualenvwrapper_lazy.sh)
 if [ ! -z "$VENV_WRAPPER_SCRIPT" ]; then source "$VENV_WRAPPER_SCRIPT"; fi
 
 # Virtualenv workflow:
@@ -88,6 +97,6 @@ function ,pycrm() {
 function ,pydebug() {
     # Prepare terminal to be a pudb debugger. See https://documen.tician.de/pudb/starting.html
     echo "Set PUDB_TTY:"
-    echo "export PUDB_TTY=$(tty)" 
+    echo "export PUDB_TTY=$(tty)"
     perl -MPOSIX -e pause
 }

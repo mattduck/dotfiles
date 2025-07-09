@@ -23,8 +23,10 @@ export FZF_COMPLETION_OPTS='--exact --height 20 --cycle -0 --border --color="16,
 # all bash tab complete candidates.
 if [ -f "$DOTFILES/fzf-tab-completion/bash/fzf-bash-completion.sh" ]; then
     source "$DOTFILES/fzf-tab-completion/bash/fzf-bash-completion.sh"
-    bind -x '"\t": fzf_bash_completion'
-
-    # Rebind the default completion in case the fzf version doesn't work
-    bind '"\C-k": complete'
- fi
+    # Only bind keys in interactive shells to avoid warnings
+    if [[ $- == *i* ]]; then
+        bind -x '"\t": fzf_bash_completion'
+        # Rebind the default completion in case the fzf version doesn't work
+        bind '"\C-k": complete'
+    fi
+fi
