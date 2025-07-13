@@ -67,13 +67,39 @@ function ,path() {
 function ,dotfiles-ls {
     # In numerical order, list paths ending in .dot.xx.sh, then list paths
     # ending in .dot.sh.
+    local DOT_NUM_REGEX='.*/.*\.dot\.[0-9][0-9]\.sh'
+    local DOT_SH_PATTERN='*.dot.sh'
+    local excludes=(
+        vim
+        virtualenvwrapper_hooks
+        ipython.symlink
+        hammerspoon.symlink
+        emacs.d.symlink
+        emacs.2023.symlink
+        config.symlink
+    )
 
-    if [[ $(uname -a) == *Darwin* ]]; then
-        for f in $(find -E $DOTFILES -regex '.+\.dot\.[0-9][0-9]\.sh' | sort -t "." -k 2); do echo $f; done
+    # Build -path exclude expressions
+    local prune_expr=""
+    for dir in "${excludes[@]}"; do
+        prune_expr+="-path \"$DOTFILES/$dir\" -o "
+    done
+    prune_expr=${prune_expr::-4}  # remove trailing " -o "
+
+    # Function to safely run find with pruning and filtering
+    if [[ $(uname -s) == "Darwin" ]]; then
+        # macOS
+        dot_num_files=$(eval "find -E \"$DOTFILES\" \\( $prune_expr \\) -prune -o -regex '$DOT_NUM_REGEX' -print | sort -t '.' -k 2")
+        dot_sh_files=$(eval "find -E \"$DOTFILES\" \\( $prune_expr \\) -prune -o -name '$DOT_SH_PATTERN' -print")
     else
-        for f in $(find $DOTFILES -regextype posix-extended -regex '.+\.dot\.[0-9][0-9]\.sh'| sort -t "." -k 2); do echo $f; done
+        # Linux
+        dot_num_files=$(eval "find \"$DOTFILES\" -regextype posix-extended \\( $prune_expr \\) -prune -o -regex '$DOT_NUM_REGEX' -print | sort -t '.' -k 2")
+        dot_sh_files=$(eval "find \"$DOTFILES\" -regextype posix-extended \\( $prune_expr \\) -prune -o -name '$DOT_SH_PATTERN' -print")
     fi
-    for f in $(find "$DOTFILES" -name "*.dot.sh"); do echo "$f"; done
+
+    echo "$dot_num_files"
+    echo "$dot_sh_files"
+
 }
 
 
@@ -82,7 +108,12 @@ THIS_FILE=${BASH_SOURCE[0]}
 export DOTFILES=$(dirname "$(,realpath "$THIS_FILE")")
 
 # Append all "bin" directories in $DOTFILES to $PATH
-,path $(find $DOTFILES -type d -name bin)
+#
+# Append bin directories. Used to find these automatically but doing it manually
+# for perf + to ensure we only include stuff I actually want
+,path macos/bin
+,path bin
+,path fzf-tab-completion/readline/bin
 
 # Source all ".dot.sh" files in $DOTFILES
 for f in $(,dotfiles-ls); do

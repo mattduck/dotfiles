@@ -4,14 +4,29 @@ export PYTHONDONTWRITEBYTECODE=1
 # New breakpoint() handling
 export PYTHONBREAKPOINT=pudb.start
 
-which pip >/dev/null && eval "$(pip completion --bash)"
+# pip completion. [2025-07] changing this to cache it as I can see it slows down shell startup
+if which pip3 >/dev/null; then
+    COMPLETION_CACHE="$HOME/.cache/pip-completion.bash"
+    if [ ! -f "$COMPLETION_CACHE" ]; then
+        mkdir -p "$(dirname "$COMPLETION_CACHE")"
+        pip3 completion --bash > "$COMPLETION_CACHE"
+    fi
+    source "$COMPLETION_CACHE"
+fi
+
+# [2024-02-12] pipx on macos uses this path
+,path ~/.local/bin
 
 # By default, Python's virtualenv will modify the prompt when a virtualenv is
 # active. Disable this.
 export VIRTUAL_ENV_DISABLE_PROMPT=1
 
-if [ ! -z "$(which python3)" ]; then export VIRTUALENVWRAPPER_PYTHON=$(which python3); fi
+# if [ ! -z "$(which python3)" ]; then export VIRTUALENVWRAPPER_PYTHON=$(which python3); fi
+# TODO clean this up. On newer macos seems it doesn't like you using pip with the system python
+# installation. Instead I've installed virtualenvwrapper via pipx on om machine, but you then need the python
+# var to match
 if [ ! -z "$(which virtualenv)" ]; then export VIRTUALENVWRAPPER_VIRTUALENV=$(which virtualenv); fi
+export VIRTUALENVWRAPPER_PYTHON="$HOME/.local/pipx/venvs/virtualenvwrapper/bin/python"
 
 export VIRTUALENVWRAPPER_HOOK_DIR="$DOTFILES/virtualenvwrapper_hooks"
 export WORKON_HOME=$HOME/.virtualenvs

@@ -13,7 +13,7 @@ set -g mouse on
 set-option -sg escape-time 0
 
 # History
-set -g history-limit 50000
+set -g history-limit 10000
 
 # Resize to smallest viewing client, not smallest attached client.
 set -g aggressive-resize on

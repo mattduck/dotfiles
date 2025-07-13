@@ -6,13 +6,15 @@ export BASH_SILENCE_DEPRECATION_WARNING=1
 
 ,path --prepend "/opt/homebrew/bin"
 
+brew_prefix=$(brew --prefix)
+
 # Use GNU coreutils - it's easier if programs have the same flags between
 # machines, same man pages etc.
-,path --prepend "$(brew --prefix)/opt/coreutils/libexec/gnubin"
-export MANPATH="$(brew --prefix)/opt/coreutils/libexec/gnuman:$MANPATH"
+,path --prepend "$brew_prefix/opt/coreutils/libexec/gnubin"
+export MANPATH="$brew_prefix/opt/coreutils/libexec/gnuman:$MANPATH"
 
 # golang
-,path "$(brew --prefix)opt/go/libexec/bin/"
+,path "$brew_prefix/opt/go/libexec/bin/"
 
 # Latex
 if [ -d /usr/local/texlive/2023 ]; then
@@ -20,8 +22,10 @@ if [ -d /usr/local/texlive/2023 ]; then
 fi
 
 # Bash completion lives in the brew directory
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-  . $(brew --prefix)/etc/bash_completion
+if [[ $- == *i* ]]; then  # Skip if not interactive
+  if [ -f "$brew_prefix/etc/bash_completion" ]; then
+    . "$brew_prefix/etc/bash_completion"
+  fi
 fi
 
 function ,finder-pull() {
