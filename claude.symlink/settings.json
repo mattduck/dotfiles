@@ -1,0 +1,20 @@
+{
+    "permissions": {
+        "allow": [
+            "Bash(make fix)"
+        ]
+    },
+    "hooks": {
+        "Notification": [
+            {
+                "matcher": "",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "/opt/homebrew/bin/terminal-notifier -message \"Waiting for input\" -title \"Claude Code\" -sender com.apple.Terminal"
+                    }
+                ]
+            }
+         ]
+    }
+}
