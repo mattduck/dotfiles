@@ -111,9 +111,9 @@ export DOTFILES=$(dirname "$(,realpath "$THIS_FILE")")
 #
 # Append bin directories. Used to find these automatically but doing it manually
 # for perf + to ensure we only include stuff I actually want
-,path macos/bin
-,path bin
-,path fzf-tab-completion/readline/bin
+,path "$DOTFILES/macos/bin"
+,path "$DOTFILES/bin"
+,path "$DOTFILES/fzf-tab-completion/readline/bin"
 
 # Source all ".dot.sh" files in $DOTFILES
 for f in $(,dotfiles-ls); do
