@@ -35,3 +35,6 @@ function ,finder-pull() {
 
 # Try using this new iTerm shell integration
 test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
+
+# Claude installs here for some reason
+,path "${HOME}/.claude/local"
