@@ -1435,6 +1435,140 @@ Searches across all Org agenda files."
               (goto-char found-point))
           (message "Ticket ID %s not found" ticket-id)))))
 
+  (defun md/org-list-tickets ()
+    "Use Consult to list and search entries with the ORG- `TICKET` property."
+    (interactive)
+    (let (ticket-alist cands)
+      ;; Collect (num . marker)
+      (org-map-entries
+       (lambda ()
+         (let ((ticket (org-entry-get nil "TICKET")))
+           (when (and ticket (string-match "^ORG-\\([0-9]+\\)$" ticket))
+             (let ((num (match-string 1 ticket)))
+               (push (cons num (point-marker)) ticket-alist)))))
+       nil 'agenda)
+
+      (if (null ticket-alist)
+          (message "No tickets found (no TICKET properties matching ORG-<num>).")
+        ;; Sort descending by numeric ticket id
+        (setq ticket-alist
+              (sort ticket-alist
+                    (lambda (a b)
+                      (> (string-to-number (car a))
+                         (string-to-number (car b))))))
+
+        ;; Build visible candidates in that order: show heading + styled tags
+        (setq cands
+              (mapcar
+               (lambda (pair)
+                 (let* ((num (car pair))
+                        (marker (cdr pair)))
+                   (with-current-buffer (marker-buffer marker)
+                     (goto-char marker)
+                     (let* ((heading (org-get-heading t t t t))
+                            (tags (org-get-tags))
+                            (tagstr (when tags
+                                      (mapconcat
+                                       (lambda (tg)
+                                         (propertize (concat ":" tg ":")
+                                                     'face 'org-tag))
+                                       tags " ")))
+                            (display (if tagstr
+                                         (format "%s  %s" heading tagstr)
+                                       heading)))
+                       ;; Candidate *matches on number only*, displays heading+tags
+                       (propertize num 'display display)))))
+               ticket-alist))
+
+        ;; Consult picker
+        (let ((state (consult--jump-state)))
+          (when-let* ((loc (consult--read
+                            cands
+                            :prompt "Ticket #: "
+                            :require-match t
+                            :sort nil
+                            :category 'consult-location
+                            :state state
+                            :lookup (lambda (cand &rest _)
+                                      (cdr (assoc (substring-no-properties cand)
+                                                  ticket-alist))))))
+            (funcall state loc :done)
+            (org-show-entry)
+            (org-reveal))))))
+
+  (defun md/org-list-timestamps ()
+    "Basic listing of inactive org timestamps in the current buffer.
+
+Generated code with some basic edits, seems to work ok.
+
+Doesn't widen buffer or jump to other files, I'm assuming that makes perf worse.
+
+Has some hardcoded limits only the number of timestamps we parse and show, but
+hopefully those are high enough to never be an issue."
+    (interactive)
+    (let* ((match-limit 10000)
+           (result-limit 50)
+           ;; Org regexp for inactive timestamps
+           (re org-ts-regexp-inactive)
+           (matches '()))
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward re nil t)
+          (let* ((pos (match-beginning 0))
+                 (ts  (match-string-no-properties 0))
+                 (time (ignore-errors (org-time-string-to-time ts)))
+                 (line (buffer-substring-no-properties
+                        (line-beginning-position) (line-end-position)))
+                 (m (copy-marker pos)))
+            ;; Push newest, then trim to last MATCH-LIMIT entries
+            (push (list time m line pos) matches)
+            (when (> (length matches) match-limit)
+              (setcdr (nthcdr (1- match-limit) matches) nil)))))
+
+      (if (null matches)
+          (message "No inactive timestamps found in the current buffer (respecting narrowing).")
+        ;; Sort reverse-chronological (nil times last)
+        (setq matches
+              (sort matches
+                    (lambda (a b)
+                      (let ((ta (car a)) (tb (car b)))
+                        (cond
+                         ((and ta tb) (time-less-p tb ta)) ; descending
+                         (ta t)
+                         (tb nil)
+                         (t nil))))))
+
+        ;; Take top RESULT-LIMIT after sorting
+        (when (> (length matches) result-limit)
+          (setcdr (nthcdr (1- result-limit) matches) nil))
+
+        ;; Build Consult candidates
+        (let ((table (make-hash-table :test 'equal))
+              (cands '()))
+          (dolist (it matches)
+            (pcase-let ((`(,_time ,marker ,line ,pos) it))
+              ;; Invisible suffix prevents collisions for identical lines
+              (let* ((uniq (propertize (format " \u2063%d" pos) 'invisible t))
+                     (cand (concat line uniq)))
+                (puthash (substring-no-properties cand) marker table)
+                (push cand cands))))
+          (setq cands (nreverse cands))
+
+          (let ((state (consult--jump-state)))
+            (when-let* ((loc (consult--read
+                              cands
+                              :prompt "Timestamp: "
+                              :require-match t
+                              :sort nil
+                              :category 'consult-location
+                              :state state
+                              :lookup (lambda (cand &rest _)
+                                        (gethash (substring-no-properties cand) table)))))
+              (funcall state loc :done)
+              (when (derived-mode-p 'org-mode)
+                (ignore-errors (org-reveal)))
+              (recenter)))))))
+
   :config
 
   (defun md/org-link-sync ()

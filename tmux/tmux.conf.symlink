@@ -107,3 +107,6 @@ bind-key -r "C-p" new-window -n "goto" 'source "$DOTFILES/tmux/tmux_env.dot.sh" 
 
 bind-key -r "C-c" new-window -c "#{pane_current_path}" ",fzf --action copy"
 bind-key -r "C-v" new-window -c "#{pane_current_path}" ",fzf --action send-keys-last-window"
+
+# This fixes the claude cursor problem
+set-option -g focus-events on
