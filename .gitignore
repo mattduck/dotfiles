@@ -54,3 +54,8 @@ osx/Brewfile.lock.json
 macos/Brewfile.lock.json
 .aider.*
 claude.symlink/*
+
+# [2026-03-20] This always shows up as it mixes config + state
+# (eg. the welcome message value is always incrementing). I rarely
+# change it, so ignore by default.
+config.symlink/pudb/pudb.cfg
