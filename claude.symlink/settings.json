@@ -1,7 +1,20 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "statusLine": {
+    "type": "command",
+    "command": "bash /Users/mattduck/.claude/statusline-command.sh"
+  },
   "permissions": {
     "allow": [
-      "Bash(make fix)"
+      "Bash(make fix)",
+      "Read(/tmp/*)",
+      "Bash(,wrap-message *)",
+      "Bash(git diff *)",
+      "Bash(git diff HEAD --stat && echo \"---\" && git diff HEAD)",
+      "Bash(,wrap-message *| git commit *)",
+      "Bash(git reset --soft *&& ,wrap-message *| git commit *)",
+      "Bash(grep *)",
+      "Bash(rg *)"
     ]
   },
   "hooks": {
@@ -17,5 +30,15 @@
       }
     ]
   },
-  "promptSuggestionEnabled": false
+  "enabledPlugins": {
+    "dfd@dfd": true
+  },
+  "extraKnownMarketplaces": {
+    "dfd": {
+      "source": {
+        "source": "github",
+        "repo": "mattduck/diffyduck"
+      }
+    }
+  }
 }
