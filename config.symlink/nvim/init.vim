@@ -54,3 +54,6 @@ nnoremap <C-w>9 9gt
 
 " Use system clipboard
 set clipboard=unnamedplus
+
+" [2026-03-16 Mon] for some reason it's using full colours
+set notermguicolors

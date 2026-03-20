@@ -245,3 +245,16 @@ tags
 .mypy_cache
 
 matt.py
+
+# [2024-04-03]
+# Ignoring this as it gives me an easy pyright / eglot setup by putting the config in a repo
+pyrightconfig.json
+
+# Aider
+.aider.conf.yml
+.aider.*
+.aiderignore
+
+# Claude
+.claude
+.clawde

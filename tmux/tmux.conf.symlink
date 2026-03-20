@@ -83,9 +83,24 @@ bind H select-layout main-vertical
 bind J select-layout even-vertical
 bind K select-layout main-horizontal
 bind L select-layout even-horizontal
+bind Space select-layout tiled
 bind-key Q setw synchronize-panes \; display-message "toggled pane sync"
 bind X confirm-before -p "kill-window #W? (y/n)" kill-window
 bind o resize-pane -Z  # The zoom function
+bind O run-shell '                                                    \
+  cur=$(tmux display -p "#{pane_height}");                            \
+  win=$(tmux display -p "#{window_height}");                          \
+  target=$((win * 60 / 100));                                         \
+  if [ "$cur" -lt "$target" ]; then                                   \
+    tmux set-option -p @halfzoom_prev "$cur";                         \
+    tmux resize-pane -y 60%;                                          \
+  else                                                                \
+    prev=$(tmux show-options -pqv @halfzoom_prev);                    \
+    if [ -n "$prev" ]; then                                           \
+      tmux resize-pane -y "$prev";                                    \
+    fi;                                                               \
+  fi                                                                  \
+'
 
 # Use namespace shell wrapper to enable pbcopy and pbpaste commands on OS X.
 set-option -g default-command "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace -l bash; else bash; fi"
@@ -108,5 +123,7 @@ bind-key -r "C-p" new-window -n "goto" 'source "$DOTFILES/tmux/tmux_env.dot.sh" 
 bind-key -r "C-c" new-window -c "#{pane_current_path}" ",fzf --action copy"
 bind-key -r "C-v" new-window -c "#{pane_current_path}" ",fzf --action send-keys-last-window"
 
-# This fixes the claude cursor problem
+# Workaround for claude code not knowing when focus changes. All other
+# programs seem to get xterm events and respond accordingly. This
+# setting at least gives us coverage for tmux pane switches.
 set-option -g focus-events on

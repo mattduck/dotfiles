@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+"""Wrap text to 72 columns, preserving bullet indentation and code blocks.
+
+Usage: ,wrap-message < input.txt > output.txt
+       ,wrap-message input.txt output.txt
+"""
+import sys
+import textwrap
+
+
+def wrap_line(line, width=72):
+    if len(line) <= width:
+        return line
+
+    stripped = line.lstrip(" ")
+    leading_spaces = len(line) - len(stripped)
+
+    if stripped.startswith("- "):
+        subsequent_indent = " " * (leading_spaces + 2)
+    else:
+        subsequent_indent = " " * leading_spaces
+
+    initial_indent = " " * leading_spaces
+
+    wrapped = textwrap.fill(
+        stripped,
+        width=width,
+        initial_indent=initial_indent,
+        subsequent_indent=subsequent_indent,
+        break_long_words=False,
+        break_on_hyphens=False,
+    )
+    return wrapped
+
+
+def wrap_text(text, width=72):
+    lines = text.split("\n")
+    result = []
+    in_code_block = False
+
+    for line in lines:
+        if line.strip().startswith("```"):
+            in_code_block = not in_code_block
+            result.append(line)
+            continue
+
+        if in_code_block:
+            result.append(line)
+            continue
+
+        result.append(wrap_line(line, width))
+
+    return "\n".join(result)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 3:
+        with open(sys.argv[1]) as f:
+            text = f.read()
+        with open(sys.argv[2], "w") as f:
+            f.write(wrap_text(text))
+    elif len(sys.argv) == 1:
+        sys.stdout.write(wrap_text(sys.stdin.read()))
+    else:
+        print("Usage: ,wrap-message [input-file output-file]", file=sys.stderr)
+        sys.exit(1)

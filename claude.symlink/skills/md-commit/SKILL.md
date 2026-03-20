@@ -1,7 +1,7 @@
 ---
 name: md-commit
 description: Git commit using standard layout
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 Create a git commit. The context for what needs committing should be clear from
@@ -12,6 +12,16 @@ the existing conversation. Follow the conventions and template below:
 - If we're operating on a known ticket ID, use the format "feat: MYTICKET-123 here's my commit title".
 
 - Where below I refer to "you" or "Claude", that means you the agent. "User" or "me" means me.
+
+- Wrap output at 72 columns. Do NOT attempt to wrap lines yourself —
+  the ,wrap-message command handles this. See the commit instructions
+  below for details.
+
+- TONE: never use superlatives or subjective adjectives to describe
+  changes. No "comprehensive", "robust", "elegant", "streamlined",
+  "enhanced", etc. Stick to plain factual descriptions. Write "add
+  tests for X" not "add comprehensive tests for X". This applies to
+  all sections of the commit message.
 
 ## Commit message template
 
@@ -62,3 +72,27 @@ Prompts:
 ...
 - [This is your question?]
   - "This is my answer"
+
+## Committing
+
+IMPORTANT: You MUST run ,wrap-message and show its output. Do NOT
+show your own draft to the user — the LLM cannot reliably wrap text.
+Follow these exact steps in order:
+
+1. Compose your draft commit message with NO attempt at wrapping —
+   just write natural-length lines.
+
+2. Wrap and commit in a single command using a heredoc:
+   ```bash
+   ,wrap-message <<'DRAFT' | git commit -F -
+   your message here
+   DRAFT
+   ```
+   This both wraps the message and commits it in one step. The
+   wrapped message will be visible in the command output.
+
+3. If the user wants changes after seeing the commit, amend by
+   repeating from step 1 with `git commit --amend -F -` instead.
+
+Do NOT skip any of these steps. Do NOT show the user text you
+composed yourself — only show the output of ,wrap-message.
