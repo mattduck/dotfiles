@@ -1635,6 +1635,7 @@ clipboard contents. Otherwise, prompt for a description"
                   ("gK" . md/org-narrow-prev)
                   ("gJ" . md/org-narrow-next)
                   ("gl" . md/org-goto-last-timestamp)
+                  ("gL" . md/org-list-timestamps)
                   ("H" . org-beginning-of-line)
                   ("L" . org-end-of-line)
                   ("$" . org-end-of-line)

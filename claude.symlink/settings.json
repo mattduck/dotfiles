@@ -31,6 +31,8 @@
     ]
   },
   "enabledPlugins": {
+    "pyright-lsp@claude-plugins-official": false,
+    "gopls-lsp@claude-plugins-official": true,
     "dfd@dfd": true
   },
   "extraKnownMarketplaces": {
@@ -40,5 +42,7 @@
         "repo": "mattduck/diffyduck"
       }
     }
-  }
+  },
+  "promptSuggestionEnabled": false,
+  "voiceEnabled": true
 }

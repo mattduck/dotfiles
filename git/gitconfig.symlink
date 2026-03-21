@@ -1,14 +1,16 @@
 [user]
 name = Matt Duck
 email = matt@mattduck.com
-editor = vim
 
 [core]
 excludesfile = ~/.gitignore
+editor = vim
 
 # swap github https for SSH to avoid having to login
-#[url "git@github.com:"]
-#insteadOf = https://github.com/
+[url "git@github.com:"]
+insteadOf = https://github.com/
+
+#pager = "env -u COLUMNS less"
 
 [alias]
 s = "!tig status"
@@ -19,6 +21,9 @@ b = branch -av
 
 d = diff
 dc = diff --cached
+
+super = "!superlog"
+nosuper = "!git -c pager.log=less -c pager.show=less"
 
 save =!git stash --all --keep-index && git stash apply
 stashq = stash --all --keep-index
@@ -58,6 +63,11 @@ ll = "!git l --all"
 
 # Want quicker way to jump to prs
 pr = !gh pr view --web 2>/dev/null || gh pr create --web
+
+#super = "!f() { superlog $@; }; f"
+
+# TEMP
+#context = "!f() { open "http://localhost:8000/v3/log?c=$(git rev-parse HEAD)"; }; f"
 
 [commit]
 template = "~/.commitmsg"
@@ -109,7 +119,12 @@ unmerged = 9
 [pager]
 diff = delta
 log = delta
+#log = "if command -v superlog >/dev/null 2>&1; then superlog log; else less; fi;"
+#log = "/f/2023-business/superlog/src/superlog/cli/superlog-pager.sh"
+#log = "if command -v superlog-pager >/dev/null 2>&1; then superlog-pager; else less; fi;"
+
 reflog = delta
+#show = "if command -v superlog-pager >/dev/null 2>&1; then superlog-pager; else less; fi;"
 show = delta
 
 [interactive]
@@ -151,6 +166,13 @@ file-style = blue
 
 commit-decoration-style = 8 ol
 
+
+[notes]
+#displayRef = refs/notes/super/msg
+#displayRef = refs/notes/super/links
+
+[color.log]
+notes = blue
 
 # Include local config if it exists
 [include]
