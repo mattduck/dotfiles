@@ -90,7 +90,7 @@ table_format = orgtbl
 # Syntax Style. Possible values: manni, igor, xcode, vim, autumn, vs, rrt,
 # native, perldoc, borland, tango, emacs, friendly, monokai, paraiso-dark,
 # colorful, murphy, bw, pastie, paraiso-light, trac, default, fruity
-syntax_style = native
+syntax_style = inkpot
 
 # Keybindings:
 # When Vi mode is enabled you can use modal editing features offered by Vi in the REPL.
@@ -145,29 +145,60 @@ multiline_continuation_char = '.'
 # cyan      #2aa198  6/6 #00afaf #ansiteal
 # green     #859900  2/2 #5f8700 ansigreen
 
-# Keyword = 'ansigreen noinherit'  # eg. select, from
-# Name = '#ansiblue noinherit'  # non-keywords
-# Name.Builtin = '#ansidarkblue noinherit' # uuid, text, interval
-# String = '#ansiteal noinherit'  # 'foo'
-# Number = '#ansiteal noinherit'
-# Comment = '#ansigreen noinherit'
-# Punctuation = '#ansiwhite noinherit'  # ;
-# Operator = '#ansiwhite noinherit'  # *
-# Token.Toolbar.Transaction.Valid = '#ansiteal noinherit'
-# Token.Toolbar.Transaction.Failed = '#ansidarkred noinherit'
-# Token.Menu.Completions.Completion = 'bg:#ansiblack #ansiturquoise noinherit'
-# Token.Menu.Completions.Completion.Current = 'bg:#ansidarkgray #ansiwhite noinherit'
-# Token.Menu.Completions.Meta = 'bg:#ansiblack #ansigreen noinherit'
-# Token.Menu.Completions.Meta.Current = 'bg:#ansidarkgray #ansipurple noinherit'
-# Token.Toolbar = 'bg:#ansiblack #ansiblue noinherit'
-# Token.Toolbar.Off = 'bg:#ansiblack #ansidarkgray noinherit'
-# Token.Toolbar.On = 'bg:#ansiblack #ansiwhite noinherit'
-# Token.SearchMatch = '#ansidarkgray bg:#ansibrown noinherit'
-# Token.SearchMatch.Current = '#ansidarkgray bg:#ansired noinherit'
+# Syntax highlighting - using pygments.* prompt-toolkit class names with ANSI colors
+# Matched to diffyduck theme for visual consistency
+pygments = 'noinherit'
+pygments.keyword = 'ansiblue noinherit'
+pygments.keyword.pseudo = 'ansiblue noinherit'
+pygments.operator.word = 'ansiblue noinherit'
+pygments.name = 'noinherit'
+pygments.name.builtin = 'ansibrightblue noinherit'
+pygments.name.variable = 'noinherit'
+pygments.name.constant = 'bold ansiyellow noinherit'
+pygments.name.class = 'ansibrightmagenta noinherit'
+pygments.name.function = 'ansibrightblue noinherit'
+pygments.name.namespace = 'noinherit'
+pygments.name.attribute = 'ansibrightcyan noinherit'
+pygments.name.decorator = 'ansiblue noinherit'
+pygments.name.exception = 'ansired noinherit'
+pygments.name.tag = 'ansibrightblack noinherit'
+pygments.literal.string = 'ansibrightblack noinherit'
+pygments.literal.string.other = 'ansibrightblack noinherit'
+pygments.literal.number = 'bold ansiyellow noinherit'
+pygments.comment = 'ansibrightblack noinherit'
+pygments.comment.preproc = 'ansibrightblack noinherit'
+pygments.comment.special = 'ansibrightblack noinherit'
+pygments.punctuation = 'ansiwhite noinherit'
+pygments.operator = 'ansiwhite noinherit'
+pygments.error = 'ansired noinherit'
+pygments.generic.deleted = 'ansired noinherit'
+pygments.generic.inserted = 'ansigreen noinherit'
+pygments.generic.error = 'ansired noinherit'
+pygments.generic.output = 'noinherit'
+pygments.generic.prompt = 'ansibrightblack noinherit'
+pygments.text.whitespace = 'ansibrightblack noinherit'
 
-# Token.Output.Header = "#ansiwhite noinherit"
-# Token.Output.OddRow = "#ansiyellow noinherit"
-# Token.Output.EvenRow = "#ansiwhite noinherit"
+# UI elements - using Token.* names for TOKEN_TO_PROMPT_STYLE mapping
+Token.Toolbar.Transaction.Valid = 'ansicyan noinherit'
+Token.Toolbar.Transaction.Failed = 'ansired noinherit'
+Token.Menu.Completions.Completion = 'bg:ansiblack ansicyan noinherit'
+Token.Menu.Completions.Completion.Current = 'bg:ansibrightblack ansiwhite noinherit'
+Token.Menu.Completions.Meta = 'bg:ansiblack ansigreen noinherit'
+Token.Menu.Completions.Meta.Current = 'bg:ansibrightblack ansimagenta noinherit'
+Token.Toolbar = 'bg:ansiblack ansiblue noinherit'
+Token.Toolbar.Off = 'bg:ansiblack ansibrightblack noinherit'
+Token.Toolbar.On = 'bg:ansiblack ansiwhite noinherit'
+Token.Menu.Completions.MultiColumnMeta = 'bg:ansiblack ansibrightblack noinherit'
+Token.Menu.Completions.ProgressButton = 'bg:ansibrightblack noinherit'
+Token.Menu.Completions.ProgressBar = 'bg:ansiblack noinherit'
+Token.SearchMatch = 'ansibrightblack bg:ansiyellow noinherit'
+Token.SearchMatch.Current = 'ansibrightblack bg:ansired noinherit'
+
+# Output table
+Token.Output.Header = "ansiwhite noinherit"
+Token.Output.OddRow = "noinherit"
+Token.Output.EvenRow = "noinherit"
+Token.Output.Null = "ansibrightblack noinherit"
 
 # --- copypaste
 # Text = '#ansipurple'
