@@ -57,6 +57,11 @@ if [ $(command -v bat) ]; then
     alias batg='BAT_STYLE=grid,header,changes,numbers batgrep -p'
 fi
 
+# jq colors matched to diffyduck theme:
+# null=bold yellow, false=bold yellow, true=bold yellow, number=bold yellow,
+# string=bright black (gray), arrays=default, objects=default, object keys=bright cyan
+export JQ_COLORS="1;33:1;33:1;33:1;33:0;90:1;39:1;39:0;96"
+
 # Ripgrep configuration
 #export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
 
