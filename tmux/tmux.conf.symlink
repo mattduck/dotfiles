@@ -39,26 +39,20 @@ col_host="12"
 
 # Left status is session name, right is hostname + date. Highlights current
 # window name.
-# NOTE: duplicate set-option calls overwrite rather than merge — the second
-# call replaces the first, so only the last value takes effect. To set both
-# bg and fg, combine them on one line: "bg=colour0,fg=colour7"
-set-option -g status-style "bg=colour$col_bg"
-set-option -g status-style "fg=colour$col_primary"
+set-option -g status-style "bg=colour$col_bg,fg=colour$col_primary"
 set-option -g status-left "#[fg=colour$col_secondary]#[bg=colour$col_bg_hl] #S"
 set-option -g status-right ""
 
-set-option -g window-status-style "bg=colour$col_bg"
 set-option -g window-status-style "fg=colour$col_secondary"
-set-option -g window-status-current-style "bg=colour$col_bg"
-set-option -g window-status-current-style "fg=colour$col_host"
-set-option -g window-status-format "#{?#{e|>:#{session_windows},1},#I:#W,}"
-set-option -g window-status-current-format "#{?#{e|>:#{session_windows},1},#I:#W,}"
+set-option -g window-status-current-style "reverse,fg=colour$col_host"
+set-option -g automatic-rename on
+set-option -g automatic-rename-format '#($DOTFILES/tmux/tmux-window-name.sh "#{pane_current_path}")'
+set-option -g window-status-format "#{?#{e|>:#{session_windows},1}, #I:#W ,}"
+set-option -g window-status-current-format "#{?#{e|>:#{session_windows},1}, #I:#W ,}"
 
 # Command bar colours
-set-option -g message-command-style "bg=colour$col_orange"
-set-option -g message-command-style "fg=colour$col_bg_hl"
-set-option -g message-style "bg=colour$col_bg_hl"
-set-option -g message-style "fg=colour$col_primary"
+set-option -g message-command-style "bg=colour$col_orange,fg=colour$col_bg_hl"
+set-option -g message-style "bg=colour$col_bg_hl,fg=colour$col_primary"
 
 # Highlight current pane.
 set-option -g pane-active-border-style "fg=colour$col_host"
