@@ -86,6 +86,7 @@ bind J select-layout even-vertical
 bind K select-layout main-horizontal
 bind L select-layout even-horizontal
 bind Space select-layout tiled
+bind - select-layout -o  # Undo last layout change
 bind-key Q setw synchronize-panes \; display-message "toggled pane sync"
 bind X confirm-before -p "kill-window #W? (y/n)" kill-window
 bind o resize-pane -Z  # The zoom function

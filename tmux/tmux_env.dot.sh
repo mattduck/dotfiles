@@ -11,6 +11,10 @@ function ,tmux-reload() {
 
 # Show titles on panes, to help keep track when lots of TUI-like
 # programs are running
+function ,tmux-last-layout() {
+    tmux select-layout -o
+}
+
 function ,tmux-toggle-titles() {
     local current
     current=$(tmux show -gv pane-border-status 2>/dev/null)
