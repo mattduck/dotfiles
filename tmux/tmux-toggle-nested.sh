@@ -15,65 +15,59 @@ if [ -z "$outer" ] || echo "$outer" | grep -q '^-'; then
     exit 0
 fi
 
-# Find all inner sessions (have MD_TMUX_OUTER set to our outer name)
-inners=""
-for s in $(tmux list-sessions -F '#{session_name}'); do
-    val=$(tmux show-environment -t "$s" MD_TMUX_OUTER 2>/dev/null | sed 's/^MD_TMUX_OUTER=//')
-    if [ "$val" = "$outer" ]; then
-        inners="$inners $s"
-    fi
-done
+# Find all inner sessions from the outer panes' @inner_session option
+inners=$(tmux list-panes -t "$outer" -F '#{@inner_session}' 2>/dev/null | grep .)
 
 state=$(tmux show -t "$outer" -qv @passthrough 2>/dev/null)
 
 if [ "$state" = "on" ]; then
     # Restore outer — unset overrides so globals from tmux.conf take effect
-    tmux set -t "$outer" prefix C-a \; \
-        set -t "$outer" @passthrough off
-    tmux set -t "$outer" -u status-style
-    tmux set -t "$outer" -u pane-active-border-style
-    tmux set -t "$outer" -u pane-border-style
-    # Dim inner sessions
+    # Collect all inner window IDs first, then apply everything in one tmux call
+    cmd="set -t '$outer' prefix C-a"
+    cmd="$cmd \\; set -t '$outer' @passthrough off"
+    cmd="$cmd \\; set -t '$outer' -u status-style"
+    cmd="$cmd \\; set -t '$outer' -u pane-active-border-style"
+    cmd="$cmd \\; set -t '$outer' -u pane-border-style"
     for inner in $inners; do
-        tmux set -t "$inner" status-style "bg=colour0,fg=colour8"
+        cmd="$cmd \\; set -t '$inner' status-style 'bg=colour0,fg=colour8'"
         for w in $(tmux list-windows -t "$inner" -F '#{window_id}'); do
-            tmux set -t "$w" window-status-current-style "dim,fg=colour6"
-            tmux set -t "$w" window-status-style "fg=colour8"
-            tmux set-option -w -t "$w" pane-border-lines simple
-            tmux set-option -w -t "$w" pane-active-border-style "dim,fg=colour7"
-            tmux set-option -w -t "$w" pane-border-style "dim,fg=colour7"
+            cmd="$cmd \\; set -t '$w' window-status-current-style 'dim,fg=colour6'"
+            cmd="$cmd \\; set -t '$w' window-status-style 'fg=colour8'"
+            cmd="$cmd \\; set-option -w -t '$w' pane-border-lines simple"
+            cmd="$cmd \\; set-option -w -t '$w' pane-active-border-style 'dim,fg=colour7'"
+            cmd="$cmd \\; set-option -w -t '$w' pane-border-style 'dim,fg=colour7'"
         done
     done
+    eval "tmux $cmd"
 else
-    # Dim outer
-    tmux set -t "$outer" prefix None \; \
-        set -t "$outer" @passthrough on
-    tmux set -t "$outer" status-style "fg=colour8,bg=colour0"
-    tmux set -t "$outer" pane-active-border-style "fg=colour6"
-    tmux set -t "$outer" pane-border-style "fg=colour8"
-    # Highlight the active inner session, keep others dimmed
-    active_tty=$(tmux display-message -t "$outer" -p '#{pane_tty}')
-    active_inner=$(tmux list-clients -F '#{client_tty} #{session_name}' | \
-        awk -v tty="$active_tty" '$1 == tty {print $2}')
+    # Active pane's inner session (single tmux call instead of display-message + list-clients)
+    active_inner=$(tmux display-message -t "$outer" -p '#{@inner_session}')
+    # Collect all window IDs up front
+    # Build one batched tmux command for outer + all inner styling
+    cmd="set -t '$outer' prefix None"
+    cmd="$cmd \\; set -t '$outer' @passthrough on"
+    cmd="$cmd \\; set -t '$outer' status-style 'fg=colour8,bg=colour0'"
+    cmd="$cmd \\; set -t '$outer' pane-active-border-style 'fg=colour6'"
+    cmd="$cmd \\; set -t '$outer' pane-border-style 'fg=colour8'"
     for inner in $inners; do
+        cmd="$cmd \\; set -t '$inner' status-style 'bg=colour0,fg=colour8'"
         if [ "$inner" = "$active_inner" ]; then
-            tmux set -t "$inner" status-style "bg=colour0,fg=colour8"
             for w in $(tmux list-windows -t "$inner" -F '#{window_id}'); do
-                tmux set -t "$w" window-status-current-style "fg=colour6"
-                tmux set -t "$w" window-status-style "fg=colour8"
-                tmux set-option -w -t "$w" pane-border-lines single
-                tmux set-option -w -t "$w" pane-active-border-style "fg=colour15"
-                tmux set-option -w -t "$w" pane-border-style "fg=colour7"
+                cmd="$cmd \\; set -t '$w' window-status-current-style 'fg=colour6'"
+                cmd="$cmd \\; set -t '$w' window-status-style 'fg=colour8'"
+                cmd="$cmd \\; set-option -w -t '$w' pane-border-lines single"
+                cmd="$cmd \\; set-option -w -t '$w' pane-active-border-style 'fg=colour15'"
+                cmd="$cmd \\; set-option -w -t '$w' pane-border-style 'fg=colour7'"
             done
         else
-            tmux set -t "$inner" status-style "bg=colour0,fg=colour8"
             for w in $(tmux list-windows -t "$inner" -F '#{window_id}'); do
-                tmux set -t "$w" window-status-current-style "dim,fg=colour6"
-                tmux set -t "$w" window-status-style "fg=colour8"
-                tmux set-option -w -t "$w" pane-border-lines simple
-                tmux set-option -w -t "$w" pane-active-border-style "dim,fg=colour7"
-                tmux set-option -w -t "$w" pane-border-style "dim,fg=colour7"
+                cmd="$cmd \\; set -t '$w' window-status-current-style 'dim,fg=colour6'"
+                cmd="$cmd \\; set -t '$w' window-status-style 'fg=colour8'"
+                cmd="$cmd \\; set-option -w -t '$w' pane-border-lines simple"
+                cmd="$cmd \\; set-option -w -t '$w' pane-active-border-style 'dim,fg=colour7'"
+                cmd="$cmd \\; set-option -w -t '$w' pane-border-style 'dim,fg=colour7'"
             done
         fi
     done
+    eval "tmux $cmd"
 fi
