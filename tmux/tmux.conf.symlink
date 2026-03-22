@@ -47,8 +47,8 @@ set-option -g window-status-style "fg=colour$col_secondary"
 set-option -g window-status-current-style "reverse,fg=colour$col_host"
 set-option -g automatic-rename on
 set-option -g automatic-rename-format '#($DOTFILES/tmux/tmux-window-name.sh "#{pane_current_path}")'
-set-option -g window-status-format "#{?#{e|>:#{session_windows},1}, #I:#W ,}"
-set-option -g window-status-current-format "#{?#{e|>:#{session_windows},1}, #I:#W ,}"
+set-option -g window-status-format "#{?#{e|>:#{session_windows},1}, #I:#W#{?window_zoomed_flag,Z,} ,}"
+set-option -g window-status-current-format "#{?#{e|>:#{session_windows},1}, #I:#W#{?window_zoomed_flag,Z,} ,}"
 
 # Command bar colours
 set-option -g message-command-style "bg=colour$col_orange,fg=colour$col_bg_hl"
@@ -88,7 +88,15 @@ bind Space select-layout tiled
 bind - select-layout -o  # Undo last layout change
 bind-key Q setw synchronize-panes \; display-message "toggled pane sync"
 bind X confirm-before -p "kill-window #W? (y/n)" kill-window
-bind o resize-pane -Z  # The zoom function
+bind z resize-pane -Z  # Zoom: always operates on current (inner) session
+bind o run-shell '                                                      \
+  outer=$(tmux show-environment MD_TMUX_OUTER 2>/dev/null |             \
+          sed "s/^MD_TMUX_OUTER=//");                                   \
+  if [ -n "$outer" ] && ! echo "$outer" | grep -q "^-"; then           \
+    tmux resize-pane -Z -t "$outer";                                    \
+  else                                                                  \
+    tmux resize-pane -Z;                                                \
+  fi'
 bind O run-shell '                                                    \
   cur=$(tmux display -p "#{pane_height}");                            \
   win=$(tmux display -p "#{window_height}");                          \
