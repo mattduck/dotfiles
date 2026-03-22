@@ -2,7 +2,7 @@ function ,tmux() {
     if [[ -z "$TMUX" ]]; then
         command tmux new-session \; \
             set pane-border-status top \; \
-            set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#[reverse]#[fg=colour6],#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,} #[default]"
+            set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[reverse]#[fg=colour6],#[bg=colour15]#[fg=colour6]},#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,} #[default]"
         return
     fi
     if [[ -n "$MD_TMUX_OUTER" ]]; then
@@ -104,7 +104,7 @@ function ,tmux-toggle-titles() {
         echo "Pane borders off"
     else
         tmux set pane-border-status top
-        tmux set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#[reverse]#[fg=colour6],#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,} #[default]"
+        tmux set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[reverse]#[fg=colour6],#[bg=colour15]#[fg=colour6]},#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,} #[default]"
         echo "Pane borders on"
     fi
 }
