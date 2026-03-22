@@ -27,7 +27,8 @@
       "Bash(,wrap-message *| git commit *)",
       "Bash(git reset --soft *&& ,wrap-message *| git commit *)",
       "Bash(grep *)",
-      "Bash(rg *)"
+      "Bash(rg *)",
+      "Bash(git status && echo \"---\" && git diff)"
     ]
   },
   "hooks": {
