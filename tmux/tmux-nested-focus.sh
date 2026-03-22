@@ -25,7 +25,14 @@ if [ "$nested" = "on" ]; then
             "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session"
         fi
     fi
-    # Auto focus-in to nested tmux panes is disabled; use C-a a or C-a o
+    # Auto focus-in when @auto-focus-in is enabled (toggled via prefix-Enter)
+    auto=$(tmux show -t "$session" -qv @auto-focus-in 2>/dev/null)
+    if [ "$auto" = "on" ]; then
+        state=$(tmux show -t "$session" -qv @passthrough 2>/dev/null)
+        if [ "$state" != "on" ]; then
+            "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session"
+        fi
+    fi
 else
     state=$(tmux show -t "$session" -qv @passthrough 2>/dev/null)
     if [ "$state" = "on" ]; then

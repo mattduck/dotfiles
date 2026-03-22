@@ -157,16 +157,8 @@ set-option -g focus-events on
 # prefix on/off so keys pass through to the inner session.
 bind a run-shell '$DOTFILES/tmux/tmux-toggle-nested.sh'
 # Toggle auto-focus-in mode: when on, clicking/focusing a nested pane
-# automatically enters passthrough. Off by default.
-bind Enter run-shell ' \
-    state=$(tmux show -qv @auto-focus-in 2>/dev/null); \
-    if [ "$state" = "on" ]; then \
-        tmux set @auto-focus-in off; \
-        tmux display-message "auto-focus-in: off"; \
-    else \
-        tmux set @auto-focus-in on; \
-        tmux display-message "auto-focus-in: on"; \
-    fi'
+# automatically enters passthrough. Also toggles passthrough to match.
+bind Enter run-shell '$DOTFILES/tmux/tmux-toggle-auto-focus.sh'
 # Clear stale hooks from previous config reloads (source-file doesn't remove hooks)
 set-hook -gu after-select-pane
 set-hook -gu client-focus-in
