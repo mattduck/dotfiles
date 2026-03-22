@@ -154,6 +154,7 @@ set-option -g focus-events on
 # is set to the outer session name. C-a a toggles the outer session's
 # prefix on/off so keys pass through to the inner session.
 bind a run-shell '$DOTFILES/tmux/tmux-toggle-nested.sh'
+bind Enter run-shell '$DOTFILES/tmux/tmux-toggle-nested.sh'
 # Clear stale hooks from previous config reloads (source-file doesn't remove hooks)
 set-hook -gu after-select-pane
 set-hook -gu client-focus-in

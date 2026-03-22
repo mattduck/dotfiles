@@ -2,7 +2,7 @@ function ,tmux() {
     if [[ -z "$TMUX" ]]; then
         command tmux new-session \; \
             set pane-border-status top \; \
-            set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#[reverse]#[fg=colour6],#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #[default]"
+            set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#[reverse]#[fg=colour6],#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,} #[default]"
         return
     fi
     if [[ -n "$MD_TMUX_OUTER" ]]; then
@@ -30,11 +30,13 @@ function ,tmux-last-layout() {
 }
 
 function ,tmux--nested() {
-    local outer_session
+    local outer_session inner_name
     outer_session=$(tmux display-message -p '#S')
+    inner_name="nested-${outer_session}-$(tmux display-message -p '#{pane_id}' | tr '%' '_')"
     tmux set-option -p @nested on
+    tmux set-option -p @inner_session "$inner_name"
     "$DOTFILES/tmux/tmux-toggle-nested.sh" "$outer_session"
-    TMUX= tmux new-session "MD_TMUX_OUTER='$outer_session' bash" \; \
+    TMUX= tmux new-session -s "$inner_name" "MD_TMUX_OUTER='$outer_session' bash" \; \
         set-environment MD_TMUX_OUTER "$outer_session" \; \
         set-option -w pane-border-lines single \; \
         set-option -w pane-border-status top \; \
@@ -65,6 +67,7 @@ function ,tmux--nested() {
             "if-shell '[ #{session_windows} -le 1 ]' 'set-option status off'"
 
     # Inner tmux has exited — clean up
+    tmux set-option -p -u @inner_session
     tmux set-option -p -u @nested
     local state
     state=$(tmux show -t "$outer_session" -qv @passthrough 2>/dev/null)
@@ -101,7 +104,7 @@ function ,tmux-toggle-titles() {
         echo "Pane borders off"
     else
         tmux set pane-border-status top
-        tmux set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#[reverse]#[fg=colour6],#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #[default]"
+        tmux set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#[reverse]#[fg=colour6],#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,} #[default]"
         echo "Pane borders on"
     fi
 }
