@@ -16,7 +16,7 @@ else
     # Add git info
     if command -v __git_ps1 >/dev/null; then
         GIT_PS1_SHOWDIRTYSTATE=true
-        _git_info="$ANSIbrightgreen\$(__git_ps1)"
+        _git_info="$ANSIwhite\$(__git_ps1)"
     fi
 
     PS1="\n$_pwd$_git_info\n$ANSIbrightcyan$ "
