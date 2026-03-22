@@ -41,6 +41,7 @@ function ,tmux--nested() {
         set-option -w pane-border-format "#{?pane_active,#[fg=colour15] #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #[default],}" \; \
         set-option -w pane-active-border-style "fg=colour15" \; \
         set-option -w pane-border-style "fg=colour7" \; \
+        set-option status off \; \
         set-option status-position bottom \; \
         set-option status-justify left \; \
         set-option status-style "bg=colour0,fg=colour8" \; \
@@ -50,7 +51,8 @@ function ,tmux--nested() {
         set-option window-status-format " #I:#W#{?window_zoomed_flag,Z,} " \; \
         set-option window-status-current-format " #I:#W#{?window_zoomed_flag,Z,} " \; \
         set-hook after-new-window \
-            "set-option -w pane-border-lines single ; \
+            "set-option status on ; \
+             set-option -w pane-border-lines single ; \
              set-option -w pane-border-status top ; \
              set-option -w pane-border-format '#{?pane_active,#[fg=colour15] #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #[default],}' ; \
              set-option -w pane-active-border-style fg=colour15 ; \
@@ -58,7 +60,9 @@ function ,tmux--nested() {
              set-option window-status-format ' #I:#W#{?window_zoomed_flag,Z,} ' ; \
              set-option window-status-current-format ' #I:#W#{?window_zoomed_flag,Z,} ' ; \
              set-option window-status-current-style 'fg=colour6' ; \
-             set-option window-status-style 'fg=colour8'"
+             set-option window-status-style 'fg=colour8'" \; \
+        set-hook window-unlinked \
+            "if-shell '[ #{session_windows} -le 1 ]' 'set-option status off'"
 
     # Inner tmux has exited — clean up
     tmux set-option -p -u @nested
