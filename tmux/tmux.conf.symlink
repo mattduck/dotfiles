@@ -46,7 +46,11 @@ set-option -g status-right ""
 set-option -g window-status-style "fg=colour$col_secondary"
 set-option -g window-status-current-style "reverse,fg=colour$col_host"
 set-option -g automatic-rename on
-set-option -g automatic-rename-format '#($DOTFILES/tmux/tmux-window-name.sh "#{pane_current_path}")'
+# Use a pure format string (not #()) for instant updates on pane switch.
+# #() runs async and caches results, so the window title always shows the
+# *previous* pane's directory until the next refresh cycle. The tradeoff is
+# losing git-repo-root-name display (shows basename instead).
+set-option -g automatic-rename-format '#{?#{==:#{pane_current_path},#{HOME}},~,#{b:pane_current_path}}'
 set-option -g window-status-format "#{?#{e|>:#{session_windows},1}, #I:#W#{?window_zoomed_flag,Z,} ,}"
 set-option -g window-status-current-format "#{?#{e|>:#{session_windows},1}, #I:#W#{?window_zoomed_flag,Z,} ,}"
 
