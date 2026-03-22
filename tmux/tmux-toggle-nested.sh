@@ -48,7 +48,7 @@ else
     cmd="$cmd \\; set -t '$outer' @passthrough on"
     cmd="$cmd \\; set -t '$outer' status-style 'fg=colour8,bg=colour0'"
     cmd="$cmd \\; set -t '$outer' pane-active-border-style 'fg=colour6'"
-    cmd="$cmd \\; set -t '$outer' pane-border-style 'fg=colour8'"
+    cmd="$cmd \\; set -t '$outer' pane-border-style 'dim,fg=colour8'"
     for inner in $inners; do
         cmd="$cmd \\; set -t '$inner' status-style 'bg=colour0,fg=colour8'"
         if [ "$inner" = "$active_inner" ]; then
