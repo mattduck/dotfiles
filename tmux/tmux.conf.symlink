@@ -55,8 +55,8 @@ set-option -g message-command-style "bg=colour$col_orange,fg=colour$col_bg_hl"
 set-option -g message-style "bg=colour$col_bg_hl,fg=colour$col_primary"
 
 # Highlight current pane.
-set-option -g pane-active-border-style "fg=colour$col_host"
-set-option -g pane-border-style "fg=colour$col_optional_em"
+set-option -g pane-active-border-style "fg=colour$col_optional_em"
+set-option -g pane-border-style "fg=colour$col_secondary"
 set-option -g pane-border-indicators colour
 set-option -g pane-border-lines heavy
 

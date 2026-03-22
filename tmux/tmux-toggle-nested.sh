@@ -28,12 +28,12 @@ done
 state=$(tmux show -t "$outer" -qv @passthrough 2>/dev/null)
 
 if [ "$state" = "on" ]; then
-    # Restore outer
+    # Restore outer — unset overrides so globals from tmux.conf take effect
     tmux set -t "$outer" prefix C-a \; \
         set -t "$outer" @passthrough off
-    tmux set -t "$outer" status-style "fg=colour7,bg=colour0"
-    tmux set -t "$outer" pane-active-border-style "fg=colour12"
-    tmux set -t "$outer" pane-border-style "fg=colour15"
+    tmux set -t "$outer" -u status-style
+    tmux set -t "$outer" -u pane-active-border-style
+    tmux set -t "$outer" -u pane-border-style
     # Dim inner status bar
     if [ -n "$inner" ]; then
         tmux set -t "$inner" status-style "bg=colour0,fg=colour8"
@@ -50,7 +50,7 @@ else
         set -t "$outer" @passthrough on
     tmux set -t "$outer" status-style "fg=colour8,bg=colour0"
     tmux set -t "$outer" pane-active-border-style "fg=colour6"
-    tmux set -t "$outer" pane-border-style "dim,fg=colour15"
+    tmux set -t "$outer" pane-border-style "dim,fg=colour8"
     # Highlight inner status bar
     if [ -n "$inner" ]; then
         tmux set -t "$inner" status-style "bg=colour6,fg=colour0"
