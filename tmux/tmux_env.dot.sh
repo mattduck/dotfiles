@@ -2,7 +2,7 @@ function ,tmux() {
     if [[ -z "$TMUX" ]]; then
         command tmux new-session \; \
             set pane-border-status top \; \
-            set pane-border-format "#{?pane_active,#[reverse],#[bg=colour8,fg=colour0]} #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path}) #[default]"
+            set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#[reverse]#[fg=colour6],#[reverse]},#{?#{==:#{pane_current_command},tmux},#[nodim]#[bg=colour6]#[fg=colour0],#[bg=colour8]#[fg=colour0]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path}) #[default]"
         return
     fi
     if [[ -n "$MD_TMUX_OUTER" ]]; then
@@ -42,8 +42,10 @@ function ,tmux--nested() {
         set-option -w pane-border-style "fg=colour7" \; \
         set-option status-position bottom \; \
         set-option status-justify left \; \
-        set-option status-left "#[fg=colour8] #S " \; \
-        set-option window-status-current-style "reverse,fg=colour6" \; \
+        set-option status-style "bg=colour6,fg=colour0" \; \
+        set-option status-left "#[fg=colour0] #S " \; \
+        set-option window-status-current-style "bg=colour0,fg=colour6" \; \
+        set-option window-status-style "fg=colour0" \; \
         set-option window-status-format " #I:#W " \; \
         set-option window-status-current-format " #I:#W " \; \
         set-hook after-new-window \
@@ -51,9 +53,10 @@ function ,tmux--nested() {
              set-option -w pane-border-status off ; \
              set-option -w pane-active-border-style fg=colour6 ; \
              set-option -w pane-border-style fg=colour7 ; \
-             set-option window-status-current-style reverse,fg=colour6 ; \
              set-option window-status-format ' #I:#W ' ; \
-             set-option window-status-current-format ' #I:#W '"
+             set-option window-status-current-format ' #I:#W ' ; \
+             set-option window-status-current-style 'bg=colour0,fg=colour6' ; \
+             set-option window-status-style 'fg=colour0'"
 
     # Inner tmux has exited — clean up
     tmux set-option -p -u @nested
@@ -92,7 +95,7 @@ function ,tmux-toggle-titles() {
         echo "Pane borders off"
     else
         tmux set pane-border-status top
-        tmux set pane-border-format "#{?pane_active,#[reverse],#[bg=colour8,fg=colour0]} #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path}) #[default]"
+        tmux set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#[reverse]#[fg=colour6],#[reverse]},#{?#{==:#{pane_current_command},tmux},#[nodim]#[bg=colour6]#[fg=colour0],#[bg=colour8]#[fg=colour0]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path}) #[default]"
         echo "Pane borders on"
     fi
 }
