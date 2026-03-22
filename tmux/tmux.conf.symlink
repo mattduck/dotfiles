@@ -39,6 +39,9 @@ col_host="12"
 
 # Left status is session name, right is hostname + date. Highlights current
 # window name.
+# NOTE: duplicate set-option calls overwrite rather than merge — the second
+# call replaces the first, so only the last value takes effect. To set both
+# bg and fg, combine them on one line: "bg=colour0,fg=colour7"
 set-option -g status-style "bg=colour$col_bg"
 set-option -g status-style "fg=colour$col_primary"
 set-option -g status-left "#[fg=colour$col_secondary]#[bg=colour$col_bg_hl] #S"
@@ -48,6 +51,8 @@ set-option -g window-status-style "bg=colour$col_bg"
 set-option -g window-status-style "fg=colour$col_secondary"
 set-option -g window-status-current-style "bg=colour$col_bg"
 set-option -g window-status-current-style "fg=colour$col_host"
+set-option -g window-status-format "#{?#{e|>:#{session_windows},1},#I:#W,}"
+set-option -g window-status-current-format "#{?#{e|>:#{session_windows},1},#I:#W,}"
 
 # Command bar colours
 set-option -g message-command-style "bg=colour$col_orange"
@@ -68,10 +73,10 @@ set-option -g pane-base-index 1
 # vi
 set-option -g status-keys vi
 set-option -g mode-keys vi
-bind h select-pane -L
-bind j select-pane -D
-bind k select-pane -U
-bind l select-pane -R
+bind h run-shell '$DOTFILES/tmux/tmux-nested-move.sh L'
+bind j run-shell '$DOTFILES/tmux/tmux-nested-move.sh D'
+bind k run-shell '$DOTFILES/tmux/tmux-nested-move.sh U'
+bind l run-shell '$DOTFILES/tmux/tmux-nested-move.sh R'
 bind-key -T copy-mode-vi 'v' send -X begin-selection
 
 # Splitscreen
@@ -130,3 +135,8 @@ bind-key -r "C-v" new-window -c "#{pane_current_path}" ",fzf --action send-keys-
 # programs seem to get xterm events and respond accordingly. This
 # setting at least gives us coverage for tmux pane switches.
 set-option -g focus-events on
+
+# Nested session support: when launched via ,tmux-nested, MD_TMUX_OUTER
+# is set to the outer session name. C-a a toggles the outer session's
+# prefix on/off so keys pass through to the inner session.
+bind a run-shell '$DOTFILES/tmux/tmux-toggle-nested.sh'

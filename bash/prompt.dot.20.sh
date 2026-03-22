@@ -7,7 +7,11 @@ if [[ $EUID == 0 ]]; then
 else
     # Standard prompt
     _user="$ANSIyellow$debian_chroot\u"
-    _pwd="$ANSIblue\w"
+    if [[ -n "$MD_TMUX_OUTER" ]]; then
+        _pwd="$ANSIcyan\w"
+    else
+        _pwd="$ANSIblue\w"
+    fi
 
     # Add git info
     if command -v __git_ps1 >/dev/null; then
