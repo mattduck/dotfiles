@@ -43,10 +43,10 @@ function ,tmux--nested() {
         set-option -w pane-border-style "fg=colour7" \; \
         set-option status-position bottom \; \
         set-option status-justify left \; \
-        set-option status-style "bg=colour6,fg=colour0" \; \
-        set-option status-left "#[fg=colour0] #S " \; \
-        set-option window-status-current-style "bg=colour0,fg=colour6" \; \
-        set-option window-status-style "fg=colour0" \; \
+        set-option status-style "bg=colour0,fg=colour8" \; \
+        set-option status-left "#[fg=colour8] #S " \; \
+        set-option window-status-current-style "fg=colour6" \; \
+        set-option window-status-style "fg=colour8" \; \
         set-option window-status-format " #I:#W#{?window_zoomed_flag,Z,} " \; \
         set-option window-status-current-format " #I:#W#{?window_zoomed_flag,Z,} " \; \
         set-hook after-new-window \
@@ -57,8 +57,8 @@ function ,tmux--nested() {
              set-option -w pane-border-style fg=colour7 ; \
              set-option window-status-format ' #I:#W#{?window_zoomed_flag,Z,} ' ; \
              set-option window-status-current-format ' #I:#W#{?window_zoomed_flag,Z,} ' ; \
-             set-option window-status-current-style 'bg=colour0,fg=colour6' ; \
-             set-option window-status-style 'fg=colour0'"
+             set-option window-status-current-style 'fg=colour6' ; \
+             set-option window-status-style 'fg=colour8'"
 
     # Inner tmux has exited — clean up
     tmux set-option -p -u @nested
