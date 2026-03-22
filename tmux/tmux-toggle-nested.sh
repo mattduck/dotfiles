@@ -53,17 +53,33 @@ else
     tmux set -t "$outer" status-style "fg=colour8,bg=colour0"
     tmux set -t "$outer" pane-active-border-style "fg=colour6"
     tmux set -t "$outer" pane-border-style "dim,fg=colour8"
-    # Highlight inner sessions
+    # Highlight the active inner session, keep others dimmed
+    active_tty=$(tmux display-message -t "$outer" -p '#{pane_tty}')
+    active_inner=$(tmux list-clients -F '#{client_tty} #{session_name}' | \
+        awk -v tty="$active_tty" '$1 == tty {print $2}')
     for inner in $inners; do
-        tmux set -t "$inner" status-style "bg=colour6,fg=colour0"
-        tmux set -t "$inner" window-status-current-style "bg=colour0,fg=colour6"
-        tmux set -t "$inner" window-status-style "fg=colour0"
-        for w in $(tmux list-windows -t "$inner" -F '#{window_id}'); do
-            tmux set -t "$w" window-status-current-style "bg=colour0,fg=colour6"
-            tmux set -t "$w" window-status-style "fg=colour0"
-            tmux set-option -w -t "$w" pane-border-lines single
-            tmux set-option -w -t "$w" pane-active-border-style "fg=colour15"
-            tmux set-option -w -t "$w" pane-border-style "fg=colour7"
-        done
+        if [ "$inner" = "$active_inner" ]; then
+            tmux set -t "$inner" status-style "bg=colour6,fg=colour0"
+            tmux set -t "$inner" window-status-current-style "bg=colour0,fg=colour6"
+            tmux set -t "$inner" window-status-style "fg=colour0"
+            for w in $(tmux list-windows -t "$inner" -F '#{window_id}'); do
+                tmux set -t "$w" window-status-current-style "bg=colour0,fg=colour6"
+                tmux set -t "$w" window-status-style "fg=colour0"
+                tmux set-option -w -t "$w" pane-border-lines single
+                tmux set-option -w -t "$w" pane-active-border-style "fg=colour15"
+                tmux set-option -w -t "$w" pane-border-style "fg=colour7"
+            done
+        else
+            tmux set -t "$inner" status-style "bg=colour0,fg=colour8"
+            tmux set -t "$inner" window-status-current-style "reverse,fg=colour6"
+            tmux set -t "$inner" window-status-style "fg=colour8"
+            for w in $(tmux list-windows -t "$inner" -F '#{window_id}'); do
+                tmux set -t "$w" window-status-current-style "reverse,fg=colour6"
+                tmux set -t "$w" window-status-style "fg=colour8"
+                tmux set-option -w -t "$w" pane-border-lines simple
+                tmux set-option -w -t "$w" pane-active-border-style "dim,fg=colour7"
+                tmux set-option -w -t "$w" pane-border-style "dim,fg=colour7"
+            done
+        fi
     done
 fi
