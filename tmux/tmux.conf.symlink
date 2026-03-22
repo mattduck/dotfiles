@@ -130,7 +130,7 @@ bind-key -r "C-v" new-window -c "#{pane_current_path}" ",fzf --action send-keys-
 # setting at least gives us coverage for tmux pane switches.
 set-option -g focus-events on
 
-# Nested session support: when launched via ,tmux-nested, MD_TMUX_OUTER
+# Nested session support: when launched via ,tmux, MD_TMUX_OUTER
 # is set to the outer session name. C-a a toggles the outer session's
 # prefix on/off so keys pass through to the inner session.
 bind a run-shell '$DOTFILES/tmux/tmux-toggle-nested.sh'

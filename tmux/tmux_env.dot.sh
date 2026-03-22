@@ -1,3 +1,17 @@
+function ,tmux() {
+    if [[ -z "$TMUX" ]]; then
+        command tmux new-session \; \
+            set pane-border-status top \; \
+            set pane-border-format "#{?pane_active,#[reverse],#[bg=colour8,fg=colour0]} #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path}) #[default]"
+        return
+    fi
+    if [[ -n "$MD_TMUX_OUTER" ]]; then
+        echo "Already in a nested tmux session (outer=$MD_TMUX_OUTER)"
+        return 1
+    fi
+    ,tmux--nested
+}
+
 # If this shell is running within tmux, add some extra utilities
 if [[ -z $TMUX ]]; then return; fi
 
@@ -15,10 +29,11 @@ function ,tmux-last-layout() {
     tmux select-layout -o
 }
 
-function ,tmux-nested() {
+function ,tmux--nested() {
     local outer_session
     outer_session=$(tmux display-message -p '#S')
     tmux set-option -p @nested on
+    "$DOTFILES/tmux/tmux-toggle-nested.sh" "$outer_session"
     TMUX= tmux new-session "MD_TMUX_OUTER='$outer_session' bash" \; \
         set-environment MD_TMUX_OUTER "$outer_session" \; \
         set-option -w pane-border-lines single \; \
