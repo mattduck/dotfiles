@@ -14,12 +14,7 @@ check_nested_destination() {
     target=$(tmux display-message -t "$pane" -p '#{@nested}' 2>/dev/null)
     if [ "$target" = "on" ]; then
         cmd=$(tmux display-message -t "$pane" -p '#{pane_current_command}')
-        if [ "$cmd" = "tmux" ]; then
-            state=$(tmux show -t "$session" -qv @passthrough 2>/dev/null)
-            if [ "$state" != "on" ]; then
-                "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session"
-            fi
-        else
+        if [ "$cmd" != "tmux" ]; then
             # Nested tmux has exited — clean up the marker and restore
             tmux set-option -t "$pane" -p -u @nested
             state=$(tmux show -t "$session" -qv @passthrough 2>/dev/null)
@@ -27,6 +22,7 @@ check_nested_destination() {
                 "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session"
             fi
         fi
+        # Auto focus-in to nested tmux panes is disabled; use C-a a or C-a o
     fi
 }
 

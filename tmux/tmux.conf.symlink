@@ -96,6 +96,18 @@ bind o run-shell '                                                      \
     tmux resize-pane -Z -t "$outer";                                    \
   else                                                                  \
     tmux resize-pane -Z;                                                \
+    session=$(tmux display-message -p "#{session_name}");               \
+    pane=$(tmux display-message -p "#{pane_id}");                       \
+    nested=$(tmux display-message -t "$pane" -p "#{@nested}");          \
+    if [ "$nested" = "on" ]; then                                       \
+      cmd=$(tmux display-message -t "$pane" -p "#{pane_current_command}"); \
+      if [ "$cmd" = "tmux" ]; then                                      \
+        state=$(tmux show -t "$session" -qv @passthrough 2>/dev/null);  \
+        if [ "$state" != "on" ]; then                                   \
+          "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session";            \
+        fi;                                                             \
+      fi;                                                               \
+    fi;                                                                 \
   fi'
 bind O run-shell '                                                    \
   cur=$(tmux display -p "#{pane_height}");                            \
