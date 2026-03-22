@@ -128,6 +128,11 @@ bind O run-shell '                                                    \
   fi                                                                  \
 '
 
+# Explicitly set bash as the default command so tmux panes (including nested
+# session shells) resolve to Homebrew bash 5.x via PATH, rather than falling
+# back to default-shell which can pick up /bin/bash 3.2 in some contexts.
+set-option -g default-command bash
+
 # Copy selection to system clipboard. Uses pbcopy directly rather than
 # reattach-to-user-namespace (no longer needed on modern macOS). This also
 # works in nested tmux sessions, unlike the default set-clipboard/OSC 52
@@ -151,7 +156,17 @@ set-option -g focus-events on
 # is set to the outer session name. C-a a toggles the outer session's
 # prefix on/off so keys pass through to the inner session.
 bind a run-shell '$DOTFILES/tmux/tmux-toggle-nested.sh'
-bind Enter run-shell '$DOTFILES/tmux/tmux-toggle-nested.sh'
+# Toggle auto-focus-in mode: when on, clicking/focusing a nested pane
+# automatically enters passthrough. Off by default.
+bind Enter run-shell ' \
+    state=$(tmux show -qv @auto-focus-in 2>/dev/null); \
+    if [ "$state" = "on" ]; then \
+        tmux set @auto-focus-in off; \
+        tmux display-message "auto-focus-in: off"; \
+    else \
+        tmux set @auto-focus-in on; \
+        tmux display-message "auto-focus-in: on"; \
+    fi'
 # Clear stale hooks from previous config reloads (source-file doesn't remove hooks)
 set-hook -gu after-select-pane
 set-hook -gu client-focus-in
