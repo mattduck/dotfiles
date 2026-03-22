@@ -128,20 +128,13 @@ bind O run-shell '                                                    \
   fi                                                                  \
 '
 
-# Use namespace shell wrapper to enable pbcopy and pbpaste commands on OS X.
-set-option -g default-command "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace -l bash; else bash; fi"
-
-# Tmux 1.8 has copy-pipe command, which copies selected text to the tmux paste
-# buffer and pipes it to given command
-bind-key -T copy-mode-vi 'y' send -X copy-pipe \
-    "if command -v reattach-to-user-namespace >/dev/null; \
-    then reattach-to-user-namespace pbcopy; \
-    elif command -v xclip >/dev/null; \
-    then xclip -selection clipboard; fi"
-
-# Do the same for the default copy binding of Enter
+# Copy selection to system clipboard. Uses pbcopy directly rather than
+# reattach-to-user-namespace (no longer needed on modern macOS). This also
+# works in nested tmux sessions, unlike the default set-clipboard/OSC 52
+# approach which requires passthrough from the outer session.
+bind-key -T copy-mode-vi 'y' send -X copy-pipe "pbcopy"
 unbind -T copy-mode-vi Enter
-bind-key -T copy-mode-vi Enter send -X copy-pipe "if command -v reattach-to-user-namespace >/dev/null; then reattach-to-user-namespace pbcopy; elif command -v xclip >/dev/null; then xclip -selection clipboard; fi"
+bind-key -T copy-mode-vi Enter send -X copy-pipe "pbcopy"
 
 # Shortcut for running the fzf goto command
 bind-key -r "C-p" new-window -n "goto" 'source "$DOTFILES/tmux/tmux_env.dot.sh" && ,tm-goto'
