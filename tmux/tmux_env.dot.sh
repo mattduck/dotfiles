@@ -19,7 +19,7 @@ function ,tmux-toggle-titles() {
         echo "Pane borders off"
     else
         tmux set -g pane-border-status top
-        tmux set -g pane-border-format " #(echo #{pane_current_path} | sed s\|$HOME\|~\|) "
+        tmux set -g pane-border-format "#[reverse] #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path}) #[default]"
         echo "Pane borders on"
     fi
 }
