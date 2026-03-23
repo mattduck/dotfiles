@@ -32,13 +32,46 @@
     ]
   },
   "hooks": {
-    "Notification": [
+    "Stop": [
       {
         "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "/opt/homebrew/bin/terminal-notifier -message \"Waiting for input\" -title \"Claude Code\" -sender com.apple.Terminal"
+            "command": "$DOTFILES/tmux/tmux-claude-waiting.sh done"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$DOTFILES/tmux/tmux-claude-waiting.sh blocked"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$DOTFILES/tmux/tmux-claude-waiting.sh off"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$DOTFILES/tmux/tmux-claude-waiting.sh off"
           }
         ]
       }

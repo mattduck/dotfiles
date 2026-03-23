@@ -55,7 +55,7 @@ else
             for w in $(tmux list-windows -t "$inner" -F '#{window_id}'); do
                 cmd="$cmd \\; set -t '$w' window-status-current-style 'fg=colour6'"
                 cmd="$cmd \\; set -t '$w' window-status-style 'fg=colour8'"
-                cmd="$cmd \\; set-option -w -t '$w' pane-border-lines single"
+                cmd="$cmd \\; set-option -w -t '$w' pane-border-lines double"
                 cmd="$cmd \\; set-option -w -t '$w' pane-active-border-style 'fg=colour15'"
                 cmd="$cmd \\; set-option -w -t '$w' pane-border-style 'fg=colour7'"
             done

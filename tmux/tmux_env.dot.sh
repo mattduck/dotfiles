@@ -2,7 +2,7 @@ function ,tmux() {
     if [[ -z "$TMUX" ]]; then
         command tmux new-session \; \
             set pane-border-status top \; \
-            set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[reverse]#[fg=colour6],#[bg=colour15]#[fg=colour6]},#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,} #[default]"
+            set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[reverse]#[fg=colour6],#[bg=colour15]#[fg=colour6]},#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,}#{?#{==:#{@claude-waiting},blocked}, #[fg=colour5]#[reverse] ■ BLOCKED,#{?#{==:#{@claude-waiting},done}, #[noreverse]#{?pane_active, ,}#[fg=colour3]● IDLE,}} #[default]"
         return
     fi
     if [[ -n "$MD_TMUX_OUTER" ]]; then
@@ -38,9 +38,9 @@ function ,tmux--nested() {
     "$DOTFILES/tmux/tmux-toggle-nested.sh" "$outer_session"
     TMUX= tmux new-session -s "$inner_name" "MD_TMUX_OUTER='$outer_session' bash" \; \
         set-environment MD_TMUX_OUTER "$outer_session" \; \
-        set-option -w pane-border-lines single \; \
+        set-option -w pane-border-lines double \; \
         set-option -w pane-border-status top \; \
-        set-option -w pane-border-format "#{?pane_active,#[fg=colour15] #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #[default],}" \; \
+        set-option -w pane-border-format "#{?pane_active,#[fg=colour15],#[fg=colour7]} #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #{?#{==:#{@claude-waiting},blocked},#[fg=colour5]#[reverse] ■ BLOCKED ,#{?#{==:#{@claude-waiting},done},#[noreverse]#[fg=colour3]● IDLE ,}}#[default]" \; \
         set-option -w pane-active-border-style "fg=colour15" \; \
         set-option -w pane-border-style "fg=colour7" \; \
         set-option status off \; \
@@ -54,9 +54,9 @@ function ,tmux--nested() {
         set-option window-status-current-format " #I:#W#{?window_zoomed_flag,Z,} " \; \
         set-hook after-new-window \
             "set-option status on ; \
-             set-option -w pane-border-lines single ; \
+             set-option -w pane-border-lines double ; \
              set-option -w pane-border-status top ; \
-             set-option -w pane-border-format '#{?pane_active,#[fg=colour15] #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #[default],}' ; \
+             set-option -w pane-border-format '#{?pane_active,#[fg=colour15],#[fg=colour7]} #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #{?#{==:#{@claude-waiting},blocked},#[fg=colour5]#[reverse] ■ BLOCKED ,#{?#{==:#{@claude-waiting},done},#[noreverse]#[fg=colour3]● IDLE ,}}#[default]' ; \
              set-option -w pane-active-border-style fg=colour15 ; \
              set-option -w pane-border-style fg=colour7 ; \
              set-option window-status-format ' #I:#W#{?window_zoomed_flag,Z,} ' ; \
@@ -104,7 +104,7 @@ function ,tmux-toggle-titles() {
         echo "Pane borders off"
     else
         tmux set pane-border-status top
-        tmux set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[reverse]#[fg=colour6],#[bg=colour15]#[fg=colour6]},#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,} #[default]"
+        tmux set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[reverse]#[fg=colour6],#[bg=colour15]#[fg=colour6]},#[reverse]#[fg=colour15]},#{?#{==:#{pane_current_command},tmux},#[fg=colour6],#[fg=colour15]}} #{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,}#{?#{==:#{@claude-waiting},blocked}, #[fg=colour5]#[reverse] ■ BLOCKED,#{?#{==:#{@claude-waiting},done}, #[noreverse]#{?pane_active, ,}#[fg=colour3]● IDLE,}} #[default]"
         echo "Pane borders on"
     fi
 }
