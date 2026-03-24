@@ -25,24 +25,30 @@ export VIRTUAL_ENV_DISABLE_PROMPT=1
 # TODO clean this up. On newer macos seems it doesn't like you using pip with the system python
 # installation. Instead I've installed virtualenvwrapper via pipx on om machine, but you then need the python
 # var to match
-if [ ! -z "$(which virtualenv)" ]; then export VIRTUALENVWRAPPER_VIRTUALENV=$(which virtualenv); fi
-export VIRTUALENVWRAPPER_PYTHON="$HOME/.local/pipx/venvs/virtualenvwrapper/bin/python"
-
-export VIRTUALENVWRAPPER_HOOK_DIR="$DOTFILES/virtualenvwrapper_hooks"
-export WORKON_HOME=$HOME/.virtualenvs
-mkdir -p "$WORKON_HOME"
-
-# Sometimes the wrapper breaks if eg. python is upgraded, as the script tries to import
-# the virtualenvwrapper module. This is annoying and adds startup time for the shell.
-# The lazy version avoids python init work until it's actually called for the first time.
-#
-# NOTE: this is supposed to mean tab completion of environments doesn't work
-# until you've run it once.
-#
-# I could probably also fix the python mismatch issue by doing something different
-# with VIRTUALENVWRAPPER_PYTHON
-VENV_WRAPPER_SCRIPT=$(which virtualenvwrapper_lazy.sh)
-if [ ! -z "$VENV_WRAPPER_SCRIPT" ]; then source "$VENV_WRAPPER_SCRIPT"; fi
+# Virtualenvwrapper is loaded on first use to avoid ~400ms startup cost.
+# Any of the wrapper commands (workon, mkvirtualenv, etc.) will trigger the load.
+_virtualenvwrapper_setup() {
+    unset -f _virtualenvwrapper_setup workon mkvirtualenv mktmpenv rmvirtualenv \
+        lsvirtualenv showvirtualenv cpvirtualenv allvirtualenv \
+        add2virtualenv cdsitepackages cdvirtualenv lssitepackages \
+        toggleglobalsitepackages setvirtualenvproject mkproject cdproject wipeenv
+    if [ ! -z "$(which virtualenv)" ]; then export VIRTUALENVWRAPPER_VIRTUALENV=$(which virtualenv); fi
+    export VIRTUALENVWRAPPER_PYTHON="$HOME/.local/pipx/venvs/virtualenvwrapper/bin/python"
+    export VIRTUALENVWRAPPER_HOOK_DIR="$DOTFILES/virtualenvwrapper_hooks"
+    export WORKON_HOME=$HOME/.virtualenvs
+    mkdir -p "$WORKON_HOME"
+    local script
+    script=$(which virtualenvwrapper_lazy.sh)
+    if [ ! -z "$script" ]; then source "$script"; fi
+}
+# Create thin wrappers that load virtualenvwrapper on first use
+for _venvw_cmd in workon mkvirtualenv mktmpenv rmvirtualenv \
+    lsvirtualenv showvirtualenv cpvirtualenv allvirtualenv \
+    add2virtualenv cdsitepackages cdvirtualenv lssitepackages \
+    toggleglobalsitepackages setvirtualenvproject mkproject cdproject wipeenv; do
+    eval "${_venvw_cmd}() { _virtualenvwrapper_setup && ${_venvw_cmd} \"\$@\"; }"
+done
+unset _venvw_cmd
 
 # Virtualenv workflow:
 # - Use pyenv to install python versions, but don't use the provided shims.

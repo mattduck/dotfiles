@@ -6,7 +6,7 @@ export BASH_SILENCE_DEPRECATION_WARNING=1
 
 ,path --prepend "/opt/homebrew/bin"
 
-brew_prefix=$(brew --prefix)
+brew_prefix=/opt/homebrew
 
 # Use GNU coreutils - it's easier if programs have the same flags between
 # machines, same man pages etc.
@@ -21,9 +21,18 @@ if [ -d /usr/local/texlive/2023 ]; then
   ,path /usr/local/texlive/2023/bin/universal-darwin/
 fi
 
-# Bash completion lives in the brew directory
-if [[ $- == *i* ]]; then  # Skip if not interactive
-  if [ -f "$brew_prefix/etc/bash_completion" ]; then
+# Bash completion - use v2 (lazy-loading) if available, fall back to v1.
+# Set BASH_COMPLETION_COMPAT_DIR to empty to skip eager loading of
+# /opt/homebrew/etc/bash_completion.d/ (~33 files). Most of these tools also
+# ship completions in /opt/homebrew/share/bash-completion/completions/ which
+# are lazy-loaded on first tab. If tab completion is missing for a command,
+# check if it only has a file in etc/bash_completion.d/ and not in
+# share/bash-completion/completions/ — if so, symlink it into the latter.
+if [[ $- == *i* ]]; then
+  export BASH_COMPLETION_COMPAT_DIR=
+  if [ -f "$brew_prefix/etc/profile.d/bash_completion.sh" ]; then
+    . "$brew_prefix/etc/profile.d/bash_completion.sh"
+  elif [ -f "$brew_prefix/etc/bash_completion" ]; then
     . "$brew_prefix/etc/bash_completion"
   fi
 fi

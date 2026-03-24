@@ -2,16 +2,16 @@
 
 if [ $(command -v brew) ]; then
 
-    function fzf-prefix() {
-        echo "$(brew --prefix)/opt/fzf"
-    }
+    _fzf_prefix="/opt/homebrew/opt/fzf"
 
     # This is basically what happens in ~/.fzf.bash, which is provided by fzf.
-    ,path $(fzf-prefix)/bin
-    if [[ ! "$MANPATH" == *"$(fzf-prefix)/man"* && -d "$(fzf-prefix)/man" ]]; then
-        export MANPATH="$MANPATH:$(fzf-prefix)/man"
+    ,path "$_fzf_prefix/bin"
+    if [[ ! "$MANPATH" == *"$_fzf_prefix/man"* && -d "$_fzf_prefix/man" ]]; then
+        export MANPATH="$MANPATH:$_fzf_prefix/man"
     fi
-    source "$(fzf-prefix)/shell/completion.bash"
+    # NOTE: fzf's completion.bash eagerly wraps dozens of commands (~500ms).
+    # Skipped because fzf-tab-completion (below) handles tab completion instead.
+    # source "$_fzf_prefix/shell/completion.bash"
 fi
 
 # Empty completion trigger causes this to work on <TAB> rather than *<TAB>
@@ -20,13 +20,14 @@ export FZF_COMPLETION_TRIGGER="*"
 export FZF_COMPLETION_OPTS='--exact --height 20 --cycle -0 --border --color="16,border:8,bg+:-1" --multi'
 
 # [2021-05-16] fzf-tab-completion setup. This provides proper fzf completion for
-# all bash tab complete candidates.
-if [ -f "$DOTFILES/fzf-tab-completion/bash/fzf-bash-completion.sh" ]; then
-    source "$DOTFILES/fzf-tab-completion/bash/fzf-bash-completion.sh"
-    # Only bind keys in interactive shells to avoid warnings
-    if [[ $- == *i* ]]; then
+# all bash tab complete candidates. Deferred until first tab press.
+if [[ $- == *i* ]]; then
+    _fzf_tab_completion_lazy() {
+        source "$DOTFILES/fzf-tab-completion/bash/fzf-bash-completion.sh"
         bind -x '"\t": fzf_bash_completion'
-        # Rebind the default completion in case the fzf version doesn't work
         bind '"\C-k": complete'
-    fi
+        fzf_bash_completion
+    }
+    bind -x '"\t": _fzf_tab_completion_lazy'
+    bind '"\C-k": complete'
 fi

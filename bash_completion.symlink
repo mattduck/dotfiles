@@ -343,19 +343,24 @@ fi
 #
 # Uncomment and edit these lines to add your own alias completions.
 #
-if [ $(command -v kubectl) ]; then
-    source <(kubectl completion bash)
-fi
+# kubectl completions are provided lazily by bash-completion@2
 # If sshrc is installed, enable it to use the same completion as ssh.
 if [ $(command -v sshrc) ]; then
     complete -F _ssh sshrc
 fi
-# Setup autocompletion for git alias
-if [[ $(type -t __git_complete) == *function* ]]; then
-    __git_complete g __git_main
-fi
+# Setup autocompletion for git alias - deferred to avoid eagerly loading git completions (~200ms)
+_deferred_git_complete() {
+    # Load git completion on first use, then re-register
+    _comp_load git 2>/dev/null || __load_completion git 2>/dev/null
+    if [[ $(type -t __git_complete) == *function* ]]; then
+        __git_complete g __git_main
+    fi
+    complete -F _complete_alias g
+    # Re-trigger completion for this invocation
+    _complete_alias "$@"
+}
+complete -F _deferred_git_complete g
 complete -F _complete_alias k
-complete -F _complete_alias g
 complete -F _complete_alias dockerc
 complete -F _complete_alias ,pymk2
 complete -F _complete_alias ,pymk3

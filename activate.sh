@@ -116,6 +116,25 @@ export DOTFILES=$(dirname "$(,realpath "$THIS_FILE")")
 ,path "$DOTFILES/fzf-tab-completion/readline/bin"
 
 # Source all ".dot.sh" files in $DOTFILES
-for f in $(,dotfiles-ls); do
+#
+# Hardcoded for startup performance (~540ms saved vs find-based ,dotfiles-ls).
+# Numbered files are sourced first in order, then unnumbered .dot.sh files.
+# Update this list when adding/removing dotfiles.
+for f in \
+    "$DOTFILES/bash/aliases.dot.10.sh" \
+    "$DOTFILES/macos/macos.dot.10.sh" \
+    "$DOTFILES/bash/setup.dot.11.sh" \
+    "$DOTFILES/bash/colours.dot.15.sh" \
+    "$DOTFILES/bash/fzf.dot.16.sh" \
+    "$DOTFILES/bash/python.dot.17.sh" \
+    "$DOTFILES/bash/go.dot.18.sh" \
+    "$DOTFILES/bash/rust.dot.18.sh" \
+    "$DOTFILES/bash/prompt.dot.20.sh" \
+    "$DOTFILES/bash/zoxide.dot.30.sh" \
+    "$DOTFILES/bash/functions.dot.sh" \
+    "$DOTFILES/tmux/tmux_env.dot.sh" \
+    "$DOTFILES/git/git.dot.sh" \
+    "$DOTFILES/git/git-wt.dot.sh" \
+; do
     source "$f"
 done

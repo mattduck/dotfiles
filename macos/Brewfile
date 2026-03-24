@@ -7,7 +7,7 @@ tap 'homebrew/cask-fonts' || true
 
 # Tools
 brew 'bash'
-brew 'bash-completion'
+brew 'bash-completion@2'
 brew 'bat'
 brew 'bat-extras'
 brew 'cmake'  # For Emacs' vterm
