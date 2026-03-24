@@ -163,4 +163,4 @@ bind Enter run-shell '$DOTFILES/tmux/tmux-toggle-auto-focus.sh'
 set-hook -gu after-select-pane
 set-hook -gu client-focus-in
 set-hook -g client-focus-in 'run-shell -b "$DOTFILES/tmux/tmux-nested-focus.sh \"#{session_name}\" \"#{pane_id}\""'
-bind -n MouseDown1Pane select-pane -t= \; run-shell -b "$DOTFILES/tmux/tmux-nested-focus.sh '#{session_name}' '#{pane_id}'"
+bind -n MouseDown1Pane select-pane -t= \; run-shell -b "$DOTFILES/tmux/tmux-nested-focus.sh '#{session_name}'"
