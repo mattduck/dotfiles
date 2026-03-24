@@ -1,9 +1,12 @@
 #!/bin/sh
 # Toggle passthrough on the outer tmux session so keys reach the inner session.
 # Reads MD_TMUX_OUTER from tmux environment, or accepts outer session name as $1.
+# Optional $2 = pane ID to use for determining the active inner session (avoids
+# stale active-pane resolution in background run-shell contexts).
 # With no args and no MD_TMUX_OUTER, forwards C-a a to the inner session (for keybind use).
 
 outer="${1:-}"
+active_pane="${2:-}"
 
 if [ -z "$outer" ]; then
     outer=$(tmux show-environment MD_TMUX_OUTER 2>/dev/null | sed 's/^MD_TMUX_OUTER=//')
@@ -15,8 +18,8 @@ if [ -z "$outer" ] || echo "$outer" | grep -q '^-'; then
     exit 0
 fi
 
-# Find all inner sessions from the outer panes' @inner_session option
-inners=$(tmux list-panes -t "$outer" -F '#{@inner_session}' 2>/dev/null | grep .)
+# Find all inner sessions from the outer panes' @inner_session option (-s for all windows)
+inners=$(tmux list-panes -s -t "$outer" -F '#{@inner_session}' 2>/dev/null | grep .)
 
 state=$(tmux show -t "$outer" -qv @passthrough 2>/dev/null)
 
@@ -40,8 +43,13 @@ if [ "$state" = "on" ]; then
     done
     eval "tmux $cmd"
 else
-    # Active pane's inner session (single tmux call instead of display-message + list-clients)
-    active_inner=$(tmux display-message -t "$outer" -p '#{@inner_session}')
+    # Active pane's inner session — use explicit pane target if provided (background
+    # run-shell may not reflect the most recent select-pane)
+    if [ -n "$active_pane" ]; then
+        active_inner=$(tmux display-message -t "$active_pane" -p '#{@inner_session}')
+    else
+        active_inner=$(tmux display-message -t "$outer" -p '#{@inner_session}')
+    fi
     # Collect all window IDs up front
     # Build one batched tmux command for outer + all inner styling
     cmd="set -t '$outer' prefix None"
