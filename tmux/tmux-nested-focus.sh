@@ -42,16 +42,22 @@ fi
 tmux set -t "$session" -q @_last_focus_pane "$pane"
 _tlog "after dedup check + set last_focus_pane"
 
-nested=$(tmux display-message -t "$pane" -p '#{@nested}' 2>/dev/null)
-_tlog "queried nested=$nested"
+# Batch pane-level queries: @nested and pane_current_command in one call
+pane_info=$(tmux display-message -t "$pane" -p '#{@nested}|#{pane_current_command}' 2>/dev/null)
+nested="${pane_info%%|*}"
+pane_cmd="${pane_info#*|}"
+_tlog "pane_info nested=$nested cmd=$pane_cmd"
+
+# Batch session-level queries: @auto-focus-in and @passthrough in one call
+sess_info=$(tmux display-message -t "$session" -p '#{@auto-focus-in}|#{@passthrough}' 2>/dev/null)
+auto="${sess_info%%|*}"
+state="${sess_info#*|}"
+_tlog "sess_info auto=$auto passthrough=$state"
 
 if [ "$nested" = "on" ]; then
-    cmd=$(tmux display-message -t "$pane" -p '#{pane_current_command}')
-    _tlog "pane_current_command=$cmd"
-    if [ "$cmd" != "tmux" ]; then
+    if [ "$pane_cmd" != "tmux" ]; then
         # Nested tmux has exited — clean up marker and restore passthrough
         tmux set-option -t "$pane" -p -u @nested
-        state=$(tmux show -t "$session" -qv @passthrough 2>/dev/null)
         if [ "$state" = "on" ]; then
             _tlog "calling toggle (stale nested cleanup)"
             "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session"
@@ -60,12 +66,7 @@ if [ "$nested" = "on" ]; then
         _tlog "exit: stale nested cleanup"
         exit 0
     fi
-    # Auto focus-in when @auto-focus-in is enabled (toggled via prefix-Enter)
-    auto=$(tmux show -t "$session" -qv @auto-focus-in 2>/dev/null)
-    _tlog "auto-focus-in=$auto"
     if [ "$auto" = "on" ]; then
-        state=$(tmux show -t "$session" -qv @passthrough 2>/dev/null)
-        _tlog "passthrough=$state"
         if [ "$state" != "on" ]; then
             _tlog "calling toggle (auto-focus enter)"
             "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session" "$pane"
@@ -80,8 +81,6 @@ if [ "$nested" = "on" ]; then
     else
         # Auto-focus off: exit passthrough when clicking away from the
         # pane where it was manually enabled.
-        state=$(tmux show -t "$session" -qv @passthrough 2>/dev/null)
-        _tlog "auto-focus off, passthrough=$state"
         if [ "$state" = "on" ]; then
             _tlog "calling toggle (manual exit)"
             "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session"
@@ -89,8 +88,6 @@ if [ "$nested" = "on" ]; then
         fi
     fi
 else
-    state=$(tmux show -t "$session" -qv @passthrough 2>/dev/null)
-    _tlog "not nested, passthrough=$state"
     if [ "$state" = "on" ]; then
         _tlog "calling toggle (focus non-nested pane)"
         "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session"
