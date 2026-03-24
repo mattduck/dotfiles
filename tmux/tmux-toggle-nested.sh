@@ -7,10 +7,11 @@
 # without toggling passthrough on/off. Used when moving between nested panes.
 # With no args and no MD_TMUX_OUTER, forwards C-a a to the inner session (for keybind use).
 
-_log=/tmp/tmux-nested-debug.log
-_t0=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))')
-_tlog() { _now=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))'); echo "    toggle +$((_now - _t0))ms  $1" >> "$_log"; }
-echo "  toggle start $(gdate +%H:%M:%S.%3N 2>/dev/null || date +%H:%M:%S) args=$*" >> "$_log"
+#_log=/tmp/tmux-nested-debug.log
+#_t0=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))')
+#_tlog() { _now=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))'); echo "    toggle +$((_now - _t0))ms  $1" >> "$_log"; }
+#echo "  toggle start $(gdate +%H:%M:%S.%3N 2>/dev/null || date +%H:%M:%S) args=$*" >> "$_log"
+_tlog() { :; }
 
 outer="${1:-}"
 active_pane="${2:-}"
@@ -146,7 +147,7 @@ else
     for inner in $inners; do
         inner_wins=$(windows_for "$inner")
         [ -z "$inner_wins" ] && continue
-        _tlog "  passthrough inner=$inner (active=$( [ "$inner" = "$active_inner" ] && echo yes || echo no))"
+        _tlog "  passthrough inner=$inner"
         cmd="$cmd \\; set -t '$inner' status-style 'bg=colour0,fg=colour8'"
         if [ "$inner" = "$active_inner" ]; then
             for w in $inner_wins; do

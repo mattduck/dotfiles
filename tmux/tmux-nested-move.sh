@@ -4,10 +4,11 @@
 # - In outer session moving into a @nested pane: toggle passthrough on
 # Usage: tmux-nested-move.sh <direction> (L/D/U/R)
 
-_log=/tmp/tmux-nested-debug.log
-_t0=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))')
-_tlog() { _now=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))'); echo "  move +$((_now - _t0))ms  $1" >> "$_log"; }
-echo "--- move $(gdate +%H:%M:%S.%3N 2>/dev/null || date +%H:%M:%S) direction=$1 ---" >> "$_log"
+#_log=/tmp/tmux-nested-debug.log
+#_t0=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))')
+#_tlog() { _now=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))'); echo "  move +$((_now - _t0))ms  $1" >> "$_log"; }
+#echo "--- move $(gdate +%H:%M:%S.%3N 2>/dev/null || date +%H:%M:%S) direction=$1 ---" >> "$_log"
+_tlog() { :; }
 
 direction="$1"
 

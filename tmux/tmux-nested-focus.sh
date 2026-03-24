@@ -6,10 +6,11 @@
 #   client-focus-in hook — passes session name ($1) and pane_id ($2) directly,
 #     since #{pane_id} is correct in hook context.
 
-_log=/tmp/tmux-nested-debug.log
-_t0=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))')
-_tlog() { _now=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))'); echo "  +$((_now - _t0))ms  $1" >> "$_log"; }
-echo "--- focus $(gdate +%H:%M:%S.%3N 2>/dev/null || date +%H:%M:%S) session=$1 pane=${2:-<mouse>} ---" >> "$_log"
+#_log=/tmp/tmux-nested-debug.log
+#_t0=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))')
+#_tlog() { _now=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))'); echo "  +$((_now - _t0))ms  $1" >> "$_log"; }
+#echo "--- focus $(gdate +%H:%M:%S.%3N 2>/dev/null || date +%H:%M:%S) session=$1 pane=${2:-<mouse>} ---" >> "$_log"
+_tlog() { :; }
 
 session="$1"
 pane="${2:-}"
