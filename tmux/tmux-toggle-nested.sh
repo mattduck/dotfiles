@@ -32,6 +32,7 @@ if [ "$state" = "on" ]; then
     cmd="$cmd \\; set -t '$outer' -u pane-active-border-style"
     cmd="$cmd \\; set -t '$outer' -u pane-border-style"
     for inner in $inners; do
+        tmux has-session -t "$inner" 2>/dev/null || continue
         cmd="$cmd \\; set -t '$inner' status-style 'bg=colour0,fg=colour8'"
         for w in $(tmux list-windows -t "$inner" -F '#{window_id}'); do
             cmd="$cmd \\; set -t '$w' window-status-current-style 'dim,fg=colour6'"
@@ -58,6 +59,7 @@ else
     cmd="$cmd \\; set -t '$outer' pane-active-border-style 'fg=colour6'"
     cmd="$cmd \\; set -t '$outer' pane-border-style 'dim,fg=colour8'"
     for inner in $inners; do
+        tmux has-session -t "$inner" 2>/dev/null || continue
         cmd="$cmd \\; set -t '$inner' status-style 'bg=colour0,fg=colour8'"
         if [ "$inner" = "$active_inner" ]; then
             for w in $(tmux list-windows -t "$inner" -F '#{window_id}'); do
