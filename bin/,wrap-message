@@ -33,22 +33,45 @@ def wrap_line(line, width=72):
     return wrapped
 
 
+def bullet_indent(line):
+    """Return the indent level of a bullet line, or -1 if not a bullet."""
+    if line.lstrip(" ").startswith("- "):
+        return len(line) - len(line.lstrip(" "))
+    return -1
+
+
 def wrap_text(text, width=72):
     lines = text.split("\n")
     result = []
     in_code_block = False
+    in_bullet_group = False
 
     for line in lines:
         if line.strip().startswith("```"):
             in_code_block = not in_code_block
             result.append(line)
+            in_bullet_group = False
             continue
 
         if in_code_block:
             result.append(line)
+            in_bullet_group = False
             continue
 
+        cur_indent = bullet_indent(line)
+        # Insert blank line before a new top-level bullet if we were
+        # already inside a bullet group
+        if cur_indent == 0 and in_bullet_group:
+            result.append("")
+
         result.append(wrap_line(line, width))
+
+        if line.strip() == "":
+            in_bullet_group = False
+        elif cur_indent >= 0:
+            in_bullet_group = True
+        else:
+            in_bullet_group = False
 
     return "\n".join(result)
 
