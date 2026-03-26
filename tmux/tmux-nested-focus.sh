@@ -6,11 +6,46 @@
 #   client-focus-in hook — passes session name ($1) and pane_id ($2) directly,
 #     since #{pane_id} is correct in hook context.
 
-#_log=/tmp/tmux-nested-debug.log
-#_t0=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))')
-#_tlog() { _now=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))'); echo "  +$((_now - _t0))ms  $1" >> "$_log"; }
-#echo "--- focus $(gdate +%H:%M:%S.%3N 2>/dev/null || date +%H:%M:%S) session=$1 pane=${2:-<mouse>} ---" >> "$_log"
-_tlog() { :; }
+_log=/tmp/tmux-nested-debug.log
+_t0=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))')
+_tlog() { _now=$(gdate +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))'); echo "  +$((_now - _t0))ms  $1" >> "$_log"; }
+echo "--- focus $(gdate +%H:%M:%S.%3N 2>/dev/null || date +%H:%M:%S) session=$1 pane=${2:-<mouse>} ---" >> "$_log"
+
+# Inline passthrough enter: metadata + outer active border colour
+_enter_passthrough() {
+    local session="$1" inner="$2"
+    _tlog "inline enter passthrough inner=$inner"
+    eval "tmux set -t '$session' prefix None \
+        \\; set -t '$session' @passthrough on \
+        \\; set -t '$session' @_active_inner '$inner' \
+        \\; set -t '$session' pane-active-border-style 'fg=colour6'"
+    _tlog "enter done"
+}
+
+# Inline passthrough exit: restore outer defaults
+_exit_passthrough() {
+    local session="$1"
+    _tlog "inline exit passthrough"
+    eval "tmux set -t '$session' prefix C-a \
+        \\; set -t '$session' @passthrough off \
+        \\; set -t '$session' -u @_active_inner \
+        \\; set -t '$session' -u status-style \
+        \\; set -t '$session' -u pane-active-border-style \
+        \\; set -t '$session' -u pane-border-style"
+    _tlog "exit done"
+}
+
+# Inline restyle: just update which inner is active
+_restyle() {
+    local session="$1" pane="$2"
+    local new_inner
+    new_inner=$(tmux display-message -t "$pane" -p '#{@inner_session}')
+    _tlog "inline restyle new=$new_inner"
+    if [ -n "$new_inner" ]; then
+        tmux set -t "$session" @_active_inner "$new_inner"
+    fi
+    _tlog "restyle done"
+}
 
 session="$1"
 pane="${2:-}"
@@ -60,39 +95,34 @@ if [ "$nested" = "on" ]; then
         # Nested tmux has exited — clean up marker and restore passthrough
         tmux set-option -t "$pane" -p -u @nested
         if [ "$state" = "on" ]; then
-            _tlog "calling toggle (stale nested cleanup)"
-            "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session"
-            _tlog "toggle returned"
+            _tlog "exit passthrough (stale nested cleanup)"
+            _exit_passthrough "$session"
         fi
         _tlog "exit: stale nested cleanup"
         exit 0
     fi
     if [ "$auto" = "on" ]; then
         if [ "$state" != "on" ]; then
-            _tlog "calling toggle (auto-focus enter)"
-            "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session" "$pane"
-            _tlog "toggle returned"
+            inner=$(tmux display-message -t "$pane" -p '#{@inner_session}' 2>/dev/null)
+            _tlog "enter passthrough (auto-focus)"
+            _enter_passthrough "$session" "$inner"
         else
             # Passthrough already on but we switched to a different nested pane.
-            # Use restyle mode to only update the old/new active inner styling.
-            _tlog "calling restyle (auto-focus switch)"
-            "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session" "$pane" restyle
-            _tlog "restyle returned"
+            _tlog "restyle (auto-focus switch)"
+            _restyle "$session" "$pane"
         fi
     else
         # Auto-focus off: exit passthrough when clicking away from the
         # pane where it was manually enabled.
         if [ "$state" = "on" ]; then
-            _tlog "calling toggle (manual exit)"
-            "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session"
-            _tlog "toggle returned"
+            _tlog "exit passthrough (manual)"
+            _exit_passthrough "$session"
         fi
     fi
 else
     if [ "$state" = "on" ]; then
-        _tlog "calling toggle (focus non-nested pane)"
-        "$DOTFILES/tmux/tmux-toggle-nested.sh" "$session"
-        _tlog "toggle returned"
+        _tlog "exit passthrough (focus non-nested pane)"
+        _exit_passthrough "$session"
     fi
 fi
 _tlog "done"
