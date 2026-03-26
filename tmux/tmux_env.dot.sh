@@ -12,6 +12,74 @@ function ,tmux() {
     ,tmux--nested
 }
 
+function ,tmux-attach() {
+    local show_all=0
+    if [[ "$1" == "-a" ]]; then
+        show_all=1
+        shift
+    fi
+
+    if [[ -n "$MD_TMUX_OUTER" ]]; then
+        echo "Already in a nested tmux session (outer=$MD_TMUX_OUTER)"
+        return 1
+    fi
+
+    local in_tmux=0
+    [[ -n "$TMUX" ]] && in_tmux=1
+
+    local filter_prefix=""
+    [[ $in_tmux -eq 1 ]] && filter_prefix="nested-"
+
+    local sessions
+    if [[ $show_all -eq 1 ]]; then
+        sessions=$(tmux list-sessions -F '#{session_name}' 2>/dev/null | \
+            { if [[ -n "$filter_prefix" ]]; then grep "^${filter_prefix}"; else cat; fi })
+    else
+        sessions=$(tmux list-sessions -F '#{session_name}|#{session_attached}' 2>/dev/null | \
+            grep '|0$' | cut -d'|' -f1 | \
+            { if [[ -n "$filter_prefix" ]]; then grep "^${filter_prefix}"; else cat; fi })
+    fi
+
+    if [[ -z "$sessions" ]]; then
+        echo "No matching sessions found"
+        return 1
+    fi
+
+    local count selected
+    count=$(echo "$sessions" | wc -l | tr -d ' ')
+
+    if [[ $count -eq 1 ]]; then
+        selected="$sessions"
+    else
+        selected=$(echo "$sessions" | fzf \
+            --preview 's={}; tmux list-sessions 2>/dev/null | grep -F "$s:"; echo; tmux list-panes -t "$s" -s -F "  #{window_index}:#{pane_index} #{pane_title} [#{pane_current_command}] #{pane_current_path}" 2>/dev/null' \
+            --preview-window=top:60% \
+            --prompt="attach session> ")
+    fi
+
+    [[ -z "$selected" ]] && return 0
+
+    if [[ $in_tmux -eq 1 ]]; then
+        local outer_session
+        outer_session=$(tmux display-message -p '#S')
+        tmux set-option -p @nested on
+        tmux set-option -p @inner_session "$selected"
+        "$DOTFILES/tmux/tmux-toggle-nested.sh" "$outer_session"
+        TMUX= tmux attach -t "$selected"
+
+        # Inner tmux has exited/detached — clean up
+        tmux set-option -p -u @inner_session
+        tmux set-option -p -u @nested
+        local state
+        state=$(tmux show -t "$outer_session" -qv @passthrough 2>/dev/null)
+        if [ "$state" = "on" ]; then
+            "$DOTFILES/tmux/tmux-toggle-nested.sh" "$outer_session"
+        fi
+    else
+        tmux attach -t "$selected"
+    fi
+}
+
 # If this shell is running within tmux, add some extra utilities
 if [[ -z $TMUX ]]; then return; fi
 
