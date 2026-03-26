@@ -108,9 +108,9 @@ function ,tmux--nested() {
         set-environment MD_TMUX_OUTER "$outer_session" \; \
         set-option -w pane-border-lines double \; \
         set-option -w pane-border-status top \; \
-        set-option -w pane-border-format "#{?pane_active,#[fg=colour15],#[fg=colour7]} #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #{?#{==:#{@claude-waiting},blocked},#[fg=colour5]#[reverse] ■ BLOCKED ,#{?#{==:#{@claude-waiting},done},#[noreverse]#[fg=colour3]● IDLE ,}}#[default]" \; \
-        set-option -w pane-active-border-style "fg=colour15" \; \
-        set-option -w pane-border-style "fg=colour7" \; \
+        set-option -w pane-border-format "#{?pane_active,#[fg=colour15],#[nodim]#[fg=colour7]} #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #{?#{==:#{@claude-waiting},blocked},#[fg=colour5]#[reverse] ■ BLOCKED ,#{?#{==:#{@claude-waiting},done},#[noreverse]#[fg=colour3]● IDLE ,}}#[default]" \; \
+        set-option -w pane-active-border-style "fg=colour7" \; \
+        set-option -w pane-border-style "fg=colour7,dim" \; \
         set-option status off \; \
         set-option status-position bottom \; \
         set-option status-justify left \; \
@@ -124,9 +124,9 @@ function ,tmux--nested() {
             "set-option status on ; \
              set-option -w pane-border-lines double ; \
              set-option -w pane-border-status top ; \
-             set-option -w pane-border-format '#{?pane_active,#[fg=colour15],#[fg=colour7]} #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #{?#{==:#{@claude-waiting},blocked},#[fg=colour5]#[reverse] ■ BLOCKED ,#{?#{==:#{@claude-waiting},done},#[noreverse]#[fg=colour3]● IDLE ,}}#[default]' ; \
-             set-option -w pane-active-border-style fg=colour15 ; \
-             set-option -w pane-border-style fg=colour7 ; \
+             set-option -w pane-border-format '#{?pane_active,#[fg=colour15],#[nodim]#[fg=colour7]} #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #{?#{==:#{@claude-waiting},blocked},#[fg=colour5]#[reverse] ■ BLOCKED ,#{?#{==:#{@claude-waiting},done},#[noreverse]#[fg=colour3]● IDLE ,}}#[default]' ; \
+             set-option -w pane-active-border-style 'fg=colour7' ; \
+             set-option -w pane-border-style 'fg=colour7,dim' ; \
              set-option window-status-format ' #I:#W#{?window_zoomed_flag,Z,} ' ; \
              set-option window-status-current-format ' #I:#W#{?window_zoomed_flag,Z,} ' ; \
              set-option window-status-current-style 'fg=colour6' ; \
