@@ -66,6 +66,7 @@ else
     eval "tmux set -t '$outer' prefix None \
         \\; set -t '$outer' @passthrough on \
         \\; set -t '$outer' @_active_inner '$active_inner' \
-        \\; set -t '$outer' pane-active-border-style 'fg=colour6'"
+        \\; set -t '$outer' pane-active-border-style 'fg=colour6' \
+        \\; set -t '$outer' pane-border-style 'fg=colour8,dim'"
     _tlog "eval done"
 fi
