@@ -54,11 +54,18 @@ _tlog "state=$state active_inner=$active_inner"
 
 if [ "$state" = "on" ]; then
     _tlog "exit passthrough"
+    auto=$(tmux show -t "$outer" -qv @auto-focus-in 2>/dev/null)
     [ -n "$active_inner" ] && tmux set -t "$active_inner" -u @outer_passthrough 2>/dev/null &
-    eval "tmux set -t '$outer' prefix C-a \
-        \\; set -t '$outer' @passthrough off \
-        \\; set -t '$outer' -u @_active_inner \
-        \\; set -t '$outer' -u pane-border-style"
+    if [ "$auto" = "on" ]; then
+        eval "tmux set -t '$outer' prefix C-a \
+            \\; set -t '$outer' @passthrough off \
+            \\; set -t '$outer' -u @_active_inner"
+    else
+        eval "tmux set -t '$outer' prefix C-a \
+            \\; set -t '$outer' @passthrough off \
+            \\; set -t '$outer' -u @_active_inner \
+            \\; set -t '$outer' -u pane-border-style"
+    fi
     _tlog "eval done"
 else
     _tlog "enter passthrough"

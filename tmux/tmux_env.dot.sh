@@ -103,9 +103,15 @@ function ,tmux--nested() {
     inner_name="nested-${outer_session}-$(tmux display-message -p '#{pane_id}' | tr '%' '_')"
     tmux set-option -p @nested on
     tmux set-option -p @inner_session "$inner_name"
+    local auto
+    auto=$(tmux show -t "$outer_session" -qv @auto-focus-in 2>/dev/null)
+    if [ "$auto" != "on" ]; then
+        tmux set -t "$outer_session" @auto-focus-in on
+    fi
     "$DOTFILES/tmux/tmux-toggle-nested.sh" "$outer_session"
     TMUX= tmux new-session -s "$inner_name" "MD_TMUX_OUTER='$outer_session' bash" \; \
         set-environment MD_TMUX_OUTER "$outer_session" \; \
+        set @outer_passthrough on \; \
         set-option -w pane-border-lines double \; \
         set-option -w pane-border-status top \; \
         set-option -w pane-border-format "#[nodim]#[align=left]#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[fg=colour0]#[bg=colour15],#[fg=colour7]},#[fg=colour7]} #($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #{?#{==:#{@claude-waiting},blocked},#[fg=colour5]#[reverse] ■ BLOCKED ,#{?#{==:#{@claude-waiting},done},#[noreverse]#[fg=colour3]● IDLE ,}}#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[bg=default]#[fg=colour15]════════════════════,},#{?#{==:#{@outer_passthrough},on},#[fg=colour7],#[dim]#[fg=colour7]}══════════}#[default]" \; \

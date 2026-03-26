@@ -10,8 +10,30 @@ if [ -z "$outer" ]; then
 fi
 
 if [ -z "$outer" ] || echo "$outer" | grep -q '^-'; then
-    # We're in the outer session — forward to inner session
-    tmux send-keys C-a Enter
+    # We're in the outer session
+    outer=$(tmux display-message -p '#S')
+    auto=$(tmux show -t "$outer" -qv @auto-focus-in 2>/dev/null)
+    if [ "$auto" = "on" ]; then
+        # Turn off auto-focus from outer session
+        tmux set -t "$outer" @auto-focus-in off
+        state=$(tmux show -t "$outer" -qv @passthrough 2>/dev/null)
+        if [ "$state" = "on" ]; then
+            "$DOTFILES/tmux/tmux-toggle-nested.sh" "$outer"
+        else
+            tmux set -t "$outer" -u pane-border-style
+        fi
+    else
+        # Turn on auto-focus from outer session
+        tmux set -t "$outer" @auto-focus-in on
+        tmux set -t "$outer" pane-border-style 'fg=colour8,dim'
+        # If current pane is nested, enter passthrough too
+        pane_info=$(tmux display-message -p '#{@nested}|#{pane_current_command}')
+        nested="${pane_info%%|*}"
+        cmd="${pane_info#*|}"
+        if [ "$nested" = "on" ] && [ "$cmd" = "tmux" ]; then
+            "$DOTFILES/tmux/tmux-toggle-nested.sh" "$outer"
+        fi
+    fi
     exit 0
 fi
 

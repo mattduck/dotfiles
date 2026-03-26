@@ -26,14 +26,22 @@ _enter_passthrough() {
 # Inline passthrough exit: restore outer defaults
 _exit_passthrough() {
     local session="$1"
-    local old_inner
-    old_inner=$(tmux show -t "$session" -qv @_active_inner 2>/dev/null)
-    _tlog "inline exit passthrough old_inner=$old_inner"
+    local _info old_inner auto
+    _info=$(tmux display-message -t "$session" -p '#{@_active_inner}|#{@auto-focus-in}' 2>/dev/null)
+    old_inner="${_info%%|*}"
+    auto="${_info#*|}"
+    _tlog "inline exit passthrough old_inner=$old_inner auto=$auto"
     [ -n "$old_inner" ] && tmux set -t "$old_inner" -u @outer_passthrough 2>/dev/null &
-    eval "tmux set -t '$session' prefix C-a \
-        \\; set -t '$session' @passthrough off \
-        \\; set -t '$session' -u @_active_inner \
-        \\; set -t '$session' -u pane-border-style"
+    if [ "$auto" = "on" ]; then
+        eval "tmux set -t '$session' prefix C-a \
+            \\; set -t '$session' @passthrough off \
+            \\; set -t '$session' -u @_active_inner"
+    else
+        eval "tmux set -t '$session' prefix C-a \
+            \\; set -t '$session' @passthrough off \
+            \\; set -t '$session' -u @_active_inner \
+            \\; set -t '$session' -u pane-border-style"
+    fi
     _tlog "exit done"
 }
 
