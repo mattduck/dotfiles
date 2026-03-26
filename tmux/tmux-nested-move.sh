@@ -15,22 +15,24 @@ direction="$1"
 _enter_passthrough() {
     local session="$1" inner="$2"
     _tlog "inline enter passthrough inner=$inner"
+    [ -n "$inner" ] && tmux set -t "$inner" @outer_passthrough on 2>/dev/null &
     eval "tmux set -t '$session' prefix None \
         \\; set -t '$session' @passthrough on \
         \\; set -t '$session' @_active_inner '$inner' \
-        \\; set -t '$session' pane-active-border-style 'fg=colour6'"
+        \\; set -t '$session' pane-border-style 'fg=colour8,dim'"
     _tlog "enter done"
 }
 
 # Inline passthrough exit: restore outer defaults
 _exit_passthrough() {
     local session="$1"
-    _tlog "inline exit passthrough"
+    local old_inner
+    old_inner=$(tmux show -t "$session" -qv @_active_inner 2>/dev/null)
+    _tlog "inline exit passthrough old_inner=$old_inner"
+    [ -n "$old_inner" ] && tmux set -t "$old_inner" -u @outer_passthrough 2>/dev/null &
     eval "tmux set -t '$session' prefix C-a \
         \\; set -t '$session' @passthrough off \
         \\; set -t '$session' -u @_active_inner \
-        \\; set -t '$session' -u status-style \
-        \\; set -t '$session' -u pane-active-border-style \
         \\; set -t '$session' -u pane-border-style"
     _tlog "exit done"
 }
@@ -38,9 +40,12 @@ _exit_passthrough() {
 # Inline restyle: just update which inner is active
 _restyle() {
     local session="$1" new_pane="$2"
-    local new_inner
+    local old_inner new_inner
+    old_inner=$(tmux show -t "$session" -qv @_active_inner 2>/dev/null)
     new_inner=$(tmux display-message -t "$new_pane" -p '#{@inner_session}')
-    _tlog "inline restyle new=$new_inner"
+    _tlog "inline restyle old=$old_inner new=$new_inner"
+    [ -n "$old_inner" ] && [ "$old_inner" != "$new_inner" ] && tmux set -t "$old_inner" -u @outer_passthrough 2>/dev/null &
+    [ -n "$new_inner" ] && tmux set -t "$new_inner" @outer_passthrough on 2>/dev/null &
     if [ -n "$new_inner" ]; then
         tmux set -t "$session" @_active_inner "$new_inner"
     fi
