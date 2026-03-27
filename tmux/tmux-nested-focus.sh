@@ -32,16 +32,10 @@ _exit_passthrough() {
     auto="${_info#*|}"
     _tlog "inline exit passthrough old_inner=$old_inner auto=$auto"
     [ -n "$old_inner" ] && tmux set -t "$old_inner" -u @outer_passthrough 2>/dev/null &
-    if [ "$auto" = "on" ]; then
-        eval "tmux set -t '$session' prefix C-a \
-            \\; set -t '$session' @passthrough off \
-            \\; set -t '$session' -u @_active_inner"
-    else
-        eval "tmux set -t '$session' prefix C-a \
-            \\; set -t '$session' @passthrough off \
-            \\; set -t '$session' -u @_active_inner \
-            \\; set -t '$session' -u pane-border-style"
-    fi
+    eval "tmux set -t '$session' prefix C-a \
+        \\; set -t '$session' @passthrough off \
+        \\; set -t '$session' -u @_active_inner \
+        \\; set -t '$session' -u pane-border-style"
     _tlog "exit done"
 }
 
