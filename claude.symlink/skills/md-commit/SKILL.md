@@ -29,8 +29,13 @@ the existing conversation. Follow the conventions and template below:
 <keyword>: <optional ticket> <short summary>
 
 Changes:
-- Bullet points describing what changed in the code.
-- Be literal and precise.
+- Summarise what changed — don't reproduce the diff.
+- Aim for 1–3 bullets. More than 3 is usually too granular
+  unless it's a genuinely large change.
+- Don't list every function rename, every file touched, or
+  every small edit. Group related changes into one bullet.
+- Name specific functions/files only when that's the point
+  of the change (e.g. "rename fetchUser to getUser").
 
 Context:
 - Why we're making the change: the goal and any key takeaways from our chat.
