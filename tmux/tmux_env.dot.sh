@@ -118,14 +118,14 @@ function ,tmux--nested() {
         set-option -w pane-active-border-style "fg=colour7,dim" \; \
         set-option -w pane-border-style "fg=colour7,dim" \; \
         set-option status off \; \
-        set-option status-position bottom \; \
+        set-option status-position top \; \
         set-option status-justify left \; \
         set-option status-style "bg=colour0,fg=colour8" \; \
-        set-option status-left "#[fg=colour8] #S " \; \
-        set-option window-status-current-style "fg=colour6" \; \
+        set-option status-left "" \; \
+        set-option window-status-current-style "fg=colour6,bold" \; \
         set-option window-status-style "fg=colour8" \; \
-        set-option window-status-format " #I:#W#{?window_zoomed_flag,Z,} " \; \
-        set-option window-status-current-format " #I:#W#{?window_zoomed_flag,Z,} " \; \
+        set-option window-status-format " #I " \; \
+        set-option window-status-current-format " #I*" \; \
         set-hook after-new-window \
             "set-option status on ; \
              set-option -w pane-border-lines double ; \
@@ -133,9 +133,9 @@ function ,tmux--nested() {
              set-option -w pane-border-format '#[nodim]#[align=left]#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[fg=colour0]#[bg=colour15],#[fg=colour7]},#[fg=colour7]} #{?pane_active,#{?#{==:#{@outer_passthrough},on},> ,},}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #{?#{==:#{@claude-waiting},blocked},#[fg=colour1]#[bg=colour11] ■ BLOCKED                                                                        #[default],#{?#{==:#{@claude-waiting},done},#[noreverse]#[fg=colour3]#[bg=default] ● ,}}#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[bg=default]#[fg=colour15]════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════,},#{?#{==:#{@outer_passthrough},on},#[fg=colour7],#[dim]#[fg=colour7]}══════════}#[default]' ; \
              set-option -w pane-active-border-style 'fg=colour7,dim' ; \
              set-option -w pane-border-style 'fg=colour7,dim' ; \
-             set-option window-status-format ' #I:#W#{?window_zoomed_flag,Z,} ' ; \
-             set-option window-status-current-format ' #I:#W#{?window_zoomed_flag,Z,} ' ; \
-             set-option window-status-current-style 'fg=colour6' ; \
+             set-option window-status-format ' #I ' ; \
+             set-option window-status-current-format ' #I*' ; \
+             set-option window-status-current-style 'fg=colour6,bold' ; \
              set-option window-status-style 'fg=colour8'" \; \
         set-hook window-unlinked \
             "if-shell '[ #{session_windows} -le 1 ]' 'set-option status off'"
