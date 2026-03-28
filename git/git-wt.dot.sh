@@ -8,8 +8,8 @@
 #   ,gwt ls           - list all worktrees
 #
 # <ref> can be a number (2, 3), ordinal (second, third), or name.
-# Branches are named wt/<ordinal> (numbered) or wt/<name> (named).
-# Worktree directories live in ~/f/worktrees/<repo>.<N|name>.
+# Branches are named wt/<ordinal> (numbered) or <name> (named).
+# Worktree directories live in ~/f/worktrees/<repo>.<letter|name>.
 
 _GWT_WORKTREE_DIR="$HOME/f/worktrees"
 _GWT_ORDINALS=(
@@ -40,6 +40,19 @@ _gwt_num_to_branch() {
         return 1
     fi
     echo "wt/${_GWT_ORDINALS[$n]}"
+}
+
+_gwt_num_to_letter() {
+    local n="$1"
+    if (( n < 1 || n > 20 )); then
+        echo "Letter out of range (1-20): $n" >&2
+        return 1
+    fi
+    printf '%b' "\\x$(printf '%02x' $((96 + n)))"
+}
+
+_gwt_sanitize_dir() {
+    echo "${1//\//-}"
 }
 
 _gwt_main_worktree() {
@@ -124,14 +137,19 @@ function ,gwt() {
 
     # Create next numbered worktree and cd into it
     _gwt_add() {
-        local num branch dir
+        local num letter branch dir
         num=2
-        while [[ -d "$_GWT_WORKTREE_DIR/$repo_name.$num" ]]; do
+        while true; do
+            letter="$(_gwt_num_to_letter "$num")" || return 1
+            branch="$(_gwt_num_to_branch "$num")" || return 1
+            dir="$_GWT_WORKTREE_DIR/$repo_name.$letter"
+            # Skip if directory exists (new or old naming) or branch is already checked out
+            if [[ ! -d "$dir" && ! -d "$_GWT_WORKTREE_DIR/$repo_name.$num" ]] \
+                && [[ -z "$(_gwt_find_by_branch "$branch")" ]]; then
+                break
+            fi
             ((num++))
         done
-
-        branch="$(_gwt_num_to_branch "$num")" || return 1
-        dir="$_GWT_WORKTREE_DIR/$repo_name.$num"
 
         mkdir -p "$_GWT_WORKTREE_DIR"
         if git show-ref --verify --quiet "refs/heads/$branch"; then
@@ -156,50 +174,55 @@ function ,gwt() {
         # Try as number or ordinal
         local num
         if num="$(_gwt_ordinal_to_num "$arg")"; then
-            local dir="$_GWT_WORKTREE_DIR/$repo_name.$num"
-            if [[ -d "$dir" ]]; then
-                builtin cd "$dir"
-                return 0
-            fi
+            local letter
+            if letter="$(_gwt_num_to_letter "$num" 2>/dev/null)"; then
+                local dir="$_GWT_WORKTREE_DIR/$repo_name.$letter"
+                if [[ -d "$dir" ]]; then
+                    builtin cd "$dir"
+                    return 0
+                fi
 
-            # Check if the branch is already checked out elsewhere
-            local branch
-            branch="$(_gwt_num_to_branch "$num")" || return 1
-            local existing
-            existing="$(_gwt_find_by_branch "$branch")"
-            if [[ -n "$existing" ]]; then
-                builtin cd "$existing"
-                return 0
-            fi
+                # Check if the branch is already checked out elsewhere
+                local branch
+                if branch="$(_gwt_num_to_branch "$num" 2>/dev/null)"; then
+                    local existing
+                    existing="$(_gwt_find_by_branch "$branch")"
+                    if [[ -n "$existing" ]]; then
+                        builtin cd "$existing"
+                        return 0
+                    fi
 
-            # Auto-create numbered worktree
-            mkdir -p "$_GWT_WORKTREE_DIR"
-            if git show-ref --verify --quiet "refs/heads/$branch"; then
-                git worktree add "$dir" "$branch" || return 1
-            else
-                git worktree add -b "$branch" "$dir" || return 1
+                    # Auto-create numbered worktree
+                    mkdir -p "$_GWT_WORKTREE_DIR"
+                    if git show-ref --verify --quiet "refs/heads/$branch"; then
+                        git worktree add "$dir" "$branch" || return 1
+                    else
+                        git worktree add -b "$branch" "$dir" || return 1
+                    fi
+                    builtin cd "$dir"
+                    return 0
+                fi
             fi
-            builtin cd "$dir"
-            return 0
+            # Number out of range — fall through to named handling
         fi
 
         # Try as named worktree directory
-        local named_dir="$_GWT_WORKTREE_DIR/$repo_name.$arg"
+        local named_dir="$_GWT_WORKTREE_DIR/$repo_name.$(_gwt_sanitize_dir "$arg")"
         if [[ -d "$named_dir" ]]; then
             builtin cd "$named_dir"
             return 0
         fi
 
-        # Try as branch name (wt/<arg>)
+        # Try as branch name
         local wt_path
-        wt_path="$(_gwt_find_by_branch "wt/$arg")"
+        wt_path="$(_gwt_find_by_branch "$arg")"
         if [[ -n "$wt_path" ]]; then
             builtin cd "$wt_path"
             return 0
         fi
 
         # Auto-create named worktree
-        local branch="wt/$arg"
+        local branch="$arg"
         mkdir -p "$_GWT_WORKTREE_DIR"
         if git show-ref --verify --quiet "refs/heads/$branch"; then
             git worktree add "$named_dir" "$branch" || return 1
@@ -239,13 +262,22 @@ function ,gwt() {
             fi
             local num
             if num="$(_gwt_ordinal_to_num "$arg")"; then
-                target_dir="$_GWT_WORKTREE_DIR/$repo_name.$num"
-            else
+                local letter
+                if letter="$(_gwt_num_to_letter "$num" 2>/dev/null)"; then
+                    local letter_dir="$_GWT_WORKTREE_DIR/$repo_name.$letter"
+                    if [[ -d "$letter_dir" ]]; then
+                        target_dir="$letter_dir"
+                    elif [[ -d "$_GWT_WORKTREE_DIR/$repo_name.$num" ]]; then
+                        target_dir="$_GWT_WORKTREE_DIR/$repo_name.$num"
+                    fi
+                fi
+            fi
+            if [[ -z "${target_dir:-}" ]]; then
                 # Try as named worktree directory
-                target_dir="$_GWT_WORKTREE_DIR/$repo_name.$arg"
+                target_dir="$_GWT_WORKTREE_DIR/$repo_name.$(_gwt_sanitize_dir "$arg")"
                 if [[ ! -d "$target_dir" ]]; then
                     # Try finding by branch name
-                    target_dir="$(_gwt_find_by_branch "wt/$arg")"
+                    target_dir="$(_gwt_find_by_branch "$arg")"
                     if [[ -z "$target_dir" ]]; then
                         echo "No worktree found for: $arg" >&2
                         return 1
@@ -256,6 +288,25 @@ function ,gwt() {
 
         if [[ ! -d "$target_dir" ]]; then
             echo "Worktree directory does not exist: $target_dir" >&2
+            return 1
+        fi
+
+        # Refuse to remove the main worktree
+        if [[ "$(cd "$target_dir" && pwd -P)" == "$(cd "$main_path" && pwd -P)" ]]; then
+            echo "Cannot remove the main worktree" >&2
+            return 1
+        fi
+
+        # Verify target is actually a known worktree
+        local is_worktree=false
+        while IFS= read -r line; do
+            if [[ "$(cd "$target_dir" && pwd -P)" == "$line" ]]; then
+                is_worktree=true
+                break
+            fi
+        done < <(git worktree list --porcelain | awk '/^worktree / { print substr($0, 10) }')
+        if ! "$is_worktree"; then
+            echo "Not a git worktree: $target_dir" >&2
             return 1
         fi
 
