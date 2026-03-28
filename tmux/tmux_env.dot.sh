@@ -109,6 +109,8 @@ function ,tmux--nested() {
         tmux set -t "$outer_session" @auto-focus-in on
     fi
     "$DOTFILES/tmux/tmux-toggle-nested.sh" "$outer_session"
+    # Inner window styles below are also duplicated in the after-new-window
+    # hook and in tmux-collapse-windows.sh. Keep all three in sync.
     TMUX= tmux new-session -s "$inner_name" "MD_TMUX_OUTER='$outer_session' bash" \; \
         set-environment MD_TMUX_OUTER "$outer_session" \; \
         set @outer_passthrough on \; \

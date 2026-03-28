@@ -156,6 +156,8 @@ set-option -g focus-events on
 # is set to the outer session name. C-a a toggles the outer session's
 # prefix on/off so keys pass through to the inner session.
 bind a run-shell '$DOTFILES/tmux/tmux-toggle-nested.sh'
+# Toggle collapse: merge single-pane windows into current, or expand back out
+bind @ run-shell '$DOTFILES/tmux/tmux-collapse-windows.sh'
 # Toggle auto-focus-in mode: when on, clicking/focusing a nested pane
 # automatically enters passthrough. Also toggles passthrough to match.
 bind Enter run-shell '$DOTFILES/tmux/tmux-toggle-auto-focus.sh'
