@@ -1,0 +1,94 @@
+# use xterm-256color instead of xterm-ghostty so that bold-as-bright
+# works correctly outside tmux (xterm-ghostty terminfo doesn't handle it)
+term = xterm-256color
+
+theme = Gruvbox Dark
+cursor-style = block
+cursor-style-blink = false
+shell-integration-features = no-cursor
+#font-family = Iosevka
+#font-family = Menlo
+font-family = Monaco
+font-thicken = true
+faint-opacity = 0.2
+
+# don't use default ghostty blocks for the shading characters
+font-codepoint-map = U+2591-U+2593=Menlo
+
+# --- Font style ---
+
+# specific bold/italic font families (overrides font-family for that style)
+#font-family-bold =
+#font-family-italic =
+#font-family-bold-italic =
+
+# named style from the font (e.g. "Semibold"), or false to disable
+#font-style-bold = true
+#font-style-italic = true
+#font-style-bold-italic = true
+
+# synthesize bold/italic when font lacks them (bold, italic, or false)
+#font-synthetic-style = bold,italic
+
+# --- Font size & rendering ---
+
+font-size = 12
+
+# fine-tune thickening strength when font-thicken is on (0-255)
+#font-thicken-strength = 128
+#font-thicken-strength = 64
+
+# OpenType features, e.g. -calt disables ligatures
+#font-feature = -calt
+
+# variable font axes, e.g. wght=600 for weight
+#font-variation =
+#font-variation-bold =
+#font-variation-italic =
+#font-variation-bold-italic =
+
+# color space for transparency blending: native, linear, linear-corrected
+#alpha-blending = native
+
+# unicode width calculation: legacy (compatible) or unicode (standards)
+#grapheme-width-method = legacy
+
+# where font shaping breaks into runs (cursor = break at cursor position)
+#font-shaping-break = cursor
+
+# --- Cell spacing & alignment ---
+
+# adjust cell dimensions (pixels or percentage, e.g. 2 or 10%)
+#adjust-cell-width = 0
+#adjust-cell-height = 0
+
+# shift text baseline up/down within cell
+#adjust-font-baseline = 0
+
+# --- Decorations ---
+
+# underline position and thickness
+#adjust-underline-position = 0
+#adjust-underline-thickness = 0
+
+# strikethrough position and thickness
+#adjust-strikethrough-position = 0
+#adjust-strikethrough-thickness = 0
+
+# overline position and thickness
+#adjust-overline-position = 0
+#adjust-overline-thickness = 0
+
+# --- Cursor & box drawing ---
+
+# cursor bar/outline thickness
+#adjust-cursor-thickness = 0
+
+# cursor height
+#adjust-cursor-height = 0
+
+# box-drawing character line thickness
+#adjust-box-thickness = 0
+
+# max height for Nerd Font icons
+#adjust-icon-height = 0
