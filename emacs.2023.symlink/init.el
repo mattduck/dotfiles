@@ -1,3 +1,7 @@
+(defun md/terminal-daemon-p ()
+  "Return non-nil if this Emacs instance is the terminal-only daemon."
+  (equal (daemonp) "term"))
+
 (define-prefix-command 'md/leader-map)
 
 (defun md/maybe-native-compile-and-load (path loadp)
@@ -698,7 +702,7 @@ over any existing rules with the same match pattern."
   (scroll-conservatively 999 "")
   (scroll-step 1 "Only scroll one row at a time. Default behaviour is to centre the row")
 
-  (left-margin-width 4 "Whitespace to the left of the window")
+  (left-margin-width (if (md/terminal-daemon-p) 0 4) "Whitespace to the left of the window")
   (indent-tabs-mode nil "Use spaces instead of tabs")
   (tab-width 4 "Use 4 spaces for tabs")
   (tab-always-indent nil "Don't do magic indenting when I press tab")
@@ -2688,8 +2692,221 @@ that gets complicated"
                            :fork (:host github
                                         :repo "mattduck/emacs-theme-gruvbox"))
   :config
-  (md/disable-all-themes)
-  (load-theme 'gruvbox-dark-hard t))
+  (unless (md/terminal-daemon-p)
+    (md/disable-all-themes)
+    (load-theme 'gruvbox-dark-hard t)))
+
+(defvar md/terminal-theme-faces nil
+  "Faces that have been overridden by `md/terminal-theme-overrides'.")
+
+(defun md/terminal-theme-set (face &rest attrs)
+  "Set FACE attributes and track it for later reset.
+Skips faces that don't exist yet (e.g. from lazy-loaded packages)."
+  (if (facep face)
+      (progn
+        (add-to-list 'md/terminal-theme-faces face)
+        (apply #'set-face-attribute face nil attrs))
+    (message "md/terminal-theme-set: skipping unknown face '%s'" face)))
+
+(defun md/terminal-theme-overrides ()
+  "Apply face overrides for the terminal daemon using only ANSI colours.
+Can be re-evaluated and re-called to update faces interactively."
+  (interactive)
+  (when (md/terminal-daemon-p)
+    ;; Reset previously overridden faces
+    (let ((frame (window-frame)))
+      (dolist (face md/terminal-theme-faces)
+        (face-spec-recalc face frame)))
+    (setq md/terminal-theme-faces nil)
+
+    ;; Default
+    (md/terminal-theme-set 'italic :slant 'normal)
+    (md/terminal-theme-set 'bold-italic :slant 'normal)
+    (md/terminal-theme-set 'default :foreground "brightwhite" :background "black")
+    (md/terminal-theme-set 'cursor :background "white")
+    (md/terminal-theme-set 'fringe :background "black")
+    (md/terminal-theme-set 'hl-line :background "brightblack")
+    (md/terminal-theme-set 'region :background "brightblack" :foreground "black" :slant 'normal :bold nil)
+    (md/terminal-theme-set 'secondary-selection :background "brightblack")
+    (md/terminal-theme-set 'minibuffer-prompt :foreground "green" :bold nil)
+    (md/terminal-theme-set 'vertical-border :foreground "brightblack")
+    (md/terminal-theme-set 'link :foreground "blue" :underline t)
+    (md/terminal-theme-set 'shadow :foreground "brightblack")
+
+    ;; Built-in syntax
+    (md/terminal-theme-set 'font-lock-keyword-face :foreground "blue")
+    (md/terminal-theme-set 'font-lock-builtin-face :foreground "brightblue")
+    (md/terminal-theme-set 'font-lock-constant-face :foreground "brightyellow" :bold t)
+    (md/terminal-theme-set 'font-lock-type-face :foreground "magenta")
+    (md/terminal-theme-set 'font-lock-string-face :foreground "brightwhite" :slant 'italic)
+    (md/terminal-theme-set 'font-lock-function-name-face :foreground "brightblue")
+    (md/terminal-theme-set 'font-lock-variable-name-face :foreground "white")
+    (md/terminal-theme-set 'font-lock-comment-face :foreground "brightblack" :slant 'italic)
+    (md/terminal-theme-set 'font-lock-doc-face :foreground "brightblack")
+    (md/terminal-theme-set 'font-lock-warning-face :foreground "magenta" :bold t)
+    (md/terminal-theme-set 'font-lock-function-call-face :foreground "white")
+
+    ;; fic-mode (TODO/FIXME highlights in comments)
+    (md/terminal-theme-set 'fic-face :foreground "brightred" :background nil :bold t :slant 'normal :underline nil :inherit nil)
+
+    ;; Basic faces
+    (md/terminal-theme-set 'error :foreground "red")
+    (md/terminal-theme-set 'success :foreground "green" :bold t)
+    (md/terminal-theme-set 'warning :foreground "magenta")
+    (md/terminal-theme-set 'trailing-whitespace :background "red")
+    (md/terminal-theme-set 'escape-glyph :foreground "cyan")
+    (md/terminal-theme-set 'header-line :background "black" :foreground "white")
+    (md/terminal-theme-set 'highlight :background "yellow" :foreground "black" :bold t)
+    (md/terminal-theme-set 'match :foreground "black" :background "brightblue")
+
+    ;; Line numbers
+    (md/terminal-theme-set 'line-number :foreground "brightblack")
+    (md/terminal-theme-set 'line-number-current-line :foreground "red" :bold t)
+
+    ;; show-paren
+    (md/terminal-theme-set 'show-paren-match :background "brightblack" :foreground "brightblue" :bold t)
+    (md/terminal-theme-set 'show-paren-mismatch :background "red" :foreground "white" :bold t)
+
+    ;; isearch
+    (md/terminal-theme-set 'isearch :foreground "black" :background "red")
+    (md/terminal-theme-set 'lazy-highlight :foreground "black" :background "yellow")
+    (md/terminal-theme-set 'isearch-fail :foreground "white" :background "red")
+
+    ;; Diffs
+    (md/terminal-theme-set 'diff-added :foreground "green")
+    (md/terminal-theme-set 'diff-removed :foreground "red")
+    (md/terminal-theme-set 'diff-changed :foreground "blue")
+
+    ;; Magit
+    (md/terminal-theme-set 'magit-diff-added :foreground "green")
+    (md/terminal-theme-set 'magit-diff-added-highlight :foreground "green")
+    (md/terminal-theme-set 'magit-diff-removed :foreground "red")
+    (md/terminal-theme-set 'magit-diff-removed-highlight :foreground "red")
+    (md/terminal-theme-set 'magit-diff-context :foreground "white")
+    (md/terminal-theme-set 'magit-diff-context-highlight :background "brightblack" :foreground "white")
+    (md/terminal-theme-set 'magit-diff-hunk-heading :foreground "white" :background "brightblack")
+    (md/terminal-theme-set 'magit-diff-hunk-heading-highlight :foreground "white" :background "brightblack")
+    (md/terminal-theme-set 'magit-section-heading :foreground "yellow" :bold t)
+    (md/terminal-theme-set 'magit-section-highlight :background "brightblack")
+    (md/terminal-theme-set 'magit-branch-local :foreground "brightblue")
+    (md/terminal-theme-set 'magit-branch-remote :foreground "green")
+    (md/terminal-theme-set 'magit-branch-current :foreground "brightblue" :underline t)
+    (md/terminal-theme-set 'magit-hash :foreground "brightblue")
+    (md/terminal-theme-set 'magit-log-author :foreground "red")
+    (md/terminal-theme-set 'magit-log-date :foreground "cyan")
+    (md/terminal-theme-set 'magit-tag :foreground "yellow")
+    (md/terminal-theme-set 'magit-dimmed :foreground "brightblack")
+
+    ;; git-gutter
+    (md/terminal-theme-set 'git-gutter:modified :foreground "blue" :background "blue")
+    (md/terminal-theme-set 'git-gutter:added :foreground "green" :background "green")
+    (md/terminal-theme-set 'git-gutter:deleted :foreground "red" :background "red")
+    (md/terminal-theme-set 'git-gutter:unchanged :background "black")
+    (md/terminal-theme-set 'git-gutter:separator :background "black")
+
+    ;; Outline / org headings
+    (md/terminal-theme-set 'outline-1 :foreground "brightblue")
+    (md/terminal-theme-set 'outline-2 :foreground "cyan")
+    (md/terminal-theme-set 'outline-3 :foreground "green")
+    (md/terminal-theme-set 'outline-4 :foreground "yellow" :inherit nil)
+    (md/terminal-theme-set 'outline-5 :foreground "red" :inherit nil)
+    (md/terminal-theme-set 'outline-6 :foreground "red" :inherit nil)
+    (md/terminal-theme-set 'outline-7 :foreground "magenta" :inherit nil)
+    (md/terminal-theme-set 'outline-8 :foreground "yellow" :inherit nil)
+
+    ;; Org
+    (md/terminal-theme-set 'org-hide :foreground "black")
+    (md/terminal-theme-set 'org-block :foreground "white")
+    (md/terminal-theme-set 'org-block-begin-line :foreground "brightblack")
+    (md/terminal-theme-set 'org-block-end-line :foreground "brightblack")
+    (md/terminal-theme-set 'org-link :foreground "magenta" :underline t)
+    (md/terminal-theme-set 'org-footnote :foreground "cyan" :underline t)
+    (md/terminal-theme-set 'org-ellipsis :foreground "brightblack")
+    (md/terminal-theme-set 'org-date :foreground "brightblack" :underline t)
+    (md/terminal-theme-set 'org-code :foreground "green")
+    (md/terminal-theme-set 'org-tag :foreground "yellow" :bold t)
+    (md/terminal-theme-set 'org-todo :foreground "red")
+    (md/terminal-theme-set 'org-done :foreground "brightblack")
+    (md/terminal-theme-set 'org-headline-done :foreground "brightblack")
+    (md/terminal-theme-set 'org-checkbox :foreground "yellow" :bold t)
+    (md/terminal-theme-set 'org-table :foreground "white")
+    (md/terminal-theme-set 'org-document-title :foreground "blue")
+    (md/terminal-theme-set 'org-document-info :foreground "blue")
+    (md/terminal-theme-set 'org-agenda-structure :foreground "blue" :bold t :underline t)
+    (md/terminal-theme-set 'org-scheduled :foreground "yellow")
+    (md/terminal-theme-set 'org-scheduled-today :foreground "brightblue")
+    (md/terminal-theme-set 'org-scheduled-previously :foreground "red")
+    (md/terminal-theme-set 'org-warning :foreground "red" :bold t)
+    (md/terminal-theme-set 'org-drawer :foreground "brightblack" :bold nil)
+    (md/terminal-theme-set 'org-special-keyword :foreground "brightblack" :bold nil)
+
+    ;; Markdown
+    (md/terminal-theme-set 'markdown-header-face-1 :foreground "brightblue")
+    (md/terminal-theme-set 'markdown-header-face-2 :foreground "yellow")
+    (md/terminal-theme-set 'markdown-header-face-3 :foreground "magenta")
+    (md/terminal-theme-set 'markdown-header-face-4 :foreground "red")
+    (md/terminal-theme-set 'markdown-header-face-5 :foreground "green")
+    (md/terminal-theme-set 'markdown-header-face-6 :foreground "cyan")
+
+    ;; Mode line
+    (md/terminal-theme-set 'mode-line :background "brightwhite" :foreground "black")
+    (md/terminal-theme-set 'mode-line-inactive :background "brightblack" :foreground "black")
+
+    ;; Flycheck
+    (md/terminal-theme-set 'flycheck-error :underline "red")
+    (md/terminal-theme-set 'flycheck-warning :underline "magenta")
+
+    ;; Vertico / completion
+    (md/terminal-theme-set 'vertico-current :background "black" :foreground "brightwhite" :bold t)
+    (md/terminal-theme-set 'vertico-group-title :foreground "brightblack")
+    (md/terminal-theme-set 'vertico-group-separator :foreground "brightblack")
+
+    ;; Orderless match highlights
+    (md/terminal-theme-set 'orderless-match-face-0 :foreground "blue" :bold t)
+    (md/terminal-theme-set 'orderless-match-face-1 :foreground "magenta" :bold t)
+    (md/terminal-theme-set 'orderless-match-face-2 :foreground "green" :bold t)
+    (md/terminal-theme-set 'orderless-match-face-3 :foreground "yellow" :bold t)
+
+    ;; Consult
+    (md/terminal-theme-set 'consult-line-number :foreground "brightblack")
+    (md/terminal-theme-set 'consult-separator :foreground "brightblack")
+    (md/terminal-theme-set 'consult-help :foreground "brightblack")
+
+    ;; Marginalia
+    (md/terminal-theme-set 'completions-annotations :foreground "brightblack")
+    (md/terminal-theme-set 'marginalia-documentation :foreground "brightblack" :inherit nil)
+    (md/terminal-theme-set 'marginalia-file-name :foreground "brightblack" :inherit nil)
+    (md/terminal-theme-set 'marginalia-file-priv-no :foreground "brightblack")
+
+    ;; Disable cursor blinking
+    (blink-cursor-mode -1)
+
+    ;; Evil cursor shapes
+    (setq evil-normal-state-cursor 'box)
+    (setq evil-insert-state-cursor 'bar)
+    (setq evil-visual-state-cursor 'box)
+    (setq evil-replace-state-cursor 'bar)
+    (setq evil-emacs-state-cursor 'bar)
+    (setq evil-operator-state-cursor 'box)
+
+    (setq visible-cursor nil)
+
+    ;; Sync terminal cursor shape after every command
+    (add-hook 'post-command-hook #'md/terminal-cursor-sync)))
+
+(defvar md/terminal-cursor--last nil
+  "Last cursor shape sent to terminal, to avoid redundant writes.")
+
+(defun md/terminal-cursor-sync ()
+  "Send DECSCUSR escape sequence matching current `cursor-type'."
+  (let ((seq (pcase cursor-type
+               ((or 'bar '(bar . 2) '(bar . 1)) "\e[6 q")
+               (_ "\e[2 q"))))
+    (unless (equal seq md/terminal-cursor--last)
+      (send-string-to-terminal seq)
+      (setq md/terminal-cursor--last seq))))
+
+(md/terminal-theme-overrides)
 
 (use-package emacs
   :init

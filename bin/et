@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Terminal emacs client. Starts the daemon if not running.
+
+if [ "$1" = "--kill" ]; then
+  COLORTERM= emacsclient -s term -e '(kill-emacs)' 2>/dev/null
+  exit $?
+fi
+
+if ! ALTERNATE_EDITOR=false COLORTERM= emacsclient -s term -e nil 2>/dev/null; then
+  COLORTERM= emacs --daemon=term
+fi
+
+cleanup() {
+  # Reset cursor to steady block on exit
+  printf '\e[2 q'
+}
+trap cleanup EXIT
+
+ALTERNATE_EDITOR=false COLORTERM= emacsclient -s term -nw "$@"
