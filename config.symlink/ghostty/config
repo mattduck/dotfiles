@@ -10,7 +10,7 @@ shell-integration-features = no-cursor
 #font-family = Menlo
 font-family = Monaco
 font-thicken = true
-faint-opacity = 0.2
+faint-opacity = 0.3
 
 # don't use default ghostty blocks for the shading characters
 font-codepoint-map = U+2591-U+2593=Menlo
