@@ -1,0 +1,20 @@
+[projects."/Users/matt/f/2026-01-16-diffyduck"]
+trust_level = "trusted"
+
+[projects."/System/Volumes/Data/f/2026-06-26-slidefile"]
+trust_level = "trusted"
+
+[projects."/System/Volumes/Data/f/dotfiles"]
+trust_level = "trusted"
+
+[tui]
+theme = "ansi"
+
+[tui.keymap.composer]
+submit = ["ctrl-j"]
+
+[tui.keymap.editor]
+insert_newline = ["enter"]
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
