@@ -59,6 +59,8 @@ Prompts:
 - "Include all quotes from the user verbatim (but wrapped), and in chronological order".
 - "If the user was responding to your question (or vice versa), include the question
   and answer as a nested bullet. See example below"
+- "Only include this section if my own messages are in your context and you can
+  quote them. See 'When there are no prompts to quote' below."
 
 ```
 
@@ -77,6 +79,38 @@ Prompts:
 ...
 - [This is your question?]
   - "This is my answer"
+
+## When there are no prompts to quote
+
+The Prompts section records what I actually said, so include it **only if my
+own messages are present in your context and you can quote them verbatim.**
+
+**Never write a Prompts bullet you cannot quote from something in front of
+you.** Reconstructing what I probably said, or paraphrasing a summary and
+presenting it as a quote, invents provenance — worse than having no section
+at all.
+
+You will have nothing to quote when:
+
+- you are a subagent — you were handed a task, not a conversation
+- the session was compacted or resumed and my verbatim messages are gone
+- the commit came from a scheduled or otherwise autonomous run
+
+In that case replace the section with what you *can* quote:
+
+```
+Task:
+- "<the instruction you were given, verbatim>"
+- Delegated by the main session; my own prompts are not in this agent's
+  context.
+```
+
+A partly-compacted session is the awkward one: quote what you still have
+under Prompts, and add a bullet saying earlier messages were lost to
+compaction. Don't let a summary pass as a quote.
+
+If you have neither my prompts nor a task instruction, omit both sections
+and say so when you report the commit, rather than filling the gap.
 
 ## Committing
 
