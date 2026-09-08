@@ -2,7 +2,7 @@ function ,tmux() {
     if [[ -z "$TMUX" ]]; then
         command tmux new-session \; \
             set pane-border-status top \; \
-            set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fill=colour6],#[fill=colour15]},#[fill=colour15]},}#[align=left]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour6]━━━━━━━━━━,#[fg=colour15]━━━━━━━━━━},#[fg=colour15]━━━━━━━━━━},#{?#{==:#{@passthrough},on},#[dim]#[fg=colour8],#[fg=colour8]}━━━━━━━━━━}#[nodim]#[align=centre]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour0]#[bg=colour6],#[fg=colour0]#[bg=colour15]},#[fg=colour0]#[bg=colour15]},#{?#{==:#{@passthrough},on},#[nodim]#[fg=colour0]#[bg=colour8],#[fg=colour0]#[bg=colour8]}} #{?pane_active,#{?#{==:#{@passthrough},on},,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@auto-focus-in},on},,> },> }},}#{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,}#{?#{==:#{@claude-waiting},blocked}, #[fg=colour1]#[bg=colour11] ■ BLOCKED                                                                        #[default],#{?#{==:#{@claude-waiting},done}, #[noreverse]#{?pane_active, ,}#[fg=colour3]● , }}#[default]#[align=right]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour6]━━━━━━━━━━,#[fg=colour15]━━━━━━━━━━},#[fg=colour15]━━━━━━━━━━},#{?#{==:#{@passthrough},on},#[dim]#[fg=colour8],#[fg=colour8]}━━━━━━━━━━}"
+            set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fill=colour6],#[fill=colour15]},#[fill=colour15]},}#[align=left]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour6]━━━━━━━━━━,#[fg=colour15]━━━━━━━━━━},#[fg=colour15]━━━━━━━━━━},#{?#{==:#{@passthrough},on},#[dim]#[fg=colour8],#[fg=colour8]}━━━━━━━━━━}#[nodim]#[align=centre]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour0]#[bg=colour6],#[fg=colour0]#[bg=colour15]},#[fg=colour0]#[bg=colour15]},#{?#{==:#{@passthrough},on},#[nodim]#[fg=colour0]#[bg=colour8],#[fg=colour0]#[bg=colour8]}} #{?pane_active,#{?#{==:#{@passthrough},on},,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@auto-focus-in},on},,> },> }},}#{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,}#[default]#[align=right]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour6]━━━━━━━━━━,#[fg=colour15]━━━━━━━━━━},#[fg=colour15]━━━━━━━━━━},#{?#{==:#{@passthrough},on},#[dim]#[fg=colour8],#[fg=colour8]}━━━━━━━━━━}"
         return
     fi
     if [[ -n "$MD_TMUX_OUTER" ]]; then
@@ -116,7 +116,7 @@ function ,tmux--nested() {
         set @outer_passthrough on \; \
         set-option -w pane-border-lines double \; \
         set-option -w pane-border-status top \; \
-        set-option -w pane-border-format "#[nodim]#[align=left]#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[fg=colour0]#[bg=colour15],#[fg=colour7]},#[fg=colour7]} #{?pane_active,#{?#{==:#{@outer_passthrough},on},> ,},}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #{?#{==:#{@claude-waiting},blocked},#[fg=colour1]#[bg=colour11] ■ BLOCKED                                                                        #[default],#{?#{==:#{@claude-waiting},done},#[noreverse]#[fg=colour3]#[bg=default] ● ,}}#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[bg=default]#[fg=colour15]════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════,},#{?#{==:#{@outer_passthrough},on},#[fg=colour7],#[dim]#[fg=colour7]}══════════}#[default]" \; \
+        set-option -w pane-border-format "#[nodim]#[align=left]#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[fg=colour0]#[bg=colour15],#[fg=colour7]},#[fg=colour7]} #{?pane_active,#{?#{==:#{@outer_passthrough},on},> ,},}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,}#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[bg=default]#[fg=colour15]════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════,},#{?#{==:#{@outer_passthrough},on},#[fg=colour7],#[dim]#[fg=colour7]}══════════}#[default]" \; \
         set-option -w pane-active-border-style "fg=colour7,dim" \; \
         set-option -w pane-border-style "fg=colour7,dim" \; \
         set-option status off \; \
@@ -132,7 +132,7 @@ function ,tmux--nested() {
             "set-option status on ; \
              set-option -w pane-border-lines double ; \
              set-option -w pane-border-status top ; \
-             set-option -w pane-border-format '#[nodim]#[align=left]#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[fg=colour0]#[bg=colour15],#[fg=colour7]},#[fg=colour7]} #{?pane_active,#{?#{==:#{@outer_passthrough},on},> ,},}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,} #{?#{==:#{@claude-waiting},blocked},#[fg=colour1]#[bg=colour11] ■ BLOCKED                                                                        #[default],#{?#{==:#{@claude-waiting},done},#[noreverse]#[fg=colour3]#[bg=default] ● ,}}#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[bg=default]#[fg=colour15]════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════,},#{?#{==:#{@outer_passthrough},on},#[fg=colour7],#[dim]#[fg=colour7]}══════════}#[default]' ; \
+             set-option -w pane-border-format '#[nodim]#[align=left]#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[fg=colour0]#[bg=colour15],#[fg=colour7]},#[fg=colour7]} #{?pane_active,#{?#{==:#{@outer_passthrough},on},> ,},}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path})#{?window_zoomed_flag, Z,}#{?pane_active,#{?#{==:#{@outer_passthrough},on},#[bg=default]#[fg=colour15]════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════,},#{?#{==:#{@outer_passthrough},on},#[fg=colour7],#[dim]#[fg=colour7]}══════════}#[default]' ; \
              set-option -w pane-active-border-style 'fg=colour7,dim' ; \
              set-option -w pane-border-style 'fg=colour7,dim' ; \
              set-option window-status-format ' #I ' ; \
@@ -180,49 +180,7 @@ function ,tmux-toggle-titles() {
         echo "Pane borders off"
     else
         tmux set pane-border-status top
-        tmux set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fill=colour6],#[fill=colour15]},#[fill=colour15]},}#[align=left]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour6]━━━━━━━━━━,#[fg=colour15]━━━━━━━━━━},#[fg=colour15]━━━━━━━━━━},#{?#{==:#{@passthrough},on},#[dim]#[fg=colour8],#[fg=colour8]}━━━━━━━━━━}#[nodim]#[align=centre]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour0]#[bg=colour6],#[fg=colour0]#[bg=colour15]},#[fg=colour0]#[bg=colour15]},#{?#{==:#{@passthrough},on},#[nodim]#[fg=colour0]#[bg=colour8],#[fg=colour0]#[bg=colour8]}} #{?pane_active,#{?#{==:#{@passthrough},on},,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@auto-focus-in},on},,> },> }},}#{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,}#{?#{==:#{@claude-waiting},blocked}, #[fg=colour1]#[bg=colour11] ■ BLOCKED                                                                        #[default],#{?#{==:#{@claude-waiting},done}, #[noreverse]#{?pane_active, ,}#[fg=colour3]● , }}#[default]#[align=right]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour6]━━━━━━━━━━,#[fg=colour15]━━━━━━━━━━},#[fg=colour15]━━━━━━━━━━},#{?#{==:#{@passthrough},on},#[dim]#[fg=colour8],#[fg=colour8]}━━━━━━━━━━}"
+        tmux set pane-border-format "#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fill=colour6],#[fill=colour15]},#[fill=colour15]},}#[align=left]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour6]━━━━━━━━━━,#[fg=colour15]━━━━━━━━━━},#[fg=colour15]━━━━━━━━━━},#{?#{==:#{@passthrough},on},#[dim]#[fg=colour8],#[fg=colour8]}━━━━━━━━━━}#[nodim]#[align=centre]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour0]#[bg=colour6],#[fg=colour0]#[bg=colour15]},#[fg=colour0]#[bg=colour15]},#{?#{==:#{@passthrough},on},#[nodim]#[fg=colour0]#[bg=colour8],#[fg=colour0]#[bg=colour8]}} #{?pane_active,#{?#{==:#{@passthrough},on},,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@auto-focus-in},on},,> },> }},}#{?#{==:#{pane_current_command},tmux},tmux: ,}#($DOTFILES/tmux/tmux-pane-path.sh #{pane_current_path} #{pane_id} #{pane_current_command})#{?window_zoomed_flag, Z,}#[default]#[align=right]#{?pane_active,#{?#{==:#{pane_current_command},tmux},#{?#{==:#{@passthrough},on},#[fg=colour6]━━━━━━━━━━,#[fg=colour15]━━━━━━━━━━},#[fg=colour15]━━━━━━━━━━},#{?#{==:#{@passthrough},on},#[dim]#[fg=colour8],#[fg=colour8]}━━━━━━━━━━}"
         echo "Pane borders on"
     fi
-}
-
-function ,tmux-style-test() {
-    local target
-    target="${TMUX_PANE:-$(tmux display-message -p '#{pane_id}' 2>/dev/null)}"
-    if [[ -z "$target" ]]; then
-        echo "Not in a tmux session"
-        return 1
-    fi
-
-    local states=(
-        "claude-waiting:blocked"
-        "claude-waiting:done"
-        "claude-waiting:off"
-    )
-
-    echo "Cycling tmux border states on pane $target"
-    echo "Press Enter to advance, q to quit."
-    echo ""
-
-    local key val input
-    for entry in "${states[@]}"; do
-        key="${entry%%:*}"
-        val="${entry#*:}"
-        printf "  @%-20s = %s  " "$key" "$val"
-        if [[ "$val" == "off" ]]; then
-            tmux set-option -t "$target" -p -u "@$key" 2>/dev/null
-        else
-            tmux set-option -t "$target" -p "@$key" "$val"
-        fi
-        read -r input
-        if [[ "$input" == "q" ]]; then
-            break
-        fi
-    done
-
-    # Reset all tested options
-    for entry in "${states[@]}"; do
-        key="${entry%%:*}"
-        tmux set-option -t "$target" -p -u "@$key" 2>/dev/null
-    done
-    echo "Reset."
 }
