@@ -4,6 +4,10 @@ Usage: ,install_dotfile_symlinks.py
 
 Creates ~/.foo symlinks for all foo.symlink files in $DOTFILES. Any existing
 dotfiles are backed up to ~/dotfiles_backup/$(date).
+
+Home names listed in ~/.dotfiles-skip (one per line, eg. ".claude"; blank
+lines and # comments ignored) are left untouched. Use this when another repo
+owns that path on this machine.
 """
 from __future__ import print_function
 
@@ -16,9 +20,20 @@ from datetime import datetime
 HOME_PATH = os.path.expanduser("~")
 BACKUP_PATH = os.path.realpath(os.path.join(HOME_PATH, "dotfiles_backup"))
 DOTFILES_PATH = os.path.realpath(os.environ["DOTFILES"])
+SKIP_FILE_PATH = os.path.join(HOME_PATH, ".dotfiles-skip")
+
+
+def read_skip_list():
+    if not os.path.exists(SKIP_FILE_PATH):
+        return set()
+    with open(SKIP_FILE_PATH) as f:
+        lines = (line.split("#", 1)[0].strip() for line in f)
+        return {line for line in lines if line}
 
 
 def main(argv):
+    skip = read_skip_list()
+
     if not os.path.exists(BACKUP_PATH):
         subprocess.Popen(["mkdir", "-pv", BACKUP_PATH])
     date = datetime.now().strftime("%Y-%m-%d-%H-%M-%s")
@@ -53,6 +68,10 @@ def main(argv):
             continue
         if home_name == ".emacs.2023":
             home_name = ".emacs.d"
+
+        if home_name in skip:
+            print("Skipping ~/%s (listed in %s)" % (home_name, SKIP_FILE_PATH))
+            continue
 
         home_path = os.path.join(HOME_PATH, home_name)
         dotfiles_path = os.path.join(root, symlink_name)
